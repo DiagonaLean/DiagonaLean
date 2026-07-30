@@ -3,6 +3,8 @@ import DiagonaLean.Halt.Encoding
 import DiagonaLean.Halt.Helpers
 import DiagonaLean.Halt.Compositions
 import DiagonaLean.Halt.Undecidable
+import DiagonaLean.Rice.Basic
+import DiagonaLean.Rice.EmptyLang
 
 import DiagonaLean.MPCP.Basic
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP

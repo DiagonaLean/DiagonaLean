@@ -8,6 +8,11 @@ import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
 
 import DiagonaLean.Halt.Basic
 
+/-
+  A Problem is defined as a Predicate on a Type X.
+  A reduction is defined using a function f : X → Y such that for all x : X, P1 x ↔ P2 (f x), where P1 : X → Prop and P2 : Y → Prop are the two problems.
+-/
+
 @[expose] public section
 
 namespace DiagonaLean.Synthetic.Definitions
@@ -31,13 +36,13 @@ def decider (f : X → Bool) (P : X → Prop) : Prop :=
 def SDecidable (P : X → Prop) : Prop :=
   ∃ f : X → Bool, decider f P
 
-/-- `enumerator f P` means `f` surjects onto the positive instances of `P`. -/
-def enumerator (f : ℕ → Option X) (P : X → Prop) : Prop :=
+/-- `PropEnumerator f P` means `f` surjects onto the positive instances of `P`. -/
+def PropEnumerator (f : ℕ → Option X) (P : X → Prop) : Prop :=
   ∀ x, P x ↔ ∃ n, f n = some x
 
-/-- `enumerable P` means there exists an enumerator for `P`. -/
+/-- `SEnumerable P` means there exists an enumerator for `P`. -/
 def SEnumerable (P : X → Prop) : Prop :=
-  ∃ f : ℕ → Option X, enumerator f P
+  ∃ f : ℕ → Option X, PropEnumerator f P
 
 /-- `semi_decider f P` means `f` semi-decides `P` via Boolean sequences. -/
 def semi_decider (f : X → ℕ → Bool) (P : X → Prop) : Prop :=
@@ -47,11 +52,11 @@ def semi_decider (f : X → ℕ → Bool) (P : X → Prop) : Prop :=
 def semi_decidable (P : X → Prop) : Prop :=
   ∃ f : X → ℕ → Bool, semi_decider f P
 
-/-- `reduction f P Q` means `f` many-one reduces `P` to `Q`. -/
-def reduction (f : X → Y) (P : X → Prop) (Q : Y → Prop) : Prop :=
+/-- `PropositionalReduction f P Q` means `f` many-one reduces `P` to `Q`. -/
+def PropositionalReduction (f : X → Y) (P : X → Prop) (Q : Y → Prop) : Prop :=
   ∀ x, P x ↔ Q (f x)
 
-/-- Many-one reducibility. -/
+/-- `ManyOneReduces p q` means that there exists a many-one reduction from `p` to `q`. -/
 def ManyOneReduces (p : X → Prop) (q : Y → Prop) : Prop :=
   ∃ f : X → Y, ∀ x, p x ↔ q (f x)
 
