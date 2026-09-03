@@ -29,7 +29,7 @@ theorem reduces_reflexive_spec (P : X → Prop) : P ⪯ₘ[id] P :=
 
 /-- Many-one reducibility is reflexive. `⪯ₘ` is data (see `ManyOneReduces`), so building one is
 a `def`, not a `theorem`. -/
-def reduces_reflexive (P : X → Prop) : P ⪯ₘ P :=
+def ReducesReflexive (P : X → Prop) : P ⪯ₘ P :=
   ⟨id, reduces_reflexive_spec P⟩
 
 /-- `hQR.f ∘ hPQ.f` -- the composition of the two witness functions -- witnesses that
@@ -39,12 +39,12 @@ theorem reduces_transitive_spec {P : X → Prop} {Q : Y → Prop} {R : Z → Pro
   fun x => (hPQ.hf x).trans (hQR.hf (hPQ.f x))
 
 /-- Many-one reducibility is transitive: compose the two witness functions. -/
-def reduces_transitive {P : X → Prop} {Q : Y → Prop} {R : Z → Prop}
+def ReducesTransitive {P : X → Prop} {Q : Y → Prop} {R : Z → Prop}
     (hPQ : P ⪯ₘ Q) (hQR : Q ⪯ₘ R) : P ⪯ₘ R :=
   ⟨hQR.f ∘ hPQ.f, reduces_transitive_spec hPQ hQR⟩
 
 /-- Equivalent dependent formulation. -/
-def reduces_dependent {P : X → Prop} {Q : Y → Prop} :
+def ReducesDependent {P : X → Prop} {Q : Y → Prop} :
     (P ⪯ₘ Q) ≃ (∀ x, { y // P x ↔ Q y }) where
   toFun h x := ⟨h.f x, h.hf x⟩
   invFun g := ⟨fun x => (g x).val, fun x => (g x).property⟩
@@ -58,7 +58,7 @@ theorem reduces_complement_spec {P : X → Prop} {Q : Y → Prop}
   fun x => not_congr (h.hf x)
 
 /-- If `P` reduces to `Q`, then the complement of `P` reduces to the complement of `Q`. -/
-def reduces_complement {P : X → Prop} {Q : Y → Prop}
+def ReducesComplement {P : X → Prop} {Q : Y → Prop}
     (h : P ⪯ₘ Q) : Complement P ⪯ₘ Complement Q :=
   ⟨h.f, reduces_complement_spec h⟩
 
@@ -68,11 +68,6 @@ theorem dec_red {p : X → Prop} {q : Y → Prop}
   obtain ⟨f, hf⟩ := hred
   obtain ⟨d, hd⟩ := hdec
   exact ⟨d ∘ f, fun x => (hf x).trans (hd (f x))⟩
-
-/-- Alias for `reduces_complement`. If `p` reduces to `q`, then the complement of `p` reduces to the complement of `q`. -/
-def red_comp {p : X → Prop} {q : Y → Prop}
-    (h : p ⪯ₘ q) : Complement p ⪯ₘ Complement q :=
-  reduces_complement h
 
 /-- Close a reduction goal by chaining through a list of known reductions. -/
 macro "reduce_chain" H:term : tactic =>

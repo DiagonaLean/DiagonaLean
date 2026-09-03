@@ -134,7 +134,7 @@ theorem Ext.map_injective {α β : Type} {g : α → β} (hg : Function.Injectiv
   exact hg hxy
 
 /-- Map TM halting instance to a PCP stack via integer state encoding. -/
-def pcpRed (tm : SingleTapeTM Symbol) (w : List Symbol)
+def PCPRed (tm : SingleTapeTM Symbol) (w : List Symbol)
     [Encodable Symbol] [Encodable tm.State] : Stack (Ext (Alpha ℕ Symbol)) :=
   (mpcpToPcp (startTile tm w) (haltTiles tm)).map
     (Tile.map (Ext.map (Alpha.map Encodable.encode)))
@@ -143,7 +143,7 @@ def pcpRed (tm : SingleTapeTM Symbol) (w : List Symbol)
 theorem pcpRed_iff (tm : SingleTapeTM Symbol) (w : List Symbol)
     [Encodable Symbol] [Encodable tm.State] :
     PCP.DecisionProblem (mpcpToPcp (startTile tm w) (haltTiles tm)) ↔
-    PCP.DecisionProblem (pcpRed tm w) :=
+    PCP.DecisionProblem (PCPRed tm w) :=
   decisionProblem_map_iff (Ext.map (Alpha.map Encodable.encode))
     (Ext.map_injective (Alpha.map_injective Encodable.encode_injective))
     (mpcpToPcp (startTile tm w) (haltTiles tm))
@@ -160,7 +160,7 @@ def haltToPcp (p : EncodableTM Bool × List Bool) : Stack (Ext (Alpha ℕ Bool))
   letI : Encodable (Foundations.Normalize.normTM p.1.toSingleTapeTM).State :=
     (inferInstance : Encodable (p.1.State × Foundations.Normalize.Ctrl))
   AlphabetLift.liftInstance Ext.hash Ext.rupee
-    (pcpRed (Foundations.Normalize.normTM p.1.toSingleTapeTM) (Foundations.Normalize.encInput p.2))
+    (PCPRed (Foundations.Normalize.normTM p.1.toSingleTapeTM) (Foundations.Normalize.encInput p.2))
 
 /-- `haltToPcp` witnesses that the halting problem many-one reduces to PCP over the fixed
 alphabet `Ext (Alpha ℕ Bool)`. Combines TM normalization, MPCP reduction, and alphabet
@@ -178,18 +178,18 @@ theorem halt_reducesto_pcp_spec :
       (Foundations.Normalize.normTM_noLeftBoundary tm.toSingleTapeTM w),
     pcpRed_iff (Foundations.Normalize.normTM tm.toSingleTapeTM) (Foundations.Normalize.encInput w)]
   exact AlphabetLift.decisionProblem_lifts Ext.hash Ext.rupee
-    (pcpRed (Foundations.Normalize.normTM tm.toSingleTapeTM) (Foundations.Normalize.encInput w))
+    (PCPRed (Foundations.Normalize.normTM tm.toSingleTapeTM) (Foundations.Normalize.encInput w))
     (by decide)
 
 /-- The halting problem many-one reduces to PCP over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/
-def halt_reducesto_pcp :
+def haltReducesToPCP :
     HaltProblem ⪯ₘ (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
   ⟨haltToPcp, halt_reducesto_pcp_spec⟩
 
 /-- PCP is undecidable over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/
 theorem pcp_undecidable' :
     Undecidable (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
-  ⟨halt_reducesto_pcp⟩
+  ⟨haltReducesToPCP⟩
 
 /-- PCP is undecidable over any `DecidableEq`, `Nontrivial` alphabet. Obtained by transporting
   `pcp_undecidable` along `AlphabetLift.PCP_alphabet_lift`. -/
@@ -199,6 +199,6 @@ theorem pcp_undecidable {α : Type} [DecidableEq α] [Nontrivial α] :
   obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
   exact undecidability_from_reducibility
     pcp_undecidable'
-    (AlphabetLift.pcp_alphabet_lift b0 b1 hne)
+    (AlphabetLift.PCPAlphabetLift b0 b1 hne)
 
 end DiagonaLean.PCP.Reduction

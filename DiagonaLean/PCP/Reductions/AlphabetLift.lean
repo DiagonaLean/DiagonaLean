@@ -382,7 +382,7 @@ theorem pcp_alphabet_lift_spec (hne : b0 ≠ b1) :
   fun P => decisionProblem_lifts b0 b1 P hne
 
 /-- Many-one reduction from PCP over an arbitrary alphabet to PCP over a target alphabet. -/
-def pcp_alphabet_lift (hne : b0 ≠ b1) :
+def PCPAlphabetLift (hne : b0 ≠ b1) :
     (@DiagonaLean.PCP.DecisionProblem γ₁) ⪯ₘ (@DiagonaLean.PCP.DecisionProblem γ₂) :=
   ⟨liftInstance b0 b1, pcp_alphabet_lift_spec b0 b1 hne⟩
 
