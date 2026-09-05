@@ -14,7 +14,6 @@ import DiagonaLean.PCP.Basic
 import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
-
 /-! # PCP ⪯ₘ MatMort
 
 Reduction from PCP to MatMort following [Paterson1970]. Strings in the intersection

@@ -51,22 +51,22 @@ theorem halts_iff_exists_n_haltsWithinTime (tm : SingleTapeTM Symbol)
 /-- `D` is a halt decider if, given the encoding of any TM `tm` paired with any input `w`,
 it outputs `[true]` if `tm` halts on `w` and `[false]` otherwise. -/
 def IsHaltDecider (D : SingleTapeTM Bool) : Prop :=
-  ∀ (tm : SingleTapeTM Bool) [DecidableEq tm.State] (w : List Bool),
-    (Halts tm w →
+  ∀ (tm : EncodableTM Bool) (w : List Bool),
+    (Halts tm.toSingleTapeTM w →
       SingleTapeTM.Outputs D (encodePair (encodeBoolTM tm) w) [true]) ∧
-    (¬ Halts tm w →
+    (¬ Halts tm.toSingleTapeTM w →
       SingleTapeTM.Outputs D (encodePair (encodeBoolTM tm) w) [false])
 
 /-- `D` is a self-halt decider if, given the encoding of any TM `tm`, it outputs `[true]`
 if `tm` halts on its own encoding and `[false]` otherwise. -/
 def IsSelfHaltDecider (D : SingleTapeTM Bool) : Prop :=
-  ∀ (tm : SingleTapeTM Bool) [DecidableEq tm.State],
-    (Halts tm (encodeBoolTM tm) →
+  ∀ (tm : EncodableTM Bool),
+    (Halts tm.toSingleTapeTM (encodeBoolTM tm) →
       SingleTapeTM.Outputs D (encodeBoolTM tm) [true]) ∧
-    (¬ Halts tm (encodeBoolTM tm) →
+    (¬ Halts tm.toSingleTapeTM (encodeBoolTM tm) →
       SingleTapeTM.Outputs D (encodeBoolTM tm) [false])
 
 /-- The halting problem: does `tm` halt on input `w`? -/
-abbrev HaltProblem : SingleTapeTM Bool × List Bool → Prop := fun ⟨a, b⟩ ↦ Halts a b
+abbrev HaltProblem : EncodableTM Bool × List Bool → Prop := fun ⟨a, b⟩ ↦ Halts a.toSingleTapeTM b
 
 end DiagonaLean.Halt

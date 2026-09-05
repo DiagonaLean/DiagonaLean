@@ -132,15 +132,13 @@ omit [DecidableEq α] in
 theorem encodeB_nil (P : Stack α) : encodeB ([] : List (Fin P.length)) = [] := by simp [encodeB]
 
 omit [DecidableEq α] in
-/-- `encodeA (i :: is) = wᵢ · encodeA is · aᵢ`,
-mirroring the recursive production `A → wᵢ A aᵢ`. -/
+/-- `encodeA (i :: is) = wᵢ · encodeA is · aᵢ`, mirroring the recursive production `A → wᵢ A aᵢ`. -/
 theorem encodeA_cons (i : Fin P.length) (is : List (Fin P.length)) :
     encodeA (i :: is) = P[i].top.map Sum.inl ++ encodeA is ++ [Sum.inr i] := by
   simp [encodeA, List.map_append, List.reverse_cons, List.append_assoc]
 
 omit [DecidableEq α] in
-/-- `encodeB (i :: is) = xᵢ · encodeB is · aᵢ`,
-mirroring the recursive production `B → xᵢ B aᵢ`. -/
+/-- `encodeB (i :: is) = xᵢ · encodeB is · aᵢ`, mirroring the recursive production `B → xᵢ B aᵢ`. -/
 theorem encodeB_cons (i : Fin P.length) (is : List (Fin P.length)) :
     encodeB (i :: is) = P[i].bot.map Sum.inl ++ encodeB is ++ [Sum.inr i] := by
   simp [encodeB, List.map_append, List.reverse_cons, List.append_assoc]
@@ -545,24 +543,24 @@ theorem exists_indexList (L : Stack α) (hsub : ∀ t ∈ L, t ∈ P) :
 
 /-- If `P` has a solution then `toGrammar P` is ambiguous. -/
 theorem ambiguous_if_pcp (h : PCP.DecisionProblem P) : (Stack.toGrammar P).Ambiguous := by
-  obtain ⟨ L, hLne, hLsub, hLeq ⟩ := h;
-  obtain ⟨ is, hmap ⟩ := exists_indexList L hLsub;
-  refine' ⟨ _, _, _, _ ⟩;
-  exact @ContextFreeGrammar.ParseTree.node _ ( Stack.toGrammar P ) ⟨ PCPNonterm.S,
+  obtain ⟨ L, hLne, hLsub, hLeq ⟩ := h
+  obtain ⟨ is, hmap ⟩ := exists_indexList L hLsub
+  refine' ⟨ _, _, _, _ ⟩
+  · exact @ContextFreeGrammar.ParseTree.node _ ( Stack.toGrammar P ) ⟨ PCPNonterm.S,
     [ Symbol.nonterminal PCPNonterm.A ] ⟩ SA_mem ( .consN ( buildA is ( by grind ) ) .nil )
-  exact @ContextFreeGrammar.ParseTree.node _ ( Stack.toGrammar P ) ⟨ PCPNonterm.S,
+  · exact @ContextFreeGrammar.ParseTree.node _ ( Stack.toGrammar P ) ⟨ PCPNonterm.S,
     [ Symbol.nonterminal PCPNonterm.B ] ⟩ SB_mem ( .consN ( buildB is ( by grind ) ) .nil )
-  exact (by all_goals generalize_proofs at *; grind)
-  exact (by
+  · exact (by all_goals generalize_proofs at *; grind)
+  · exact (by
     all_goals generalize_proofs at *;
     erw [yield_SA, yield_SB, buildA_yield, buildB_yield]
     exact encodeA_eq_encodeB_iff.mpr ( by aesop ))
 
 /-- If `toGrammar P` is ambiguous then `P` has a solution. -/
 theorem pcp_if_ambiguous (h : (Stack.toGrammar P).Ambiguous) : PCP.DecisionProblem P := by
-  obtain ⟨t1, t2, hne, hyield⟩ := h;
-  rcases ptS_inv t1 rfl with ( ⟨cA1, heq1⟩ | ⟨cB1, heq1⟩ );
-  rcases ptS_inv t2 rfl with ( ⟨cA2, heq2⟩ | ⟨cB2, heq2⟩ );
+  obtain ⟨t1, t2, hne, hyield⟩ := h
+  rcases ptS_inv t1 rfl with ( ⟨cA1, heq1⟩ | ⟨cB1, heq1⟩ )
+  rcases ptS_inv t2 rfl with ( ⟨cA2, heq2⟩ | ⟨cB2, heq2⟩ )
   · refine False.elim (hne ?_)
     rw [eq_of_heq heq1, eq_of_heq heq2] at hyield ⊢
     erw [yield_SA, yield_SA] at hyield
