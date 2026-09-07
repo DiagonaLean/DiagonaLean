@@ -30,6 +30,10 @@ for d in "${dirs[@]}"; do
   [ -d "$d" ] && existing_dirs+=("$d")
 done
 
+# Deliberately demonstrates the banned pattern as a documentation fixture (see its docstring);
+# not wired into DiagonaLean.lean, so it never reaches the actual reduction library.
+excluded=(DiagonaLean/Synthetic/VacuousExample.lean)
+
 # Blank out `/- ... -/` block comments (Lean also uses `/-- -/` and `/-! -/`, both matched by
 # the same `/-`/`-/` markers) and `-- ...` line comments, so identifiers mentioned only in
 # prose (like this script's own docstring, or the one on `ManyOneReduces`) don't trip the check.
@@ -52,8 +56,17 @@ decomment() {
   ' "$1"
 }
 
+is_excluded() {
+  local f="$1"
+  for e in "${excluded[@]}"; do
+    [ "$f" = "$e" ] && return 0
+  done
+  return 1
+}
+
 fail=0
 while IFS= read -r -d '' file; do
+  is_excluded "$file" && continue
   hit=$(decomment "$file" | grep -nE "$pattern" || true)
   if [ -n "$hit" ]; then
     echo "$hit" | sed "s|^|$file:|"

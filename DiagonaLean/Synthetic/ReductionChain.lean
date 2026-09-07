@@ -70,7 +70,7 @@ theorem dec_red {p : X → Prop} {q : Y → Prop}
   exact ⟨d ∘ f, fun x => (hf x).trans (hd (f x))⟩
 
 /-- Alias for `ReducesComplement`. If `p` reduces to `q`, then the complement of `p` reduces to the complement of `q`. -/
-def red_comp {p : X → Prop} {q : Y → Prop}
+def RedComp {p : X → Prop} {q : Y → Prop}
     (h : p ⪯ₘ q) : Complement p ⪯ₘ Complement q :=
   ReducesComplement h
 
