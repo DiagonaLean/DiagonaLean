@@ -69,8 +69,13 @@ theorem dec_red {p : X → Prop} {q : Y → Prop}
   obtain ⟨d, hd⟩ := hdec
   exact ⟨d ∘ f, fun x => (hf x).trans (hd (f x))⟩
 
+/-- Alias for `ReducesComplement`. If `p` reduces to `q`, then the complement of `p` reduces to the complement of `q`. -/
+def red_comp {p : X → Prop} {q : Y → Prop}
+    (h : p ⪯ₘ q) : Complement p ⪯ₘ Complement q :=
+  ReducesComplement h
+
 /-- Close a reduction goal by chaining through a list of known reductions. -/
 macro "reduce_chain" H:term : tactic =>
-  `(tactic| repeat (first | exact reduces_reflexive _ | apply reduces_transitive $H))
+  `(tactic| repeat (first | exact ReducesReflexive _ | apply ReducesTransitive $H))
 
 end DiagonaLean.Synthetic.ReductionChain
