@@ -2,7 +2,7 @@
 
 A foundational software research project to develop the first tactic-driven toolkit for mechanising computability-theoretic reasoning in Lean 4.
 
-A continuation of https://github.com/aalok-thakkar/undecidability/.
+A continuation of prior work on formalizing undecidability.
 
 ## Phased work plan
 

@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Akhilesh Balaji. All rights reserved.
+Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Akhilesh Balaji, Aristotle (Harmonic), Prathamesh Turaga
+Authors: Anonymous
 -/
 
 import Mathlib.LinearAlgebra.Matrix.Notation
@@ -101,7 +101,7 @@ lemma S_prod_T_eq_zero (P : Matrix (Fin 3) (Fin 3) ℤ) (h : ℤ)
   fin_cases i <;> fin_cases j <;>
     simp [T, Matrix.mul_apply, Fin.sum_univ_three]
 
-/- TODO: Make all Aristotle-generated lemmas more readable. -/
+/- TODO: Make all automatically generated lemmas more readable. -/
 set_option maxHeartbeats 1600000 in
 /-- Given a sequence of matrices `Ms` drawn from `{S, T} ∪ Ws` whose product with a starting vector
   `u` is zero, this lemma extracts the contiguous subsequence `Run` of `W'` matrices that represent
@@ -363,7 +363,7 @@ lemma flatten_liftS23_bot (A : Stack S23) :
 
 /-- If the flattened, lifted string representations of the top and bottom words match
     (with a leading `1` marker on one bottom tile), then the original top and bottom strings
-    must be equal. (Proved by Aristotle). -/
+    must be equal. (automatically generated proof). -/
 lemma bots_eq_of_word (L : List (Tile S23 × Bool))
     (heq : one₁₂₃ :: liftS23 (τ1 (L.map Prod.fst))
          = (L.map (fun tb => if tb.2 then one₁₂₃ :: liftS23 tb.1.bot
@@ -469,7 +469,7 @@ lemma bots_eq_of_word (L : List (Tile S23 × Bool))
     grind
 
 /-- Packages all inductive work: given the product equation, produce a tile sequence that is a PCP
-  solution. (Proved by Aristotle). -/
+  solution. (automatically generated proof). -/
 private lemma exists_solution_from_prod
     (K : Stack S23) (is : List (Matrix (Fin 3) (Fin 3) ℤ))
     (his_ne : is ≠ [])
