@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Akhilesh Balaji. All rights reserved.
+Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Akhilesh Balaji
+Authors: Anonymous
 -/
 
 import DiagonaLean.Halt.Basic
@@ -69,8 +69,13 @@ theorem dec_red {p : X → Prop} {q : Y → Prop}
   obtain ⟨d, hd⟩ := hdec
   exact ⟨d ∘ f, fun x => (hf x).trans (hd (f x))⟩
 
+/-- Alias for `ReducesComplement`. If `p` reduces to `q`, then the complement of `p` reduces to the complement of `q`. -/
+def RedComp {p : X → Prop} {q : Y → Prop}
+    (h : p ⪯ₘ q) : Complement p ⪯ₘ Complement q :=
+  ReducesComplement h
+
 /-- Close a reduction goal by chaining through a list of known reductions. -/
 macro "reduce_chain" H:term : tactic =>
-  `(tactic| repeat (first | exact reduces_reflexive _ | apply reduces_transitive $H))
+  `(tactic| repeat (first | exact ReducesReflexive _ | apply ReducesTransitive $H))
 
 end DiagonaLean.Synthetic.ReductionChain

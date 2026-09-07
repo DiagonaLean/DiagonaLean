@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Akhilesh Balaji. All rights reserved.
+Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Akhilesh Balaji, Aristotle (Harmonic), Prathamesh Turaga
+Authors: Anonymous
 -/
 
 import Mathlib.LinearAlgebra.Matrix.Notation
@@ -101,7 +101,7 @@ lemma S_prod_T_eq_zero (P : Matrix (Fin 3) (Fin 3) ℤ) (h : ℤ)
   fin_cases i <;> fin_cases j <;>
     simp [T, Matrix.mul_apply, Fin.sum_univ_three]
 
-/- TODO: Make all Aristotle-generated lemmas more readable. -/
+/- TODO: Make all automatically generated lemmas more readable. -/
 set_option maxHeartbeats 1600000 in
 /-- Given a sequence of matrices `Ms` drawn from `{S, T} ∪ Ws` whose product with a starting vector
   `u` is zero, this lemma extracts the contiguous subsequence `Run` of `W'` matrices that represent
@@ -210,7 +210,7 @@ theorem mortal_iff_exists_prod_of_Ws
     (Ws : Finset (Matrix (Fin 3) (Fin 3) ℤ))
     (hWs : ∀ M ∈ Ws, ∃ (p q r s : ℤ) (hpq : p > q ∧ q ≥ 0) (hrs : r > s ∧ s ≥ 0),
              M = W' p q r s hpq hrs) :
-    HasSolution ({S, T} ∪ Ws) ↔ ∃ (seq : WSeq Ws) (h : ℤ), h > 0 ∧ WProd seq.val = !![h, h, 1] := by
+    DecisionProblem ({S, T} ∪ Ws) ↔ ∃ (seq : WSeq Ws) (h : ℤ), h > 0 ∧ WProd seq.val = !![h, h, 1] := by
   constructor
   · rintro ⟨Ms, hMem, hMs0⟩
     obtain ⟨Run, hRunMem, hRunNe, h, hpos, hRunProd⟩ :=
@@ -363,7 +363,7 @@ lemma flatten_liftS23_bot (A : Stack S23) :
 
 /-- If the flattened, lifted string representations of the top and bottom words match
     (with a leading `1` marker on one bottom tile), then the original top and bottom strings
-    must be equal. (Proved by Aristotle). -/
+    must be equal. (automatically generated proof). -/
 lemma bots_eq_of_word (L : List (Tile S23 × Bool))
     (heq : one₁₂₃ :: liftS23 (τ1 (L.map Prod.fst))
          = (L.map (fun tb => if tb.2 then one₁₂₃ :: liftS23 tb.1.bot
@@ -469,7 +469,7 @@ lemma bots_eq_of_word (L : List (Tile S23 × Bool))
     grind
 
 /-- Packages all inductive work: given the product equation, produce a tile sequence that is a PCP
-  solution. (Proved by Aristotle). -/
+  solution. (automatically generated proof). -/
 private lemma exists_solution_from_prod
     (K : Stack S23) (is : List (Matrix (Fin 3) (Fin 3) ℤ))
     (his_ne : is ≠ [])
@@ -552,7 +552,7 @@ abbrev MatImage (K : Stack S23) :=({S, T} ∪
 /-- If a PCP instance `K` has a solution, then its corresponding set of constructed matrices has a
   mortality solution. -/
 lemma pcp_if_matmort (h : PCP.DecisionProblem K) :
-    HasSolution (MatImage K) := by
+    DecisionProblem (MatImage K) := by
   obtain ⟨ A, hA₁, hA₂, hA₃ ⟩ := h;
   by_cases hA : A = [] <;> simp_all +decide;
   obtain ⟨ t₀, rest, rfl ⟩ := List.exists_cons_of_ne_nil hA;
@@ -580,7 +580,7 @@ lemma pcp_if_matmort (h : PCP.DecisionProblem K) :
 
 /-- If the constructed set of matrices for a PCP instance `K` is mortal, then `K` has a solution. -/
 lemma matmort_if_pcp
-    (h : HasSolution (MatImage K)) :
+    (h : DecisionProblem (MatImage K)) :
     PCP.DecisionProblem K := by
   have h_exists_prod : ∃ (seq : WSeq (Finset.image (fun tile => StringPairToW (liftS23 tile.top)
     (liftS23 tile.bot)) (List.toFinset K) ∪
@@ -601,7 +601,7 @@ lemma matmort_if_pcp
   W(U_i,1::V_i)} with K over {2, 3}. -/
 lemma pcp_iff_matmort (K : Stack S23) :
     PCP.DecisionProblem K ↔
-    HasSolution (MatImage K) :=
+    DecisionProblem (MatImage K) :=
   ⟨pcp_if_matmort, matmort_if_pcp⟩
 
 open DiagonaLean.Synthetic.Notation
@@ -609,7 +609,7 @@ open DiagonaLean.Synthetic.Notation
 /-- Matrix mortality of `3 × 3` integer matrices is undecidable: reduced from PCP over the
 alphabet `S23 = {2, 3}` by the encoding `MatImage`, with `pcp_iff_matmort` supplying the
 correctness equivalence. -/
-theorem matmort_undecidable : Undecidable (fun Ws => HasSolution Ws) := by
+theorem matmort_undecidable : Undecidable (fun Ws => DecisionProblem Ws) := by
   reduceFromPCP over_type S23 with_red_function MatImage
     using_lemmas pcp_if_matmort matmort_if_pcp
 

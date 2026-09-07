@@ -1,7 +1,7 @@
 /-
-Copyright (c) 2026 Aalok Thakkar. All rights reserved.
+Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Aalok Thakkar
+Authors: Anonymous
 -/
 
 import DiagonaLean.Halt.Basic
@@ -12,7 +12,7 @@ import DiagonaLean.MPCP.Basic
 /-! # Halt ⪯ₘ MPCP
 
 Reduction from the halting problem to MPCP following the Hopcroft–Ullman construction. Solutions to
-`MHasSolution (startTile tm w) (haltTiles tm)` encode halting computation histories of `tm` on `w`.
+`DecisionProblem (startTile tm w) (haltTiles tm)` encode halting computation histories of `tm` on `w`.
 The main result is `halt_iff_mpcp`, subject to `NoBlankWrites` and `NoLeftBoundary`.
 
 ## References
