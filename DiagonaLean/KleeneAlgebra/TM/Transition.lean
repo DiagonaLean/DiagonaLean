@@ -189,9 +189,11 @@ theorem finiteState_rule (q : M.State) (h : Option Sym) : FiniteState (rule M q 
 
 variable [DecidableEq Sym] [DecidableEq M.State]
 
-/-- **Lemma 35.** `R_M` is a representable relation on configuration words. -/
-theorem rel_RM : Rel (Lset M) (RM M) := by
-  refine lemma34 ?_ ?_ ?_ (FiniteState.sum _ _ fun p _ => finiteState_rule p.1 p.2) ⟨1, ?_⟩
+/-- **Lemma 35**, with an explicit residue: if `R_M`'s automaton has its states below `b`, then
+`R_M` is a representable relation on configuration words with residue `Σ̈∗ b`. -/
+theorem rel_RM_le {b : TD (Letter Sym M.State)} (hb : FiniteStateLe (RM M) b) :
+    ∃ h : Rel (Lset M) (RM M), h.ResidBy (sigAll∗ * b) := by
+  refine lemma34_le ?_ ?_ ?_ hb ⟨1, ?_⟩
   · rintro _ ⟨d, rfl⟩ _ ⟨d', rfl⟩ h
     exact congrArg wdF (prefixFree h)
   · intro s hs
@@ -205,5 +207,14 @@ theorem rel_RM : Rel (Lset M) (RM M) := by
     show (wd (dstep M d)).length ≤ ((wd d).length + 1) * 1
     have := length_wd_dstep d
     omega
+
+omit [DecidableEq Sym] [DecidableEq M.State] in
+theorem finiteState_RM : FiniteState (RM M) :=
+  FiniteState.sum _ _ fun p _ => finiteState_rule p.1 p.2
+
+/-- **Lemma 35.** `R_M` is a representable relation on configuration words. -/
+theorem rel_RM : Rel (Lset M) (RM M) := by
+  obtain ⟨b, hb⟩ := (finiteState_iff _).1 (finiteState_RM (M := M))
+  exact (rel_RM_le hb).1
 
 end DiagonaLean.KAComm.Enc

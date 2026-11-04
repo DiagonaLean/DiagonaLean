@@ -30,7 +30,7 @@ representable relation on `L`.
 ## Main statements
 
 * `TD.lemma33`, `TD.lemma33'`: Lemma 33.
-* `TD.lemma34`: Lemma 34.
+* `TD.lemma34`: Lemma 34; `TD.lemma34_le` with the explicit residue `Σ̈∗ b`.
 
 ## References
 
@@ -125,16 +125,17 @@ theorem lemma33' (s u : FreeMonoid A) (h₁ : ¬ s.toList <+: u.toList)
 def PrefixFree (L : Set (FreeMonoid A)) : Prop :=
   ∀ u ∈ L, ∀ v ∈ L, u.toList <+: v.toList → u = v
 
-/-- **Lemma 34.** -/
-theorem lemma34 {L : Set (FreeMonoid A)} (hpf : PrefixFree L) {e : TD A}
+/-- **Lemma 34**, with an explicit residue: if the automaton of `e` has its states below `b`,
+then `ρ = Σ̈∗ b` works. -/
+theorem lemma34_le {L : Set (FreeMonoid A)} (hpf : PrefixFree L) {e b : TD A}
     (hl : ∀ s, SetSemiring.Mem s (pl e) → s.1 ∈ L) (hr : ∀ s, SetSemiring.Mem s (pl e) → s.2 ∈ L)
-    (hfs : FiniteState e) (hbo : BoundedOutput e) : Rel L e := by
-  obtain ⟨S, hS, heS⟩ := hfs
+    (hfs : FiniteStateLe e b) (hbo : BoundedOutput e) :
+    ∃ h : Rel L e, h.ResidBy (sigAll∗ * b) := by
+  obtain ⟨S, hS, heS, hρe⟩ := hfs
   obtain ⟨k₀, hk₀⟩ := hbo
   obtain ⟨k, hk, hexp⟩ := hS.lemma31 heS hk₀
   have hfin := hk.next_finite
-  let ρe : TD A := ∑ x ∈ S, x
-  have hρe : ∀ x ∈ S, x ≤ ρe := fun x hx => le_sum_of_mem id hx
+  let ρe : TD A := b
   let ρ : TD A := sigAll∗ * ρe
   have herr : ∀ (r : W A) (Z : TD A), Z ≤ ρe → ofPair r * Z ≤ ρ :=
     fun r Z hZ => mul_le_mul' (ofPair_le_sigAll_kstar r) hZ
@@ -203,15 +204,25 @@ theorem lemma34 {L : Set (FreeMonoid A)} (hpf : PrefixFree L) {e : TD A}
       refine (hr' _).trans (mul_le_mul' le_rfl (mul_le_mul' le_rfl ?_))
       rw [R_eq_ofPair, ← mul_assoc, ← ofPair_mul]
       exact herr _ _ (hρe _ (hes t))
-  refine ⟨hl, hr, hfin, ρ, fun Λ hΛ => ?_⟩
-  rw [rtS, Finset.sum_mul]
-  refine sum_le_of_forall _ _ fun u hu => (single u (hΛ hu)).trans (add_le_add ?_ le_rfl)
-  refine mul_le_mul' (le_sum_of_mem dg hu) (rtS_mono fun v hv => ?_)
-  rw [Set.Finite.mem_toFinset] at hv ⊢
-  obtain ⟨u', hu', huv⟩ := hv
-  rw [Finset.coe_singleton, Set.mem_singleton_iff] at hu'
-  subst hu'
-  exact ⟨u', hu, huv⟩
+  have key : ∀ Λ : Finset (FreeMonoid A), ↑Λ ⊆ L →
+      rtS Λ * e ≤ dgS Λ * rtS (hfin Λ).toFinset + err ρ := by
+    intro Λ hΛ
+    rw [rtS, Finset.sum_mul]
+    refine sum_le_of_forall _ _ fun u hu => (single u (hΛ hu)).trans (add_le_add ?_ le_rfl)
+    refine mul_le_mul' (le_sum_of_mem dg hu) (rtS_mono fun v hv => ?_)
+    rw [Set.Finite.mem_toFinset] at hv ⊢
+    obtain ⟨u', hu', huv⟩ := hv
+    rw [Finset.coe_singleton, Set.mem_singleton_iff] at hu'
+    subst hu'
+    exact ⟨u', hu, huv⟩
+  exact ⟨⟨hl, hr, hfin, ρ, key⟩, key⟩
+
+/-- **Lemma 34.** -/
+theorem lemma34 {L : Set (FreeMonoid A)} (hpf : PrefixFree L) {e : TD A}
+    (hl : ∀ s, SetSemiring.Mem s (pl e) → s.1 ∈ L) (hr : ∀ s, SetSemiring.Mem s (pl e) → s.2 ∈ L)
+    (hfs : FiniteState e) (hbo : BoundedOutput e) : Rel L e := by
+  obtain ⟨b, hb⟩ := (finiteState_iff e).1 hfs
+  exact (lemma34_le hpf hl hr hb hbo).1
 
 end TD
 

@@ -129,6 +129,10 @@ namespace Rel
 variable {L : Set (FreeMonoid A)} {e : TD A} (h : Rel L e)
 include h
 
+/-- `ρ` is a residue for `e` in the sense of Def 20. -/
+def ResidBy (ρ : TD A) : Prop :=
+  ∀ Λ : Finset (FreeMonoid A), (↑Λ ⊆ L) → rtS Λ * e ≤ dgS Λ * rtS (h.finite Λ).toFinset + err ρ
+
 /-- `Next_e(Λ)` as a finite set. -/
 noncomputable def next (Λ : Finset (FreeMonoid A)) : Finset (FreeMonoid A) := (h.finite Λ).toFinset
 
@@ -146,11 +150,11 @@ noncomputable def below : ℕ → Finset (FreeMonoid A) → Finset (FreeMonoid A
   | 0, _ => ∅
   | n + 1, Λ => Λ ∪ below n (h.next Λ)
 
-/-- **Lemma 21.** -/
-theorem lemma21 : ∃ ρ : TD A, ∀ (n : ℕ) (Λ : Finset (FreeMonoid A)), ↑Λ ⊆ L →
-    rtS Λ * e∗ ≤ sig∗ * rtS (h.below n Λ) + sig∗ * rtS (h.iter n Λ) * e∗ + err ρ := by
-  obtain ⟨ρ', hρ'⟩ := h.resid
-  refine ⟨ρ' * e∗, fun n => ?_⟩
+/-- **Lemma 21**, for a given residue `ρ'`: the bound holds with `ρ = ρ' e∗`. -/
+theorem lemma21 {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ) (Λ : Finset (FreeMonoid A)),
+    ↑Λ ⊆ L →
+    rtS Λ * e∗ ≤ sig∗ * rtS (h.below n Λ) + sig∗ * rtS (h.iter n Λ) * e∗ + err (ρ' * e∗) := by
+  intro n
   have hone : (1 : TD A) ≤ sig∗ := one_le_kstar' _
   induction n with
   | zero =>
@@ -194,12 +198,12 @@ theorem lemma21 : ∃ ρ : TD A, ∀ (n : ℕ) (Λ : Finset (FreeMonoid A)), ↑
           · exact le_add_left le_rfl
           · exact le_add_left le_rfl
 
-/-- **Theorem 22.** If `Nextⁿ_e(Λ) = ∅`, then `Λ_r e∗ ≤ Σ∗ Next^{<n}_e(Λ)_r + Σ∗ Σ^≠ ρ`. -/
-theorem theorem22 : ∃ ρ : TD A, ∀ (n : ℕ) (Λ : Finset (FreeMonoid A)), ↑Λ ⊆ L →
-    h.iter n Λ = ∅ → rtS Λ * e∗ ≤ sig∗ * rtS (h.below n Λ) + err ρ := by
-  obtain ⟨ρ, hρ⟩ := h.lemma21
-  refine ⟨ρ, fun n Λ hΛ hn => ?_⟩
-  have := hρ n Λ hΛ
+/-- **Theorem 22.** If `Nextⁿ_e(Λ) = ∅`, then `Λ_r e∗ ≤ Σ∗ Next^{<n}_e(Λ)_r + Σ∗ Σ^≠ ρ`, with
+`ρ = ρ' e∗` for any residue `ρ'` of `e`. -/
+theorem theorem22 {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ) (Λ : Finset (FreeMonoid A)),
+    ↑Λ ⊆ L → h.iter n Λ = ∅ → rtS Λ * e∗ ≤ sig∗ * rtS (h.below n Λ) + err (ρ' * e∗) := by
+  intro n Λ hΛ hn
+  have := h.lemma21 hρ' n Λ hΛ
   rwa [hn, rtS_empty, mul_zero, zero_mul, add_zero] at this
 
 end Rel

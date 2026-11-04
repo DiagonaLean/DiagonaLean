@@ -21,7 +21,7 @@ The machine-specific remainder of Theorem 16 is to show `{s₀, …, sₙ} ≤ C
 
 ## Main statements
 
-* `TD.Rel.complete_of_trace`.
+* `TD.Rel.complete_of_trace_le` (explicit residue), `TD.Rel.complete_of_trace`.
 
 ## References
 
@@ -63,16 +63,16 @@ theorem mem_below : ∀ (j : ℕ) (Λ : Finset (FreeMonoid A)) (v : FreeMonoid A
     · obtain ⟨i, hi, hv⟩ := mem_below j _ v hv
       exact ⟨i + 1, by omega, hv⟩
 
-/-- **Completeness along a trace.** There is a residue `ρ` (depending only on `e`) such that
+/-- **Completeness along a trace.** For a residue `ρ'` of `e`, with `ρ = ρ' e∗`:
 for every trace `s₀ → s₁ → ⋯ → sₙ` in `L` along which `e` is deterministic, and whose last
 element has no successor, `(s₀)_r e∗ ≤ Σ∗ {s₀, …, sₙ}_r + Σ∗ Σ^≠ ρ`. -/
-theorem complete_of_trace : ∃ ρ : TD A, ∀ (n : ℕ) (s : ℕ → FreeMonoid A),
+theorem complete_of_trace_le {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ) (s : ℕ → FreeMonoid A),
     s 0 ∈ L →
     (∀ i < n, ∀ v, SetSemiring.Mem (s i, v) (pl e) ↔ v = s (i + 1)) →
     (∀ v, ¬ SetSemiring.Mem (s n, v) (pl e)) →
-    R (s 0) * e∗ ≤ sig∗ * rtS ((Finset.range (n + 1)).image s) + err ρ := by
-  obtain ⟨ρ, hρ⟩ := h.theorem22
-  refine ⟨ρ, fun n s hs0 hstep hlast => ?_⟩
+    R (s 0) * e∗ ≤ sig∗ * rtS ((Finset.range (n + 1)).image s) + err (ρ' * e∗) := by
+  have hρ := h.theorem22 hρ'
+  intro n s hs0 hstep hlast
   have hnext : ∀ i < n, h.next {s i} = {s (i + 1)} := fun i hi => by
     ext v; simp [mem_next, hstep i hi]
   have hnextn : h.next {s n} = ∅ := by
@@ -110,6 +110,15 @@ theorem complete_of_trace : ∃ ρ : TD A, ∀ (n : ℕ) (s : ℕ → FreeMonoid
   obtain ⟨i, hi, hv⟩ := h.mem_below _ _ v hv
   rw [hiter i (by omega), Finset.mem_singleton] at hv
   exact Finset.mem_image.2 ⟨i, Finset.mem_range.2 hi, hv.symm⟩
+
+/-- **Completeness along a trace**, with the residue left existential. -/
+theorem complete_of_trace : ∃ ρ : TD A, ∀ (n : ℕ) (s : ℕ → FreeMonoid A),
+    s 0 ∈ L →
+    (∀ i < n, ∀ v, SetSemiring.Mem (s i, v) (pl e) ↔ v = s (i + 1)) →
+    (∀ v, ¬ SetSemiring.Mem (s n, v) (pl e)) →
+    R (s 0) * e∗ ≤ sig∗ * rtS ((Finset.range (n + 1)).image s) + err ρ := by
+  obtain ⟨ρ', hρ'⟩ := h.resid
+  exact ⟨_, h.complete_of_trace_le (ρ' := ρ') hρ'⟩
 
 end Rel
 

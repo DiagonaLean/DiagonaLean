@@ -31,6 +31,8 @@ finite set of terms containing `1`, closed under sums, whose elements have deriv
 * `TD.HasDerivs`: Definition 23 with a chosen family of derivatives.
 * `TD.IsAutomaton`, `TD.FiniteState`: Definition 25.
 * `TD.FiniteState.zero/one/of/add/mul/kstar`: Lemma 26 (the effectivity claim is not formalized).
+* `TD.FiniteStateLe`: a finite-state term together with an explicit bound on its automaton's
+  states; `TD.FiniteStateLe.zero/one/of/add/mul/kstar` track the bound through Lemma 26.
 
 ## References
 
@@ -236,22 +238,54 @@ theorem IsPreAutomaton.cl {P : Finset (TD A)} (hP : IsPreAutomaton P) : IsAutoma
       fun x => sum_mem_cl U _ fun u hu => hδS u (hU hu) x,
       hasDerivs_sum U id δ fun u hu => hδ u (hU hu)⟩
 
-/-! ### Lemma 26: closure of finite-state terms -/
+/-! ### Lemma 26: closure of finite-state terms, with explicit bounds
 
-namespace FiniteState
+Each closure lemma also records an explicit upper bound on the states of the automaton it builds
+(`FiniteStateLe e b`). The residue `ρ` of Lemma 34 is built from that bound, so tracking it makes
+`ρ` an explicit term instead of an existential witness. -/
 
-theorem of_preAutomaton {P : Finset (TD A)} (hP : IsPreAutomaton P) {e : TD A} (he : e ∈ P) :
-    FiniteState e :=
-  ⟨cl P, hP.cl, mem_cl_of_mem he⟩
+/-- `e` is a state of an automaton all of whose states lie below `b`. -/
+def FiniteStateLe (e b : TD A) : Prop := ∃ S : Finset (TD A), IsAutomaton S ∧ e ∈ S ∧ ∀ x ∈ S, x ≤ b
 
-theorem one : FiniteState (1 : TD A) :=
-  ⟨cl ∅, IsPreAutomaton.cl (fun _ h => absurd h (Finset.notMem_empty _)), one_mem_cl ∅⟩
+omit [Fintype A] in
+theorem cl_le {P : Finset (TD A)} {b : TD A} (h : ∀ p ∈ P, p ≤ b) : ∀ x ∈ cl P, x ≤ 1 + b := by
+  intro x hx
+  obtain ⟨U, hU, rfl⟩ := mem_cl_iff.1 hx
+  refine sum_le_of_forall _ _ fun u hu => ?_
+  rcases Finset.mem_insert.1 (hU hu) with rfl | hu
+  · exact le_add_right le_rfl
+  · exact le_add_left (h u hu)
 
-theorem zero : FiniteState (0 : TD A) :=
-  ⟨cl ∅, IsPreAutomaton.cl (fun _ h => absurd h (Finset.notMem_empty _)), zero_mem_cl ∅⟩
+namespace FiniteStateLe
 
-theorem of (y : A ⊕ A) : FiniteState (FreePreKA.of y : TD A) := by
+theorem mono {e b b' : TD A} (h : FiniteStateLe e b) (hb : b ≤ b') : FiniteStateLe e b' := by
+  obtain ⟨S, hS, heS, hSb⟩ := h
+  exact ⟨S, hS, heS, fun x hx => (hSb x hx).trans hb⟩
+
+theorem of_preAutomaton {P : Finset (TD A)} (hP : IsPreAutomaton P) {e b : TD A} (he : e ∈ P)
+    (hb : ∀ p ∈ P, p ≤ b) : FiniteStateLe e (1 + b) :=
+  ⟨cl P, hP.cl, mem_cl_of_mem he, cl_le hb⟩
+
+theorem toFiniteState {e b : TD A} (h : FiniteStateLe e b) : FiniteState e := by
+  obtain ⟨S, hS, heS, -⟩ := h
+  exact ⟨S, hS, heS⟩
+
+private theorem empty_pre : IsPreAutomaton (∅ : Finset (TD A)) :=
+  fun _ h => absurd h (Finset.notMem_empty _)
+
+theorem one : FiniteStateLe (1 : TD A) 1 := by
+  have := cl_le (P := (∅ : Finset (TD A))) (b := 0) (fun _ h => absurd h (Finset.notMem_empty _))
+  rw [add_zero] at this
+  exact ⟨cl ∅, empty_pre.cl, one_mem_cl ∅, this⟩
+
+theorem zero : FiniteStateLe (0 : TD A) 1 := by
+  have := cl_le (P := (∅ : Finset (TD A))) (b := 0) (fun _ h => absurd h (Finset.notMem_empty _))
+  rw [add_zero] at this
+  exact ⟨cl ∅, empty_pre.cl, zero_mem_cl ∅, this⟩
+
+theorem of (y : A ⊕ A) : FiniteStateLe (FreePreKA.of y : TD A) (1 + FreePreKA.of y) := by
   refine of_preAutomaton (P := {FreePreKA.of y}) ?_ (Finset.mem_singleton_self _)
+    fun p hp => (Finset.mem_singleton.1 hp).le
   intro e he
   rw [Finset.mem_singleton] at he
   subst he
@@ -259,41 +293,86 @@ theorem of (y : A ⊕ A) : FiniteState (FreePreKA.of y : TD A) := by
   split_ifs
   exacts [one_mem_cl _, zero_mem_cl _]
 
-theorem add {a b : TD A} (ha : FiniteState a) (hb : FiniteState b) : FiniteState (a + b) := by
-  obtain ⟨S₁, h₁, ha⟩ := ha
-  obtain ⟨S₂, h₂, hb⟩ := hb
-  refine of_preAutomaton (P := Finset.image₂ (· + ·) S₁ S₂) ?_ (Finset.mem_image₂_of_mem ha hb)
-  intro e he
-  obtain ⟨e₁, he₁, e₂, he₂, rfl⟩ := Finset.mem_image₂.1 he
-  obtain ⟨δ₁, hδ₁, hd₁⟩ := h₁.deriv e₁ he₁
-  obtain ⟨δ₂, hδ₂, hd₂⟩ := h₂.deriv e₂ he₂
-  exact ⟨δ₁ + δ₂, fun x => mem_cl_of_mem (Finset.mem_image₂_of_mem (hδ₁ x) (hδ₂ x)),
-    hd₁.add hd₂⟩
+theorem add {a c b₁ b₂ : TD A} (ha : FiniteStateLe a b₁) (hc : FiniteStateLe c b₂) :
+    FiniteStateLe (a + c) (1 + (b₁ + b₂)) := by
+  obtain ⟨S₁, h₁, ha, hb₁⟩ := ha
+  obtain ⟨S₂, h₂, hc, hb₂⟩ := hc
+  refine of_preAutomaton (P := Finset.image₂ (· + ·) S₁ S₂) ?_ (Finset.mem_image₂_of_mem ha hc) ?_
+  · intro e he
+    obtain ⟨e₁, he₁, e₂, he₂, rfl⟩ := Finset.mem_image₂.1 he
+    obtain ⟨δ₁, hδ₁, hd₁⟩ := h₁.deriv e₁ he₁
+    obtain ⟨δ₂, hδ₂, hd₂⟩ := h₂.deriv e₂ he₂
+    exact ⟨δ₁ + δ₂, fun x => mem_cl_of_mem (Finset.mem_image₂_of_mem (hδ₁ x) (hδ₂ x)),
+      hd₁.add hd₂⟩
+  · intro p hp
+    obtain ⟨e₁, he₁, e₂, he₂, rfl⟩ := Finset.mem_image₂.1 hp
+    exact add_le_add (hb₁ e₁ he₁) (hb₂ e₂ he₂)
 
-theorem mul {a b : TD A} (ha : FiniteState a) (hb : FiniteState b) : FiniteState (a * b) := by
-  obtain ⟨S₁, h₁, ha⟩ := ha
-  obtain ⟨S₂, h₂, hb⟩ := hb
-  refine of_preAutomaton (P := Finset.image₂ (· * ·) S₁ S₂) ?_ (Finset.mem_image₂_of_mem ha hb)
-  intro e he
-  obtain ⟨e₁, he₁, e₂, he₂, rfl⟩ := Finset.mem_image₂.1 he
-  obtain ⟨δ₁, hδ₁, hd₁⟩ := h₁.deriv e₁ he₁
-  obtain ⟨δ₂, hδ₂, hd₂⟩ := h₂.deriv e₂ he₂
-  refine ⟨_, fun x => add_mem_cl ?_ ?_, hd₁.mul hd₂⟩
-  · exact mem_cl_of_mem (Finset.mem_image₂_of_mem (h₁.nul_mem e₁) (hδ₂ x))
-  · exact mem_cl_of_mem (Finset.mem_image₂_of_mem (hδ₁ x) he₂)
+theorem mul {a c b₁ b₂ : TD A} (ha : FiniteStateLe a b₁) (hc : FiniteStateLe c b₂) :
+    FiniteStateLe (a * c) (1 + b₁ * b₂) := by
+  obtain ⟨S₁, h₁, ha, hb₁⟩ := ha
+  obtain ⟨S₂, h₂, hc, hb₂⟩ := hc
+  refine of_preAutomaton (P := Finset.image₂ (· * ·) S₁ S₂) ?_ (Finset.mem_image₂_of_mem ha hc) ?_
+  · intro e he
+    obtain ⟨e₁, he₁, e₂, he₂, rfl⟩ := Finset.mem_image₂.1 he
+    obtain ⟨δ₁, hδ₁, hd₁⟩ := h₁.deriv e₁ he₁
+    obtain ⟨δ₂, hδ₂, hd₂⟩ := h₂.deriv e₂ he₂
+    refine ⟨_, fun x => add_mem_cl ?_ ?_, hd₁.mul hd₂⟩
+    · exact mem_cl_of_mem (Finset.mem_image₂_of_mem (h₁.nul_mem e₁) (hδ₂ x))
+    · exact mem_cl_of_mem (Finset.mem_image₂_of_mem (hδ₁ x) he₂)
+  · intro p hp
+    obtain ⟨e₁, he₁, e₂, he₂, rfl⟩ := Finset.mem_image₂.1 hp
+    exact mul_le_mul' (hb₁ e₁ he₁) (hb₂ e₂ he₂)
 
-theorem kstar {e : TD A} (he : FiniteState e) (h0 : ¬ Nullable e) : FiniteState e∗ := by
-  obtain ⟨S, hS, heS⟩ := he
+theorem kstar {e b : TD A} (he : FiniteStateLe e b) (h0 : ¬ Nullable e) :
+    FiniteStateLe e∗ (1 + b * e∗) := by
+  obtain ⟨S, hS, heS, hSb⟩ := he
   obtain ⟨δ, hδS, hδ⟩ := hS.deriv e heS
   have hstar := hδ.kstar h0
-  refine of_preAutomaton (P := S.image (· * e∗)) ?_ (Finset.mem_image.2 ⟨1, hS.one_mem, one_mul _⟩)
-  intro p hp
-  obtain ⟨e', he', rfl⟩ := Finset.mem_image.1 hp
-  obtain ⟨δ', hδ'S, hδ'⟩ := hS.deriv e' he'
-  refine ⟨_, fun x => add_mem_cl ?_ ?_, hδ'.mul hstar⟩
-  · rw [← mul_assoc]
-    exact mem_cl_of_mem (Finset.mem_image.2 ⟨_, hS.nul_mul_mem e' (hδS x), rfl⟩)
-  · exact mem_cl_of_mem (Finset.mem_image.2 ⟨_, hδ'S x, rfl⟩)
+  refine of_preAutomaton (P := S.image (· * e∗)) ?_
+    (Finset.mem_image.2 ⟨1, hS.one_mem, one_mul _⟩) ?_
+  · intro p hp
+    obtain ⟨e', he', rfl⟩ := Finset.mem_image.1 hp
+    obtain ⟨δ', hδ'S, hδ'⟩ := hS.deriv e' he'
+    refine ⟨_, fun x => add_mem_cl ?_ ?_, hδ'.mul hstar⟩
+    · rw [← mul_assoc]
+      exact mem_cl_of_mem (Finset.mem_image.2 ⟨_, hS.nul_mul_mem e' (hδS x), rfl⟩)
+    · exact mem_cl_of_mem (Finset.mem_image.2 ⟨_, hδ'S x, rfl⟩)
+  · intro p hp
+    obtain ⟨e', he', rfl⟩ := Finset.mem_image.1 hp
+    exact mul_le_mul' (hSb e' he') le_rfl
+
+end FiniteStateLe
+
+theorem finiteState_iff (e : TD A) : FiniteState e ↔ ∃ b, FiniteStateLe e b := by
+  refine ⟨fun ⟨S, hS, heS⟩ => ⟨∑ x ∈ S, x, S, hS, heS, fun x hx => le_sum_of_mem id hx⟩,
+    fun ⟨_, h⟩ => h.toFiniteState⟩
+
+namespace FiniteState
+
+theorem of_preAutomaton {P : Finset (TD A)} (hP : IsPreAutomaton P) {e : TD A} (he : e ∈ P) :
+    FiniteState e :=
+  ⟨cl P, hP.cl, mem_cl_of_mem he⟩
+
+theorem one : FiniteState (1 : TD A) := FiniteStateLe.one.toFiniteState
+
+theorem zero : FiniteState (0 : TD A) := FiniteStateLe.zero.toFiniteState
+
+theorem of (y : A ⊕ A) : FiniteState (FreePreKA.of y : TD A) := (FiniteStateLe.of y).toFiniteState
+
+theorem add {a b : TD A} (ha : FiniteState a) (hb : FiniteState b) : FiniteState (a + b) := by
+  obtain ⟨_, ha⟩ := (finiteState_iff a).1 ha
+  obtain ⟨_, hb⟩ := (finiteState_iff b).1 hb
+  exact (ha.add hb).toFiniteState
+
+theorem mul {a b : TD A} (ha : FiniteState a) (hb : FiniteState b) : FiniteState (a * b) := by
+  obtain ⟨_, ha⟩ := (finiteState_iff a).1 ha
+  obtain ⟨_, hb⟩ := (finiteState_iff b).1 hb
+  exact (ha.mul hb).toFiniteState
+
+theorem kstar {e : TD A} (he : FiniteState e) (h0 : ¬ Nullable e) : FiniteState e∗ := by
+  obtain ⟨_, he⟩ := (finiteState_iff e).1 he
+  exact (he.kstar h0).toFiniteState
 
 end FiniteState
 

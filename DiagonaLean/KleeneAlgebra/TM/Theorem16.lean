@@ -77,14 +77,17 @@ theorem R_wdF_le_crun (d : Data M) (hd : d.Running) : R (wdF d) ≤ crun M := by
 
 variable [DecidableEq Sym] [DecidableEq M.State]
 
-/-- **Theorem 16** (Turing machines). There is `ρ`, depending only on `M`, such that whenever
-`dstep` runs for `n` steps from `d₀` and then halts, the configuration word of `d₀` followed by
-`R_M∗` lies below `Σ∗ (C_M + t)_r + Σ∗ Σ^≠ ρ`, with `t` the halting configuration word. -/
-theorem theorem16 : ∃ ρ : TD (Letter Sym M.State), ∀ (d₀ : Data M) (n : ℕ),
+/-- **Theorem 16** (Turing machines), with an explicit residue. If the automaton of `R_M` has its
+states below `b`, then with `ρ = Σ̈∗ b R_M∗`: whenever `dstep` runs for `n` steps from `d₀` and
+then halts, the configuration word of `d₀` followed by `R_M∗` lies below
+`Σ∗ (C_M + t)_r + Σ∗ Σ^≠ ρ`, with `t` the halting configuration word. -/
+theorem theorem16_le {b : TD (Letter Sym M.State)} (hb : FiniteStateLe (RM M) b) :
+    ∀ (d₀ : Data M) (n : ℕ),
     (∀ i < n, ((dstep M)^[i] d₀).Running) → ¬ ((dstep M)^[n] d₀).Running →
-    R (wdF d₀) * (RM M)∗ ≤ sig∗ * (crun M + R (wdF ((dstep M)^[n] d₀))) + err ρ := by
-  obtain ⟨ρ, hρ⟩ := (rel_RM (M := M)).complete_of_trace
-  refine ⟨ρ, fun d₀ n hrun hhalt => ?_⟩
+    R (wdF d₀) * (RM M)∗ ≤
+      sig∗ * (crun M + R (wdF ((dstep M)^[n] d₀))) + err (sigAll∗ * b * (RM M)∗) := by
+  obtain ⟨hrel, hρ⟩ := rel_RM_le hb
+  intro d₀ n hrun hhalt
   let s : ℕ → FreeMonoid (Letter Sym M.State) := fun i => wdF ((dstep M)^[i] d₀)
   have hstep : ∀ i < n, ∀ v, SetSemiring.Mem (s i, v) (pl (RM M)) ↔ v = s (i + 1) := by
     intro i hi v
@@ -102,7 +105,7 @@ theorem theorem16 : ∃ ρ : TD (Letter Sym M.State), ∀ (d₀ : Data M) (n : �
     obtain ⟨d, hd, he⟩ := (mem_RM _).1 hv
     rw [← wdF_injective (Prod.mk.inj he).1] at hd
     exact hhalt hd
-  have := hρ n s ⟨d₀, rfl⟩ hstep hlast
+  have := hrel.complete_of_trace_le hρ n s ⟨d₀, rfl⟩ hstep hlast
   refine this.trans (add_le_add (mul_le_mul' le_rfl ?_) le_rfl)
   refine sum_le_of_forall _ _ fun u hu => ?_
   obtain ⟨i, hi, rfl⟩ := Finset.mem_image.1 hu
@@ -111,6 +114,15 @@ theorem theorem16 : ∃ ρ : TD (Letter Sym M.State), ∀ (d₀ : Data M) (n : �
   · have : i = n := by rw [Finset.mem_range] at hi; omega
     subst this
     exact le_add_left le_rfl
+
+/-- **Theorem 16** (Turing machines). There is `ρ`, depending only on `M`, such that whenever
+`dstep` runs for `n` steps from `d₀` and then halts, the configuration word of `d₀` followed by
+`R_M∗` lies below `Σ∗ (C_M + t)_r + Σ∗ Σ^≠ ρ`, with `t` the halting configuration word. -/
+theorem theorem16 : ∃ ρ : TD (Letter Sym M.State), ∀ (d₀ : Data M) (n : ℕ),
+    (∀ i < n, ((dstep M)^[i] d₀).Running) → ¬ ((dstep M)^[n] d₀).Running →
+    R (wdF d₀) * (RM M)∗ ≤ sig∗ * (crun M + R (wdF ((dstep M)^[n] d₀))) + err ρ := by
+  obtain ⟨b, hb⟩ := (finiteState_iff _).1 (finiteState_RM (M := M))
+  exact ⟨_, theorem16_le hb⟩
 
 /-! ### Cslib runs -/
 
@@ -134,6 +146,28 @@ theorem cfgOf_initData (input : List Sym) : cfgOf (initData input : Data M) = M.
     simp only [cfgOf, initData, SingleTapeTM.initCfg, BiTape.mk₁, stk_map_some]
     rfl
 
+omit [DecidableEq Sym] [DecidableEq M.State] in
+/-- A Cslib run to `haltCfg output` is a `dstep` trace that runs for `m` steps and then halts. -/
+theorem exists_halting_trace {input output : List Sym} (hout : M.Outputs input output) :
+    ∃ m, (∀ i < m, ((dstep M)^[i] (initData input : Data M)).Running) ∧
+      ¬ ((dstep M)^[m] (initData input : Data M)).Running ∧
+      cfgOf ((dstep M)^[m] (initData input : Data M)) = M.haltCfg output := by
+  set d₀ : Data M := initData input
+  have hrun : Relation.ReflTransGen M.TransitionRelation (cfgOf d₀) (M.haltCfg output) := by
+    rw [cfgOf_initData]; exact hout
+  obtain ⟨n, hn⟩ := exists_iterate_of_reflTransGen d₀ hrun
+  have hhn : ¬ ((dstep M)^[n] d₀).Running := by
+    intro h
+    have : ((dstep M)^[n] d₀).state = none := congrArg SingleTapeTM.Cfg.state hn
+    simp [Data.Running, this] at h
+  have hex : ∃ m, ¬ ((dstep M)^[m] d₀).Running := ⟨n, hhn⟩
+  let m := Nat.find hex
+  have hm : ¬ ((dstep M)^[m] d₀).Running := Nat.find_spec hex
+  have hmn : m ≤ n := Nat.find_min' hex hhn
+  have heq : (dstep M)^[n] d₀ = (dstep M)^[m] d₀ := by
+    rw [show n = (n - m) + m by omega, Function.iterate_add_apply, iterate_halted _ hm]
+  exact ⟨m, fun i hi => not_not.1 (Nat.find_min hex hi), hm, heq ▸ hn⟩
+
 /-- **Theorem 16** for Cslib's `Outputs`: if `M` outputs `output` on `input`, then for some word
 `t` encoding the halting configuration `haltCfg output`,
 `(init input)_r R_M∗ ≤ Σ∗ (C_M + t)_r + Σ∗ Σ^≠ ρ`. -/
@@ -142,26 +176,7 @@ theorem theorem16_outputs : ∃ ρ : TD (Letter Sym M.State), ∀ input output :
       R (wdF (initData input : Data M)) * (RM M)∗ ≤ sig∗ * (crun M + R (wdF d)) + err ρ := by
   obtain ⟨ρ, hρ⟩ := theorem16 (M := M)
   refine ⟨ρ, fun input output hout => ?_⟩
-  set d₀ : Data M := initData input
-  have hrun : Relation.ReflTransGen M.TransitionRelation (cfgOf d₀) (M.haltCfg output) := by
-    rw [cfgOf_initData]; exact hout
-  obtain ⟨n, hn⟩ := exists_iterate_of_reflTransGen d₀ hrun
-  have hex : ∃ m, ¬ ((dstep M)^[m] d₀).Running := ⟨n, by
-    intro h
-    have : ((dstep M)^[n] d₀).state = none := by
-      have := congrArg SingleTapeTM.Cfg.state hn; exact this
-    simp [Data.Running, this] at h⟩
-  let m := Nat.find hex
-  have hm : ¬ ((dstep M)^[m] d₀).Running := Nat.find_spec hex
-  have hlt : ∀ i < m, ((dstep M)^[i] d₀).Running := fun i hi => by
-    have := Nat.find_min hex hi
-    exact not_not.1 this
-  have hmn : m ≤ n := Nat.find_min' hex (by
-    intro h
-    have : ((dstep M)^[n] d₀).state = none := congrArg SingleTapeTM.Cfg.state hn
-    simp [Data.Running, this] at h)
-  have heq : (dstep M)^[n] d₀ = (dstep M)^[m] d₀ := by
-    rw [show n = (n - m) + m by omega, Function.iterate_add_apply, iterate_halted _ hm]
-  exact ⟨(dstep M)^[m] d₀, heq ▸ hn, hρ d₀ m hlt hm⟩
+  obtain ⟨m, hlt, hm, hcfg⟩ := exists_halting_trace hout
+  exact ⟨_, hcfg, hρ _ m hlt hm⟩
 
 end DiagonaLean.KAComm.Enc

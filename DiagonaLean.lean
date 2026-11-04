@@ -45,6 +45,7 @@ import DiagonaLean.KleeneAlgebra.PreKleene
 import DiagonaLean.KleeneAlgebra.Example1
 import DiagonaLean.KleeneAlgebra.Free
 import DiagonaLean.KleeneAlgebra.Theorem6Counterexample
+import DiagonaLean.KleeneAlgebra.Theorem6Repair
 import DiagonaLean.KleeneAlgebra.SetStar
 import DiagonaLean.KleeneAlgebra.Doubled
 import DiagonaLean.KleeneAlgebra.Representable
@@ -54,6 +55,12 @@ import DiagonaLean.KleeneAlgebra.BoundedOutput
 import DiagonaLean.KleeneAlgebra.SingleStep
 import DiagonaLean.KleeneAlgebra.Completeness
 import DiagonaLean.KleeneAlgebra.Copy
+import DiagonaLean.KleeneAlgebra.Syntax
+import DiagonaLean.KleeneAlgebra.Soundness
 import DiagonaLean.KleeneAlgebra.TM.Encoding
 import DiagonaLean.KleeneAlgebra.TM.Transition
 import DiagonaLean.KleeneAlgebra.TM.Theorem16
+import DiagonaLean.KleeneAlgebra.TM.Theorem15
+import DiagonaLean.KleeneAlgebra.TM.Syntax
+import DiagonaLean.KleeneAlgebra.TM.Halting
+import DiagonaLean.KleeneAlgebra.TM.Undecidable
