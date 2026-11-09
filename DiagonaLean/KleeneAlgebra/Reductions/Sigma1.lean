@@ -103,25 +103,25 @@ theorem undecidable_eqVia_of_family (F : LangFactor X) (fam : SmullyanFamily (Se
 /-- `HALT` many-one reduces to provable equality in pre-Kleene algebra with commutativity, through
 `eqRed ∘ N`. -/
 def haltReduces_termEq (fam : SmullyanFamily (SelfEq factorT)) :
-    HALT ⪯ₘ fun i : Inst => Equiv DComm i.1 i.2 :=
+    HALT ⪯ₘ @TermEq.DecisionProblem ℕ :=
   ⟨eqRed ∘ fam.N, fun p => (halt_iff_selfEq factorT fam p).trans (eqVia_factorT _)⟩
 
 /-- `HALT` many-one reduces to provable equality in Kleene algebra with commutativity, through
 `eqRed ∘ N`. -/
 def haltReduces_kaTermEq (fam : SmullyanFamily (SelfEq factorK)) :
-    HALT ⪯ₘ fun i : Inst => KAEquiv DComm i.1 i.2 :=
+    HALT ⪯ₘ @KATermEq.DecisionProblem ℕ :=
   ⟨eqRed ∘ fam.N, fun p => (halt_iff_selfEq factorK fam p).trans (eqVia_factorK _)⟩
 
 /-- **Provable equality in pre-Kleene algebra with commutativity is `Undecidable`,** given a
 Smullyan family for `T Σ̈`. -/
 theorem undecidable_termEq_of_family (fam : SmullyanFamily (SelfEq factorT)) :
-    Undecidable fun i : Inst => Equiv DComm i.1 i.2 :=
+    Undecidable (@TermEq.DecisionProblem ℕ) :=
   ⟨haltReduces_termEq fam⟩
 
 /-- **Provable equality in Kleene algebra with commutativity is `Undecidable`,** given a Smullyan
 family for `K Σ̈`. -/
 theorem undecidable_kaTermEq_of_family (fam : SmullyanFamily (SelfEq factorK)) :
-    Undecidable fun i : Inst => KAEquiv DComm i.1 i.2 :=
+    Undecidable (@KATermEq.DecisionProblem ℕ) :=
   ⟨haltReduces_kaTermEq fam⟩
 
 end DiagonaLean.KAComm.Undec

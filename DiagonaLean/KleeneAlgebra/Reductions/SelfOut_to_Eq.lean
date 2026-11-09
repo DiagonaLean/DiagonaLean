@@ -231,7 +231,7 @@ theorem undecidable_not_eqVia (F : LangFactor X)
 
 /-- **`Undecidable` for language inequality of two terms.** -/
 theorem undecidable_not_langEq :
-    Undecidable (Complement fun i : Inst => pl (mk i.1 : TD ℕ) = pl (mk i.2)) :=
+    Undecidable (Complement (@LangEq.DecisionProblem ℕ)) :=
   undecidable_not_eqVia factorL fun _ _ h => h
 
 /-- The machines whose instance `eqRed M` holds in `X`: the paper's set `A'` (Theorem 19). -/

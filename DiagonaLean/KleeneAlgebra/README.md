@@ -25,7 +25,9 @@ covered at this level. See `GAPS.md`.
 
 ## The layout
 
-* `Basic.lean`: the instances.
+* `Basic.lean`: the instances (`EqInstance`) and the decision problems `TermEq.DecisionProblem`,
+  `KATermEq.DecisionProblem` and `LangEq.DecisionProblem`, as in `PCP/Basic.lean`, with
+  `TermEqProblem`, `KATermEqProblem` and `LangEqProblem` over `{0, 1}`.
 * The files directly in this folder: pre-Kleene algebra, the free algebras, the language model,
   automata, and the completeness theorems of the paper's §2, §4 and §5.
 * `MachineEncoding/`: Turing machine runs as terms, and Theorems 15 and 16.

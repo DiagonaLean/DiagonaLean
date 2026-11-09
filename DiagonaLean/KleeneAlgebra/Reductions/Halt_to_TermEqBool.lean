@@ -92,35 +92,35 @@ theorem halt_iff_qb {ka : Bool} {B : Base} {C : Code} (hB : B.Good) (hC : RacePr
 /-- `reductionB B C` reduces `HALT` to provable equality in pre-Kleene algebra over `{0, 1}`. -/
 theorem halt_reducesto_termEq_bool_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProgB false B C) :
-    HALT ⪯ₘ[reductionB B C] fun i : InstB => Equiv DComm i.1 i.2 := fun p =>
+    HALT ⪯ₘ[reductionB B C] TermEqProblem := fun p =>
   (halt_iff_qb hB hC p).trans (by
-    simpa [QB, Rel, reductionB] using equiv_iff_map)
+    simpa [QB, Rel, reductionB, TermEq.DecisionProblem] using equiv_iff_map)
 
 /-- `reductionB B C` reduces `HALT` to provable equality in Kleene algebra over `{0, 1}`. -/
 theorem halt_reducesto_kaTermEq_bool_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProgB true B C) :
-    HALT ⪯ₘ[reductionB B C] fun i : InstB => KAEquiv DComm i.1 i.2 := fun p =>
+    HALT ⪯ₘ[reductionB B C] KATermEqProblem := fun p =>
   (halt_iff_qb hB hC p).trans (by
-    simpa [QB, Rel, reductionB] using kaEquiv_iff_map)
+    simpa [QB, Rel, reductionB, KATermEq.DecisionProblem] using kaEquiv_iff_map)
 
 /-- `HALT` many-one reduces to provable equality in pre-Kleene algebra over `{0, 1}`. -/
 def haltReduces_termEq_bool (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB false B C) :
-    HALT ⪯ₘ fun i : InstB => Equiv DComm i.1 i.2 :=
+    HALT ⪯ₘ TermEqProblem :=
   ⟨reductionB B C, halt_reducesto_termEq_bool_spec hB hC⟩
 
 /-- `HALT` many-one reduces to provable equality in Kleene algebra over `{0, 1}`. -/
 def haltReduces_kaTermEq_bool (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB true B C) :
-    HALT ⪯ₘ fun i : InstB => KAEquiv DComm i.1 i.2 :=
+    HALT ⪯ₘ KATermEqProblem :=
   ⟨reductionB B C, halt_reducesto_kaTermEq_bool_spec hB hC⟩
 
 /-- **Provable equality in pre-Kleene algebra with commutativity over `{0, 1}` is `Undecidable`.** -/
-theorem undecidable_termEq_bool : Undecidable fun i : InstB => Equiv DComm i.1 i.2 := by
+theorem undecidable_termEq_bool : Undecidable TermEqProblem := by
   obtain ⟨B, hB⟩ := exists_base
   obtain ⟨C, hC⟩ := exists_raceProgB false B
   exact ⟨haltReduces_termEq_bool B C hB hC⟩
 
 /-- **Provable equality in Kleene algebra with commutativity over `{0, 1}` is `Undecidable`.** -/
-theorem undecidable_kaTermEq_bool : Undecidable fun i : InstB => KAEquiv DComm i.1 i.2 := by
+theorem undecidable_kaTermEq_bool : Undecidable KATermEqProblem := by
   obtain ⟨B, hB⟩ := exists_base
   obtain ⟨C, hC⟩ := exists_raceProgB true B
   exact ⟨haltReduces_kaTermEq_bool B C hB hC⟩
@@ -130,18 +130,18 @@ def haltEqRedB (p : EncodableTM Bool × List Bool) : InstB := sbI (haltEqRed p)
 
 /-- `haltEqRedB` reduces `HALT` to the failure of language equality over `{0, 1}`. -/
 theorem halt_reducesto_not_langEq_bool :
-    HALT ⪯ₘ[haltEqRedB] Complement fun i : InstB => pl (mk i.1 : TD Bool) = pl (mk i.2) :=
+    HALT ⪯ₘ[haltEqRedB] Complement LangEqProblem :=
   fun p => (halt_iff_not_modelLe p).trans (not_congr
     ((modelLe_iff_langEq _).trans (pl_sb_eq_iff cd_injective).symm))
 
 /-- `HALT` many-one reduces to the failure of language equality over `{0, 1}`. -/
 def haltReduces_not_langEq_bool :
-    HALT ⪯ₘ Complement fun i : InstB => pl (mk i.1 : TD Bool) = pl (mk i.2) :=
+    HALT ⪯ₘ Complement LangEqProblem :=
   ⟨haltEqRedB, halt_reducesto_not_langEq_bool⟩
 
 /-- **The failure of language equality over `{0, 1}` is `Undecidable`.** -/
 theorem undecidable_not_langEq_bool :
-    Undecidable (Complement fun i : InstB => pl (mk i.1 : TD Bool) = pl (mk i.2)) :=
+    Undecidable (Complement LangEqProblem) :=
   ⟨haltReduces_not_langEq_bool⟩
 
 end DiagonaLean.KAComm.Reduction

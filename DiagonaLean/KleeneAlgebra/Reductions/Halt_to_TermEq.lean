@@ -208,32 +208,32 @@ theorem halt_iff_rel {ka : Bool} {B : Base} {C : Code} (hB : B.Good) (hC : RaceP
 
 /-- `reduction B C` reduces `HALT` to provable equality in pre-Kleene algebra with commutativity. -/
 theorem halt_reducesto_termEq_spec {B : Base} {C : Code} (hB : B.Good) (hC : RaceProg false B C) :
-    HALT ⪯ₘ[reduction B C] fun i : Inst => Equiv DComm i.1 i.2 :=
-  fun p => by simpa [Rel] using halt_iff_rel hB hC p
+    HALT ⪯ₘ[reduction B C] @TermEq.DecisionProblem ℕ :=
+  fun p => by simpa [Rel, TermEq.DecisionProblem] using halt_iff_rel hB hC p
 
 /-- `HALT` many-one reduces to provable equality in pre-Kleene algebra with commutativity. -/
 def haltReduces_termEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg false B C) :
-    HALT ⪯ₘ fun i : Inst => Equiv DComm i.1 i.2 :=
+    HALT ⪯ₘ @TermEq.DecisionProblem ℕ :=
   ⟨reduction B C, halt_reducesto_termEq_spec hB hC⟩
 
 /-- `reduction B C` reduces `HALT` to provable equality in Kleene algebra with commutativity. -/
 theorem halt_reducesto_kaTermEq_spec {B : Base} {C : Code} (hB : B.Good) (hC : RaceProg true B C) :
-    HALT ⪯ₘ[reduction B C] fun i : Inst => KAEquiv DComm i.1 i.2 :=
-  fun p => by simpa [Rel] using halt_iff_rel hB hC p
+    HALT ⪯ₘ[reduction B C] @KATermEq.DecisionProblem ℕ :=
+  fun p => by simpa [Rel, KATermEq.DecisionProblem] using halt_iff_rel hB hC p
 
 /-- `HALT` many-one reduces to provable equality in Kleene algebra with commutativity. -/
 def haltReduces_kaTermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg true B C) :
-    HALT ⪯ₘ fun i : Inst => KAEquiv DComm i.1 i.2 :=
+    HALT ⪯ₘ @KATermEq.DecisionProblem ℕ :=
   ⟨reduction B C, halt_reducesto_kaTermEq_spec hB hC⟩
 
 /-- **Provable equality in pre-Kleene algebra with commutativity is `Undecidable`.** -/
-theorem undecidable_termEq : Undecidable fun i : Inst => Equiv DComm i.1 i.2 := by
+theorem undecidable_termEq : Undecidable (@TermEq.DecisionProblem ℕ) := by
   obtain ⟨B, hB⟩ := exists_base
   obtain ⟨C, hC⟩ := exists_raceProg false B
   exact ⟨haltReduces_termEq B C hB hC⟩
 
 /-- **Provable equality in Kleene algebra with commutativity is `Undecidable`.** -/
-theorem undecidable_kaTermEq : Undecidable fun i : Inst => KAEquiv DComm i.1 i.2 := by
+theorem undecidable_kaTermEq : Undecidable (@KATermEq.DecisionProblem ℕ) := by
   obtain ⟨B, hB⟩ := exists_base
   obtain ⟨C, hC⟩ := exists_raceProg true B
   exact ⟨haltReduces_kaTermEq B C hB hC⟩
