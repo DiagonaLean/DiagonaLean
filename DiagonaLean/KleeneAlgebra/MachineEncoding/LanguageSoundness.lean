@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anonymous
 -/
 
-import DiagonaLean.KleeneAlgebra.TM.Theorem16
+import DiagonaLean.KleeneAlgebra.MachineEncoding.TraceCompleteness
 import DiagonaLean.KleeneAlgebra.Soundness
 
 @[expose] public section
@@ -25,7 +25,7 @@ halting machine outputs.
 ## Main statements
 
 * `Enc.mem_crun`: the strings of `(C_M)_r` are right copies of running configuration words.
-* `Enc.theorem15`, `Enc.theorem15_outputs`.
+* `Enc.wdF_eq_of_pl_le`, `Enc.exists_wdF_of_outputs_of_pl_le`.
 * `Enc.le_iff_halting`, `Enc.le_iff_outputs`: the soundness/completeness combination.
 
 ## References
@@ -105,7 +105,7 @@ variable [DecidableEq Sym] [DecidableEq M.State]
 /-- **Theorem 15** (soundness). If `M` runs for `n` steps from `d₀` and halts, and the language
 inequality `(s₀)_r R_M∗ ≤ Σ∗ (C_M + t)_r + Σ∗ Σ^≠ Σ̈∗` holds, then `t` is the halting
 configuration word. -/
-theorem theorem15 (d₀ : Data M) (n : ℕ) (hrun : ∀ i < n, ((dstep M)^[i] d₀).Running)
+theorem wdF_eq_of_pl_le (d₀ : Data M) (n : ℕ) (hrun : ∀ i < n, ((dstep M)^[i] d₀).Running)
     (hhalt : ¬ ((dstep M)^[n] d₀).Running) (t : FreeMonoid (Letter Sym M.State))
     (h : pl (R (wdF d₀) * (RM M)∗) ≤ pl (sig∗ * (crun M + R t) + err (sigAll : TD _)∗)) :
     wdF ((dstep M)^[n] d₀) = t := by
@@ -121,13 +121,13 @@ theorem theorem15 (d₀ : Data M) (n : ℕ) (hrun : ∀ i < n, ((dstep M)^[i] d�
 
 /-- **Theorem 15** for Cslib's `Outputs`: the language inequality forces `t` to be the word of a
 list-level configuration decoding to `haltCfg output`. -/
-theorem theorem15_outputs {input output : List Sym} (hout : M.Outputs input output)
+theorem exists_wdF_of_outputs_of_pl_le {input output : List Sym} (hout : M.Outputs input output)
     (t : FreeMonoid (Letter Sym M.State))
     (h : pl (R (wdF (initData input : Data M)) * (RM M)∗) ≤
       pl (sig∗ * (crun M + R t) + err (sigAll : TD _)∗)) :
     ∃ d : Data M, t = wdF d ∧ cfgOf d = M.haltCfg output := by
   obtain ⟨m, hlt, hm, hcfg⟩ := exists_halting_trace hout
-  exact ⟨_, (theorem15 _ m hlt hm t h).symm, hcfg⟩
+  exact ⟨_, (wdF_eq_of_pl_le _ m hlt hm t h).symm, hcfg⟩
 
 /-! ### Soundness and completeness together -/
 
@@ -144,11 +144,11 @@ theorem le_iff_halting : ∃ ρ : TD (Letter Sym M.State), ∀ (d₀ : Data M) (
       (R (wdF d₀) * (RM M)∗ ≤ sig∗ * (crun M + R t) + err ρ ↔ wdF ((dstep M)^[n] d₀) = t) ∧
       (pl (R (wdF d₀) * (RM M)∗) ≤ pl (sig∗ * (crun M + R t) + err ρ) ↔
         wdF ((dstep M)^[n] d₀) = t) := by
-  obtain ⟨ρ, hρ⟩ := theorem16 (M := M)
+  obtain ⟨ρ, hρ⟩ := exists_le_err_of_halting_run (M := M)
   refine ⟨ρ, fun d₀ n hrun hhalt t => ?_⟩
   have hsound : pl (R (wdF d₀) * (RM M)∗) ≤ pl (sig∗ * (crun M + R t) + err ρ) →
       wdF ((dstep M)^[n] d₀) = t := fun h =>
-    theorem15 d₀ n hrun hhalt t (h.trans (by rw [pl_add, pl_add]; exact add_le_add le_rfl (pl_err_le ρ)))
+    wdF_eq_of_pl_le d₀ n hrun hhalt t (h.trans (by rw [pl_add, pl_add]; exact add_le_add le_rfl (pl_err_le ρ)))
   have hcomp : wdF ((dstep M)^[n] d₀) = t →
       R (wdF d₀) * (RM M)∗ ≤ sig∗ * (crun M + R t) + err ρ := by
     rintro rfl; exact hρ d₀ n hrun hhalt

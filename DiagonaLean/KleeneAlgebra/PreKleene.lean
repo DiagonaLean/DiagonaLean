@@ -68,7 +68,7 @@ theorem mul_kstar_le_of_le {a x : α} (h : a ≤ x) : a * x∗ ≤ x∗ :=
   (mul_le_mul' h le_rfl).trans (mul_kstar_le_kstar' x)
 
 /-- A product of elements below `x`, followed by `x∗`, is below `x∗`. This is the form of the
-paper's Theorem 9 that survives (`not_theorem9`): it is applied to genuine strings. -/
+paper's Theorem 9 that survives (`not_forall_finite_lang_mul_kstar_le`): it is applied to genuine strings. -/
 theorem list_prod_mul_kstar_le (x : α) :
     ∀ l : List α, (∀ a ∈ l, a ≤ x) → l.prod * x∗ ≤ x∗
   | [], _ => by rw [List.prod_nil, one_mul]

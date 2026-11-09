@@ -71,7 +71,7 @@ theorem complete_of_trace_le {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ)
     (∀ i < n, ∀ v, SetSemiring.Mem (s i, v) (pl e) ↔ v = s (i + 1)) →
     (∀ v, ¬ SetSemiring.Mem (s n, v) (pl e)) →
     R (s 0) * e∗ ≤ sig∗ * rtS ((Finset.range (n + 1)).image s) + err (ρ' * e∗) := by
-  have hρ := h.theorem22 hρ'
+  have hρ := h.le_below_of_iter_eq_empty hρ'
   intro n s hs0 hstep hlast
   have hnext : ∀ i < n, h.next {s i} = {s (i + 1)} := fun i hi => by
     ext v; simp [mem_next, hstep i hi]

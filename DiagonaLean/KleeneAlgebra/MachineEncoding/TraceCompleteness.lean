@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anonymous
 -/
 
-import DiagonaLean.KleeneAlgebra.TM.Transition
+import DiagonaLean.KleeneAlgebra.MachineEncoding.Transition
 import DiagonaLean.KleeneAlgebra.Completeness
 
 @[expose] public section
@@ -25,8 +25,8 @@ configuration words, and `ρ` depends only on `M`.
 
 ## Main statements
 
-* `Enc.theorem16`: completeness along a halting run of `dstep`.
-* `Enc.theorem16_outputs`: the same for Cslib's `SingleTapeTM.Outputs`.
+* `Enc.exists_le_err_of_halting_run`: completeness along a halting run of `dstep`.
+* `Enc.exists_le_err_of_outputs`: the same for Cslib's `SingleTapeTM.Outputs`.
 
 ## References
 
@@ -81,7 +81,7 @@ variable [DecidableEq Sym] [DecidableEq M.State]
 states below `b`, then with `ρ = Σ̈∗ b R_M∗`: whenever `dstep` runs for `n` steps from `d₀` and
 then halts, the configuration word of `d₀` followed by `R_M∗` lies below
 `Σ∗ (C_M + t)_r + Σ∗ Σ^≠ ρ`, with `t` the halting configuration word. -/
-theorem theorem16_le {b : TD (Letter Sym M.State)} (hb : FiniteStateLe (RM M) b) :
+theorem le_err_of_halting_run {b : TD (Letter Sym M.State)} (hb : FiniteStateLe (RM M) b) :
     ∀ (d₀ : Data M) (n : ℕ),
     (∀ i < n, ((dstep M)^[i] d₀).Running) → ¬ ((dstep M)^[n] d₀).Running →
     R (wdF d₀) * (RM M)∗ ≤
@@ -118,33 +118,13 @@ theorem theorem16_le {b : TD (Letter Sym M.State)} (hb : FiniteStateLe (RM M) b)
 /-- **Theorem 16** (Turing machines). There is `ρ`, depending only on `M`, such that whenever
 `dstep` runs for `n` steps from `d₀` and then halts, the configuration word of `d₀` followed by
 `R_M∗` lies below `Σ∗ (C_M + t)_r + Σ∗ Σ^≠ ρ`, with `t` the halting configuration word. -/
-theorem theorem16 : ∃ ρ : TD (Letter Sym M.State), ∀ (d₀ : Data M) (n : ℕ),
+theorem exists_le_err_of_halting_run : ∃ ρ : TD (Letter Sym M.State), ∀ (d₀ : Data M) (n : ℕ),
     (∀ i < n, ((dstep M)^[i] d₀).Running) → ¬ ((dstep M)^[n] d₀).Running →
     R (wdF d₀) * (RM M)∗ ≤ sig∗ * (crun M + R (wdF ((dstep M)^[n] d₀))) + err ρ := by
   obtain ⟨b, hb⟩ := (finiteState_iff _).1 (finiteState_RM (M := M))
-  exact ⟨_, theorem16_le hb⟩
+  exact ⟨_, le_err_of_halting_run hb⟩
 
 /-! ### Cslib runs -/
-
-/-- The list-level initial configuration on `input`. -/
-def initData (input : List Sym) : Data M :=
-  match input with
-  | [] => ⟨some M.q₀, [], none, []⟩
-  | a :: t => ⟨some M.q₀, [], some a, t.map some⟩
-
-omit [Inhabited Sym] [Fintype Sym] [DecidableEq Sym] [DecidableEq M.State] in
-theorem stk_map_some (t : List Sym) : stk (t.map some) = StackTape.mapSome t := by
-  induction t with
-  | nil => rfl
-  | cons a t ih => rw [List.map_cons, stk_cons, ih]; rfl
-
-omit [DecidableEq Sym] [DecidableEq M.State] in
-theorem cfgOf_initData (input : List Sym) : cfgOf (initData input : Data M) = M.initCfg input := by
-  cases input with
-  | nil => rfl
-  | cons a t =>
-    simp only [cfgOf, initData, SingleTapeTM.initCfg, BiTape.mk₁, stk_map_some]
-    rfl
 
 omit [DecidableEq Sym] [DecidableEq M.State] in
 /-- A Cslib run to `haltCfg output` is a `dstep` trace that runs for `m` steps and then halts. -/
@@ -171,10 +151,10 @@ theorem exists_halting_trace {input output : List Sym} (hout : M.Outputs input o
 /-- **Theorem 16** for Cslib's `Outputs`: if `M` outputs `output` on `input`, then for some word
 `t` encoding the halting configuration `haltCfg output`,
 `(init input)_r R_M∗ ≤ Σ∗ (C_M + t)_r + Σ∗ Σ^≠ ρ`. -/
-theorem theorem16_outputs : ∃ ρ : TD (Letter Sym M.State), ∀ input output : List Sym,
+theorem exists_le_err_of_outputs : ∃ ρ : TD (Letter Sym M.State), ∀ input output : List Sym,
     M.Outputs input output → ∃ d : Data M, cfgOf d = M.haltCfg output ∧
       R (wdF (initData input : Data M)) * (RM M)∗ ≤ sig∗ * (crun M + R (wdF d)) + err ρ := by
-  obtain ⟨ρ, hρ⟩ := theorem16 (M := M)
+  obtain ⟨ρ, hρ⟩ := exists_le_err_of_halting_run (M := M)
   refine ⟨ρ, fun input output hout => ?_⟩
   obtain ⟨m, hlt, hm, hcfg⟩ := exists_halting_trace hout
   exact ⟨_, hcfg, hρ _ m hlt hm⟩

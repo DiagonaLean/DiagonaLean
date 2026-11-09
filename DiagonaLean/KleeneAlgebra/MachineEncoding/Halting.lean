@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anonymous
 -/
 
-import DiagonaLean.KleeneAlgebra.TM.Syntax
+import DiagonaLean.KleeneAlgebra.MachineEncoding.MachineTerms
 import DiagonaLean.Halt.Basic
 
 @[expose] public section
@@ -26,7 +26,7 @@ halting exactly, but only in the language model:
   (Lemma 33).
 
 This gives a many-one reduction from `HALT` to the complement of language-model inclusion
-(`TM/Undecidable.lean`). It does not reach pre-KA *provability*: for a machine that runs forever,
+(`Reductions/SelfOut_to_ModelLe.lean`). It does not reach pre-KA *provability*: for a machine that runs forever,
 whether the inequality is provable is left open, as in the paper.
 
 ## Main statements
@@ -61,7 +61,7 @@ theorem mem_err_of_diverge {A : Type*} [Fintype A] [DecidableEq A] (x : W A)
   have hx : ofPair x = R x.2 * L x.1 := (R_mul_L x.2 x.1).symm
   calc ofPair x = R x.2 * L x.1 * 1 := by rw [mul_one, hx]
     _ ≤ R x.2 * L x.1 * sigAll∗ := mul_le_mul' le_rfl (one_le_kstar' _)
-    _ ≤ err sigAll∗ := lemma33' _ _ h₁ h₂
+    _ ≤ err sigAll∗ := le_sigNe_kstar_of_not_prefix _ _ h₁ h₂
 
 variable {Sym : Type} [Inhabited Sym] [Fintype Sym] {M : SingleTapeTM Sym}
 

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anonymous
 -/
 
-import DiagonaLean.KleeneAlgebra.Example1
+import DiagonaLean.KleeneAlgebra.PreKleeneNotKleene
 import DiagonaLean.KleeneAlgebra.Free
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 
@@ -26,9 +26,9 @@ included.
 
 * `FreePreKA.one_kstar_ne_one`: `(1 : T X)∗ ≠ 1`.
 * `FreePreKA.lang_one_kstar`: `l(1∗) = {ε}`.
-* `FreePreKA.not_theorem6`: the negation of Theorem 6.
-* `FreePreKA.not_corollary7`: the negation of Corollary 7.
-* `FreePreKA.not_theorem9`: the negation of Theorem 9 (same counterexample).
+* `FreePreKA.not_forall_finite_lang_eq_sum`: the negation of Theorem 6.
+* `FreePreKA.not_lang_injective_on_finite`: the negation of Corollary 7.
+* `FreePreKA.not_forall_finite_lang_mul_kstar_le`: the negation of Theorem 9 (same counterexample).
 
 ## References
 
@@ -47,9 +47,9 @@ variable {X : Type*}
 /-- `1∗ ≠ 1` in the free pre-Kleene algebra, for any alphabet and commutation relation. -/
 theorem one_kstar_ne_one {C : X → X → Prop} : (1 : FreePreKA X C)∗ ≠ 1 := by
   intro h
-  have := congrArg (lift (fun _ => (0 : Ex1)) (fun _ _ _ => rfl)) h
+  have := congrArg (lift (fun _ => (0 : NatBotTop)) (fun _ _ _ => rfl)) h
   rw [lift_kstar, lift_one] at this
-  exact Ex1.one_kstar_ne this
+  exact NatBotTop.one_kstar_ne this
 
 /-- The string `x₁ ⋯ xₙ` as a term. -/
 def ofWord {C : X → X → Prop} (w : List X) : FreePreKA X C := (w.map of).prod
@@ -69,7 +69,7 @@ theorem langIs_one : LangIs (1 : FreePreKA X (· = ·)) {[]} := by
 
 /-- **Theorem 6 is false.** It is not true that every term with a finite language equals the sum
 of the strings in its language. -/
-theorem not_theorem6 :
+theorem not_forall_finite_lang_eq_sum :
     ¬ ∀ (e : FreePreKA X (· = ·)) (S : Finset (List X)), LangIs e S →
         e = ∑ s ∈ S, ofWord s := by
   intro H
@@ -79,7 +79,7 @@ theorem not_theorem6 :
 
 /-- **Corollary 7 is false.** The language interpretation is not injective on terms with finite
 languages. -/
-theorem not_corollary7 :
+theorem not_lang_injective_on_finite :
     ¬ ∀ (e₁ e₂ : FreePreKA X (· = ·)) (S : Finset (List X)), LangIs e₁ S → LangIs e₂ S →
         e₁ = e₂ :=
   fun H => one_kstar_ne_one (H _ _ _ (langIs_one_kstar (X := X)) langIs_one)
@@ -87,15 +87,15 @@ theorem not_corollary7 :
 /-- **Theorem 9 is false.** For finite `X`, it is not true that every term `e` with a finite
 language satisfies `e X∗ ≤ X∗`. Counterexample: `e = 1∗`, sent to Example 1 with every
 generator mapped to `⊥`. Then `X∗ ↦ 1` and `1∗ X∗ ↦ ⊤`. -/
-theorem not_theorem9 [Fintype X] :
+theorem not_forall_finite_lang_mul_kstar_le [Fintype X] :
     ¬ ∀ (e : FreePreKA X (· = ·)) (S : Finset (List X)), LangIs e S →
         e * (∑ x, of x)∗ ≤ (∑ x, of x)∗ := by
   intro H
-  have h := lift_mono (fun _ : X => (0 : Ex1)) (fun _ _ _ => rfl)
+  have h := lift_mono (fun _ : X => (0 : NatBotTop)) (fun _ _ _ => rfl)
     (H _ _ (langIs_one_kstar (X := X)))
   rw [lift_mul, lift_kstar, lift_kstar, lift_one, lift_sum] at h
   simp only [lift_of, Finset.sum_const_zero] at h
-  exact Ex1.top_not_le_one h
+  exact NatBotTop.top_not_le_one h
 
 end FreePreKA
 

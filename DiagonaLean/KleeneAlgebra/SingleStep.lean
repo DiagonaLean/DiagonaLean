@@ -24,13 +24,13 @@ representable relation on `L`.
 * Step (6) applies Lemma 33 to `s` and `π_l s′` directly (with `|π_l s′| > |s|` and
   prefix-freeness), rather than to `s` and `π_l(s′s″)` followed by a case analysis.
 * Lemma 33 is stated with an arbitrary right context `Z` kept *to the right* of the remainder
-  string: the paper's form `s_r u_l Σ̈∗ ≤ Σ∗Σ^≠Σ̈∗` is `lemma33'`. Pre-Kleene algebra cannot
+  string: the paper's form `s_r u_l Σ̈∗ ≤ Σ∗Σ^≠Σ̈∗` is `le_sigNe_kstar_of_not_prefix`. Pre-Kleene algebra cannot
   absorb a string to the right of `Σ̈∗`, so Lemma 34 needs the general form.
 
 ## Main statements
 
-* `TD.lemma33`, `TD.lemma33'`: Lemma 33.
-* `TD.lemma34`: Lemma 34; `TD.lemma34_le` with the explicit residue `Σ̈∗ b`.
+* `TD.exists_le_sigNe_of_not_prefix`, `TD.le_sigNe_kstar_of_not_prefix`: Lemma 33.
+* `TD.rel_of_finiteState`: Lemma 34; `TD.rel_resid_of_finiteStateLe` with the explicit residue `Σ̈∗ b`.
 
 ## References
 
@@ -98,7 +98,7 @@ theorem mismatch_le_sigNe {a b : A} (h : a ≠ b) :
 
 /-- **Lemma 33.** If neither of `s`, `u` is a prefix of the other, then for some remainder string
 `r` and every `Z`, `s_r u_l Z ≤ Σ∗ Σ^≠ (r Z)`. -/
-theorem lemma33 (s u : FreeMonoid A) (h₁ : ¬ s.toList <+: u.toList)
+theorem exists_le_sigNe_of_not_prefix (s u : FreeMonoid A) (h₁ : ¬ s.toList <+: u.toList)
     (h₂ : ¬ u.toList <+: s.toList) :
     ∃ r : W A, ∀ Z : TD A, R s * L u * Z ≤ sig∗ * (sigNe * (ofPair r * Z)) := by
   obtain ⟨s₀, a, s₁, b, u₁, hab, hs, hu⟩ := List.exists_diverge _ _ h₁ h₂
@@ -115,10 +115,10 @@ theorem lemma33 (s u : FreeMonoid A) (h₁ : ¬ s.toList <+: u.toList)
   exact mismatch_le_sigNe hab
 
 /-- Lemma 33 in the paper's form: `s_r u_l Σ̈∗ ≤ Σ∗ Σ^≠ Σ̈∗`. -/
-theorem lemma33' (s u : FreeMonoid A) (h₁ : ¬ s.toList <+: u.toList)
+theorem le_sigNe_kstar_of_not_prefix (s u : FreeMonoid A) (h₁ : ¬ s.toList <+: u.toList)
     (h₂ : ¬ u.toList <+: s.toList) :
     R s * L u * sigAll∗ ≤ sig∗ * (sigNe * (sigAll : TD A)∗) := by
-  obtain ⟨r, hr⟩ := lemma33 s u h₁ h₂
+  obtain ⟨r, hr⟩ := exists_le_sigNe_of_not_prefix s u h₁ h₂
   exact (hr _).trans (mul_le_mul' le_rfl (mul_le_mul' le_rfl (ofPair_mul_kstar_le r)))
 
 /-- `L` is prefix-free (Definition 32). -/
@@ -127,13 +127,13 @@ def PrefixFree (L : Set (FreeMonoid A)) : Prop :=
 
 /-- **Lemma 34**, with an explicit residue: if the automaton of `e` has its states below `b`,
 then `ρ = Σ̈∗ b` works. -/
-theorem lemma34_le {L : Set (FreeMonoid A)} (hpf : PrefixFree L) {e b : TD A}
+theorem rel_resid_of_finiteStateLe {L : Set (FreeMonoid A)} (hpf : PrefixFree L) {e b : TD A}
     (hl : ∀ s, SetSemiring.Mem s (pl e) → s.1 ∈ L) (hr : ∀ s, SetSemiring.Mem s (pl e) → s.2 ∈ L)
     (hfs : FiniteStateLe e b) (hbo : BoundedOutput e) :
     ∃ h : Rel L e, h.ResidBy (sigAll∗ * b) := by
   obtain ⟨S, hS, heS, hρe⟩ := hfs
   obtain ⟨k₀, hk₀⟩ := hbo
-  obtain ⟨k, hk, hexp⟩ := hS.lemma31 heS hk₀
+  obtain ⟨k, hk, hexp⟩ := hS.exists_fanout_expansion heS hk₀
   have hfin := hk.next_finite
   let ρe : TD A := b
   let ρ : TD A := sigAll∗ * ρe
@@ -165,7 +165,7 @@ theorem lemma34_le {L : Set (FreeMonoid A)} (hpf : PrefixFree L) {e b : TD A}
         exact ⟨s, by simp, by rw [← hts]; exact htmem⟩
       · refine le_add_left ?_
         obtain ⟨d₁, d₂⟩ := hdiv t.1 (hl t htmem) (Ne.symm hts)
-        obtain ⟨r, hr'⟩ := lemma33 s t.1 d₁ d₂
+        obtain ⟨r, hr'⟩ := exists_le_sigNe_of_not_prefix s t.1 d₁ d₂
         rw [ofPair, ← mul_assoc]
         refine (hr' _).trans (mul_le_mul' le_rfl (mul_le_mul' le_rfl ?_))
         rw [R_eq_ofPair, ← ofPair_mul, ← mul_one (ofPair _)]
@@ -199,7 +199,7 @@ theorem lemma34_le {L : Set (FreeMonoid A)} (hpf : PrefixFree L) {e b : TD A}
         have : (t * w).1.length = s.length := by rw [heq']
         simp only [Prod.fst_mul, FreeMonoid.length_mul] at this
         omega
-      obtain ⟨r, hr'⟩ := lemma33 s t.1 d₁ d₂
+      obtain ⟨r, hr'⟩ := exists_le_sigNe_of_not_prefix s t.1 d₁ d₂
       rw [ofPair, mul_assoc, ← mul_assoc (R s)]
       refine (hr' _).trans (mul_le_mul' le_rfl (mul_le_mul' le_rfl ?_))
       rw [R_eq_ofPair, ← mul_assoc, ← ofPair_mul]
@@ -218,11 +218,11 @@ theorem lemma34_le {L : Set (FreeMonoid A)} (hpf : PrefixFree L) {e b : TD A}
   exact ⟨⟨hl, hr, hfin, ρ, key⟩, key⟩
 
 /-- **Lemma 34.** -/
-theorem lemma34 {L : Set (FreeMonoid A)} (hpf : PrefixFree L) {e : TD A}
+theorem rel_of_finiteState {L : Set (FreeMonoid A)} (hpf : PrefixFree L) {e : TD A}
     (hl : ∀ s, SetSemiring.Mem s (pl e) → s.1 ∈ L) (hr : ∀ s, SetSemiring.Mem s (pl e) → s.2 ∈ L)
     (hfs : FiniteState e) (hbo : BoundedOutput e) : Rel L e := by
   obtain ⟨b, hb⟩ := (finiteState_iff e).1 hfs
-  exact (lemma34_le hpf hl hr hb hbo).1
+  exact (rel_resid_of_finiteStateLe hpf hl hr hb hbo).1
 
 end TD
 

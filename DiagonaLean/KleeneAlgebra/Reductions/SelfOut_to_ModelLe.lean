@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anonymous
 -/
 
-import DiagonaLean.KleeneAlgebra.TM.Halting
+import DiagonaLean.KleeneAlgebra.Basic
+import DiagonaLean.KleeneAlgebra.MachineEncoding.Halting
 import DiagonaLean.Halt.Undecidable
 import DiagonaLean.Synthetic.Undecidability
 
@@ -120,9 +121,6 @@ theorem not_machineDecidable_of_sepReduces {enc : Y → List Bool} {p : Y → Pr
     (machineDecidable_of_computes_reduction hR (fun _ => Iff.rfl) hp)
 
 /-! ### The theory -/
-
-/-- An instance: two expressions over the doubled alphabet `ℕ ⊕ ℕ`. -/
-abbrev Inst := RExp (ℕ ⊕ ℕ) × RExp (ℕ ⊕ ℕ)
 
 /-- `e ≤ f` is provable in pre-Kleene algebra, with left letters commuting with right letters. -/
 def Provable (i : Inst) : Prop := (mk i.1 : TD ℕ) ≤ mk i.2

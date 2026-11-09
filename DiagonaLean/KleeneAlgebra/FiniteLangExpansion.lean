@@ -6,13 +6,13 @@ Authors: Anonymous
 
 import DiagonaLean.KleeneAlgebra.Syntax
 import DiagonaLean.KleeneAlgebra.SingleStep
-import DiagonaLean.KleeneAlgebra.Theorem6Counterexample
+import DiagonaLean.KleeneAlgebra.FiniteLangCounterexample
 
 @[expose] public section
 
 /-! # Repair of Theorem 6, Corollary 7 and Theorem 9
 
-Theorem 6 fails at `1∗` (`Theorem6Counterexample.lean`): its proof, by induction on terms, has no
+Theorem 6 fails at `1∗` (`FiniteLangCounterexample.lean`): its proof, by induction on terms, has no
 valid star case. The repair restricts to **guarded** terms, where every starred subterm is
 non-nullable (`[e]₀ = 0`). Then the star case goes through: if `e ≠ 0` and `ε ∉ l(e)`, the
 language of `e∗` is infinite, and if `l(e) = ∅` then `e = 0` (Corollary 8) and `e∗ = 1`.
@@ -25,9 +25,9 @@ which the paper uses these results.
 
 ## Main statements
 
-* `TD.theorem6`: a guarded term with finite language is the sum of the strings in its language.
-* `TD.corollary7`: guarded terms with the same finite language are equal.
-* `TD.theorem9`: a guarded term `e` with finite language satisfies `e Σ̈∗ ≤ Σ̈∗`.
+* `TD.eq_sum_of_guarded_of_finite_lang`: a guarded term with finite language is the sum of the strings in its language.
+* `TD.eq_of_guarded_of_lang_eq`: guarded terms with the same finite language are equal.
+* `TD.mul_sigAll_kstar_le_of_guarded`: a guarded term `e` with finite language satisfies `e Σ̈∗ ≤ Σ̈∗`.
 * `TD.guarded_one_kstar`: `1∗` is not guarded, so the counterexample is excluded.
 
 ## References
@@ -77,7 +77,7 @@ variable [DecidableEq A]
 
 /-- **Theorem 6 (repaired).** A guarded term with a finite language is the sum of the strings in
 its language. -/
-theorem theorem6 (r : RExp (A ⊕ A)) (hg : guarded r = true) (hfin : (lng (mk r : TD A)).Finite) :
+theorem eq_sum_of_guarded_of_finite_lang (r : RExp (A ⊕ A)) (hg : guarded r = true) (hfin : (lng (mk r : TD A)).Finite) :
     (mk r : TD A) = ∑ s ∈ hfin.toFinset, ofPair s := by
   induction r with
   | zero =>
@@ -180,17 +180,17 @@ theorem theorem6 (r : RExp (A ⊕ A)) (hg : guarded r = true) (hfin : (lng (mk r
           List.prod_replicate n s⟩
 
 /-- **Corollary 7 (repaired).** Guarded terms with the same finite language are equal. -/
-theorem corollary7 (r₁ r₂ : RExp (A ⊕ A)) (hg₁ : guarded r₁ = true) (hg₂ : guarded r₂ = true)
+theorem eq_of_guarded_of_lang_eq (r₁ r₂ : RExp (A ⊕ A)) (hg₁ : guarded r₁ = true) (hg₂ : guarded r₂ = true)
     (hfin : (lng (mk r₁ : TD A)).Finite) (h : lng (mk r₁ : TD A) = lng (mk r₂)) :
     (mk r₁ : TD A) = mk r₂ := by
-  rw [theorem6 r₁ hg₁ hfin, theorem6 r₂ hg₂ (h ▸ hfin)]
+  rw [eq_sum_of_guarded_of_finite_lang r₁ hg₁ hfin, eq_sum_of_guarded_of_finite_lang r₂ hg₂ (h ▸ hfin)]
   congr 1
   ext s; simp [h]
 
 /-- **Theorem 9 (repaired).** A guarded term `e` with finite language satisfies `e Σ̈∗ ≤ Σ̈∗`. -/
-theorem theorem9 [Fintype A] (r : RExp (A ⊕ A)) (hg : guarded r = true)
+theorem mul_sigAll_kstar_le_of_guarded [Fintype A] (r : RExp (A ⊕ A)) (hg : guarded r = true)
     (hfin : (lng (mk r : TD A)).Finite) : (mk r : TD A) * sigAll∗ ≤ sigAll∗ := by
-  rw [theorem6 r hg hfin, Finset.sum_mul]
+  rw [eq_sum_of_guarded_of_finite_lang r hg hfin, Finset.sum_mul]
   exact sum_le_of_forall _ _ fun s _ => ofPair_mul_kstar_le s
 
 end TD

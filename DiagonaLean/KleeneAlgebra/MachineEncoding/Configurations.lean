@@ -7,6 +7,7 @@ Authors: Anonymous
 import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
 import Mathlib.Algebra.FreeMonoid.Basic
 import Mathlib.Tactic.DeriveFintype
+import DiagonaLean.Foundations.Computability.ListConfig
 
 @[expose] public section
 
@@ -40,6 +41,10 @@ namespace DiagonaLean.KAComm.Enc
 
 open Cslib.Turing
 
+export DiagonaLean.Foundations.Computability (Data Data.Running dstep stk stk_nil stk_cons cfgOf
+  nil_head nil_tail step_cfgOf step_cfgOf_halted dstep_halted iterate_halted
+  exists_iterate_of_reflTransGen initData stk_map_some cfgOf_initData)
+
 /-- The alphabet `Σ` of configuration words. -/
 inductive Letter (Sym St : Type) where
   | lend
@@ -48,17 +53,7 @@ inductive Letter (Sym St : Type) where
   | head (q : Option St) (o : Option Sym)
   deriving DecidableEq, Fintype
 
-variable {Sym : Type} [Inhabited Sym] [Fintype Sym] (M : SingleTapeTM Sym)
-
-/-- A list-level configuration: state (`none` = halted), left cells (nearest first), head
-symbol, right cells (nearest first). -/
-structure Data where
-  state : Option M.State
-  l : List (Option Sym)
-  h : Option Sym
-  r : List (Option Sym)
-
-variable {M}
+variable {Sym : Type} [Inhabited Sym] [Fintype Sym] {M : SingleTapeTM Sym}
 
 /-- Cells as letters. -/
 def cells {St : Type} (a : List (Option Sym)) : List (Letter Sym St) := a.map Letter.cell
@@ -69,95 +64,6 @@ def wd (d : Data M) : List (Letter Sym M.State) :=
 
 /-- The word as an element of the free monoid. -/
 def wdF (d : Data M) : FreeMonoid (Letter Sym M.State) := FreeMonoid.ofList (wd d)
-
-/-- `d` is not halted. -/
-def Data.Running (d : Data M) : Prop := d.state.isSome
-
-instance : DecidablePred (Data.Running (M := M)) :=
-  fun d => inferInstanceAs (Decidable (d.state.isSome = true))
-
-variable (M) in
-/-- The list-level step. -/
-def dstep : Data M → Data M
-  | ⟨none, l, h, r⟩ => ⟨none, l, h, r⟩
-  | ⟨some q, l, h, r⟩ =>
-    match M.tr q h with
-    | (⟨wr, none⟩, q') => ⟨q', l, wr, r⟩
-    | (⟨wr, some .right⟩, q') =>
-      match r with
-      | [] => ⟨q', wr :: l, none, []⟩
-      | r₁ :: r' => ⟨q', wr :: l, r₁, r'⟩
-    | (⟨wr, some .left⟩, q') =>
-      match l with
-      | [] => ⟨q', [], none, wr :: r⟩
-      | l₁ :: l' => ⟨q', l', l₁, wr :: r⟩
-
-/-! ### Decoding to Cslib configurations -/
-
-/-- Decode a cell list to a canonical `StackTape`. -/
-def stk (a : List (Option Sym)) : StackTape Sym := a.foldr StackTape.cons StackTape.nil
-
-omit [Inhabited Sym] [Fintype Sym] in
-@[simp] theorem stk_nil : stk ([] : List (Option Sym)) = StackTape.nil := rfl
-omit [Inhabited Sym] [Fintype Sym] in
-@[simp] theorem stk_cons (o : Option Sym) (a : List (Option Sym)) :
-    stk (o :: a) = StackTape.cons o (stk a) := rfl
-
-/-- The Cslib configuration of `d`. -/
-def cfgOf (d : Data M) : M.Cfg := ⟨d.state, ⟨d.h, stk d.l, stk d.r⟩⟩
-
-omit [Inhabited Sym] [Fintype Sym] in
-theorem nil_head : (StackTape.nil : StackTape Sym).head = none := rfl
-omit [Inhabited Sym] [Fintype Sym] in
-theorem nil_tail : (StackTape.nil : StackTape Sym).tail = StackTape.nil := rfl
-
-/-- **Simulation.** `dstep` implements `SingleTapeTM.step`. -/
-theorem step_cfgOf (d : Data M) (hd : d.Running) : M.step (cfgOf d) = some (cfgOf (dstep M d)) := by
-  obtain ⟨_ | q, l, h, r⟩ := d
-  · exact absurd hd (by simp [Data.Running])
-  · simp only [cfgOf, SingleTapeTM.step, dstep]
-    rcases htr : M.tr q h with ⟨⟨wr, _ | _ | _⟩, q'⟩
-    · simp [htr, BiTape.optionMove, BiTape.write]
-    · cases l <;>
-        simp [htr, BiTape.optionMove, BiTape.write, BiTape.move, BiTape.moveLeft, nil_head, nil_tail]
-    · cases r <;>
-        simp [htr, BiTape.optionMove, BiTape.write, BiTape.move, BiTape.moveRight, nil_head,
-          nil_tail]
-
-theorem step_cfgOf_halted (d : Data M) (hd : ¬ d.Running) : M.step (cfgOf d) = none := by
-  obtain ⟨_ | q, l, h, r⟩ := d
-  · rfl
-  · exact absurd rfl hd
-
-theorem dstep_halted (d : Data M) (hd : ¬ d.Running) : dstep M d = d := by
-  obtain ⟨_ | q, l, h, r⟩ := d
-  · rfl
-  · exact absurd rfl hd
-
-theorem iterate_halted (d : Data M) (hd : ¬ d.Running) (n : ℕ) : (dstep M)^[n] d = d := by
-  induction n with
-  | zero => rfl
-  | succ n ih => rw [Function.iterate_succ_apply, dstep_halted d hd, ih]
-
-/-- **Runs are iterations.** A Cslib run from `cfgOf d` passes only through `dstep`-iterates. -/
-theorem exists_iterate_of_reflTransGen (d : Data M) {c : M.Cfg}
-    (h : Relation.ReflTransGen M.TransitionRelation (cfgOf d) c) :
-    ∃ n, cfgOf ((dstep M)^[n] d) = c := by
-  induction h with
-  | refl => exact ⟨0, rfl⟩
-  | tail _ hbc ih =>
-    obtain ⟨n, hn⟩ := ih
-    refine ⟨n + 1, ?_⟩
-    have hbc' : M.step _ = some _ := hbc
-    have hrun : ((dstep M)^[n] d).Running := by
-      by_contra hr
-      have := step_cfgOf_halted _ hr
-      rw [hn, hbc'] at this
-      cases this
-    have := step_cfgOf _ hrun
-    rw [hn, hbc'] at this
-    rw [Function.iterate_succ_apply']
-    exact (Option.some.inj this).symm
 
 /-! ### Words -/
 

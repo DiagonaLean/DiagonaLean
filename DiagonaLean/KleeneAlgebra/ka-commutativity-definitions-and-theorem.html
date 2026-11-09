@@ -58,7 +58,7 @@
 <main>
 
 <h1>KA with Commutativity: Paper and Lean</h1>
-<p class="byline">2 November 2026 · de Amorim, Zhang, Gaboardi, arXiv:2411.15979 · Lean files under <code>DiagonaLean/KleeneAlgebra/</code></p>
+<p class="byline">2 November 2026, updated 7 November 2026 · de Amorim, Zhang, Gaboardi, arXiv:2411.15979 · Lean files under <code>DiagonaLean/KleeneAlgebra/</code></p>
 
 <p class="lead">This page puts the paper's final theorem (Theorem 18) beside its Lean statements, then lists every definition that statement depends on, each in its paper form and its Lean form. The paper uses two-counter machines; the formalization uses single-tape Turing machines, so the machine-level definitions differ in shape but play the same role.</p>
 
@@ -71,39 +71,41 @@
     <p>Let <span class="math">Σ ≜ {0, 1}</span> be a discrete commutable set. Suppose that we have a diagram of sets in which the language map <span class="math">l : T Σ̈ → L Σ̈</span> factors through <span class="math">l′ : T Σ̈ → X</span>, where <span class="math">l′</span> is computable. Then equality on <span class="math">X</span> is undecidable. In particular, equality is undecidable on <span class="math">T Σ̈</span>, <span class="math">K Σ̈</span> and <span class="math">L Σ̈</span>.</p>
   </div>
   <div class="side lean">
-    <div class="label">Lean, <code>TM/Undecidable.lean</code></div>
-<pre>theorem insepUndecidable_of_between (S : Inst → Prop)
-    (h₁ : ∀ i, Provable i → S i)
-    (h₂ : ∀ i, S i → ModelLe i) : InsepUndecidable S :=
-  ⟨sepReduces_of_between S h₁ h₂⟩
+    <div class="label">Lean, <code>Reductions/SelfOut_to_Eq.lean</code></div>
+<pre>-- the diagram: l factors through l′
+structure LangFactor (X : Type*) where
+  l' : TD ℕ → X
+  g : X → SetSemiring (W ℕ)
+  fac : ∀ a, g (l' a) = pl a
 
-/-- Pre-Kleene algebra with commutativity
-    conditions is undecidable. -/
-theorem insepUndecidable_provable :
-    InsepUndecidable Provable :=
-  insepUndecidable_of_between _ (fun _ h => h)
-    fun _ h => h.modelLe
+-- X₌ on pairs of elements, and on pairs of expressions
+def EqOn (X : Type*) (p : X × X) : Prop := p.1 = p.2
+def EqVia (F : LangFactor X) (i : Inst) : Prop :=
+  F.l' (mk i.1) = F.l' (mk i.2)
 
-theorem insepUndecidable_modelLe :
-    InsepUndecidable ModelLe :=
-  insepUndecidable_of_between _ (fun _ h => h.modelLe)
-    fun _ h => h
+def sepReduces_eqOn (F : LangFactor X) :
+    SepReduces (SelfOut true) (SelfOut false) (EqOn X)
 
-theorem not_machineDecidable_of_between
-    {enc : Inst → List Bool} {R : SingleTapeTM Bool}
-    (hR : ComputesReduction R encodeBoolTM enc kaRed)
-    (S : Inst → Prop)
-    (h₁ : ∀ i, Provable i → S i)
-    (h₂ : ∀ i, S i → ModelLe i) :
-    ¬ MachineDecidable enc S :=
-  not_machineDecidable_of_sepReduces
-    (sepReduces_of_between S h₁ h₂) hR</pre>
+theorem not_machineDecidable_eqOn_of_computes (F : LangFactor X)
+    {enc : X × X → List Bool} {R : SingleTapeTM Bool}
+    (hR : ComputesReduction R encodeBoolTM enc (eta F)) :
+    ¬ MachineDecidable enc (EqOn X)</pre>
   </div>
 </div>
 <div class="note">
-  <p><strong>How they correspond.</strong> The paper's <span class="math">X</span>, sitting between <span class="math">T Σ̈</span> and <span class="math">L Σ̈</span>, becomes a theory <code>S</code> with <code>Provable ⊆ S ⊆ ModelLe</code>. Taking <code>S = Provable</code> is the <span class="math">T Σ̈</span> case and <code>S = ModelLe</code> is the <span class="math">L Σ̈</span> case. KA lies in between, because the language model is a Kleene algebra in which the commutations hold.</p>
-  <p>"Equality on <span class="math">X</span> is undecidable" is stated two ways. <code>InsepUndecidable S</code> is unconditional and synthetic: a reduction built from data sends the inseparable pair into and out of <code>S</code>. <code>¬ MachineDecidable enc S</code> says no Turing machine decides <code>S</code>, under the hypothesis that some machine computes <code>kaRed</code>. The paper's proof assumes this computability step without proof.</p>
-  <p>The paper decides <em>equality</em>, by sending <span class="math">⟨M, n⟩</span> to <span class="math">⟨l′(e<sub>L</sub> + e<sub>R</sub>), l′(e<sub>R</sub>)⟩</span>. Lean decides the inequality <span class="math">e<sub>L</sub> ≤ e<sub>R</sub></span> directly, which is the same thing in an idempotent semiring.</p>
+  <p><strong>How they correspond.</strong> The paper's diagram is <code>LangFactor X</code>. An instance is a pair of expressions, and the same reduction <code>eqRed M = (eL + eR, eR)</code> serves every <span class="math">X</span>. Each named case is an instance of the diagram, and equality in it unfolds to the following.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Paper</th><th>Lean <code>X</code></th><th>Equality on expressions</th><th>Statement</th></tr></thead>
+    <tbody>
+      <tr><td><span class="math">T Σ̈</span></td><td><code>TD ℕ</code></td><td><code>Equiv DComm e f</code></td><td><code>termEq_separated</code></td></tr>
+      <tr><td><span class="math">K Σ̈</span></td><td><code>FreeKA (ℕ ⊕ ℕ) DComm</code></td><td><code>KAEquiv DComm e f</code></td><td><code>kaTermEq_separated</code></td></tr>
+      <tr><td><span class="math">L Σ̈</span></td><td><code>SetSemiring (W ℕ)</code></td><td><code>pl (mk e) = pl (mk f)</code></td><td><code>langEq_separated</code></td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Inequality and equality.</strong> <code>Reductions/SelfOut_to_ModelLe.lean</code> states the result for inequalities, and these lemmas connect the two forms through <span class="math">e ≤ f ⇔ e + f = f</span>: <code>provable_iff_equiv</code> for <span class="math">T Σ̈</span>, <code>kaProvable_iff_le</code> for <span class="math">K Σ̈</span>, and <code>modelLe_iff_langEq</code> for the language model. <code>insepUndecidable_of_between</code> covers any theory <code>S</code> with <code>Provable ⊆ S ⊆ ModelLe</code>, and <code>insepUndecidable_kaProvable</code> proves that Kleene algebra is one of them.</p>
+  <p><strong>What "undecidable" means here.</strong> <code>InsepUndecidable</code> and <code>SepReduces</code> are not undecidability on their own, because they do not ask that the separating function be computable. Classically, such a function exists for any predicate with both a true and a false instance. What carries over to computation is that the reduction is the concrete <code>eqRed</code>, together with <code>not_machineDecidable_eqOn_of_computes</code> and <code>not_machineDecidable_eqVia_of_computes</code>. These conclude that no Turing machine decides equality, given a machine that computes the reduction. That machine is not constructed. The paper asserts that <span class="math">η</span> is computable, without giving the machine.</p>
+  <p><strong>In the synthetic framework.</strong> DiagonaLean's <code>Undecidable p</code> means <code>HALT ⪯ₘ p</code>. For the language model this holds for the failure of equality: <code>undecidable_not_langEq</code>. For <span class="math">T Σ̈</span> and <span class="math">K Σ̈</span>, <code>HALT ⪯ₘ</code> equality is not formalized (<code>GAPS.md</code>, item 2). What is proved for them is that <code>SelfEq F</code>, the machines <code>M</code> with <code>eqRed M</code> true in <span class="math">X</span>, reduces to equality on <span class="math">X</span> (<code>selfEq_reduces</code>) and has no machine decider, with no computability hypothesis (<code>not_machineDecidable_selfEq</code>, <code>not_machineDecidable_termEq</code>, <code>not_machineDecidable_kaTermEq</code>).</p>
+  <p><strong>Alphabet.</strong> The paper fixes <span class="math">Σ = {0, 1}</span>. Lean uses the infinite alphabet <span class="math">ℕ</span>, so the result over a two-letter alphabet is not formalized (<code>GAPS.md</code>, item 1a).</p>
 </div>
 
 <h3>The proof, as in the paper</h3>
@@ -116,7 +118,7 @@ theorem not_machineDecidable_of_between
     <p>A decider for <span class="math">X</span> composed with <span class="math">η</span> would separate <span class="math">A</span> and <span class="math">B</span>, contradicting Theorem 17.</p>
   </div>
   <div class="side lean">
-    <div class="label">Lean, <code>TM/Undecidable.lean</code></div>
+    <div class="label">Lean, <code>Reductions/SelfOut_to_ModelLe.lean</code>, <code>Reductions/SelfOut_to_Eq.lean</code></div>
 <pre>def kaRed (M : EncodableTM Bool) : Inst :=
   letI := M.stateEncodable
   letI : DecidableEq M.State :=
@@ -160,11 +162,28 @@ theorem not_machineDecidable_of_sepReduces
     ¬ MachineDecidable enc p := fun hp =>
   selfOut_inseparable (S := p ∘ r.f) ⟨r.pos, r.neg⟩
     (machineDecidable_of_computes_reduction hR
-      (fun _ => Iff.rfl) hp)</pre>
+      (fun _ => Iff.rfl) hp)
+
+-- from ≤ to = (Reductions/SelfOut_to_Eq.lean)
+def eqRed (M : EncodableTM Bool) : Inst :=
+  (plus (kaRed M).1 (kaRed M).2, (kaRed M).2)
+
+theorem eqVia_eqRed_pos (F : LangFactor X)
+    {M : EncodableTM Bool} (h : SelfOut true M) :
+    EqVia F (eqRed M) :=
+  congrArg F.l' (add_eq_right_iff_le.2 (kaRed_pos h))
+
+theorem eqVia_eqRed_neg (F : LangFactor X)
+    {M : EncodableTM Bool} (h : SelfOut false M) :
+    ¬ EqVia F (eqRed M) := fun hEq => by
+  have hl := congrArg F.g hEq
+  rw [F.fac, F.fac] at hl
+  refine kaRed_neg h (add_eq_right_iff_le.1 ?_)
+  rwa [eqRed, mk_plus, pl_add] at hl</pre>
   </div>
 </div>
 <div class="note">
-  <p><code>kaRed</code> is the paper's <span class="math">η</span>. The two letter-renaming lemmas (<code>le_map</code>, <code>pl_le_of_map</code>) do the job of the paper's "find a suitable encoding of the characters of <span class="math">Σ<sub>M</sub></span> as binary strings": letters are renamed to natural numbers, which preserves provability and reflects model inclusion. <code>ρ_M</code> is computed from the syntax (see "Residue" below), so <code>kaRed</code> is an executable Lean function.</p>
+  <p><code>kaRed</code> computes the paper's <span class="math">e<sub>L</sub></span> and <span class="math">e<sub>R</sub></span>, and <code>eqRed</code> is the paper's <span class="math">η</span> on expressions. The two letter-renaming lemmas (<code>le_map</code>, <code>pl_le_of_map</code>) do the job of the paper's "find a suitable encoding of the characters of <span class="math">Σ<sub>M</sub></span> as binary strings": letters are renamed to natural numbers, which preserves provability and reflects model inclusion. <code>ρ_M</code> is computed from the syntax (see "Residue" below), so <code>kaRed</code> is an executable Lean function.</p>
 </div>
 
 <h2>The three theorems Theorem 18 uses</h2>
@@ -178,7 +197,7 @@ theorem not_machineDecidable_of_sepReduces
     <p>(The proof of Theorem 18 only uses that they are computably inseparable.)</p>
   </div>
   <div class="side lean">
-    <div class="label">Lean, <code>TM/Undecidable.lean</code></div>
+    <div class="label">Lean, <code>Reductions/SelfOut_to_ModelLe.lean</code></div>
 <pre>/-- `M` halts on its own code with output `[b]`. -/
 def SelfOut (b : Bool) (M : EncodableTM Bool) : Prop :=
   M.toSingleTapeTM.Outputs (encodeBoolTM M) [b]
@@ -211,7 +230,7 @@ theorem selfOut_inseparable {S : EncodableTM Bool → Prop}
     <p>where <span class="math">Σ<sup>≠</sup><sub>M</sub> ≜ Σ<sub>x≠y</sub> x<sub>l</sub> y<sub>r</sub></span>. If <span class="math">s →*<sub>R<sub>M</sub></sub> c<sub>x</sub></span>, then <span class="math">x = 1</span>.</p>
   </div>
   <div class="side lean">
-    <div class="label">Lean, <code>TM/Syntax.lean</code> and <code>TM/Theorem15.lean</code></div>
+    <div class="label">Lean, <code>MachineEncoding/MachineTerms.lean</code> and <code>MachineEncoding/LanguageSoundness.lean</code></div>
 <pre>/-- If M outputs [b] on input with b ≠ a, the
     inequality fails in the language model. -/
 theorem not_pl_le_of_outputs {input : List Sym}
@@ -221,7 +240,7 @@ theorem not_pl_le_of_outputs {input : List Sym}
         pl (mk (rhsS M a))
 
 -- the algebraic form, for a run d₀ → … → dₙ
-theorem theorem15 (d₀ : Data M) (n : ℕ)
+theorem wdF_eq_of_pl_le (d₀ : Data M) (n : ℕ)
     (hrun : ∀ i < n, ((dstep M)^[i] d₀).Running)
     (hhalt : ¬ ((dstep M)^[n] d₀).Running)
     (t : FreeMonoid (Letter Sym M.State))
@@ -240,7 +259,7 @@ theorem theorem15 (d₀ : Data M) (n : ℕ)
     <p>(The left side should read <span class="math">s<sub>r</sub> R<sub>M</sub>*</span>, as in Theorem 15.)</p>
   </div>
   <div class="side lean">
-    <div class="label">Lean, <code>TM/Syntax.lean</code> and <code>TM/Theorem16.lean</code></div>
+    <div class="label">Lean, <code>MachineEncoding/MachineTerms.lean</code> and <code>MachineEncoding/TraceCompleteness.lean</code></div>
 <pre>/-- If M outputs [a] on input, lhs ≤ rhs is
     provable in T Σ̈. -/
 theorem le_of_outputs {input : List Sym} {a : Sym}
@@ -248,7 +267,7 @@ theorem le_of_outputs {input : List Sym} {a : Sym}
     (mk (lhsS M input) : TD _) ≤ mk (rhsS M a)
 
 -- the algebraic form, with an explicit residue
-theorem theorem16_le {b : TD (Letter Sym M.State)}
+theorem le_err_of_halting_run {b : TD (Letter Sym M.State)}
     (hb : FiniteStateLe (RM M) b) :
     ∀ (d₀ : Data M) (n : ℕ),
     (∀ i < n, ((dstep M)^[i] d₀).Running) →
@@ -307,6 +326,36 @@ def FreePreKA (X : Type*) (C : X → X → Prop) : Type _ :=
   </div>
 </div>
 <div class="note"><p>Lean builds <span class="math">T X</span> concretely, as syntax modulo provable equality, instead of through the adjunctions of Figure 1. The universal property is <code>FreePreKA.lift</code>.</p></div>
+
+<h3>The free Kleene algebra <span class="math">K X</span> with commutation</h3>
+<div class="pair">
+  <div class="side paper">
+    <div class="label">Paper, §2 and Theorem 18</div>
+    <p><span class="math">K X</span> is the free Kleene algebra on the commutable set <span class="math">X</span>. The language interpretation <span class="math">l</span> factors as <span class="math">T X → K X → L X</span>.</p>
+  </div>
+  <div class="side lean">
+    <div class="label">Lean, <code>FreeKA.lean</code></div>
+<pre>inductive KAEquiv (C : X → X → Prop) :
+    RExp X → RExp X → Prop where
+  | ofEquiv {e f} : Equiv C e f → KAEquiv C e f
+  | symm | trans | plus | mul | star  -- congruence
+  | kstar_mul_le (e) :
+      KAEquiv C (plus (mul (star e) e) (star e)) (star e)
+  | mul_kstar_le_self {a b} :
+      KAEquiv C (plus (mul b a) b) b →
+      KAEquiv C (plus (mul b (star a)) b) b
+  | kstar_mul_le_self {a b} :
+      KAEquiv C (plus (mul a b) b) b →
+      KAEquiv C (plus (mul (star a) b) b) b
+
+def FreeKA (X) (C) := Quotient (RExp.kaSetoid C)
+instance : KleeneAlgebra (FreeKA X C)
+
+theorem plK_ofPre (a : TD A) :
+    plK (FreeKA.ofPre a) = pl a</pre>
+  </div>
+</div>
+<div class="note"><p><code>KleeneAlgebra</code> is Mathlib's class, and <code>FreeKA.lift</code> maps into any Kleene algebra whose generators commute as required. <code>SetSemiring.instKleeneAlgebra</code> makes the language model a Kleene algebra, which gives <code>plK</code>.</p></div>
 
 <h3>The doubled alphabet <span class="math">Σ̈</span></h3>
 <div class="pair">
@@ -381,7 +430,7 @@ def sigAll : TD A := ∑ x, of x                  -- Σ̈</pre>
     <p class="math">Σ<sub>M</sub> ≜ Q<sub>M</sub> + {a, b, c<sub>0</sub>, c<sub>1</sub>}<br>C<sub>M</sub> ≜ a* b* Q<sub>M</sub> (running configurations)<br>T<sub>M</sub> ≜ C<sub>M</sub> + {c<sub>0</sub>, c<sub>1</sub>} (all configurations)</p>
   </div>
   <div class="side lean">
-    <div class="label">Lean, <code>TM/Encoding.lean</code>, <code>TM/Theorem16.lean</code></div>
+    <div class="label">Lean, <code>MachineEncoding/Configurations.lean</code>, <code>MachineEncoding/TraceCompleteness.lean</code></div>
 <pre>-- machines: Cslib's SingleTapeTM Sym
 inductive Letter (Sym St : Type) where
   | lend | rend                              -- ⊢ ⊣
@@ -420,7 +469,7 @@ noncomputable def haltT (a : Sym) : TD (Letter Sym M.State) :=
     <p class="math">R<sub>M</sub> ≜ Σ { ⟦ι(q)⟧ q<sub>l</sub> | q ∈ Q<sub>M</sub> }.</p>
   </div>
   <div class="side lean">
-    <div class="label">Lean, <code>TM/Transition.lean</code></div>
+    <div class="label">Lean, <code>MachineEncoding/Transition.lean</code></div>
 <pre>/-- Copy one tape cell. -/
 noncomputable def C : TD (Letter Sym M.State) :=
   cpf fun o : Option Sym => Letter.cell o
@@ -452,7 +501,7 @@ noncomputable def RM : TD (Letter Sym M.State) :=
     <p>A term <span class="math">e</span> is a representable relation on <span class="math">L</span> if, among other conditions, there exists some residue term <span class="math">ρ</span> such that <span class="math">Λ<sub>r</sub> e ≤ Λ Next<sub>e</sub>(Λ)<sub>r</sub> + Σ* Σ<sup>≠</sup> ρ</span> for every finite <span class="math">Λ</span>. Theorem 16 says "we can compute a term <span class="math">ρ</span>".</p>
   </div>
   <div class="side lean">
-    <div class="label">Lean, <code>TM/Syntax.lean</code></div>
+    <div class="label">Lean, <code>MachineEncoding/MachineTerms.lean</code></div>
 <pre>/-- The residue ρ_M = Σ̈* bnd(R_M) R_M*, as syntax. -/
 def rhoS : Ex M :=
   mul (mul (star (sigAllS M)) (bnd (rmS M))) (star (rmS M))
@@ -476,7 +525,7 @@ def lhsS (input : List Sym) : Ex M :=
     <p>Objects are encoded as natural numbers <span class="math">⟨x⟩</span>. Equality on <span class="math">X</span> is decidable if there is a decider <span class="math">d : Σ* → {0, 1}</span> for <span class="math">X<sub>=</sub> ≜ {⟨x, y⟩ | x and y encode the same element of X}</span>. Two sets are computably inseparable if no total computable function distinguishes them.</p>
   </div>
   <div class="side lean">
-    <div class="label">Lean, <code>Synthetic/Definitions.lean</code>, <code>TM/Undecidable.lean</code></div>
+    <div class="label">Lean, <code>Synthetic/Definitions.lean</code>, <code>Reductions/SelfOut_to_ModelLe.lean</code></div>
 <pre>-- the library's notion: a Turing-machine decider
 def MachineDecidable (enc : X → List Bool)
     (P : X → Prop) : Prop :=
@@ -499,7 +548,7 @@ def InsepUndecidable (p : Y → Prop) : Prop :=
   Nonempty (SepReduces (SelfOut true) (SelfOut false) p)</pre>
   </div>
 </div>
-<div class="note"><p>The paper uses the alphabet <span class="math">Σ = {0, 1}</span> and encodes each machine's letters as binary strings. Lean uses <span class="math">ℕ ⊕ ℕ</span> letters and renames each machine's letters by their <code>Encodable</code> codes; the effect is the same.</p></div>
+<div class="note"><p>The paper uses the alphabet <span class="math">Σ = {0, 1}</span> and encodes each machine's letters as binary strings. Lean uses <span class="math">ℕ ⊕ ℕ</span> letters and renames each machine's letters by their <code>Encodable</code> codes. This gives the result over the infinite alphabet <span class="math">ℕ</span>, not over <span class="math">{0, 1}</span>; see <code>GAPS.md</code>, item 1a. <code>InsepUndecidable</code> does not require a computable reduction; see the note under Theorem 18.</p></div>
 
 <h2>Beyond the paper: a HALT reduction</h2>
 <p>The library's own notion, <code>Undecidable p := Nonempty (HALT ⪯ₘ p)</code>, needs a reduction that is also correct for machines that never halt. The paper gives none. Dropping <span class="math">T<sub>a</sub></span> from the right-hand side gives one, but to the <em>failure</em> of model inclusion, not to provability.</p>
@@ -509,7 +558,7 @@ def InsepUndecidable (p : Y → Prop) : Prop :=
     <p>Theorem 19: if equality on <span class="math">X</span> is recursively enumerable, it is <span class="math">Σ⁰₁</span>-complete, so a reduction from HALT exists. The proof cites folklore results from Kuznetsov on effectively inseparable sets and builds no explicit reduction. Lean does not formalize Theorem 19; its HALT reduction targets the failure of model inclusion instead.</p>
   </div>
   <div class="side lean">
-    <div class="label">Lean, <code>TM/Halting.lean</code>, <code>TM/Undecidable.lean</code></div>
+    <div class="label">Lean, <code>MachineEncoding/Halting.lean</code>, <code>Reductions/SelfOut_to_ModelLe.lean</code></div>
 <pre>theorem halts_iff_not_pl_le (w : List Sym)
     {ρ : TD (Letter Sym M.State)}
     (hρ : pl (sigAll : TD _)∗ ≤ pl ρ) :

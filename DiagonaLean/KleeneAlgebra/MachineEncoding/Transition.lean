@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anonymous
 -/
 
-import DiagonaLean.KleeneAlgebra.TM.Encoding
+import DiagonaLean.KleeneAlgebra.MachineEncoding.Configurations
 import DiagonaLean.KleeneAlgebra.Copy
 import DiagonaLean.KleeneAlgebra.SingleStep
 
@@ -193,7 +193,7 @@ variable [DecidableEq Sym] [DecidableEq M.State]
 `R_M` is a representable relation on configuration words with residue `Σ̈∗ b`. -/
 theorem rel_RM_le {b : TD (Letter Sym M.State)} (hb : FiniteStateLe (RM M) b) :
     ∃ h : Rel (Lset M) (RM M), h.ResidBy (sigAll∗ * b) := by
-  refine lemma34_le ?_ ?_ ?_ hb ⟨1, ?_⟩
+  refine rel_resid_of_finiteStateLe ?_ ?_ ?_ hb ⟨1, ?_⟩
   · rintro _ ⟨d, rfl⟩ _ ⟨d', rfl⟩ h
     exact congrArg wdF (prefixFree h)
   · intro s hs

@@ -23,7 +23,7 @@ the same bound (Lemma 31).
 * `TD.Fanout`, `TD.BoundedOutput`: Definition 28.
 * `TD.Fanout.next_finite`: Lemma 29.
 * `TD.Fanout.zero/one/of/add/mul/kstar`: Lemma 30.
-* `TD.IsAutomaton.lemma31`: Lemma 31.
+* `TD.IsAutomaton.exists_fanout_expansion`: Lemma 31.
 
 ## References
 
@@ -127,7 +127,7 @@ variable [Fintype A]
 
 /-- **Lemma 31.** A bounded-output state of an automaton has a fanout `k` such that, for every
 `n`, its expansion of depth `n` only uses prefixes `s` with `|π_r s| ≤ (|π_l s| + 1) k`. -/
-theorem IsAutomaton.lemma31 {S : Finset (TD A)} (hS : IsAutomaton S) {e : TD A} (he : e ∈ S)
+theorem IsAutomaton.exists_fanout_expansion {S : Finset (TD A)} (hS : IsAutomaton S) {e : TD A} (he : e ∈ S)
     {k₀ : ℕ} (hk₀ : Fanout e k₀) : ∃ k, Fanout e k ∧ ∀ n, ∃ (B T : Finset (W A))
       (es : W A → TD A), (∀ s, s ∈ B ↔ ofPair s ≤ e ∧ size s < n) ∧
       (∀ s ∈ T, size s = n ∧ s.2.length ≤ (s.1.length + 1) * k) ∧ (∀ s, es s ∈ S) ∧

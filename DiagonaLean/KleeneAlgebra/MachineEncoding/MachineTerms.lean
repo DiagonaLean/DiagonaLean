@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Anonymous
 -/
 
-import DiagonaLean.KleeneAlgebra.TM.Theorem15
+import DiagonaLean.KleeneAlgebra.MachineEncoding.LanguageSoundness
 import DiagonaLean.KleeneAlgebra.Syntax
 import Mathlib.Tactic.DeriveEncodable
 
@@ -359,7 +359,7 @@ theorem le_of_outputs {input : List Sym} {a : Sym} (h : M.Outputs input [a]) :
     (mk (lhsS M input) : TD _) ≤ mk (rhsS M a) := by
   rw [mk_lhsS, mk_rhsS]
   obtain ⟨m, hlt, hm, hcfg⟩ := exists_halting_trace h
-  exact (theorem16_le finiteStateLe_RM _ m hlt hm).trans
+  exact (le_err_of_halting_run finiteStateLe_RM _ m hlt hm).trans
     (add_le_add (mul_le_mul' le_rfl (add_le_add le_rfl (R_wdF_le_haltT hcfg))) le_rfl)
 
 /-- If `M` outputs `[b]` on `input` with `b ≠ a`, then `lhs ≤ rhs` fails in the language model

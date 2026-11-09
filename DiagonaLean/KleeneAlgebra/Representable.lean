@@ -35,8 +35,8 @@ this bound through `e∗`, and Theorem 22 is the terminating case.
 ## Main statements
 
 * `TD.Rel`: Definition 20.
-* `TD.Rel.lemma21`: Lemma 21.
-* `TD.Rel.theorem22`: Theorem 22.
+* `TD.Rel.le_below_add_iter`: Lemma 21.
+* `TD.Rel.le_below_of_iter_eq_empty`: Theorem 22.
 
 ## References
 
@@ -151,7 +151,7 @@ noncomputable def below : ℕ → Finset (FreeMonoid A) → Finset (FreeMonoid A
   | n + 1, Λ => Λ ∪ below n (h.next Λ)
 
 /-- **Lemma 21**, for a given residue `ρ'`: the bound holds with `ρ = ρ' e∗`. -/
-theorem lemma21 {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ) (Λ : Finset (FreeMonoid A)),
+theorem le_below_add_iter {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ) (Λ : Finset (FreeMonoid A)),
     ↑Λ ⊆ L →
     rtS Λ * e∗ ≤ sig∗ * rtS (h.below n Λ) + sig∗ * rtS (h.iter n Λ) * e∗ + err (ρ' * e∗) := by
   intro n
@@ -200,10 +200,10 @@ theorem lemma21 {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ) (Λ : Finset
 
 /-- **Theorem 22.** If `Nextⁿ_e(Λ) = ∅`, then `Λ_r e∗ ≤ Σ∗ Next^{<n}_e(Λ)_r + Σ∗ Σ^≠ ρ`, with
 `ρ = ρ' e∗` for any residue `ρ'` of `e`. -/
-theorem theorem22 {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ) (Λ : Finset (FreeMonoid A)),
+theorem le_below_of_iter_eq_empty {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ) (Λ : Finset (FreeMonoid A)),
     ↑Λ ⊆ L → h.iter n Λ = ∅ → rtS Λ * e∗ ≤ sig∗ * rtS (h.below n Λ) + err (ρ' * e∗) := by
   intro n Λ hΛ hn
-  have := h.lemma21 hρ' n Λ hΛ
+  have := h.le_below_add_iter hρ' n Λ hΛ
   rwa [hn, rtS_empty, mul_zero, zero_mul, add_zero] at this
 
 end Rel

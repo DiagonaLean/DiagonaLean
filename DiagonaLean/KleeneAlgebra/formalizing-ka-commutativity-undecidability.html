@@ -69,14 +69,14 @@
 <table>
 <thead><tr><th>Result</th><th>Lean name</th><th>File</th></tr></thead>
 <tbody>
-<tr><td>Pre-KA with commutativity is undecidable (via the inseparable pair)</td><td><code>insepUndecidable_provable</code></td><td><code>TM/Undecidable.lean</code></td></tr>
-<tr><td>Every theory between pre-KA provability and the language model is undecidable, KA included</td><td><code>insepUndecidable_of_between</code></td><td><code>TM/Undecidable.lean</code></td></tr>
-<tr><td>HALT many-one reduces to failure of language-model inclusion</td><td><code>undecidable_not_modelLe</code>, <code>haltReduces</code></td><td><code>TM/Undecidable.lean</code></td></tr>
-<tr><td>No Turing machine decides such a theory, assuming a TM computes the reduction</td><td><code>not_machineDecidable_of_between</code></td><td><code>TM/Undecidable.lean</code></td></tr>
-<tr><td>Outputs <code>[true]</code> vs <code>[false]</code> on own code is computably inseparable</td><td><code>selfOut_inseparable</code></td><td><code>TM/Undecidable.lean</code></td></tr>
-<tr><td>Theorem 15 (soundness)</td><td><code>theorem15</code></td><td><code>TM/Theorem15.lean</code></td></tr>
-<tr><td>Theorem 16 (completeness), with explicit residue</td><td><code>theorem16</code>, <code>theorem16_le</code></td><td><code>TM/Theorem16.lean</code></td></tr>
-<tr><td>Theorems 6, 9 and Corollary 7, repaired for guarded terms</td><td><code>theorem6</code>, <code>theorem9</code>, <code>corollary7</code></td><td><code>Theorem6Repair.lean</code></td></tr>
+<tr><td>Pre-KA with commutativity is undecidable (via the inseparable pair)</td><td><code>insepUndecidable_provable</code></td><td><code>Reductions/SelfOut_to_ModelLe.lean</code></td></tr>
+<tr><td>Every theory between pre-KA provability and the language model is undecidable, KA included</td><td><code>insepUndecidable_of_between</code></td><td><code>Reductions/SelfOut_to_ModelLe.lean</code></td></tr>
+<tr><td>HALT many-one reduces to failure of language-model inclusion</td><td><code>undecidable_not_modelLe</code>, <code>haltReduces</code></td><td><code>Reductions/SelfOut_to_ModelLe.lean</code></td></tr>
+<tr><td>No Turing machine decides such a theory, assuming a TM computes the reduction</td><td><code>not_machineDecidable_of_between</code></td><td><code>Reductions/SelfOut_to_ModelLe.lean</code></td></tr>
+<tr><td>Outputs <code>[true]</code> vs <code>[false]</code> on own code is computably inseparable</td><td><code>selfOut_inseparable</code></td><td><code>Reductions/SelfOut_to_ModelLe.lean</code></td></tr>
+<tr><td>Theorem 15 (soundness)</td><td><code>wdF_eq_of_pl_le</code></td><td><code>MachineEncoding/LanguageSoundness.lean</code></td></tr>
+<tr><td>Theorem 16 (completeness), with explicit residue</td><td><code>exists_le_err_of_halting_run</code>, <code>le_err_of_halting_run</code></td><td><code>MachineEncoding/TraceCompleteness.lean</code></td></tr>
+<tr><td>Theorems 6, 9 and Corollary 7, repaired for guarded terms</td><td><code>eq_sum_of_guarded_of_finite_lang</code>, <code>mul_sigAll_kstar_le_of_guarded</code>, <code>eq_of_guarded_of_lang_eq</code></td><td><code>FiniteLangExpansion.lean</code></td></tr>
 </tbody>
 </table>
 </div>
@@ -161,7 +161,7 @@
 <li><strong>M halts.</strong> The string recording the run up to the halted configuration has its left part a prefix of its right part, so it avoids the error term. Its last word is a halted configuration, so it is not in <code>C_M</code>. This is the paper's soundness argument (Theorem 15).</li>
 <li><strong>M runs forever.</strong> This case is new. Every string of the left side either follows the actual run, so it has the form <code>(u, u·c)</code> with <code>c</code> a running configuration, which lies in <code>Σ* (C_M)_r</code>. Otherwise it takes a wrong step at some point. Configuration words are prefix-free, so the two sides then disagree at some letter, which puts the string in <code>Σ* Σ^≠ Σ̈*</code> (Lemma 33).</li>
 </ul>
-<p>The machine-level statement is <code>Enc.halts_iff_not_pl_le</code> in <code>TM/Halting.lean</code>, with the new case in <code>Enc.pl_le_of_forall_running</code>. It does not give <code>HALT ⪯ₘ Provable</code>: for a machine that runs forever, the inequality holds in the model, but neither the paper nor this development settles whether pre-KA proves it.</p>
+<p>The machine-level statement is <code>Enc.halts_iff_not_pl_le</code> in <code>MachineEncoding/Halting.lean</code>, with the new case in <code>Enc.pl_le_of_forall_running</code>. It does not give <code>HALT ⪯ₘ Provable</code>: for a machine that runs forever, the inequality holds in the model, but neither the paper nor this development settles whether pre-KA proves it.</p>
 
 <h2>Departures from the paper</h2>
 <p>Three stated results are false, and one definition and one proof needed changes. None of these affects the main theorem.</p>
@@ -169,7 +169,7 @@
 <table>
 <thead><tr><th>Paper</th><th>Issue</th><th>What we did</th></tr></thead>
 <tbody>
-<tr><td>Theorem 6, Corollary 7, Theorem 9</td><td>False at <code>e = 1*</code>: its language is <code>{ε}</code>, but <code>1* ≠ 1</code>, shown by mapping into the paper's own Example 1</td><td>Proved the negations (<code>Theorem6Counterexample.lean</code>), and proved all three for <em>guarded</em> terms, where every starred subterm is non-nullable (<code>Theorem6Repair.lean</code>)</td></tr>
+<tr><td>Theorem 6, Corollary 7, Theorem 9</td><td>False at <code>e = 1*</code>: its language is <code>{ε}</code>, but <code>1* ≠ 1</code>, shown by mapping into the paper's own Example 1</td><td>Proved the negations (<code>FiniteLangCounterexample.lean</code>), and proved all three for <em>guarded</em> terms, where every starred subterm is non-nullable (<code>FiniteLangExpansion.lean</code>)</td></tr>
 <tr><td>Corollary 8</td><td>True, but its proof goes through the false Corollary 7</td><td>Reproved directly by induction on syntax</td></tr>
 <tr><td>Definition 20</td><td>Asks for the residue bound for every finite <code>Λ</code>; Lemma 34 can only supply it for <code>Λ ⊆ L</code></td><td>Restricted to <code>Λ ⊆ L</code>; Lemma 21 only uses it there</td></tr>
 <tr><td>Lemma 34</td><td>Step (4) needs only <code>≤</code>, so no reindexing bijection; Lemma 33 must keep its right context, since pre-KA cannot absorb strings to the right of <code>Σ̈*</code></td><td>Simplified proof; Lemma 33 stated with a right context</td></tr>
