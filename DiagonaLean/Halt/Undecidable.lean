@@ -353,4 +353,15 @@ theorem not_machineDecidable_of_computes_reduction
     ¬ MachineDecidable enc2 Q :=
   fun hQ => hP (machineDecidable_of_computes_reduction hR hf hQ)
 
+/-- Undecidability of any problem `Q` from a computable reduction of the halting problem:
+if a TM `R` computes `f : HaltProblem ⪯ₘ[f] Q` (from `haltInputEncoding` to `enc`), then `Q`
+is not machine-decidable. Combines `not_machineDecidable_of_computes_reduction` with
+`halt_not_machinedecidable`. -/
+theorem not_machineDecidable_of_halt_reduces
+    {enc : Y → List Bool} {Q : Y → Prop}
+    {R : SingleTapeTM Bool} {f : EncodableTM Bool × List Bool → Y}
+    (hR : ComputesReduction R haltInputEncoding enc f) (hf : HaltProblem ⪯ₘ[f] Q) :
+    ¬ MachineDecidable enc Q :=
+  not_machineDecidable_of_computes_reduction hR hf halt_not_machinedecidable
+
 end DiagonaLean.Halt.Undecidable
