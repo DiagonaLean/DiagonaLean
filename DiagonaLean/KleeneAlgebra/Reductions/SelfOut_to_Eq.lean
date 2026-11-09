@@ -37,7 +37,7 @@ applying `g` would give `l(eL) + l(eR) = l(eR)`, which is `ModelLe (eL, eR)`, co
   separation statements. See the warning below.
 * `provable_iff_equiv`, `modelLe_iff_langEq`, `kaProvable_iff_le`: inequalities as equalities.
 * `insepUndecidable_kaProvable`: the Kleene algebra case of `insepUndecidable_of_between`.
-* `undecidable_not_eqVia`, `undecidable_not_langEq`: `Undecidable`, through `HALT ⪯ₘ`.
+* `undecidable_not_eqVia`, `undecidable_not_langEq`: `Undecidable`, through `HaltProblem ⪯ₘ`.
 * `selfEq_reduces`, `not_machineDecidable_selfEq`, `not_machineDecidable_termEq`,
   `not_machineDecidable_kaTermEq`: no machine decides the problem on machine codes.
 
@@ -62,8 +62,8 @@ open scoped Computability
 
 namespace DiagonaLean.KAComm.Undec
 
-open Cslib.Turing SingleTapeTM DiagonaLean.Halt.Encoding DiagonaLean.Halt.Undecidable
-  DiagonaLean.Synthetic.Definitions RExp TD FreePreKA
+open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding
+  DiagonaLean.Halt.Undecidable DiagonaLean.Synthetic.Definitions RExp TD FreePreKA
 
 variable {X : Type*}
 
@@ -190,19 +190,19 @@ theorem insepUndecidable_kaProvable : InsepUndecidable KAProvable :=
 
 /-! ### In the synthetic framework
 
-`Undecidable p` is `Nonempty (HALT ⪯ₘ p)`, which asks for an exact `HALT x ↔ p (f x)`. The two
-sides of the paper's theory need different treatment.
+`Undecidable p` is `Nonempty (HaltProblem ⪯ₘ p)`, which asks for an exact `HaltProblem x ↔ p (f x)`.
+The two sides of the paper's theory need different treatment.
 
 * **Language equality.** For a diverging machine the inequality holds in the language model, so
   halting is exactly its failure. This gives `Undecidable` for the complement of equality on any
   `X` whose equality agrees with language equality (`undecidable_not_eqVia`,
   `undecidable_not_langEq`).
 * **`T Σ̈` and `K Σ̈`.** `eqRed` is only known to behave on machines that output a bit, so it gives
-  no many-one reduction from `HALT`. We instead take the source problem `SelfEq F`, the machines
-  `M` with `eqRed M` true in `X`. It many-one reduces to equality on `X` (`selfEq_reduces`), and no
-  Turing machine decides it (`not_machineDecidable_selfEq`), with no computability hypothesis. This
-  is the set `A'` of the paper's Theorem 19. `HALT ⪯ₘ` equality on `T Σ̈` or `K Σ̈` is `GAPS.md`,
-  item 2. -/
+  no many-one reduction from `HaltProblem`. We instead take the source problem `SelfEq F`, the
+  machines `M` with `eqRed M` true in `X`. It many-one reduces to equality on `X`
+  (`selfEq_reduces`), and no Turing machine decides it (`not_machineDecidable_selfEq`), with no
+  computability hypothesis. This is the set `A'` of the paper's Theorem 19. `HaltProblem ⪯ₘ`
+  equality on `T Σ̈` or `K Σ̈` is `GAPS.md`, item 2. -/
 
 section Synthetic
 
@@ -213,14 +213,14 @@ theorem eqVia_iff_langEq (F : LangFactor X) (hF : ∀ a b : TD ℕ, pl a = pl b 
     (i : Inst) : EqVia F i ↔ pl (mk i.1 : TD ℕ) = pl (mk i.2) :=
   ⟨fun h => by simpa only [F.fac] using congrArg F.g h, hF _ _⟩
 
-/-- `(eL + eR, eR)` for the `HALT` instance `haltRed`. -/
+/-- `(eL + eR, eR)` for the `HaltProblem` instance `haltRed`. -/
 def haltEqRed (p : EncodableTM Bool × List Bool) : Inst :=
   (plus (haltRed p).1 (haltRed p).2, (haltRed p).2)
 
-/-- `HALT` many-one reduces to the failure of equality on `X`, for any `X` whose equality agrees
-with language equality. -/
+/-- `HaltProblem` many-one reduces to the failure of equality on `X`, for any `X` whose equality
+agrees with language equality. -/
 def haltReduces_not_eqVia (F : LangFactor X)
-    (hF : ∀ a b : TD ℕ, pl a = pl b → F.l' a = F.l' b) : HALT ⪯ₘ Complement (EqVia F) :=
+    (hF : ∀ a b : TD ℕ, pl a = pl b → F.l' a = F.l' b) : HaltProblem ⪯ₘ Complement (EqVia F) :=
   ⟨haltEqRed, fun p => (halt_iff_not_modelLe p).trans
     (not_congr ((modelLe_iff_langEq _).trans (eqVia_iff_langEq F hF (haltEqRed p)).symm))⟩
 

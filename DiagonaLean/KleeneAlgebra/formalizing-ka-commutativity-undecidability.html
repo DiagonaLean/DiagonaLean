@@ -90,7 +90,7 @@
 <li><strong>Provable implies ModelLe</strong>, so a theory <code>S</code> with <code>Provable ⊆ S ⊆ ModelLe</code> covers pre-KA, KA with these hypotheses, and the language model itself.</li>
 </ul>
 <p>The source of undecidability is the pair <code>SelfOut true</code> / <code>SelfOut false</code>: machines that halt on their own code with output <code>[true]</code>, or with output <code>[false]</code>. No Turing machine decides a set containing the first and disjoint from the second. The proof composes a putative decider with a one-state bit-flip machine and runs the result on its own code.</p>
-<p>The repo's <code>Undecidable p</code> means <code>HALT ⪯ₘ p</code>. The paper's method gives a separation reduction instead, so we state the main result with <code>InsepUndecidable p</code>: a reduction sending <code>SelfOut true</code> into <code>p</code> and <code>SelfOut false</code> outside it. Like <code>⪯ₘ</code>, the reduction must be built from data; ours, <code>kaRed</code>, is an executable Lean function. On a one-state machine it outputs expressions of 258 and 1,743 nodes.</p>
+<p>The repo's <code>Undecidable p</code> means <code>HaltProblem ⪯ₘ p</code>. The paper's method gives a separation reduction instead, so we state the main result with <code>InsepUndecidable p</code>: a reduction sending <code>SelfOut true</code> into <code>p</code> and <code>SelfOut false</code> outside it. Like <code>⪯ₘ</code>, the reduction must be built from data; ours, <code>kaRed</code>, is an executable Lean function. On a one-state machine it outputs expressions of 258 and 1,743 nodes.</p>
 
 <h2>Proof structure</h2>
 <figure>
@@ -156,12 +156,12 @@
 <h2>The HALT reduction</h2>
 <p>Machine <code>M</code> halts on input <code>w</code> exactly when this inequality fails in the language model:</p>
 <div class="formula">(init w)<sub>r</sub> R<sub>M</sub><sup>*</sup> &nbsp;≤&nbsp; Σ<sup>*</sup> (C<sub>M</sub>)<sub>r</sub> + Σ<sup>*</sup> Σ<sup>≠</sup> ρ<sub>M</sub></div>
-<p>Here <code>R_M</code> encodes one machine step, <code>C_M</code> is the set of running configuration words, and <code>ρ_M</code> is an explicit residue whose language is everything. This gives <code>HALT ⪯ₘ Complement ModelLe</code>, so <code>Undecidable (Complement ModelLe)</code> holds in the repo's own sense.</p>
+<p>Here <code>R_M</code> encodes one machine step, <code>C_M</code> is the set of running configuration words, and <code>ρ_M</code> is an explicit residue whose language is everything. This gives <code>HaltProblem ⪯ₘ Complement ModelLe</code>, so <code>Undecidable (Complement ModelLe)</code> holds in the repo's own sense.</p>
 <ul>
 <li><strong>M halts.</strong> The string recording the run up to the halted configuration has its left part a prefix of its right part, so it avoids the error term. Its last word is a halted configuration, so it is not in <code>C_M</code>. This is the paper's soundness argument (Theorem 15).</li>
 <li><strong>M runs forever.</strong> This case is new. Every string of the left side either follows the actual run, so it has the form <code>(u, u·c)</code> with <code>c</code> a running configuration, which lies in <code>Σ* (C_M)_r</code>. Otherwise it takes a wrong step at some point. Configuration words are prefix-free, so the two sides then disagree at some letter, which puts the string in <code>Σ* Σ^≠ Σ̈*</code> (Lemma 33).</li>
 </ul>
-<p>The machine-level statement is <code>Enc.halts_iff_not_pl_le</code> in <code>MachineEncoding/Halting.lean</code>, with the new case in <code>Enc.pl_le_of_forall_running</code>. It does not give <code>HALT ⪯ₘ Provable</code>: for a machine that runs forever, the inequality holds in the model, but neither the paper nor this development settles whether pre-KA proves it.</p>
+<p>The machine-level statement is <code>Enc.halts_iff_not_pl_le</code> in <code>MachineEncoding/Halting.lean</code>, with the new case in <code>Enc.pl_le_of_forall_running</code>. It does not give <code>HaltProblem ⪯ₘ Provable</code>: for a machine that runs forever, the inequality holds in the model, but neither the paper nor this development settles whether pre-KA proves it.</p>
 
 <h2>Departures from the paper</h2>
 <p>Three stated results are false, and one definition and one proof needed changes. None of these affects the main theorem.</p>
@@ -184,7 +184,7 @@
 <p>Everything the paper proves is formalized; the open items go beyond it. Details are in <code>GAPS.md</code>.</p>
 <ol>
 <li><strong>A Turing machine computing <code>kaRed</code>.</strong> This is the only hypothesis on <code>not_machineDecidable_of_between</code>. <code>kaRed</code> runs as Lean code, but building and verifying the TM that maps <code>encodeBoolTM M</code> to its output is a large, mostly mechanical project.</li>
-<li><strong><code>HALT ⪯ₘ Provable</code>, i.e. Σ⁰₁-completeness.</strong> Not in the paper. One route is Smullyan's theorem: an r.e. set that separates effectively inseparable sets is creative. It would need the recursion theorem and an enumeration of pre-KA proofs.</li>
+<li><strong><code>HaltProblem ⪯ₘ Provable</code>, i.e. Σ⁰₁-completeness.</strong> Not in the paper. One route is Smullyan's theorem: an r.e. set that separates effectively inseparable sets is creative. It would need the recursion theorem and an enumeration of pre-KA proofs.</li>
 <li><strong>General commutation relations.</strong> The language model covers only the doubled alphabet and the no-commutation case; the general case needs trace monoids. The main result does not need it.</li>
 <li><strong>Smaller items.</strong> Uniqueness of the free algebra's universal map, and the Theorem 6 repair restated for the no-commutation case.</li>
 </ol>

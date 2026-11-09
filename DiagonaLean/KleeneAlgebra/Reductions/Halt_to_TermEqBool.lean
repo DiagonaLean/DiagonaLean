@@ -9,7 +9,7 @@ import DiagonaLean.KleeneAlgebra.Reductions.Halt_to_TermEq
 
 @[expose] public section
 
-/-! # `HALT ⪯ₘ` equality over the two-letter alphabet
+/-! # `HaltProblem ⪯ₘ` equality over the two-letter alphabet
 
 The theorems of `Halt_to_TermEq.lean` over `Bool ⊕ Bool`, the paper's `Σ = {0, 1}`.
 
@@ -83,34 +83,35 @@ theorem exists_raceProgB (ka : Bool) (B : Base) : ∃ C, RaceProgB ka B C :=
 
 theorem halt_iff_qb {ka : Bool} {B : Base} {C : Code} (hB : B.Good) (hC : RaceProgB ka B C)
     (p : EncodableTM Bool × List Bool) :
-    HALT p ↔ QB ka B.K (tapeOf B (Encodable.encode (progOf C p))) :=
+    HaltProblem p ↔ QB ka B.K (tapeOf B (Encodable.encode (progOf C p))) :=
   halt_iff_of_family (Q := QB ka B.K) hB hC
     (fun l => by
       rw [QB, rel_iff_checks, instCodeB_eq])
     (fun _ h => qb_pos h) (fun _ h => qb_neg h) p
 
-/-- `reductionB B C` reduces `HALT` to provable equality in pre-Kleene algebra over `{0, 1}`. -/
+/-- `reductionB B C` reduces `HaltProblem` to provable equality in pre-Kleene algebra over
+`{0, 1}`. -/
 theorem halt_reducesto_termEq_bool_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProgB false B C) :
-    HALT ⪯ₘ[reductionB B C] TermEqProblem := fun p =>
+    HaltProblem ⪯ₘ[reductionB B C] TermEqProblem := fun p =>
   (halt_iff_qb hB hC p).trans (by
     simpa [QB, Rel, reductionB, TermEq.DecisionProblem] using equiv_iff_map)
 
-/-- `reductionB B C` reduces `HALT` to provable equality in Kleene algebra over `{0, 1}`. -/
+/-- `reductionB B C` reduces `HaltProblem` to provable equality in Kleene algebra over `{0, 1}`. -/
 theorem halt_reducesto_kaTermEq_bool_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProgB true B C) :
-    HALT ⪯ₘ[reductionB B C] KATermEqProblem := fun p =>
+    HaltProblem ⪯ₘ[reductionB B C] KATermEqProblem := fun p =>
   (halt_iff_qb hB hC p).trans (by
     simpa [QB, Rel, reductionB, KATermEq.DecisionProblem] using kaEquiv_iff_map)
 
-/-- `HALT` many-one reduces to provable equality in pre-Kleene algebra over `{0, 1}`. -/
+/-- `HaltProblem` many-one reduces to provable equality in pre-Kleene algebra over `{0, 1}`. -/
 def haltReduces_termEq_bool (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB false B C) :
-    HALT ⪯ₘ TermEqProblem :=
+    HaltProblem ⪯ₘ TermEqProblem :=
   ⟨reductionB B C, halt_reducesto_termEq_bool_spec hB hC⟩
 
-/-- `HALT` many-one reduces to provable equality in Kleene algebra over `{0, 1}`. -/
+/-- `HaltProblem` many-one reduces to provable equality in Kleene algebra over `{0, 1}`. -/
 def haltReduces_kaTermEq_bool (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB true B C) :
-    HALT ⪯ₘ KATermEqProblem :=
+    HaltProblem ⪯ₘ KATermEqProblem :=
   ⟨reductionB B C, halt_reducesto_kaTermEq_bool_spec hB hC⟩
 
 /-- **Provable equality in pre-Kleene algebra with commutativity over `{0, 1}` is `Undecidable`.** -/
@@ -128,15 +129,15 @@ theorem undecidable_kaTermEq_bool : Undecidable KATermEqProblem := by
 /-- The reduction to language inequality over `{0, 1}`. -/
 def haltEqRedB (p : EncodableTM Bool × List Bool) : InstB := sbI (haltEqRed p)
 
-/-- `haltEqRedB` reduces `HALT` to the failure of language equality over `{0, 1}`. -/
+/-- `haltEqRedB` reduces `HaltProblem` to the failure of language equality over `{0, 1}`. -/
 theorem halt_reducesto_not_langEq_bool :
-    HALT ⪯ₘ[haltEqRedB] Complement LangEqProblem :=
+    HaltProblem ⪯ₘ[haltEqRedB] Complement LangEqProblem :=
   fun p => (halt_iff_not_modelLe p).trans (not_congr
     ((modelLe_iff_langEq _).trans (pl_sb_eq_iff cd_injective).symm))
 
-/-- `HALT` many-one reduces to the failure of language equality over `{0, 1}`. -/
+/-- `HaltProblem` many-one reduces to the failure of language equality over `{0, 1}`. -/
 def haltReduces_not_langEq_bool :
-    HALT ⪯ₘ Complement LangEqProblem :=
+    HaltProblem ⪯ₘ Complement LangEqProblem :=
   ⟨haltEqRedB, halt_reducesto_not_langEq_bool⟩
 
 /-- **The failure of language equality over `{0, 1}` is `Undecidable`.** -/

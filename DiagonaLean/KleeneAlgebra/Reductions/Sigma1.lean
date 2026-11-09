@@ -8,21 +8,21 @@ import DiagonaLean.KleeneAlgebra.Reductions.SelfOut_to_Eq
 
 @[expose] public section
 
-/-! # `HALT ⪯ₘ` equality on `T Σ̈` and `K Σ̈`: the logical core of Theorem 19 (M8)
+/-! # `HaltProblem ⪯ₘ` equality on `T Σ̈` and `K Σ̈`: the logical core of Theorem 19 (M8)
 
 `eqRed` sends machines with output `1` into equality on `X` and machines with output `0` out of
 it, and says nothing about the others. Smullyan's argument upgrades this to a many-one reduction
-from `HALT`, given a family of machines built with the recursion theorem.
+from `HaltProblem`, given a family of machines built with the recursion theorem.
 
-For a `HALT` instance `p = (M, w)`, the machine `N p`, run on its own code, searches in parallel
-for a halting run of `M` on `w` and for evidence that `SelfEq F (N p)` holds, i.e. a proof that
-`eqRed (N p)` is an equality in `X`. If the halting run comes first it outputs `1`; if the evidence
-comes first it outputs `0`. That machine satisfies the two fields of `SmullyanFamily`:
+For a `HaltProblem` instance `p = (M, w)`, the machine `N p`, run on its own code, searches in
+parallel for a halting run of `M` on `w` and for evidence that `SelfEq F (N p)` holds, i.e. a proof
+that `eqRed (N p)` is an equality in `X`. If the halting run comes first it outputs `1`; if the
+evidence comes first it outputs `0`. That machine satisfies the two fields of `SmullyanFamily`:
 
 * if `M` halts on `w` and `SelfEq F (N p)` fails, no evidence is ever found, so the output is `1`;
 * if `M` diverges and `SelfEq F (N p)` holds, the evidence is found, so the output is `0`.
 
-`halt_iff_selfEq` then shows `HALT p ↔ SelfEq F (N p)`.
+`halt_iff_selfEq` then shows `HaltProblem p ↔ SelfEq F (N p)`.
 
 The closed theorems are in `Reductions/Halt_to_TermEq.lean`, which builds the race directly on empty input and
 does not use `SmullyanFamily`. This file remains the statement of the argument on a machine's own
@@ -31,8 +31,8 @@ code.
 ## The hypothesis must be built, not chosen
 
 Lean's logic is classical, so a family with these two fields exists for trivial reasons: send
-`p` to a fixed machine that outputs `1` when `HALT p`, and to one that outputs `0` otherwise. That
-witness decides `HALT` by case split and breaks the convention on `ManyOneReduces`. A
+`p` to a fixed machine that outputs `1` when `HaltProblem p`, and to one that outputs `0` otherwise.
+That witness decides `HaltProblem` by case split and breaks the convention on `ManyOneReduces`. A
 `SmullyanFamily` is meaningful only when `N` is the machine described above, constructed from the
 data of `p` with the recursion theorem. The construction needs:
 
@@ -48,7 +48,7 @@ equalities are r.e., and not to language equality, which is co-r.e.
 
 * `SmullyanFamily`: the interface the recursion theorem must supply.
 * `halt_iff_selfEq`, `haltReduces_eqVia`, `haltReduces_termEq`, `haltReduces_kaTermEq`: the
-  reduction from `HALT`.
+  reduction from `HaltProblem`.
 * `undecidable_eqVia_of_family`, `undecidable_termEq_of_family`,
   `undecidable_kaTermEq_of_family`: `Undecidable` in the synthetic framework, given a family.
 
@@ -70,18 +70,18 @@ variable {X : Type*}
 /-- The machines that the recursion theorem must supply: on its own code, `N p` outputs `1` when
 `p` halts and `S (N p)` fails, and outputs `0` when `p` diverges and `S (N p)` holds. See the
 module docstring: `N` must be constructed from the data of `p`, never chosen by deciding
-`HALT p`. -/
+`HaltProblem p`. -/
 structure SmullyanFamily (S : EncodableTM Bool → Prop) where
   /-- The machine for the instance `p`. -/
   N : EncodableTM Bool × List Bool → EncodableTM Bool
   /-- The halting run wins the race. -/
-  out_true : ∀ p, HALT p → ¬ S (N p) → SelfOut true (N p)
+  out_true : ∀ p, HaltProblem p → ¬ S (N p) → SelfOut true (N p)
   /-- The evidence for `S` wins the race. -/
-  out_false : ∀ p, ¬ HALT p → S (N p) → SelfOut false (N p)
+  out_false : ∀ p, ¬ HaltProblem p → S (N p) → SelfOut false (N p)
 
 /-- **Smullyan's argument.** `p` halts iff `eqRed (N p)` holds in `X`. -/
 theorem halt_iff_selfEq (F : LangFactor X) (fam : SmullyanFamily (SelfEq F))
-    (p : EncodableTM Bool × List Bool) : HALT p ↔ SelfEq F (fam.N p) := by
+    (p : EncodableTM Bool × List Bool) : HaltProblem p ↔ SelfEq F (fam.N p) := by
   constructor
   · intro hp
     by_contra hS
@@ -90,9 +90,9 @@ theorem halt_iff_selfEq (F : LangFactor X) (fam : SmullyanFamily (SelfEq F))
     by_contra hp
     exact eqVia_eqRed_neg F (fam.out_false p hp hS) hS
 
-/-- `HALT` many-one reduces to equality on `X`, through `eqRed ∘ N`. -/
+/-- `HaltProblem` many-one reduces to equality on `X`, through `eqRed ∘ N`. -/
 def haltReduces_eqVia (F : LangFactor X) (fam : SmullyanFamily (SelfEq F)) :
-    HALT ⪯ₘ EqVia F :=
+    HaltProblem ⪯ₘ EqVia F :=
   ⟨eqRed ∘ fam.N, halt_iff_selfEq F fam⟩
 
 /-- **`Undecidable` for equality on `X`,** given a Smullyan family. -/
@@ -100,16 +100,16 @@ theorem undecidable_eqVia_of_family (F : LangFactor X) (fam : SmullyanFamily (Se
     Undecidable (EqVia F) :=
   ⟨haltReduces_eqVia F fam⟩
 
-/-- `HALT` many-one reduces to provable equality in pre-Kleene algebra with commutativity, through
-`eqRed ∘ N`. -/
+/-- `HaltProblem` many-one reduces to provable equality in pre-Kleene algebra with commutativity,
+through `eqRed ∘ N`. -/
 def haltReduces_termEq (fam : SmullyanFamily (SelfEq factorT)) :
-    HALT ⪯ₘ @TermEq.DecisionProblem ℕ :=
+    HaltProblem ⪯ₘ @TermEq.DecisionProblem ℕ :=
   ⟨eqRed ∘ fam.N, fun p => (halt_iff_selfEq factorT fam p).trans (eqVia_factorT _)⟩
 
-/-- `HALT` many-one reduces to provable equality in Kleene algebra with commutativity, through
-`eqRed ∘ N`. -/
+/-- `HaltProblem` many-one reduces to provable equality in Kleene algebra with commutativity,
+through `eqRed ∘ N`. -/
 def haltReduces_kaTermEq (fam : SmullyanFamily (SelfEq factorK)) :
-    HALT ⪯ₘ @KATermEq.DecisionProblem ℕ :=
+    HaltProblem ⪯ₘ @KATermEq.DecisionProblem ℕ :=
   ⟨eqRed ∘ fam.N, fun p => (halt_iff_selfEq factorK fam p).trans (eqVia_factorK _)⟩
 
 /-- **Provable equality in pre-Kleene algebra with commutativity is `Undecidable`,** given a

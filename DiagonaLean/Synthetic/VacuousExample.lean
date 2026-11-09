@@ -11,7 +11,7 @@ Demonstrates the exact failure mode `scripts/check-classical-reductions.sh` guar
 open DiagonaLean.Halt DiagonaLean.Halt.Encoding Cslib.Turing DiagonaLean.Synthetic.Definitions
   DiagonaLean.Synthetic.Notation
 
-/-- A "reduction" `HALT → ℕ` that decides nothing: it picks `0` when the halting instance
+/-- A "reduction" `HaltProblem → ℕ` that decides nothing: it picks `0` when the halting instance
 halts and `1` otherwise, using classical excluded middle on `Halts p.1 p.2` to perform that
 case split. This has no algorithmic content -- it is exactly the attack the `ManyOneReduces`
 convention rules out. -/

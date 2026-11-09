@@ -165,10 +165,10 @@ theorem not_machineDecidable_kaTermEq_bool : ¬ MachineDecidable encBool fun i :
   <p class="lede">Many-one reductions from HALT, in the library’s sense of <code>Undecidable</code>. These rest on the <code>ManyOneReduces</code> convention, and no machine computing these exact reductions is built.</p>
   <div class="keybox">
     <pre>-- The reduction function is named in the statement. Given correct constants B and C:
-theorem halt_reducesto_termEq_bool_spec   : HALT ⪯ₘ[reductionB B C] TermEqProblem
-theorem halt_reducesto_kaTermEq_bool_spec : HALT ⪯ₘ[reductionB B C] KATermEqProblem
-theorem halt_reducesto_termEq_spec        : HALT ⪯ₘ[reduction B C] @TermEq.DecisionProblem ℕ
-theorem halt_reducesto_kaTermEq_spec      : HALT ⪯ₘ[reduction B C] @KATermEq.DecisionProblem ℕ
+theorem halt_reducesto_termEq_bool_spec   : HaltProblem ⪯ₘ[reductionB B C] TermEqProblem
+theorem halt_reducesto_kaTermEq_bool_spec : HaltProblem ⪯ₘ[reductionB B C] KATermEqProblem
+theorem halt_reducesto_termEq_spec        : HaltProblem ⪯ₘ[reduction B C] @TermEq.DecisionProblem ℕ
+theorem halt_reducesto_kaTermEq_spec      : HaltProblem ⪯ₘ[reduction B C] @KATermEq.DecisionProblem ℕ
 
 -- With no hypotheses:
 theorem undecidable_termEq_bool     : Undecidable TermEqProblem
@@ -177,7 +177,7 @@ theorem undecidable_not_langEq_bool : Undecidable (Complement LangEqProblem)
 theorem undecidable_termEq          : Undecidable (@TermEq.DecisionProblem ℕ)
 theorem undecidable_kaTermEq        : Undecidable (@KATermEq.DecisionProblem ℕ)
 theorem undecidable_not_langEq      : Undecidable (Complement (@LangEq.DecisionProblem ℕ))</pre>
-    <p><code>p ⪯ₘ[f] q</code> means <code>∀ x, p x ↔ q (f x)</code>, and <code>Undecidable p</code> is <code>Nonempty (HALT ⪯ₘ p)</code>. <code>TermEq.DecisionProblem</code>, <code>KATermEq.DecisionProblem</code> and <code>LangEq.DecisionProblem</code> are equality on T Σ̈, KΣ̈ and LΣ̈, for instances over any doubled alphabet, as with <code>PCP.DecisionProblem</code>; the <code>…Problem</code> names fix <code>Bool</code>, as <code>PCProblem</code> does (<a href="#e-eq_problems" data-go="eq_problems">definitions</a>). For LΣ̈ the statement is the complement: language equality is co-r.e., so HALT cannot reduce to equality itself. <a href="#e-undecidable_termEq" data-go="undecidable_termEq">The theorems</a> · <a href="#e-undecidable_not_langEq" data-go="undecidable_not_langEq">LΣ̈</a> · <a href="#e-bridge_reduction" data-go="bridge_reduction">The reduction</a> · <a href="#e-bridge_halt_iff_rel" data-go="bridge_halt_iff_rel">Why it is correct</a></p>
+    <p><code>p ⪯ₘ[f] q</code> means <code>∀ x, p x ↔ q (f x)</code>, and <code>Undecidable p</code> is <code>Nonempty (HaltProblem ⪯ₘ p)</code>. <code>TermEq.DecisionProblem</code>, <code>KATermEq.DecisionProblem</code> and <code>LangEq.DecisionProblem</code> are equality on T Σ̈, KΣ̈ and LΣ̈, for instances over any doubled alphabet, as with <code>PCP.DecisionProblem</code>; the <code>…Problem</code> names fix <code>Bool</code>, as <code>PCProblem</code> does (<a href="#e-eq_problems" data-go="eq_problems">definitions</a>). For LΣ̈ the statement is the complement: language equality is co-r.e., so HALT cannot reduce to equality itself. <a href="#e-undecidable_termEq" data-go="undecidable_termEq">The theorems</a> · <a href="#e-undecidable_not_langEq" data-go="undecidable_not_langEq">LΣ̈</a> · <a href="#e-bridge_reduction" data-go="bridge_reduction">The reduction</a> · <a href="#e-bridge_halt_iff_rel" data-go="bridge_halt_iff_rel">Why it is correct</a></p>
   </div>
   <h3>From ℕ to the paper’s alphabet {0, 1}</h3>
   <div class="table-box"><table>
@@ -295,16 +295,16 @@ abbrev LangEqProblem : EqInstance Bool → Prop := LangEq.DecisionProblem`,
 { id: "undecidable_termEq", g: "F", name: "Reduction.undecidable_termEq, undecidable_kaTermEq, halt_reducesto_termEq_spec, halt_reducesto_kaTermEq_spec", kind: "theorem",
   file: "KleeneAlgebra/Reductions/Halt_to_TermEq.lean", line: 230, st: "adapted", ref: "Theorem 19 (Complexity), hardness for T Σ̈ and KΣ̈", page: 11,
   ptext: `<p>If equalities in X (from Theorem 18) are recursive enumerable, then equalities in X are Σ⁰₁-complete. In particular, equalities in T Σ̈ and KΣ̈ are Σ⁰₁-complete.</p>`,
-  code: `-- reduction B C reduces HALT to provable equality in T Σ̈ and in K Σ̈.
+  code: `-- reduction B C reduces HaltProblem to provable equality in T Σ̈ and in K Σ̈.
 theorem halt_reducesto_termEq_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProg false B C) :
-    HALT ⪯ₘ[reduction B C] @TermEq.DecisionProblem ℕ
+    HaltProblem ⪯ₘ[reduction B C] @TermEq.DecisionProblem ℕ
 
 theorem halt_reducesto_kaTermEq_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProg true B C) :
-    HALT ⪯ₘ[reduction B C] @KATermEq.DecisionProblem ℕ
+    HaltProblem ⪯ₘ[reduction B C] @KATermEq.DecisionProblem ℕ
 
--- Undecidable p unfolds to Nonempty (HALT ⪯ₘ p).
+-- Undecidable p unfolds to Nonempty (HaltProblem ⪯ₘ p).
 theorem undecidable_termEq : Undecidable (@TermEq.DecisionProblem ℕ) := by
   obtain ⟨B, hB⟩ := exists_base
   obtain ⟨C, hC⟩ := exists_raceProg false B
@@ -343,7 +343,7 @@ theorem undecidable_not_langEq :
 theorem undecidable_not_langEq_bool :
     Undecidable (Complement LangEqProblem)`,
   uses: ["eq_problems", "haltReduces", "haltRed", "halt_iff_not_modelLe", "le_iff_eq", "bin_lang", "LangFactor", "EqVia", "factors", "pl", "Complement", "Undecidable"],
-  diff: `<b>The complement, not equality:</b> <code>M</code> halts on <code>w</code> iff the two languages <i>differ</i>. Language equality is co-r.e. and HALT is not, so no computable reduction sends HALT to equality itself; only the complement can receive one (GAPS.md, item 2). A term of <code>HALT ⪯ₘ</code> equality could only be written by a classical case split on <code>HALT p</code>, which the <code>ManyOneReduces</code> convention forbids. <b>The reductions:</b> <code>haltEqRed</code> and <code>haltEqRedB</code> are untagged named <code>def</code>s with no classical parameters, and they read the machine itself, not <code>encodeBoolTM</code>, so the halting-write defect does not touch them. No race is needed, unlike T Σ̈ and KΣ̈. The {0, 1} version composes with the substitution <code>1ⁿ0</code>, which preserves and reflects language equality. No hypotheses, and no Turing machine computing the reduction is built. <code>undecidable_not_eqVia</code> covers any X whose equality agrees with language equality, so it does not cover T Σ̈ or KΣ̈.` },
+  diff: `<b>The complement, not equality:</b> <code>M</code> halts on <code>w</code> iff the two languages <i>differ</i>. Language equality is co-r.e. and HALT is not, so no computable reduction sends HALT to equality itself; only the complement can receive one (GAPS.md, item 2). A term of <code>HaltProblem ⪯ₘ</code> equality could only be written by a classical case split on <code>HaltProblem p</code>, which the <code>ManyOneReduces</code> convention forbids. <b>The reductions:</b> <code>haltEqRed</code> and <code>haltEqRedB</code> are untagged named <code>def</code>s with no classical parameters, and they read the machine itself, not <code>encodeBoolTM</code>, so the halting-write defect does not touch them. No race is needed, unlike T Σ̈ and KΣ̈. The {0, 1} version composes with the substitution <code>1ⁿ0</code>, which preserves and reflects language equality. No hypotheses, and no Turing machine computing the reduction is built. <code>undecidable_not_eqVia</code> covers any X whose equality agrees with language equality, so it does not cover T Σ̈ or KΣ̈.` },
 
 { id: "sepReduces_eqOn", g: "G", name: "Undec.sepReduces_eqOn, sepReduces_eqVia", kind: "def",
   file: "KleeneAlgebra/Reductions/SelfOut_to_Eq.lean", line: 108, st: "adapted", ref: "Theorem 18 (Undecidability)", page: 10,
@@ -473,12 +473,12 @@ theorem insepUndecidable_provable : InsepUndecidable Provable :=
 { id: "undecidable_not_modelLe", g: "F", name: "Undec.undecidable_not_modelLe", kind: "theorem",
   file: "KleeneAlgebra/Reductions/SelfOut_to_ModelLe.lean", line: 208, st: "beyond", ref: "Related: §1 and §6, Π⁰₁-completeness for languages (Kozen)", page: 15,
   ptext: `<p>(§6) He noted that deciding equality in ∗-continuous Kleene algebras with commutativity conditions on primitives was not possible—more precisely, the problem is Π⁰₁-complete, by reduction from the complement of the Post correspondence problem (PCP).</p><p>(§1, p. 1) … Π⁰₁-complete [15], or equivalent to the complement of the halting problem.</p>`,
-  code: `/-- Undecidability in the library's sense: HALT ⪯ₘ the complement of
+  code: `/-- Undecidability in the library's sense: HaltProblem ⪯ₘ the complement of
 language-model inclusion for KA with commutativity conditions. -/
 theorem undecidable_not_modelLe : Undecidable (Complement ModelLe) := ⟨haltReduces⟩
 
--- unfolded:  Nonempty (HALT ⪯ₘ fun i => ¬ ModelLe i), where
---   HALT (M, w)  ↔  ¬ ModelLe (haltRed (M, w))         (halt_iff_not_modelLe)`,
+-- unfolded:  Nonempty (HaltProblem ⪯ₘ fun i => ¬ ModelLe i), where
+--   HaltProblem (M, w)  ↔  ¬ ModelLe (haltRed (M, w))         (halt_iff_not_modelLe)`,
   uses: ["Undecidable", "HALT", "Complement", "ModelLe", "haltReduces"],
   diff: `<b>The second main result, not in the paper.</b> A many-one reduction from HALT, in the sense of DiagonaLean's <code>Undecidable</code>, rather than a separation reduction from an inseparable pair. It is about the <em>language model</em> only: M halts on w iff <code>(init w)_r R_M∗ ≤ Σ∗ (C_M)_r + Σ∗ Σ^≠ ρ_M</code> fails in LΣ̈. On the doubled alphabet, it proves in Lean the direction of Kozen's result that the paper cites (language inclusion modulo commutation is co-r.e.-hard), with Turing machines in place of PCP. It says nothing about pre-KA provability. For halting runs the proof reuses Theorem 15's soundness argument; for diverging runs it uses Lemma 33. It does not use Theorem 16, Lemma 34 or any finite-state fact: ρ_M occurs only as a term whose language is everything (<code>pl_sigAll_le_rho</code>). Trace shows the automata definitions only because ρ_M is written with <code>bnd</code>.` },
 
@@ -1557,24 +1557,24 @@ def lift (f : X → α) (hf : ∀ x y, C x y → f x * f y = f y * f x) : FreePr
   uses: ["FreePreKA", "PreKleeneAlgebra"], note: `<code>hf</code> is "f preserves the commuting relation". <code>lift_mono</code> (Free.lean:220) gives monotonicity, used for <code>pl_mono</code>.` },
 
 /* ───────────── L. HALT ───────────── */
-{ id: "HALT", g: "F", name: "Synthetic.HALT, Halt.Halts", kind: "def",
-  file: "Synthetic/Undecidability.lean", line: 25, st: "adapted", ref: "Related: Definition 13, \"M halts on n\"", page: 8,
+{ id: "HALT", g: "F", name: "Halt.HaltProblem, Halt.Halts", kind: "abbrev",
+  file: "Halt/Basic.lean", line: 70, st: "adapted", ref: "Related: Definition 13, \"M halts on n\"", page: 8,
   ptext: `<p>We say that M halts on n if aⁿ b⁰ q̇ →∗_{R_M} c_x for some x ∈ {0, 1}.</p>`,
   code: `-- Halt/Basic.lean:29
 def Halts (tm : SingleTapeTM Symbol) (w : List Symbol) : Prop :=
   ∃ tape : BiTape Symbol,
     Relation.ReflTransGen tm.TransitionRelation (SingleTapeTM.initCfg tm w) ⟨none, tape⟩
 
-/-- The Turing machine halting problem. -/
-def HALT : EncodableTM Bool × List Bool → Prop := fun ⟨M, w⟩ => Halts M.toSingleTapeTM w`,
+/-- The halting problem: does tm halt on input w? -/
+abbrev HaltProblem : EncodableTM Bool × List Bool → Prop := fun ⟨a, b⟩ ↦ Halts a.toSingleTapeTM b`,
   uses: ["SingleTapeTM", "Outputs", "EncodableTM"],
-  diff: `Halting with any final tape, not "halting with output 0 or 1". The paper never uses the halting problem itself; its undecidability argument goes through the inseparable pair A, B.` },
+  diff: `Halting with any final tape, not "halting with output 0 or 1". The paper never uses the halting problem itself; its undecidability argument goes through the inseparable pair A, B. The synthetic layer (<code>Undecidable</code>) and the machine layer (<code>halt_not_machinedecidable</code>) both use this one definition; the former separate <code>Synthetic.HaltProblem</code> was removed.` },
 
 { id: "Undecidable", g: "F", name: "Synthetic.Undecidable", kind: "def",
-  file: "Synthetic/Undecidability.lean", line: 34, st: "beyond", ref: null, page: null, ptext: null,
-  code: `/-- p is undecidable: HALT many-one reduces to p, so any decider for p would
-yield one for HALT. -/
-def Undecidable (p : X → Prop) : Prop := Nonempty (HALT ⪯ₘ p)`,
+  file: "Synthetic/Undecidability.lean", line: 31, st: "beyond", ref: null, page: null, ptext: null,
+  code: `/-- p is undecidable: HaltProblem many-one reduces to p, so any decider for p would
+yield one for HaltProblem. -/
+def Undecidable (p : X → Prop) : Prop := Nonempty (HaltProblem ⪯ₘ p)`,
   uses: ["HALT", "ManyOneReduces"],
   note: `The library-wide notion of undecidability in DiagonaLean. Like <code>InsepUndecidable</code> it is synthetic: the reduction is Lean data, meant to be built from the data of the input, not from a Turing machine.` },
 
@@ -1594,7 +1594,7 @@ notation:50 p " ⪯ₘ " q => ManyOneReduces p q`,
 { id: "haltRed", g: "F", name: "Undec.haltRed", kind: "def",
   file: "KleeneAlgebra/Reductions/SelfOut_to_ModelLe.lean", line: 187, st: "adapted", ref: "Related: proof of Theorem 18 (η)", page: 10,
   ptext: `<p>… let e_L and e_R be the left- and right-hand sides of the inequality of Theorem 16. We pose η⟨M, n⟩ ≜ ⟨l′(e_L + e_R), l′(e_R)⟩.</p>`,
-  code: `/-- The reduction from HALT. (M, w) ↦ ((init w)_r R_M∗, Σ∗ (C_M)_r + Σ∗ Σ^≠ ρ_M),
+  code: `/-- The reduction from HaltProblem. (M, w) ↦ ((init w)_r R_M∗, Σ∗ (C_M)_r + Σ∗ Σ^≠ ρ_M),
 with letters renamed to their codes. -/
 def haltRed (p : EncodableTM Bool × List Bool) : Inst :=
   letI := p.1.stateEncodable
@@ -1619,7 +1619,7 @@ theorem mk_rhsHS : (mk (rhsHS M) : TD _) =
   file: "KleeneAlgebra/Reductions/SelfOut_to_ModelLe.lean", line: 194, st: "beyond", ref: null, page: null, ptext: null,
   code: `/-- M halts on w iff the instance haltRed (M, w) fails in the language model. -/
 theorem halt_iff_not_modelLe (p : EncodableTM Bool × List Bool) :
-    HALT p ↔ ¬ ModelLe (haltRed p) := …
+    HaltProblem p ↔ ¬ ModelLe (haltRed p) := …
   -- Enc.halts_iff_not_pl_le_syntax, then rename letters both ways:
   -- ⟨pl_map_le_of_le _, pl_le_of_map Encodable.encode_injective⟩`,
   uses: ["HALT", "ModelLe", "haltRed", "halts_iff_not_pl_le_syntax", "pl_map_le_of_le", "pl_le_of_map"],
@@ -1627,8 +1627,8 @@ theorem halt_iff_not_modelLe (p : EncodableTM Bool × List Bool) :
 
 { id: "haltReduces", g: "F", name: "Undec.haltReduces", kind: "def",
   file: "KleeneAlgebra/Reductions/SelfOut_to_ModelLe.lean", line: 204, st: "beyond", ref: null, page: null, ptext: null,
-  code: `/-- HALT many-one reduces to the failure of language-model inclusion. -/
-def haltReduces : HALT ⪯ₘ Complement ModelLe := ⟨haltRed, halt_iff_not_modelLe⟩`,
+  code: `/-- HaltProblem many-one reduces to the failure of language-model inclusion. -/
+def haltReduces : HaltProblem ⪯ₘ Complement ModelLe := ⟨haltRed, halt_iff_not_modelLe⟩`,
   uses: ["HALT", "ManyOneReduces", "Complement", "ModelLe", "haltRed", "halt_iff_not_modelLe"] },
 
 { id: "pl_map_le_of_le", g: "F", name: "TD.pl_map_le_of_le", kind: "theorem",
@@ -1679,7 +1679,7 @@ theorem pl_le_of_forall_running (d₀ : Data M) (hrun : ∀ i, ((dstep M)^[i] d�
     {ρ : TD (Letter Sym M.State)} (hρ : pl (sigAll : TD _)∗ ≤ pl ρ) :
     pl (R (wdF d₀) * (RM M)∗) ≤ pl (sig∗ * crun M + err ρ)`,
   uses: ["RunShape", "mem_err_of_diverge", "Data", "dstep", "wd", "RM", "R", "sig", "crun", "err", "sigAll", "pl", "thm5"],
-  diff: `Not in the paper, which says nothing about machines that run forever. This half is what makes the reduction many-one. It holds only in the language model: whether pre-KA <em>proves</em> the inequality for a diverging machine is open (GAPS.md §2), so there is no <code>HALT ⪯ₘ Complement Provable</code>.` },
+  diff: `Not in the paper, which says nothing about machines that run forever. This half is what makes the reduction many-one. It holds only in the language model: whether pre-KA <em>proves</em> the inequality for a diverging machine is open (GAPS.md §2), so there is no <code>HaltProblem ⪯ₘ Complement Provable</code>.` },
 
 { id: "RunShape", g: "F", name: "Enc.RunShape, runShape_of_mem", kind: "def",
   file: "KleeneAlgebra/MachineEncoding/Halting.lean", line: 102, st: "lean", ref: null, page: null, ptext: null,
@@ -1727,20 +1727,20 @@ def reduction (B : Base) (C : Code) (p : EncodableTM Bool × List Bool) : Inst :
   file: "KleeneAlgebra/Reductions/Halt_to_TermEq.lean", line: 210, st: "beyond", ref: null, page: null, ptext: null,
   code: `theorem halt_reducesto_termEq_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProg false B C) :
-    HALT ⪯ₘ[reduction B C] @TermEq.DecisionProblem ℕ :=
+    HaltProblem ⪯ₘ[reduction B C] @TermEq.DecisionProblem ℕ :=
   fun p => by simpa [Rel] using halt_iff_rel hB hC p
 
 def haltReduces_termEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg false B C) :
-    HALT ⪯ₘ @TermEq.DecisionProblem ℕ :=
+    HaltProblem ⪯ₘ @TermEq.DecisionProblem ℕ :=
   ⟨reduction B C, halt_reducesto_termEq_spec hB hC⟩
 
 theorem halt_reducesto_kaTermEq_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProg true B C) :
-    HALT ⪯ₘ[reduction B C] @KATermEq.DecisionProblem ℕ :=
+    HaltProblem ⪯ₘ[reduction B C] @KATermEq.DecisionProblem ℕ :=
   fun p => by simpa [Rel] using halt_iff_rel hB hC p
 
 def haltReduces_kaTermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg true B C) :
-    HALT ⪯ₘ @KATermEq.DecisionProblem ℕ :=
+    HaltProblem ⪯ₘ @KATermEq.DecisionProblem ℕ :=
   ⟨reduction B C, halt_reducesto_kaTermEq_spec hB hC⟩`,
   uses: ["bridge_reduction", "bridge_halt_iff_rel", "HALT", "ManyOneReduces", "Equiv", "KAEquiv", "DComm", "Inst", "bridge_exists_base", "bridge_raceProg"],
   note: `Not to be confused with <code>Undec.haltReduces_termEq</code>, the conditional version in <code>Reductions/Sigma1.lean</code>.` },
@@ -1754,11 +1754,11 @@ def haltReduces_kaTermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg true
     (pos : ∀ l, (NM B.K l).Outputs [] [true] → Q l)
     (neg : ∀ l, (NM B.K l).Outputs [] [false] → ¬ Q l)
     (p : EncodableTM Bool × List Bool) :
-    HALT p ↔ Q (tapeOf B (Encodable.encode (progOf C p)))
+    HaltProblem p ↔ Q (tapeOf B (Encodable.encode (progOf C p)))
 
 theorem halt_iff_rel {ka : Bool} {B : Base} {C : Code} (hB : B.Good) (hC : RaceProg ka B C)
     (p : EncodableTM Bool × List Bool) :
-    HALT p ↔ Rel ka (reduction B C p).1 (reduction B C p).2`,
+    HaltProblem p ↔ Rel ka (reduction B C p).1 (reduction B C p).2`,
   uses: ["bridge_reduction", "bridge_race", "bridge_exists_base", "bridge_raceProg", "bridge_rInst_sep", "bridge_checks", "bridge_instCode", "bridge_test", "HALT"],
   diff: `The paper cites folklore propositions. Lean proves the instance it needs directly. If <code>p</code> halts and the instance is unprovable, the race returns 1, so the machine outputs <code>[true]</code> and the instance is provable. If <code>p</code> diverges and the instance is provable, the race returns 0, so the machine outputs <code>[false]</code> and the instance fails in the language model. Here <code>Rel ka</code> is <code>Equiv DComm</code> or <code>KAEquiv DComm</code>, by the flag.` },
 
@@ -1924,7 +1924,7 @@ theorem checks_prim (ka : Bool) : PrimrecPred fun x : ℕ × ℕ × ℕ => Check
   code: `/-- The machine has halted within k steps. -/
 def Test (d : List (ℕ × ℕ) × SC) (k : ℕ) : Prop := ((sstep d.1)^[k] d.2).1 = 0
 
-theorem halt_iff_test (p : EncodableTM Bool × List Bool) : HALT p ↔ ∃ k, Test (dataOf p) k
+theorem halt_iff_test (p : EncodableTM Bool × List Bool) : HaltProblem p ↔ ∃ k, Test (dataOf p) k
 
 theorem test_prim : PrimrecPred fun x : (List (ℕ × ℕ) × SC) × ℕ => Test x.1 x.2`,
   uses: ["bridge_dataOf", "HALT", "dstep", "initData"],
@@ -1937,7 +1937,7 @@ def rowsE : List (ℕ × ℕ) :=
   (SingleTapeTM.statesList M).flatMap fun q =>
     syms.map fun o => (Nat.pair (Encodable.encode q) (hc o), rowT M (M.tr q o))
 
-/-- The data of a HALT instance. -/
+/-- The data of a HaltProblem instance. -/
 def dataOf (p : EncodableTM Bool × List Bool) : List (ℕ × ℕ) × SC :=
   (rowsE p.1, absD (initData p.2 : Data p.1.toSingleTapeTM))`,
   uses: ["EncodableTM", "Data", "initData"],
@@ -1947,8 +1947,8 @@ def dataOf (p : EncodableTM Bool × List Bool) : List (ℕ × ℕ) × SC :=
   file: "KleeneAlgebra/Reductions/Sigma1.lean", line: 74, st: "lean", ref: null, page: null, ptext: null,
   code: `structure SmullyanFamily (S : EncodableTM Bool → Prop) where
   N : EncodableTM Bool × List Bool → EncodableTM Bool
-  out_true : ∀ p, HALT p → ¬ S (N p) → SelfOut true (N p)
-  out_false : ∀ p, ¬ HALT p → S (N p) → SelfOut false (N p)
+  out_true : ∀ p, HaltProblem p → ¬ S (N p) → SelfOut true (N p)
+  out_false : ∀ p, ¬ HaltProblem p → S (N p) → SelfOut false (N p)
 
 theorem undecidable_termEq_of_family (fam : SmullyanFamily (SelfEq factorT)) :
     Undecidable (@TermEq.DecisionProblem ℕ)`,
@@ -2050,14 +2050,14 @@ theorem subC_prim : Primrec subC`,
   file: "KleeneAlgebra/Reductions/Halt_to_TermEqBool.lean", line: 93, st: "beyond", ref: null, page: null, ptext: null,
   code: `theorem halt_reducesto_termEq_bool_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProgB false B C) :
-    HALT ⪯ₘ[reductionB B C] TermEqProblem
+    HaltProblem ⪯ₘ[reductionB B C] TermEqProblem
 
 theorem halt_reducesto_kaTermEq_bool_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProgB true B C) :
-    HALT ⪯ₘ[reductionB B C] KATermEqProblem
+    HaltProblem ⪯ₘ[reductionB B C] KATermEqProblem
 
 def haltReduces_termEq_bool (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB false B C) :
-    HALT ⪯ₘ TermEqProblem :=
+    HaltProblem ⪯ₘ TermEqProblem :=
   ⟨reductionB B C, halt_reducesto_termEq_bool_spec hB hC⟩`,
   uses: ["bin_reduction", "bin_retract", "bin_pl", "bridge_halt_iff_rel", "bridge_rInst_sep", "bridge_exists_base", "HALT", "ManyOneReduces"] },
 
@@ -2066,7 +2066,7 @@ def haltReduces_termEq_bool (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB 
   code: `def haltEqRedB (p : EncodableTM Bool × List Bool) : InstB := sbI (haltEqRed p)
 
 theorem halt_reducesto_not_langEq_bool :
-    HALT ⪯ₘ[haltEqRedB] Complement LangEqProblem`,
+    HaltProblem ⪯ₘ[haltEqRedB] Complement LangEqProblem`,
   uses: ["bin_pl", "bin_code", "haltRed", "halt_iff_not_modelLe", "le_iff_eq", "undecidable_not_langEq", "Complement", "HALT"],
   note: `This one needs no race: it is the composition of the ℕ reduction with the substitution, because the substitution both preserves and reflects language equality.` },
 

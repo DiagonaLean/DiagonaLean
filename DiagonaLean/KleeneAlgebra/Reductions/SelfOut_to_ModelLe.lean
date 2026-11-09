@@ -14,7 +14,7 @@ import DiagonaLean.Synthetic.Undecidability
 /-! # Undecidability of pre-Kleene algebra with commutativity conditions (M7)
 
 The paper reduces a pair of *computably inseparable* sets to the theory, rather than reducing
-`HALT`: machines that output `1` give provable inequalities, machines that output `0` give
+`HaltProblem`: machines that output `1` give provable inequalities, machines that output `0` give
 inequalities that fail in the language model, and nothing is claimed about machines that diverge.
 So the result is stated with a separation reduction (decision D1(b)).
 
@@ -43,7 +43,7 @@ hypotheses, since the language model is a Kleene algebra in which they hold.
 * `not_machineDecidable_of_between`: no Turing machine decides such an `S`, for any encoding of
   instances under which some Turing machine computes `kaRed`.
 * `undecidable_not_modelLe`: `Undecidable (Complement ModelLe)` in the library's sense, through
-  the many-one reduction `haltReduces : HALT ⪯ₘ Complement ModelLe`.
+  the many-one reduction `haltReduces : HaltProblem ⪯ₘ Complement ModelLe`.
 
 The last hypothesis is the usual Church–Turing gap: constructing the Turing machine that
 computes `kaRed` from `encodeBoolTM M` is not formalized. This matches how `Undecidable` and
@@ -174,16 +174,16 @@ theorem not_machineDecidable_of_between {enc : Inst → List Bool} {R : SingleTa
     (h₁ : ∀ i, Provable i → S i) (h₂ : ∀ i, S i → ModelLe i) : ¬ MachineDecidable enc S :=
   not_machineDecidable_of_sepReduces (sepReduces_of_between S h₁ h₂) hR
 
-/-! ### A many-one reduction from `HALT`
+/-! ### A many-one reduction from `HaltProblem`
 
-Dropping the halting term gives a reduction from `HALT` itself, in the library's sense of
-`Undecidable` (`Nonempty (HALT ⪯ₘ p)`). The target is the *failure* of language-model inclusion:
-`M` halts on `w` iff `(init w)_r R_M∗ ≤ Σ∗ (C_M)_r + Σ∗ Σ^≠ ρ_M` fails in the model
+Dropping the halting term gives a reduction from `HaltProblem` itself, in the library's sense of
+`Undecidable` (`Nonempty (HaltProblem ⪯ₘ p)`). The target is the *failure* of language-model
+inclusion: `M` halts on `w` iff `(init w)_r R_M∗ ≤ Σ∗ (C_M)_r + Σ∗ Σ^≠ ρ_M` fails in the model
 (`Enc.halts_iff_not_pl_le_syntax`). The same reduction says nothing about pre-KA provability,
 because the paper does not determine provability for machines that run forever. -/
 
-/-- **The reduction from `HALT`.** `(M, w) ↦ ((init w)_r R_M∗, Σ∗ (C_M)_r + Σ∗ Σ^≠ ρ_M)`, with
-letters renamed to their codes. -/
+/-- **The reduction from `HaltProblem`.** `(M, w) ↦ ((init w)_r R_M∗, Σ∗ (C_M)_r + Σ∗ Σ^≠ ρ_M)`,
+with letters renamed to their codes. -/
 def haltRed (p : EncodableTM Bool × List Bool) : Inst :=
   letI := p.1.stateEncodable
   letI : DecidableEq p.1.State := Encodable.decidableEqOfEncodable _
@@ -192,7 +192,7 @@ def haltRed (p : EncodableTM Bool × List Bool) : Inst :=
 
 /-- `M` halts on `w` iff the instance `haltRed (M, w)` fails in the language model. -/
 theorem halt_iff_not_modelLe (p : EncodableTM Bool × List Bool) :
-    HALT p ↔ ¬ ModelLe (haltRed p) := by
+    HaltProblem p ↔ ¬ ModelLe (haltRed p) := by
   obtain ⟨M, w⟩ := p
   let := M.stateEncodable
   let : DecidableEq M.State := Encodable.decidableEqOfEncodable _
@@ -200,10 +200,10 @@ theorem halt_iff_not_modelLe (p : EncodableTM Bool × List Bool) :
   rw [Enc.halts_iff_not_pl_le_syntax]
   exact not_congr ⟨pl_map_le_of_le _, pl_le_of_map Encodable.encode_injective⟩
 
-/-- `HALT` many-one reduces to the failure of language-model inclusion. -/
-def haltReduces : HALT ⪯ₘ Complement ModelLe := ⟨haltRed, halt_iff_not_modelLe⟩
+/-- `HaltProblem` many-one reduces to the failure of language-model inclusion. -/
+def haltReduces : HaltProblem ⪯ₘ Complement ModelLe := ⟨haltRed, halt_iff_not_modelLe⟩
 
-/-- **Undecidability in the library's sense:** `HALT ⪯ₘ` the complement of language-model
+/-- **Undecidability in the library's sense:** `HaltProblem ⪯ₘ` the complement of language-model
 inclusion for KA with commutativity conditions. -/
 theorem undecidable_not_modelLe : Undecidable (Complement ModelLe) := ⟨haltReduces⟩
 

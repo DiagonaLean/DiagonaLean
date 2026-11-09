@@ -104,7 +104,7 @@ theorem not_machineDecidable_eqOn_of_computes (F : LangFactor X)
   </table></div>
   <p><strong>Inequality and equality.</strong> <code>Reductions/SelfOut_to_ModelLe.lean</code> states the result for inequalities, and these lemmas connect the two forms through <span class="math">e ≤ f ⇔ e + f = f</span>: <code>provable_iff_equiv</code> for <span class="math">T Σ̈</span>, <code>kaProvable_iff_le</code> for <span class="math">K Σ̈</span>, and <code>modelLe_iff_langEq</code> for the language model. <code>insepUndecidable_of_between</code> covers any theory <code>S</code> with <code>Provable ⊆ S ⊆ ModelLe</code>, and <code>insepUndecidable_kaProvable</code> proves that Kleene algebra is one of them.</p>
   <p><strong>What "undecidable" means here.</strong> <code>InsepUndecidable</code> and <code>SepReduces</code> are not undecidability on their own, because they do not ask that the separating function be computable. Classically, such a function exists for any predicate with both a true and a false instance. What carries over to computation is that the reduction is the concrete <code>eqRed</code>, together with <code>not_machineDecidable_eqOn_of_computes</code> and <code>not_machineDecidable_eqVia_of_computes</code>. These conclude that no Turing machine decides equality, given a machine that computes the reduction. That machine is not constructed. The paper asserts that <span class="math">η</span> is computable, without giving the machine.</p>
-  <p><strong>In the synthetic framework.</strong> DiagonaLean's <code>Undecidable p</code> means <code>HALT ⪯ₘ p</code>. For the language model this holds for the failure of equality: <code>undecidable_not_langEq</code>. For <span class="math">T Σ̈</span> and <span class="math">K Σ̈</span>, <code>HALT ⪯ₘ</code> equality is not formalized (<code>GAPS.md</code>, item 2). What is proved for them is that <code>SelfEq F</code>, the machines <code>M</code> with <code>eqRed M</code> true in <span class="math">X</span>, reduces to equality on <span class="math">X</span> (<code>selfEq_reduces</code>) and has no machine decider, with no computability hypothesis (<code>not_machineDecidable_selfEq</code>, <code>not_machineDecidable_termEq</code>, <code>not_machineDecidable_kaTermEq</code>).</p>
+  <p><strong>In the synthetic framework.</strong> DiagonaLean's <code>Undecidable p</code> means <code>HaltProblem ⪯ₘ p</code>. For the language model this holds for the failure of equality: <code>undecidable_not_langEq</code>. For <span class="math">T Σ̈</span> and <span class="math">K Σ̈</span>, <code>HaltProblem ⪯ₘ</code> equality is not formalized (<code>GAPS.md</code>, item 2). What is proved for them is that <code>SelfEq F</code>, the machines <code>M</code> with <code>eqRed M</code> true in <span class="math">X</span>, reduces to equality on <span class="math">X</span> (<code>selfEq_reduces</code>) and has no machine decider, with no computability hypothesis (<code>not_machineDecidable_selfEq</code>, <code>not_machineDecidable_termEq</code>, <code>not_machineDecidable_kaTermEq</code>).</p>
   <p><strong>Alphabet.</strong> The paper fixes <span class="math">Σ = {0, 1}</span>. Lean uses the infinite alphabet <span class="math">ℕ</span>, so the result over a two-letter alphabet is not formalized (<code>GAPS.md</code>, item 1a).</p>
 </div>
 
@@ -551,7 +551,7 @@ def InsepUndecidable (p : Y → Prop) : Prop :=
 <div class="note"><p>The paper uses the alphabet <span class="math">Σ = {0, 1}</span> and encodes each machine's letters as binary strings. Lean uses <span class="math">ℕ ⊕ ℕ</span> letters and renames each machine's letters by their <code>Encodable</code> codes. This gives the result over the infinite alphabet <span class="math">ℕ</span>, not over <span class="math">{0, 1}</span>; see <code>GAPS.md</code>, item 1a. <code>InsepUndecidable</code> does not require a computable reduction; see the note under Theorem 18.</p></div>
 
 <h2>Beyond the paper: a HALT reduction</h2>
-<p>The library's own notion, <code>Undecidable p := Nonempty (HALT ⪯ₘ p)</code>, needs a reduction that is also correct for machines that never halt. The paper gives none. Dropping <span class="math">T<sub>a</sub></span> from the right-hand side gives one, but to the <em>failure</em> of model inclusion, not to provability.</p>
+<p>The library's own notion, <code>Undecidable p := Nonempty (HaltProblem ⪯ₘ p)</code>, needs a reduction that is also correct for machines that never halt. The paper gives none. Dropping <span class="math">T<sub>a</sub></span> from the right-hand side gives one, but to the <em>failure</em> of model inclusion, not to provability.</p>
 <div class="pair">
   <div class="side paper">
     <div class="label">Paper</div>
@@ -565,7 +565,7 @@ def InsepUndecidable (p : Y → Prop) : Prop :=
     Halts M w ↔ ¬ pl (R (wdF (initData w : Data M)) * (RM M)∗)
       ≤ pl (sig∗ * crun M + err ρ)
 
-def haltReduces : HALT ⪯ₘ Complement ModelLe :=
+def haltReduces : HaltProblem ⪯ₘ Complement ModelLe :=
   ⟨haltRed, halt_iff_not_modelLe⟩
 
 theorem undecidable_not_modelLe :

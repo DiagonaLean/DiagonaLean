@@ -10,7 +10,7 @@ Status: every box is checked except the one open item under Theorem 18. There ar
 
 ## Final results
 
-- [x] **`HALT ⪯ₘ` form, the library's `Undecidable`.** `HALT` many-one reduces to the *failure*
+- [x] **`HaltProblem ⪯ₘ` form, the library's `Undecidable`.** `HaltProblem` many-one reduces to the *failure*
   of language-model inclusion: `Undec.undecidable_not_modelLe : Undecidable (Complement ModelLe)`,
   `Reductions/SelfOut_to_ModelLe.lean:210`; reduction `haltReduces`, `:206`; `halt_iff_not_modelLe`, `:196`.
   Machine level: `Enc.halts_iff_not_pl_le`, `MachineEncoding/Halting.lean:169`, with the divergent case
@@ -76,7 +76,7 @@ Status: every box is checked except the one open item under Theorem 18. There ar
   - [x] No machine decides the problem on machine codes, with no hypothesis, for any `X`.
     `Undec.not_machineDecidable_selfEq`, `not_machineDecidable_termEq`,
     `not_machineDecidable_kaTermEq`; it reduces to equality by `selfEq_reduces`
-  - [ ] `Undecidable` for equality on `T Σ̈` and `K Σ̈`, through `HALT ⪯ₘ`. See `GAPS.md`, item 2
+  - [ ] `Undecidable` for equality on `T Σ̈` and `K Σ̈`, through `HaltProblem ⪯ₘ`. See `GAPS.md`, item 2
     - [x] Logical core (Theorem 19, Smullyan), given a `SmullyanFamily`.
       `Undec.undecidable_termEq_of_family`, `undecidable_kaTermEq_of_family`, `Reductions/Sigma1.lean`
 

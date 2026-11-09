@@ -8,9 +8,9 @@ Authors: Anonymous
 | File | Contents |
 |---|---|
 | `SelfHalt_to_TermEq.lean` | **No Turing machine decides equality** on `T Σ̈` and `K Σ̈`, over `{0, 1}` and `ℕ` |
-| `Halt_to_TermEq.lean` | The race, and `HALT ⪯ₘ` equality over `ℕ` |
-| `Halt_to_TermEqBool.lean` | `HALT ⪯ₘ` equality over `{0, 1}`, and the failure of equality on `L Σ̈` |
-| `SelfOut_to_ModelLe.lean` | `kaRed`, `haltRed`, and `HALT ⪯ₘ` the failure of language inclusion |
+| `Halt_to_TermEq.lean` | The race, and `HaltProblem ⪯ₘ` equality over `ℕ` |
+| `Halt_to_TermEqBool.lean` | `HaltProblem ⪯ₘ` equality over `{0, 1}`, and the failure of equality on `L Σ̈` |
+| `SelfOut_to_ModelLe.lean` | `kaRed`, `haltRed`, and `HaltProblem ⪯ₘ` the failure of language inclusion |
 | `SelfOut_to_Eq.lean` | The paper's Theorem 18, as separation statements |
 | `Sigma1.lean` | The same argument on a machine's own code. Conditional, and not used by the results above |
 

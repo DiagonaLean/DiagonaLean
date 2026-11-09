@@ -6,7 +6,7 @@ undecidable* (arXiv:2411.15979; PDF in `../Kleene Algebra/`). Last updated 2026-
 ## Decisions needed
 
 - [x] **D1. Undecidability notion.** The paper separates A = "halts with output 1" from
-  B = "halts with output 0". It never gives `HALT ⪯ₘ`. Options:
+  B = "halts with output 0". It never gives `HaltProblem ⪯ₘ`. Options:
   (a) Σ⁰₁-completeness (Thm 19) via Mathlib's `Nat.Partrec.Code.fixed_point`, which gives
   `Undecidable` as the framework defines it;
   (b) a new "computably inseparable ⇒ ¬ MachineDecidable" notion;
@@ -72,7 +72,7 @@ undecidable* (arXiv:2411.15979; PDF in `../Kleene Algebra/`). Last updated 2026-
   * Explicit residue: `FiniteStateLe` (Automata), `rel_resid_of_finiteStateLe`, `Rel.ResidBy`,
     `complete_of_trace_le`, `le_err_of_halting_run`; `ρ_M = Σ̈∗ bnd(R_M) R_M∗` with the syntax-directed
     `RExp.bnd` (`Syntax.finiteStateLe_mk`). Syntax-level terms in `MachineEncoding/MachineTerms`.
-  * `MachineEncoding/Halting` + `undecidable_not_modelLe`: `HALT ⪯ₘ Complement ModelLe` (library's
+  * `MachineEncoding/Halting` + `undecidable_not_modelLe`: `HaltProblem ⪯ₘ Complement ModelLe` (library's
     `Undecidable`), using the new divergent-run lemma `pl_le_of_forall_running`.
   * The right side uses `T_a = ⊢ ␣∗ [halt, a] ␣∗ ⊣` instead of one halting word, because
     list-level configurations may keep blank cells.

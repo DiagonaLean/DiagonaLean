@@ -73,7 +73,7 @@ each letter `n` with the prefix code `1ⁿ0`.
 theorem states that the `{0, 1}` result implies the `ℕ` one; they are proved separately. The map on
 `T Σ̈` is not proved injective, as the paper claims, because the argument doesn't need it.
 
-## 2. `HALT ⪯ₘ Provable`, Σ⁰₁-completeness, decision D1(a)
+## 2. `HaltProblem ⪯ₘ Provable`, Σ⁰₁-completeness, decision D1(a)
 
 **Equality is done (2026-11-09):** `Reductions/Halt_to_TermEq.lean` proves `undecidable_termEq` and
 `undecidable_kaTermEq` with no hypotheses. The reduction `Reduction.reduction` is an untagged `def`
@@ -85,7 +85,7 @@ whose only classically obtained inputs are finite constants (`Base`, and the cod
   `Reductions/SelfHalt_to_TermEq.lean` use a variant that reads only the code.
 - It is computable but infeasible to run: `Code.const n` nests `n` terms and `n` is the code of the
   instance's data. The pieces run on small inputs; the composite overflows the stack.
-- `HALT ⪯ₘ Provable` (the inequality) is not stated separately. `provable_iff_equiv` relates the
+- `HaltProblem ⪯ₘ Provable` (the inequality) is not stated separately. `provable_iff_equiv` relates the
   two forms, and `rInst` already has the shape `(e + f, f)`.
 
 The notes below predate this.
@@ -96,21 +96,21 @@ equality form, `undecidable_not_langEq` and `undecidable_not_eqVia` are in `Redu
 
 For `T Σ̈` and `K Σ̈`, `Reductions/SelfOut_to_Eq.lean` proves `selfEq_reduces` and
 `not_machineDecidable_selfEq`: the problem on machine codes reduces to equality, and no machine
-decides it. That is not `Undecidable`, which needs a reduction from `HALT`.
+decides it. That is not `Undecidable`, which needs a reduction from `HaltProblem`.
 
 **Which direction is possible:** language equality is co-r.e., so only its complement can receive
-a computable reduction from `HALT`. Provable equality in `T Σ̈` and `K Σ̈` is r.e., so there the
+a computable reduction from `HaltProblem`. Provable equality in `T Σ̈` and `K Σ̈` is r.e., so there the
 target is the predicate itself. These two remarks are not formalized.
 
 **Logical core done:** `Reductions/Sigma1.lean` proves `Undecidable` for equality on `T Σ̈` and `K Σ̈`
 from a `SmullyanFamily` (paper's Theorem 19). What remains is building that family from data:
 `TODO.md`, M8b–d and decision D4.
 
-**Do not close this classically:** a term of `HALT ⪯ₘ Equiv` is easy to write by case split on
-`HALT p`, picking a true or a false instance. That breaks the convention on `ManyOneReduces`. The
+**Do not close this classically:** a term of `HaltProblem ⪯ₘ Equiv` is easy to write by case split on
+`HaltProblem p`, picking a true or a false instance. That breaks the convention on `ManyOneReduces`. The
 same applies to any function from `(M, w)` to machines that is chosen by such a case split.
 
-**What remains:** a reduction `HALT ⪯ₘ Provable`, giving `Undecidable Provable` as the repo defines
+**What remains:** a reduction `HaltProblem ⪯ₘ Provable`, giving `Undecidable Provable` as the repo defines
 it.
 
 **Why it's not done:** the paper doesn't prove it, and the model-level reduction doesn't transfer.

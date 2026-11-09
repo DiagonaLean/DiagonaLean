@@ -18,7 +18,7 @@ recursive test of the numeric data of `(M, w)`.
 
 ## Main statements
 
-* `halt_iff_test`: `HALT (M, w)` iff the test succeeds for some `k`.
+* `halt_iff_test`: `HaltProblem (M, w)` iff the test succeeds for some `k`.
 * `test_prim`: the test is primitive recursive.
 -/
 
@@ -134,12 +134,13 @@ theorem reaches_iterate (d : Data M.toSingleTapeTM) (k : ℕ) :
     · exact ih.tail (step_cfgOf _ hr)
     · rwa [dstep_halted _ hr]
 
-/-- The data of a `HALT` instance. -/
+/-- The data of a `HaltProblem` instance. -/
 def dataOf (p : EncodableTM Bool × List Bool) : List (ℕ × ℕ) × SC :=
   (rowsE p.1, absD (initData p.2 : Data p.1.toSingleTapeTM))
 
-/-- **`HALT` is a search.** -/
-theorem halt_iff_test (p : EncodableTM Bool × List Bool) : HALT p ↔ ∃ k, Test (dataOf p) k := by
+/-- **`HaltProblem` is a search.** -/
+theorem halt_iff_test (p : EncodableTM Bool × List Bool) :
+    HaltProblem p ↔ ∃ k, Test (dataOf p) k := by
   obtain ⟨M, w⟩ := p
   constructor
   · rintro ⟨t, ht⟩

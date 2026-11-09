@@ -11,12 +11,12 @@ import DiagonaLean.KleeneAlgebra.Reductions.ProofSearch
 
 @[expose] public section
 
-/-! # `HALT` many-one reduces to equality on `T Σ̈` and `K Σ̈`
+/-! # `HaltProblem` many-one reduces to equality on `T Σ̈` and `K Σ̈`
 
-For a `HALT` instance `p`, the program `curry C ⟨p⟩` runs a race on `p`: it searches for a halting
-run of `p`, and for a proof that the instance of its own machine holds. If the halting run comes
-first it returns `1`, and otherwise `0`. Its machine writes its own code on the tape and then runs
-a fixed interpreter.
+For a `HaltProblem` instance `p`, the program `curry C ⟨p⟩` runs a race on `p`: it searches for a
+halting run of `p`, and for a proof that the instance of its own machine holds. If the halting run
+comes first it returns `1`, and otherwise `0`. Its machine writes its own code on the tape and then
+runs a fixed interpreter.
 
 The reduction `reduction B C p` is an untagged function of the data of `p`. Its only classical
 ingredients are finite constants: the interpreter's table and tape symbols (`Base`), and the code
@@ -26,8 +26,8 @@ ingredients are finite constants: the interpreter's table and tape symbols (`Bas
 
 * `reduction`: the reduction.
 * `halt_reducesto_termEq_spec`, `halt_reducesto_kaTermEq_spec`: `reduction B C` is correct, given
-  correct constants, in the explicit form `HALT ⪯ₘ[reduction B C] _`.
-* `haltReduces_termEq`, `haltReduces_kaTermEq`: the same reductions, packaged as `HALT ⪯ₘ _`.
+  correct constants, in the explicit form `HaltProblem ⪯ₘ[reduction B C] _`.
+* `haltReduces_termEq`, `haltReduces_kaTermEq`: the same reductions, packaged as `HaltProblem ⪯ₘ _`.
 * `undecidable_termEq`, `undecidable_kaTermEq`: **provable equality in pre-Kleene algebra and in
   Kleene algebra with commutativity is `Undecidable`.**
 -/
@@ -40,7 +40,7 @@ open DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definition
 
 /-! ### The race -/
 
-/-- The data of a `HALT` instance. -/
+/-- The data of a `HaltProblem` instance. -/
 abbrev HD := List (ℕ × ℕ) × SC
 
 /-- At `k`, a halting run or a proof of the equation `i` has been found. -/
@@ -165,7 +165,7 @@ theorem halt_iff_of_family {ka : Bool} {B : Base} {G : List Bool → ℕ × ℕ}
     (pos : ∀ l, (NM B.K l).Outputs [] [true] → Q l)
     (neg : ∀ l, (NM B.K l).Outputs [] [false] → ¬ Q l)
     (p : EncodableTM Bool × List Bool) :
-    HALT p ↔ Q (tapeOf B (Encodable.encode (progOf C p))) :=
+    HaltProblem p ↔ Q (tapeOf B (Encodable.encode (progOf C p))) :=
   race_iff hB hC hQ pos neg (dataOf p) (halt_iff_test p)
 
 /-- **The reduction.** The instance of the machine that writes the race program of `p` on its
@@ -198,7 +198,7 @@ theorem rel_neg {ka : Bool} {K : UConst} {l : List Bool} (h : (NM K l).Outputs [
 /-- **Smullyan's argument, for the race program.** -/
 theorem halt_iff_rel {ka : Bool} {B : Base} {C : Code} (hB : B.Good) (hC : RaceProg ka B C)
     (p : EncodableTM Bool × List Bool) :
-    HALT p ↔ Rel ka (reduction B C p).1 (reduction B C p).2 :=
+    HaltProblem p ↔ Rel ka (reduction B C p).1 (reduction B C p).2 :=
   halt_iff_of_family (Q := fun l => Rel ka (rInst B.K l).1 (rInst B.K l).2) hB hC
     (fun l => by
       rw [rel_iff_checks]
@@ -206,24 +206,26 @@ theorem halt_iff_rel {ka : Bool} {B : Base} {C : Code} (hB : B.Good) (hC : RaceP
       rw [← hi])
     (fun _ h => rel_pos h) (fun _ h => rel_neg h) p
 
-/-- `reduction B C` reduces `HALT` to provable equality in pre-Kleene algebra with commutativity. -/
+/-- `reduction B C` reduces `HaltProblem` to provable equality in pre-Kleene algebra with
+commutativity. -/
 theorem halt_reducesto_termEq_spec {B : Base} {C : Code} (hB : B.Good) (hC : RaceProg false B C) :
-    HALT ⪯ₘ[reduction B C] @TermEq.DecisionProblem ℕ :=
+    HaltProblem ⪯ₘ[reduction B C] @TermEq.DecisionProblem ℕ :=
   fun p => by simpa [Rel, TermEq.DecisionProblem] using halt_iff_rel hB hC p
 
-/-- `HALT` many-one reduces to provable equality in pre-Kleene algebra with commutativity. -/
+/-- `HaltProblem` many-one reduces to provable equality in pre-Kleene algebra with commutativity. -/
 def haltReduces_termEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg false B C) :
-    HALT ⪯ₘ @TermEq.DecisionProblem ℕ :=
+    HaltProblem ⪯ₘ @TermEq.DecisionProblem ℕ :=
   ⟨reduction B C, halt_reducesto_termEq_spec hB hC⟩
 
-/-- `reduction B C` reduces `HALT` to provable equality in Kleene algebra with commutativity. -/
+/-- `reduction B C` reduces `HaltProblem` to provable equality in Kleene algebra with
+commutativity. -/
 theorem halt_reducesto_kaTermEq_spec {B : Base} {C : Code} (hB : B.Good) (hC : RaceProg true B C) :
-    HALT ⪯ₘ[reduction B C] @KATermEq.DecisionProblem ℕ :=
+    HaltProblem ⪯ₘ[reduction B C] @KATermEq.DecisionProblem ℕ :=
   fun p => by simpa [Rel, KATermEq.DecisionProblem] using halt_iff_rel hB hC p
 
-/-- `HALT` many-one reduces to provable equality in Kleene algebra with commutativity. -/
+/-- `HaltProblem` many-one reduces to provable equality in Kleene algebra with commutativity. -/
 def haltReduces_kaTermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg true B C) :
-    HALT ⪯ₘ @KATermEq.DecisionProblem ℕ :=
+    HaltProblem ⪯ₘ @KATermEq.DecisionProblem ℕ :=
   ⟨reduction B C, halt_reducesto_kaTermEq_spec hB hC⟩
 
 /-- **Provable equality in pre-Kleene algebra with commutativity is `Undecidable`.** -/

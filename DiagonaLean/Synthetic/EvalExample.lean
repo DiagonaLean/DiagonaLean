@@ -10,7 +10,7 @@ import DiagonaLean.Halt.Helpers
 /-! # Evaluation fixture (not wired into `DiagonaLean.lean`)
 
 Runs the computable reduction `haltToPcp : EncodableTM Bool × List Bool → Stack _` on a concrete
-halting instance, to demonstrate that the HALT → PCP witness is an executable program and not
+halting instance, to demonstrate that the HaltProblem → PCP witness is an executable program and not
 just a proof object. Kept out of the main build because evaluation in the interpreter takes
 several minutes. Run with `lake env lean DiagonaLean/Synthetic/EvalExample.lean`. -/
 

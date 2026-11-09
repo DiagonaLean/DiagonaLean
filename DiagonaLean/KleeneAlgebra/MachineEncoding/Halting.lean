@@ -25,7 +25,7 @@ halting exactly, but only in the language model:
   parts diverge (configuration words are prefix-free), which puts it in `Σ∗ Σ^≠ Σ̈∗`
   (Lemma 33).
 
-This gives a many-one reduction from `HALT` to the complement of language-model inclusion
+This gives a many-one reduction from `HaltProblem` to the complement of language-model inclusion
 (`Reductions/SelfOut_to_ModelLe.lean`). It does not reach pre-KA *provability*: for a machine that runs forever,
 whether the inequality is provable is left open, as in the paper.
 
