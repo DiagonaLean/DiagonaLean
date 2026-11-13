@@ -40,6 +40,6 @@ theorem undecidable_not_langEq_bool :
 
 /-- `eqRed` separates the inseparable pair by equality of the languages of two terms. -/
 theorem langEq_separated : InsepUndecidable fun i : Inst => pl (mk i.1 : TD ℕ) = pl (mk i.2) :=
-  ⟨sepReducesEqVia factorL⟩
+  ⟨sepReducesLangEq⟩
 
 end DiagonaLean.LangEq.Reduction

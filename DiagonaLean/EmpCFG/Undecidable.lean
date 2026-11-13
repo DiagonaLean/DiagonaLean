@@ -7,10 +7,10 @@ import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFG
 
 @[expose] public section
 
-/-! # Undecidability of the emptiness of CFG intersection
+/-! # Undecidability of the non-emptiness of CFG intersection
 
-Emptiness of the intersection of two context-free grammars is undecidable over any alphabet with
-two distinct letters (`empcfg_undecidable`).
+Non-emptiness of the intersection of two context-free grammars is undecidable over the terminals
+`Term α`, for any alphabet `α` with two distinct letters (`empcfg_undecidable`).
 -/
 
 open DiagonaLean.Synthetic.Notation
@@ -19,13 +19,10 @@ namespace EmpCFG.Reduction
 
 open DiagonaLean.EmpCFG DiagonaLean.PCP ContextFreeGrammar
 
-/-- Emptiness of the intersection of two context-free grammars is undecidable: reduced from
-PCP by pairing the two derived grammars `topCFG P`, `botCFG P` for each stack `P`. The
-correctness equivalence is `pcp_iff_nempcfg`. -/
+/-- Non-emptiness of the intersection of two context-free grammars over the terminals `Term α` is
+undecidable, for any alphabet `α` with two distinct letters, through `pcpReducesEmpCFG`. -/
 theorem empcfg_undecidable {α : Type} [DecidableEq α] [Nontrivial α] :
-    Undecidable (fun (P : Stack α) => DecisionProblem (topCFG P, botCFG P)) := by
-  reduceFromPCP over_type α with_red_function (fun P => P)
-  · exact (pcp_iff_nempcfg K).mp hPCP
-  · exact (pcp_iff_nempcfg K).mpr hC
+    Undecidable (@DiagonaLean.EmpCFG.DecisionProblem (Term α)) := by
+  reduceFromPCP over_type α via pcpReducesEmpCFG
 
 end EmpCFG.Reduction

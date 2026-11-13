@@ -5,6 +5,7 @@ Authors: Akhilesh Balaji
 
 import DiagonaLean.Halt.Basic
 import DiagonaLean.Synthetic.Definitions
+import DiagonaLean.Synthetic.ReductionChain
 
 /-! # Core undecidability definitions
 
@@ -20,61 +21,25 @@ open DiagonaLean.Halt DiagonaLean.Halt.Encoding Cslib.Turing DiagonaLean.Synthet
 
 variable {X Y : Type*}
 
-/-- `p` is undecidable: `HaltProblem` many-one reduces to `p`, so any decider for `p` would yield
-one for `HaltProblem`. `HaltProblem ⪯ₘ p` is itself data (see `ManyOneReduces`), so it's wrapped in
-`Nonempty` here to keep `Undecidable` a `Prop`, matching its role as the fact one states/cites, not
-as a value one unpacks for its reduction witness. This relies on `⪯ₘ` actually carrying algorithmic
-content -- see the convention noted on `ManyOneReduces` -- since otherwise `HaltProblem ⪯ₘ p` would
-hold classically for essentially every non-trivial `p`, making this predicate vacuous the way
-`SDecidable` already is. -/
+/-- `p` is undecidable: `HaltProblem` many-one reduces to `p`. `HaltProblem ⪯ₘ p` is data (see
+`ManyOneReduces`), so it is wrapped in `Nonempty` to keep `Undecidable` a `Prop`.
+
+As a statement this is weak: Lean's logic is classical, so `HaltProblem ⪯ₘ p` holds for every `p`
+with a positive and a negative instance, through the case split `if HaltProblem x then a else b`.
+The meaning comes from the convention on `ManyOneReduces`, which `#check_reductions`
+(`Synthetic/ReductionCheck.lean`) checks in CI: every reduction behind an `Undecidable` theorem is a
+compiled definition. The statement that a Turing machine computes the reduction is
+`not_machineDecidable_of_halt_reduces`. -/
 def Undecidable (p : X → Prop) : Prop := Nonempty (HaltProblem ⪯ₘ p)
-
-/-- If a predicate `p` is synthetically decidable, then its complement is also synthetically decidable. -/
-private lemma dec_compl {X : Type*} {p : X → Prop}
-    (h : SDecidable p) : SDecidable (Complement p) := by
-  obtain ⟨f, hf⟩ := h
-  refine ⟨fun x => !f x, fun x => ?_⟩
-  constructor
-  · intro hn
-    dsimp only
-    cases hfx : f x
-    · rfl
-    · exact absurd ((hf x).mpr hfx) hn
-  · intro hfx hp
-    dsimp only at hfx
-    have : f x = true := (hf x).mp hp
-    simp [this] at hfx
-
-/-- If the double complement of a predicate `p` is synthetically decidable, then `p` itself is synthetically decidable. -/
-private lemma dec_compl' {p : X → Prop}
-    (h : SDecidable (Complement (Complement p))) : SDecidable p := by
-  obtain ⟨f, hf⟩ := h
-  refine ⟨f, fun x => ?_⟩
-  have key : ¬¬p x ↔ f x = true := Iff.symm ((fun {a b} => iff_comm.mp) (hf x))
-  exact ⟨fun hpx => key.mp (fun hn => hn hpx),
-         fun hfx => Classical.byContradiction (key.mpr hfx)⟩
 
 /-- Undecidability propagates upward along many-one reductions. -/
 lemma undecidability_from_reducibility {p : X → Prop} {q : Y → Prop}
     (hp : Undecidable p) (hpq : p ⪯ₘ q) : Undecidable q := by
   obtain ⟨r⟩ := hp
-  exact ⟨⟨hpq.f ∘ r.f, fun x => (r.hf x).trans (hpq.hf (r.f x))⟩⟩
+  exact ⟨ReductionChain.ReducesTransitive r hpq⟩
 
-
-/-- If `¬p` is undecidable then so is `p`.
-lemma undecidability_from_complement {p : X → Prop}
-    (h : Undecidable (Complement p)) : Undecidable p :=
-  fun hp => h (dec_compl hp)
-
-
-/-- If `¬p` is undecidable then so is `¬¬p`. -/
-lemma undecidability_to_complement {p : X → Prop}
-    (h : Undecidable (Complement p)) : Undecidable (Complement (Complement p)) :=
-  fun hcc => h (dec_compl (dec_compl' hcc))
-
- Tactic to prove undecidability by reduction from another undecidable problem.
-    Translates `undec from H` to `apply undecidability_from_reducibility H`. -/
-
+/-- Tactic to prove undecidability by reduction from another undecidable problem.
+Translates `undec from H` to `apply undecidability_from_reducibility H`. -/
 macro "undec" "from" H:term : tactic =>
   `(tactic| apply undecidability_from_reducibility $H)
 

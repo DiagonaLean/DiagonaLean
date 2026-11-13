@@ -43,3 +43,13 @@ One logical change per commit; if you find yourself writing "and" in the message
 - Scope to the Lean module name when possible: `feat(MyProject.Eval): ...`
 - Never commit directly to `main`. Commit to a new branch.
 
+# Reductions
+
+Lean's logic is classical, so `Undecidable p` on its own holds for every `p` with a positive and a negative instance: the reduction can be the case split `if HaltProblem x then a else b`. An undecidability result means something only if its reduction is a program. CI enforces this with `#check_reductions` (`DiagonaLean/Synthetic/ReductionCheck.lean`):
+
+- Build every reduction (`p ⪯ₘ q`, or `SepReduces`) in a named `def` that Lean compiles: not `noncomputable`, and without `implemented_by`, `extern` or `unsafe`. Put it in `Reductions/Y_to_X.lean`.
+- Do not build a reduction inside a theorem with `⟨f, h⟩`; use the `def`. For reductions from PCP, write `reduceFromPCP over_type α via R`.
+- A theorem may pass the `def` finite data obtained classically, such as a letter or a program code, but not a function or a decidability instance obtained classically.
+
+To check locally after `lake build`, run `lake env lean scripts/CheckReductions.lean`. `scripts/CheckReductionsTest.lean` holds the cases the check must reject.
+

@@ -21,14 +21,11 @@ fails in the language model.
 For equality, the paper states Theorem 18 for any factoring `l = g ∘ l'` of the language map through
 `l' : T Σ̈ → X` (`LangFactor X`). Since `e ≤ f` means `e + f = f`, `eqRed` sends `M` to
 `(eL + eR, eR)`, where `(eL, eR) = kaRed M`. `factorT`, `factorK` and `factorL` are the factorings
-through `T Σ̈`, `K Σ̈` and `L Σ̈`. A `SmullyanFamily` upgrades the separation to a many-one
-reduction from `HaltProblem` (Theorem 19); in Lean's classical logic such a family is meaningful
-only when built from the data of the instance.
+through `T Σ̈`, `K Σ̈` and `L Σ̈`.
 
 ## References
 
-* [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorems 18 and 19
-* R. M. Smullyan, *Undecidability and recursive inseparability* (1958)
+* [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18
 -/
 
 open scoped Computability
@@ -213,37 +210,5 @@ separates the inseparable pair, and its input is the machine's own code. -/
 theorem not_machineDecidable_selfEq (F : LangFactor X) :
     ¬ MachineDecidable encodeBoolTM (SelfEq F) :=
   selfOut_inseparable ⟨fun _ h => eqVia_eqRed_pos F h, fun _ h => eqVia_eqRed_neg F h⟩
-
-/-- The machines that the recursion theorem must supply: on its own code, `N p` outputs `1` when
-`p` halts and `S (N p)` fails, and outputs `0` when `p` diverges and `S (N p)` holds. `N` must be
-constructed from the data of `p`, never chosen by deciding `HaltProblem p`. -/
-structure SmullyanFamily (S : EncodableTM Bool → Prop) where
-  /-- The machine for the instance `p`. -/
-  N : EncodableTM Bool × List Bool → EncodableTM Bool
-  /-- The halting run wins the race. -/
-  out_true : ∀ p, HaltProblem p → ¬ S (N p) → SelfOut true (N p)
-  /-- The evidence for `S` wins the race. -/
-  out_false : ∀ p, ¬ HaltProblem p → S (N p) → SelfOut false (N p)
-
-/-- **Smullyan's argument.** `p` halts iff `eqRed (N p)` holds in `X`. -/
-theorem halt_iff_selfEq (F : LangFactor X) (fam : SmullyanFamily (SelfEq F))
-    (p : EncodableTM Bool × List Bool) : HaltProblem p ↔ SelfEq F (fam.N p) := by
-  constructor
-  · intro hp
-    by_contra hS
-    exact hS (eqVia_eqRed_pos F (fam.out_true p hp hS))
-  · intro hS
-    by_contra hp
-    exact eqVia_eqRed_neg F (fam.out_false p hp hS) hS
-
-/-- `HaltProblem` many-one reduces to equality on `X`, through `eqRed ∘ N`. -/
-def haltReducesEqVia (F : LangFactor X) (fam : SmullyanFamily (SelfEq F)) :
-    HaltProblem ⪯ₘ EqVia F :=
-  ⟨eqRed ∘ fam.N, halt_iff_selfEq F fam⟩
-
-/-- **`Undecidable` for equality on `X`,** given a Smullyan family. -/
-theorem undecidable_eqVia_of_family (F : LangFactor X) (fam : SmullyanFamily (SelfEq F)) :
-    Undecidable (EqVia F) :=
-  ⟨haltReducesEqVia F fam⟩
 
 end DiagonaLean.Foundations.KleeneAlgebra

@@ -17,8 +17,8 @@ the two sides are provably equal in Kleene algebra with commutativity (`halt_iff
 `halt_iff_qb`). The constants `B` and `C` are the interpreter's table and the race program from the
 recursion theorem.
 
-`haltReducesKATermEqOfFamily` is the conditional form of Theorem 19: given a `SmullyanFamily`,
-`eqRed ∘ N` is a reduction.
+`sepReducesKATermEq` sends machines that output `1` on their own code to provably equal pairs and
+machines that output `0` to pairs that are not, separating `SelfOut true` from `SelfOut false`.
 
 ## References
 
@@ -60,10 +60,11 @@ def haltReducesKATermEqBool (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB 
     HaltProblem ⪯ₘ KATermEqProblem :=
   ⟨reductionB B C, halt_reducesto_kaTermEq_bool_spec hB hC⟩
 
-/-- `HaltProblem` many-one reduces to provable equality in Kleene algebra with commutativity,
-through `eqRed ∘ N`, given a Smullyan family for `K Σ̈`. -/
-def haltReducesKATermEqOfFamily (fam : SmullyanFamily (SelfEq factorK)) :
-    HaltProblem ⪯ₘ @KATermEq.DecisionProblem ℕ :=
-  ⟨eqRed ∘ fam.N, fun p => (halt_iff_selfEq factorK fam p).trans (eqVia_factorK _)⟩
+/-- `eqRed` separates `SelfOut true` from `SelfOut false` by provable equality in Kleene algebra
+with commutativity. -/
+def sepReducesKATermEq :
+    SepReduces (SelfOut true) (SelfOut false) fun i : Inst => KAEquiv DComm i.1 i.2 :=
+  ⟨eqRed, fun _ h => (eqVia_factorK _).1 (eqVia_eqRed_pos factorK h),
+    fun _ h hE => eqVia_eqRed_neg factorK h ((eqVia_factorK _).2 hE)⟩
 
 end DiagonaLean.KATermEq.Reduction
