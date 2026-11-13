@@ -4,7 +4,7 @@ Authors: Prathamesh Turaga
 -/
 
 import DiagonaLean.Synthetic.Undecidability
-import DiagonaLean.PCP.Reductions.Halt_to_PCP
+import DiagonaLean.PCP.Undecidable
 import DiagonaLean.PCP.Basic
 
 /-! # The `reduceFromPCP` tactic

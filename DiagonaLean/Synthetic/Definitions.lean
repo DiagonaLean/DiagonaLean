@@ -98,7 +98,7 @@ classically, but only if each is a *finite constant* that does not vary with the
 a number, a program code (see `PCP.Reduction.pcp_undecidable`). One constant cannot hide infinitely
 many answers. A parameter that is a function of the input can: a classically obtained `f` passed
 to an untagged `def` is the same case split in another place. A theorem that takes such a parameter
-as a hypothesis (`KAComm.Undec.undecidable_termEq_of_family` and its `SmullyanFamily`) is therefore
+as a hypothesis (`TermEq.Reduction.undecidable_termEq_of_family` and its `SmullyanFamily`) is therefore
 only conditional, and its hypothesis must itself be discharged by a `def` that follows this
 convention.
 

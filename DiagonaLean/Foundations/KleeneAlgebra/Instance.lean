@@ -4,7 +4,8 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.RunAfterWrite
-import DiagonaLean.KAComm.Reductions.ExprCode
+import DiagonaLean.Foundations.KleeneAlgebra.ExprCode
+import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.Halting
 
 @[expose] public section
 
@@ -20,11 +21,9 @@ neither in `K Σ̈` nor in `T Σ̈`.
 
 open scoped Computability
 
-namespace DiagonaLean.KAComm.Reduction
+namespace DiagonaLean.Foundations.KleeneAlgebra
 
-open DiagonaLean.Foundations.KleeneAlgebra
-
-open Cslib.Turing Enc RExp FreePreKA TD Undec DiagonaLean.Foundations.Computability
+open Cslib.Turing Enc RExp FreePreKA TD DiagonaLean.Foundations.Computability
 
 section letC
 
@@ -210,4 +209,4 @@ theorem rInst_neg_ka (h : (NM K l).Outputs [] [false]) :
     ¬ KAEquiv DComm (rInst K l).1 (rInst K l).2 := fun hE =>
   not_modelLe h (KAProvable.modelLe (i := (redA K l, redB K l)) hE)
 
-end DiagonaLean.KAComm.Reduction
+end DiagonaLean.Foundations.KleeneAlgebra

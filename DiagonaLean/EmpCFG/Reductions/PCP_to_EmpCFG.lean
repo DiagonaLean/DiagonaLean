@@ -528,13 +528,4 @@ theorem npcp_iff_empcfg (P : Stack α) :
     obtain ⟨w, hw_top, hw_bot⟩ := (pcp_iff_nempcfg P).mp h_sol
     exact h w ⟨hw_top, hw_bot⟩
 
-/-- Emptiness of the intersection of two context-free grammars is undecidable: reduced from
-PCP by pairing the two derived grammars `topCFG P`, `botCFG P` for each stack `P`. The
-correctness equivalence is `pcp_iff_nempcfg`. -/
-theorem empcfg_undecidable {α : Type} [DecidableEq α] [Nontrivial α] :
-    Undecidable (fun (P : Stack α) => DecisionProblem (topCFG P, botCFG P)) := by
-  reduceFromPCP over_type α with_red_function (fun P => P)
-  · exact (pcp_iff_nempcfg K).mp hPCP
-  · exact (pcp_iff_nempcfg K).mpr hC
-
 end EmpCFG.Reduction

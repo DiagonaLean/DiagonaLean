@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.KAComm.Reductions.ExprCode
+import DiagonaLean.Foundations.KleeneAlgebra.ExprCode
 
 @[expose] public section
 
@@ -17,13 +17,10 @@ primitive recursive, and `equiv_iff_map` moves provable equality between `Bool �
 -/
 open scoped Computability
 
-namespace DiagonaLean.KAComm.Reduction
-
-open DiagonaLean.Foundations.KleeneAlgebra
+namespace DiagonaLean.Foundations.KleeneAlgebra
 
 open Cslib.Turing Enc RExp FreePreKA TD Nat.Partrec DiagonaLean.Foundations.Computability
-open DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
-  DiagonaLean.Synthetic.Notation Undec
+open DiagonaLean.Halt DiagonaLean.Halt.Encoding
 
 section subst
 
@@ -57,7 +54,7 @@ theorem comm_words (u v : List B) :
 
 /-- Substitution preserves provable equality in pre-Kleene algebra. -/
 theorem Equiv.sb (w : A → List B) {e f : RExp (A ⊕ A)} (h : Equiv DComm e f) :
-    Equiv DComm (Reduction.sb w e) (Reduction.sb w f) := by
+    Equiv DComm (KleeneAlgebra.sb w e) (KleeneAlgebra.sb w f) := by
   induction h with
   | refl => exact .refl _
   | symm _ ih => exact ih.symm
@@ -86,7 +83,7 @@ theorem Equiv.sb (w : A → List B) {e f : RExp (A ⊕ A)} (h : Equiv DComm e f)
 
 /-- Substitution preserves provable equality in Kleene algebra. -/
 theorem KAEquiv.sb (w : A → List B) {e f : RExp (A ⊕ A)} (h : KAEquiv DComm e f) :
-    KAEquiv DComm (Reduction.sb w e) (Reduction.sb w f) := by
+    KAEquiv DComm (KleeneAlgebra.sb w e) (KleeneAlgebra.sb w f) := by
   induction h with
   | ofEquiv h => exact .ofEquiv (Equiv.sb w h)
   | symm _ ih => exact ih.symm
@@ -164,14 +161,14 @@ theorem pl_rW (u : List B) : pl (mk (rW u) : TD B) = single (1, FreeMonoid.ofLis
 
 /-- The language of a substituted expression is the image of the language. -/
 theorem mem_pl_sb (w : A → List B) (e : RExp (A ⊕ A)) (y : W B) :
-    SetSemiring.Mem y (pl (mk (Reduction.sb w e))) ↔
+    SetSemiring.Mem y (pl (mk (KleeneAlgebra.sb w e))) ↔
       ∃ x, SetSemiring.Mem x (pl (mk e)) ∧ wsub w x = y := by
   induction e generalizing y with
   | zero =>
-    simp only [Reduction.sb, mk_zero, pl_zero]
+    simp only [KleeneAlgebra.sb, mk_zero, pl_zero]
     exact iff_of_false (SetSemiring.mem_zero y) fun ⟨x, hx, _⟩ => SetSemiring.mem_zero x hx
   | one =>
-    simp only [Reduction.sb, mk_one, pl_one, SetSemiring.mem_one]
+    simp only [KleeneAlgebra.sb, mk_one, pl_one, SetSemiring.mem_one]
     exact ⟨fun h => ⟨1, rfl, by rw [map_one, h]⟩, fun ⟨x, hx, h⟩ => by rw [← h, hx, map_one]⟩
   | sym x =>
     rcases x with a | a
@@ -186,21 +183,21 @@ theorem mem_pl_sb (w : A → List B) (e : RExp (A ⊕ A)) (y : W B) :
       simp only [gen, mem_single, exists_eq_left]
       simp [wsub, cd, eq_comm]
   | plus e f ihe ihf =>
-    simp only [Reduction.sb, mk_plus, pl_add, SetSemiring.mem_add, ihe, ihf]
+    simp only [KleeneAlgebra.sb, mk_plus, pl_add, SetSemiring.mem_add, ihe, ihf]
     constructor
     · rintro (⟨x, hx, rfl⟩ | ⟨x, hx, rfl⟩)
       exacts [⟨x, Or.inl hx, rfl⟩, ⟨x, Or.inr hx, rfl⟩]
     · rintro ⟨x, hx | hx, rfl⟩
       exacts [Or.inl ⟨x, hx, rfl⟩, Or.inr ⟨x, hx, rfl⟩]
   | mul e f ihe ihf =>
-    simp only [Reduction.sb, mk_mul, pl_mul, SetSemiring.mem_mul, ihe, ihf]
+    simp only [KleeneAlgebra.sb, mk_mul, pl_mul, SetSemiring.mem_mul, ihe, ihf]
     constructor
     · rintro ⟨_, ⟨a, ha, rfl⟩, _, ⟨b, hb, rfl⟩, rfl⟩
       exact ⟨a * b, ⟨a, ha, b, hb, rfl⟩, map_mul _ _ _⟩
     · rintro ⟨_, ⟨a, ha, b, hb, rfl⟩, rfl⟩
       exact ⟨_, ⟨a, ha, rfl⟩, _, ⟨b, hb, rfl⟩, (map_mul _ _ _).symm⟩
   | star e ihe =>
-    simp only [Reduction.sb, mk_star, pl_kstar, SetSemiring.mem_kstar]
+    simp only [KleeneAlgebra.sb, mk_star, pl_kstar, SetSemiring.mem_kstar]
     constructor
     · rintro ⟨l, hl, rfl⟩
       induction l with
@@ -225,21 +222,21 @@ theorem wsub_injective {w : A → List B} (h : Function.Injective (cd w)) :
 
 /-- An injective substitution reflects inclusion in the language model. -/
 theorem pl_le_of_sb {w : A → List B} (hw : Function.Injective (cd w)) {e f : RExp (A ⊕ A)}
-    (h : pl (mk (Reduction.sb w e)) ≤ pl (mk (Reduction.sb w f))) : pl (mk e) ≤ pl (mk f) := by
+    (h : pl (mk (KleeneAlgebra.sb w e)) ≤ pl (mk (KleeneAlgebra.sb w f))) : pl (mk e) ≤ pl (mk f) := by
   intro x hx
   obtain ⟨x', hx', he⟩ := (mem_pl_sb w f _).1 (h ((mem_pl_sb w e _).2 ⟨x, hx, rfl⟩))
   rwa [← wsub_injective hw he]
 
 /-- A substitution preserves inclusion in the language model. -/
 theorem pl_sb_le (w : A → List B) {e f : RExp (A ⊕ A)} (h : pl (mk e) ≤ pl (mk f)) :
-    pl (mk (Reduction.sb w e)) ≤ pl (mk (Reduction.sb w f)) := by
+    pl (mk (KleeneAlgebra.sb w e)) ≤ pl (mk (KleeneAlgebra.sb w f)) := by
   intro y hy
   obtain ⟨x, hx, rfl⟩ := (mem_pl_sb w e y).1 hy
   exact (mem_pl_sb w f _).2 ⟨x, h hx, rfl⟩
 
 /-- An injective substitution preserves and reflects language equality. -/
 theorem pl_sb_eq_iff {w : A → List B} (hw : Function.Injective (cd w)) {e f : RExp (A ⊕ A)} :
-    pl (mk (Reduction.sb w e)) = pl (mk (Reduction.sb w f)) ↔ pl (mk e) = pl (mk f) :=
+    pl (mk (KleeneAlgebra.sb w e)) = pl (mk (KleeneAlgebra.sb w f)) ↔ pl (mk e) = pl (mk f) :=
   ⟨fun h => le_antisymm (pl_le_of_sb hw h.le) (pl_le_of_sb hw h.ge),
     fun h => le_antisymm (pl_sb_le w h.le) (pl_sb_le w h.ge)⟩
 
@@ -497,4 +494,4 @@ theorem subC_prim : Primrec subC := by
         (prim_cons (subV_prim.comp Primrec.snd) (Primrec.const []))))
   exact subV_prim.comp hT
 
-end DiagonaLean.KAComm.Reduction
+end DiagonaLean.Foundations.KleeneAlgebra

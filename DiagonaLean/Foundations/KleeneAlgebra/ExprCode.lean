@@ -3,7 +3,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.KAComm.Reductions.SelfOut_to_Eq
+import DiagonaLean.Foundations.KleeneAlgebra.Inequality
+import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.Halting
 import DiagonaLean.Foundations.Computability.Prim
 
 @[expose] public section
@@ -14,9 +15,7 @@ import DiagonaLean.Foundations.Computability.Prim
 the `prim` tactic learns to handle those constructors.
 -/
 
-namespace DiagonaLean.KAComm.Reduction
-
-open DiagonaLean.Foundations.KleeneAlgebra
+namespace DiagonaLean.Foundations.KleeneAlgebra
 
 open RExp DiagonaLean.Foundations.Computability
 
@@ -109,4 +108,4 @@ macro_rules
     | apply prim_cm
     | apply prim_ct)
 
-end DiagonaLean.KAComm.Reduction
+end DiagonaLean.Foundations.KleeneAlgebra

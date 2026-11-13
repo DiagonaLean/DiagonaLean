@@ -603,13 +603,4 @@ lemma pcp_iff_matmort (K : Stack S23) :
     DecisionProblem (MatImage K) :=
   ⟨pcp_if_matmort, matmort_if_pcp⟩
 
-open DiagonaLean.Synthetic.Notation
-
-/-- Matrix mortality of `3 × 3` integer matrices is undecidable: reduced from PCP over the
-alphabet `S23 = {2, 3}` by the encoding `MatImage`, with `pcp_iff_matmort` supplying the
-correctness equivalence. -/
-theorem matmort_undecidable : Undecidable (fun Ws => DecisionProblem Ws) := by
-  reduceFromPCP over_type S23 with_red_function MatImage
-    using_lemmas pcp_if_matmort matmort_if_pcp
-
 end DiagonaLean.MatMort.Reduction

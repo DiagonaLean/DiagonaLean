@@ -7,7 +7,7 @@ import DiagonaLean.PCP.Reductions.MPCP_to_PCP
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.Foundations.Normalize.Normalize
-import DiagonaLean.PCP.Reductions.AlphabetLift
+import DiagonaLean.PCP.AlphabetLift
 
 /-! # Halt ⪯ₘ PCP
 
@@ -190,20 +190,5 @@ theorem halt_reducesto_pcp_spec :
 def haltReducesToPCP :
     HaltProblem ⪯ₘ (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
   ⟨haltToPcp, halt_reducesto_pcp_spec⟩
-
-/-- PCP is undecidable over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/
-theorem pcp_undecidable' :
-    Undecidable (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
-  ⟨haltReducesToPCP⟩
-
-/-- PCP is undecidable over any `DecidableEq`, `Nontrivial` alphabet. Obtained by transporting
-  `pcp_undecidable` along `AlphabetLift.PCP_alphabet_lift`. -/
-@[nolint unusedArguments]
-theorem pcp_undecidable {α : Type} [DecidableEq α] [Nontrivial α] :
-    Undecidable (@DecisionProblem α) := by
-  obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
-  exact undecidability_from_reducibility
-    pcp_undecidable'
-    (AlphabetLift.PCPAlphabetLift b0 b1 hne)
 
 end DiagonaLean.PCP.Reduction

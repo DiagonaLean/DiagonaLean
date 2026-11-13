@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.KAComm.Reductions.Instance
+import DiagonaLean.Foundations.KleeneAlgebra.Instance
 
 @[expose] public section
 
@@ -17,9 +17,7 @@ on codes, the builders run on two tracks: `pcode e` is the pair of the codes of 
 and each constructor of `RExp` acts on such pairs directly.
 -/
 
-namespace DiagonaLean.KAComm.Reduction
-
-open DiagonaLean.Foundations.KleeneAlgebra
+namespace DiagonaLean.Foundations.KleeneAlgebra
 
 open Cslib.Turing Enc RExp TD DiagonaLean.Foundations.Computability
 
@@ -658,4 +656,4 @@ theorem instCode_prim (K : UConst) : Primrec fun l : List Bool => instCode K l :
   show Primrec fun l : List Bool => (cp (instA K l) (instB K l), instB K l)
   prim
 
-end DiagonaLean.KAComm.Reduction
+end DiagonaLean.Foundations.KleeneAlgebra

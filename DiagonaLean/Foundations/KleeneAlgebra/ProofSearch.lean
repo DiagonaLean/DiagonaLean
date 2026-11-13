@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.KAComm.Reductions.ExprCode
+import DiagonaLean.Foundations.KleeneAlgebra.ExprCode
 
 @[expose] public section
 
@@ -20,9 +20,7 @@ is the primitive recursive test that a code is a program proving a given equatio
 is `∃ k, Checks ..` (`equiv_iff_checks`, `kaEquiv_iff_checks`).
 -/
 
-namespace DiagonaLean.KAComm.Reduction
-
-open DiagonaLean.Foundations.KleeneAlgebra
+namespace DiagonaLean.Foundations.KleeneAlgebra
 
 open RExp DiagonaLean.Foundations.Computability
 
@@ -461,4 +459,4 @@ theorem checks_prim (ka : Bool) : PrimrecPred fun x : ℕ × ℕ × ℕ => Check
   exact pred_eq (prim_headI ((run_prim ka).comp Primrec.fst))
     (prim_pair (prim_fst Primrec.snd) (prim_snd Primrec.snd))
 
-end DiagonaLean.KAComm.Reduction
+end DiagonaLean.Foundations.KleeneAlgebra
