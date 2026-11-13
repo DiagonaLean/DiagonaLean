@@ -67,10 +67,17 @@ theorem halt_reducesto_mpcp_spec :
       (Foundations.Normalize.normTM_noLeftBoundary tm.toSingleTapeTM w)]
   exact decisionProblem_map_iff _ (Alpha.map_injective Encodable.encode_injective) _ _
 
+/-- The halting problem many-one reduces to MPCP over the fixed alphabet `Alpha ℕ Sym2`, through
+`haltToMpcpNorm`. -/
+def haltReducesMPCP :
+    HaltProblem ⪯ₘ fun x : Tile (Alpha ℕ Foundations.Normalize.Sym2) ×
+      Stack (Alpha ℕ Foundations.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 :=
+  ⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩
+
 /-- MPCP is undecidable over the fixed alphabet `Alpha ℕ Sym2`. -/
 theorem mpcp_undecidable :
     Undecidable fun x : Tile (Alpha ℕ Foundations.Normalize.Sym2) ×
       Stack (Alpha ℕ Foundations.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 :=
-  ⟨⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩⟩
+  ⟨haltReducesMPCP⟩
 
 end DiagonaLean.MPCP.Reduction

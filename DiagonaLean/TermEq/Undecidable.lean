@@ -66,13 +66,6 @@ theorem not_machineDecidable_termEq :
 /-- `eqRed` separates the inseparable pair by provable equality of terms in pre-Kleene algebra
 with commutativity. -/
 theorem termEq_separated : InsepUndecidable fun i : Inst => Equiv DComm i.1 i.2 :=
-  ⟨⟨eqRed, fun _ h => (eqVia_factorT _).1 (eqVia_eqRed_pos factorT h),
-    fun _ h hE => eqVia_eqRed_neg factorT h ((eqVia_factorT _).2 hE)⟩⟩
-
-/-- **Provable equality in pre-Kleene algebra with commutativity is `Undecidable`,** given a
-Smullyan family for `T Σ̈`. -/
-theorem undecidable_termEq_of_family (fam : SmullyanFamily (SelfEq factorT)) :
-    Undecidable (@TermEq.DecisionProblem ℕ) :=
-  ⟨haltReducesTermEqOfFamily fam⟩
+  ⟨sepReducesTermEq⟩
 
 end DiagonaLean.TermEq.Reduction

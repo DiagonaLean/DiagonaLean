@@ -603,4 +603,8 @@ lemma pcp_iff_matmort (K : Stack S23) :
     DecisionProblem (MatImage K) :=
   ⟨pcp_if_matmort, matmort_if_pcp⟩
 
+/-- PCP over `S23` many-one reduces to matrix mortality through `MatImage`. -/
+def pcpReducesMatMort : @PCP.DecisionProblem S23 ⪯ₘ fun Ws => MatMort.DecisionProblem Ws :=
+  ⟨MatImage, fun _ => ⟨pcp_if_matmort, matmort_if_pcp⟩⟩
+
 end DiagonaLean.MatMort.Reduction

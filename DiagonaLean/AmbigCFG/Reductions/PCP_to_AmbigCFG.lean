@@ -593,4 +593,21 @@ theorem pcp_iff_ambigcfg (P : Stack α) :
     PCP.DecisionProblem P ↔ (P.toGrammar).DecisionProblem :=
   ⟨ambiguous_if_pcp, pcp_if_ambiguous⟩
 
+/-- A context-free grammar over `PCPAlpha` for *some* tile-count `n`, bundled into one
+  fixed type. `Stack.toGrammar P`'s own alphabet `PCPAlpha P = Sum α (Fin P.length)`
+  depends on `P.length`, so it can't itself be the codomain of a many-one reduction
+  `Stack α → Y` for a single fixed `Y` — `Undecidable`/`ManyOneReduces` need that.
+  Bundling the length alongside the grammar is the standard way to state "CFG
+  ambiguity is undecidable" once instances don't all share one alphabet. -/
+abbrev AmbigCFGInstance (α : Type) : Type 1 :=
+  Σ n : ℕ, ContextFreeGrammar (Sum α (Fin n))
+
+/-- The grammar of a PCP instance, bundled with its tile count. -/
+def pcpToAmbigCFG (P : Stack α) : AmbigCFGInstance α := ⟨P.length, Stack.toGrammar P⟩
+
+/-- PCP many-one reduces to CFG ambiguity through `pcpToAmbigCFG`. -/
+def pcpReducesAmbigCFG :
+    @PCP.DecisionProblem α ⪯ₘ fun G : AmbigCFGInstance α => G.2.DecisionProblem :=
+  ⟨pcpToAmbigCFG, fun _ => ⟨ambiguous_if_pcp, pcp_if_ambiguous⟩⟩
+
 end DiagonaLean.AmbigCFG.Reduction

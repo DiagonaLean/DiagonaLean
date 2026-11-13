@@ -77,37 +77,25 @@ notation:50 p " ⪯ₘ[" f "] " q => Reduction f p q
 as a structure (rather than `∃ f, ...`) so a reduction is data: `.f` projects out the witness
 function directly, without going through `Classical.choose`.
 
-**Convention (not enforced by the type above).** Lean's logic is classical, so a term of this
-structure is still satisfiable by excluded-middle-style case splits on `p x` itself: pick a
-positive witness of `q` when `p x` holds and a negative one otherwise, producing an `f` with no
-algorithmic content that "reduces" almost any non-trivial `p` to almost any non-trivial `q`.
-Bundling `f` into a structure does not by itself rule this out -- the case split can still live
-inside the `f` field. To keep `⪯ₘ` meaningful, every witness function must be a named `def` that
-is not tagged `noncomputable` and does not use `implemented_by`, `extern` or `unsafe`. It may
-read data carried by its input, such as a machine's `stateEncodable` field (see
-`PCP.Reduction.haltToPcp`). Lean's compiler then rejects a case split on `p x`, because the
-`Decidable (p x)` instance can only come from `Classical.propDecidable`, which is
-`noncomputable`; `Synthetic/VacuousExample.lean` shows the tagged form this rules out.
+**Convention, checked by `#check_reductions`.** Lean's logic is classical, so a term of this
+structure exists for almost any non-trivial `p` and `q`: the case split `if p x then a else b`,
+with `q a` and `¬ q b`, is a valid `f` with no algorithmic content. To keep `⪯ₘ` meaningful, every
+reduction is built by a definition that Lean compiles: not `noncomputable`, and without
+`implemented_by`, `extern` or `unsafe`. Lean refuses to compile a case split on an undecided `p x`,
+since the `Decidable (p x)` instance can only come from classical choice. The definition may read
+data carried by its input, such as a machine's `stateEncodable` field (see
+`PCP.Reduction.haltToPcp`).
 
-Since `Undecidable` is a `Prop` and proofs are not compiled, the same case split raises no error
-when it is written inline in a `theorem`. So an undecidability proof must obtain its reduction
-from such a `def`, not construct the function in the proof.
+Proofs are never compiled, so a theorem must not build a reduction itself; it uses one of these
+definitions. It may pass them finite data obtained classically, such as a letter or a program code
+(see `PCP.Reduction.pcp_undecidable`), since one constant cannot hide infinitely many answers. It
+may not pass a function or a decidability instance obtained classically, which would be the same
+case split in another place.
 
-The `def` may also take parameters, and a closed undecidability proof may obtain their values
-classically, but only if each is a *finite constant* that does not vary with the input: a letter,
-a number, a program code (see `PCP.Reduction.pcp_undecidable`). One constant cannot hide infinitely
-many answers. A parameter that is a function of the input can: a classically obtained `f` passed
-to an untagged `def` is the same case split in another place. A theorem that takes such a parameter
-as a hypothesis (`TermEq.Reduction.undecidable_termEq_of_family` and its `SmullyanFamily`) is therefore
-only conditional, and its hypothesis must itself be discharged by a `def` that follows this
-convention.
-
-This convention is evidence of computability, not a proof of it: a witness that follows it runs
-as a Lean program, but that does not show a Turing machine computes it on encoded inputs. That
-stronger statement is the `ComputesReduction` hypothesis of
-`not_machineDecidable_of_halt_reduces`. `scripts/check-classical-reductions.sh` gives a
-best-effort textual check for the most direct form of the case split (see its header for what it
-does and does not catch); it does not check this convention as a whole. -/
+`#check_reductions` (`Synthetic/ReductionCheck.lean`), run in CI by `scripts/CheckReductions.lean`,
+checks these rules over the library. A reduction that passes runs as a Lean program; that is not a
+proof that a Turing machine computes it on encoded inputs, which is the `ComputesReduction`
+hypothesis of `not_machineDecidable_of_halt_reduces`. -/
 structure ManyOneReduces (p : X → Prop) (q : Y → Prop) where
   /-- The reduction function. -/
   f : X → Y

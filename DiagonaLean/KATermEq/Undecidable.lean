@@ -65,13 +65,6 @@ theorem not_machineDecidable_kaTermEq :
 /-- `eqRed` separates the inseparable pair by provable equality of terms in Kleene algebra with
 commutativity, the theory of the paper's title. -/
 theorem kaTermEq_separated : InsepUndecidable fun i : Inst => KAEquiv DComm i.1 i.2 :=
-  ⟨⟨eqRed, fun _ h => (eqVia_factorK _).1 (eqVia_eqRed_pos factorK h),
-    fun _ h hE => eqVia_eqRed_neg factorK h ((eqVia_factorK _).2 hE)⟩⟩
-
-/-- **Provable equality in Kleene algebra with commutativity is `Undecidable`,** given a Smullyan
-family for `K Σ̈`. -/
-theorem undecidable_kaTermEq_of_family (fam : SmullyanFamily (SelfEq factorK)) :
-    Undecidable (@KATermEq.DecisionProblem ℕ) :=
-  ⟨haltReducesKATermEqOfFamily fam⟩
+  ⟨sepReducesKATermEq⟩
 
 end DiagonaLean.KATermEq.Reduction

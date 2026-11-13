@@ -4,7 +4,6 @@ Authors: Akhilesh Balaji
 -/
 
 import DiagonaLean.Halt.Basic
-import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.Synthetic.Definitions
 
 /-! # Pre-Order Properties of Many-One Reductions
@@ -41,14 +40,6 @@ theorem reduces_transitive_spec {P : X → Prop} {Q : Y → Prop} {R : Z → Pro
 def ReducesTransitive {P : X → Prop} {Q : Y → Prop} {R : Z → Prop}
     (hPQ : P ⪯ₘ Q) (hQR : Q ⪯ₘ R) : P ⪯ₘ R :=
   ⟨hQR.f ∘ hPQ.f, reduces_transitive_spec hPQ hQR⟩
-
-/-- Equivalent dependent formulation. -/
-def ReducesDependent {P : X → Prop} {Q : Y → Prop} :
-    (P ⪯ₘ Q) ≃ (∀ x, { y // P x ↔ Q y }) where
-  toFun h x := ⟨h.f x, h.hf x⟩
-  invFun g := ⟨fun x => (g x).val, fun x => (g x).property⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
 
 /-- `h.f` -- the same witness function -- also witnesses that the complement of `P` reduces to
 the complement of `Q`. -/

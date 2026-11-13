@@ -29,8 +29,9 @@ variable {X Y : Type*}
 /-- `S` separates `A` from `B`. -/
 def Separates (A B S : X → Prop) : Prop := (∀ x, A x → S x) ∧ ∀ x, B x → ¬ S x
 
-/-- `f` maps `A` into `p` and `B` into the complement of `p`. As with `ManyOneReduces`, `f` is
-meant to be built from the data of `x`, never by inspecting `A`, `B` or `p`. -/
+/-- `f` maps `A` into `p` and `B` into the complement of `p`. As with `ManyOneReduces`, every
+term of this structure must be built by a compiled definition, never by a case split on `A`, `B` or
+`p`; `#check_reductions` checks this. -/
 structure SepReduces (A B : X → Prop) (p : Y → Prop) where
   /-- The reduction function. -/
   f : X → Y
@@ -69,7 +70,10 @@ theorem selfOut_inseparable {S : EncodableTM Bool → Prop}
   · exact hE (hS.1 E (compComputer_seq_outputs (hneg hE) flipTM_false))
 
 /-- `p` is undecidable via the inseparable pair. Like `Undecidable`, the reduction is wrapped in
-`Nonempty` to keep this a `Prop`. -/
+`Nonempty` to keep this a `Prop`, and like `Undecidable`, the statement alone holds classically for
+every `p` with a positive and a negative instance. Its meaning comes from the convention on
+`SepReduces`, checked by `#check_reductions`; the statement about machines is
+`not_machineDecidable_of_sepReduces`. -/
 def InsepUndecidable (p : Y → Prop) : Prop := Nonempty (SepReduces (SelfOut true) (SelfOut false) p)
 
 /-- A separation reduction computed by a Turing machine transfers inseparability: `p` has no

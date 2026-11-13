@@ -10,8 +10,5 @@ For a `HaltProblem` instance `p`, the program `curry C ⟨p⟩` runs a race: it 
 
 `halt_reducesto_termEq_spec` gives `HaltProblem ⪯ₘ[reduction B C] _` over `ℕ`, packaged as `haltReducesTermEq`. Substituting the code `1ⁿ0` for the letter `n` (`Foundations/KleeneAlgebra/BinarySubst.lean`) moves the reduction to `Σ = {0, 1}`: `haltReducesTermEqBool`.
 
-### Conditional Form
-`haltReducesTermEqOfFamily` is Theorem 19 as stated in the paper: given a `SmullyanFamily`, machines `N p` that race a halting run of `p` against evidence for their own instance `eqRed (N p)`, the map `eqRed ∘ N` is a reduction. The family has to be built from the data of `p` with the recursion theorem; the reduction above does not use it.
-
 ### Undecidability
 `Undecidable.lean` collects `undecidable_termEq` (over `ℕ`), `undecidable_termEq_bool` (over `{0, 1}`), the machine-level statements `not_machineDecidable_termEq_nat` and `not_machineDecidable_termEq_bool` (no Turing machine decides `T Σ̈` equality under the encoding of a pair of expressions as the binary digits of its code, by reduction from `self_halt_undecidable`), and `termEq_separated` (`T Σ̈` equality separates the computably inseparable pair `SelfOut true`, `SelfOut false`).

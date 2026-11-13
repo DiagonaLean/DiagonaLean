@@ -15,10 +15,8 @@ namespace DiagonaLean.MatMort.Reduction
 open DiagonaLean.PCP DiagonaLean.MatMort DiagonaLean.Synthetic.Notation
 
 /-- Matrix mortality of `3 × 3` integer matrices is undecidable: reduced from PCP over the
-alphabet `S23 = {2, 3}` by the encoding `MatImage`, with `pcp_iff_matmort` supplying the
-correctness equivalence. -/
+alphabet `S23 = {2, 3}` through `pcpReducesMatMort`. -/
 theorem matmort_undecidable : Undecidable (fun Ws => DecisionProblem Ws) := by
-  reduceFromPCP over_type S23 with_red_function MatImage
-    using_lemmas pcp_if_matmort matmort_if_pcp
+  reduceFromPCP over_type S23 via pcpReducesMatMort
 
 end DiagonaLean.MatMort.Reduction

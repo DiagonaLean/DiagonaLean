@@ -528,4 +528,14 @@ theorem npcp_iff_empcfg (P : Stack α) :
     obtain ⟨w, hw_top, hw_bot⟩ := (pcp_iff_nempcfg P).mp h_sol
     exact h w ⟨hw_top, hw_bot⟩
 
+/-- The two grammars of a PCP instance. -/
+def pcpToEmpCFG (P : Stack α) : ContextFreeGrammar (Term α) × ContextFreeGrammar (Term α) :=
+  (topCFG P, botCFG P)
+
+/-- PCP many-one reduces to the non-emptiness of the intersection of two context-free grammars,
+through `pcpToEmpCFG`. -/
+def pcpReducesEmpCFG :
+    @DiagonaLean.PCP.DecisionProblem α ⪯ₘ @DiagonaLean.EmpCFG.DecisionProblem (Term α) :=
+  ⟨pcpToEmpCFG, pcp_iff_nempcfg⟩
+
 end EmpCFG.Reduction
