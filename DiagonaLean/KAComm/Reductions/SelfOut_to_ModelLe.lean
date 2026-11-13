@@ -1,0 +1,178 @@
+/-
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Prathamesh TVH, Claude Opus
+-/
+
+import DiagonaLean.KAComm.Basic
+import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.Halting
+import DiagonaLean.Halt.Undecidable
+import DiagonaLean.Synthetic.Undecidability
+
+@[expose] public section
+
+/-! # Undecidability of pre-Kleene algebra with commutativity conditions
+
+An instance is a pair `(e, f)` of expressions over `ℕ ⊕ ℕ`, where left letters commute with right
+letters. `Provable (e, f)` is `e ≤ f` in the free pre-Kleene algebra, and `ModelLe (e, f)` is
+inclusion in the language model. The reduction `kaRed` sends machines that output `1` on their own
+code to provable inequalities and machines that output `0` to inequalities that fail in the
+language model, so every theory between `Provable` and `ModelLe` separates the computably
+inseparable pair `SelfOut true`, `SelfOut false` (`sepReducesOfBetween`).
+
+Since nothing is claimed about diverging machines, the paper's result is stated here as a
+separation reduction, not as `HaltProblem ⪯ₘ _`. Dropping the halting term gives a many-one
+reduction from `HaltProblem` to the failure of `ModelLe` (`undecidable_not_modelLe`).
+
+## References
+
+* [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18, Section 3
+-/
+
+open scoped Computability
+
+namespace DiagonaLean.KAComm.Undec
+
+open DiagonaLean.Foundations.KleeneAlgebra
+
+open Cslib.Turing SingleTapeTM DiagonaLean.Halt.Encoding DiagonaLean.Halt.Compositions
+  DiagonaLean.Halt.Undecidable DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
+  DiagonaLean.Halt TD FreePreKA
+
+variable {X Y : Type*}
+
+/-- `S` separates `A` from `B`. -/
+def Separates (A B S : X → Prop) : Prop := (∀ x, A x → S x) ∧ ∀ x, B x → ¬ S x
+
+/-- `f` maps `A` into `p` and `B` into the complement of `p`. As with `ManyOneReduces`, `f` is
+meant to be built from the data of `x`, never by inspecting `A`, `B` or `p`. -/
+structure SepReduces (A B : X → Prop) (p : Y → Prop) where
+  /-- The reduction function. -/
+  f : X → Y
+  /-- `A` lands in `p`. -/
+  pos : ∀ x, A x → p (f x)
+  /-- `B` lands outside `p`. -/
+  neg : ∀ x, B x → ¬ p (f x)
+
+/-- `M` halts on its own code with output `[b]`. -/
+def SelfOut (b : Bool) (M : EncodableTM Bool) : Prop :=
+  M.toSingleTapeTM.Outputs (encodeBoolTM M) [b]
+
+/-- Flip the bit under the head and halt. -/
+def flipTM : SingleTapeTM Bool where
+  State := Unit
+  q₀ := ()
+  tr _ a :=
+    match a with
+    | some b => (⟨some (!b), none⟩, none)
+    | none => (⟨none, none⟩, none)
+
+/-- `flipTM` turns `[true]` into `[false]`. -/
+theorem flipTM_true : flipTM.Outputs [true] [false] := Relation.ReflTransGen.single rfl
+
+/-- `flipTM` turns `[false]` into `[true]`. -/
+theorem flipTM_false : flipTM.Outputs [false] [true] := Relation.ReflTransGen.single rfl
+
+/-- **The pair `SelfOut true`, `SelfOut false` is computably inseparable.** -/
+theorem selfOut_inseparable {S : EncodableTM Bool → Prop}
+    (hS : Separates (SelfOut true) (SelfOut false) S) : ¬ MachineDecidable encodeBoolTM S := by
+  rintro ⟨D, hD⟩
+  let E : EncodableTM Bool := ⟨compComputer D flipTM, Fintype.toEncodable _⟩
+  obtain ⟨hpos, hneg⟩ := hD E
+  by_cases hE : S E
+  · exact hS.2 E (compComputer_seq_outputs (hpos hE) flipTM_true) hE
+  · exact hE (hS.1 E (compComputer_seq_outputs (hneg hE) flipTM_false))
+
+/-- `p` is undecidable via the inseparable pair. Like `Undecidable`, the reduction is wrapped in
+`Nonempty` to keep this a `Prop`. -/
+def InsepUndecidable (p : Y → Prop) : Prop := Nonempty (SepReduces (SelfOut true) (SelfOut false) p)
+
+/-- A separation reduction computed by a Turing machine transfers inseparability: `p` has no
+machine decider. -/
+theorem not_machineDecidable_of_sepReduces {enc : Y → List Bool} {p : Y → Prop}
+    (r : SepReduces (SelfOut true) (SelfOut false) p) {R : SingleTapeTM Bool}
+    (hR : ComputesReduction R encodeBoolTM enc r.f) : ¬ MachineDecidable enc p := fun hp =>
+  selfOut_inseparable (S := p ∘ r.f) ⟨r.pos, r.neg⟩
+    (machineDecidable_of_computes_reduction hR (fun _ => Iff.rfl) hp)
+
+/-- `e ≤ f` is provable in pre-Kleene algebra, with left letters commuting with right letters. -/
+def Provable (i : Inst) : Prop := (mk i.1 : TD ℕ) ≤ mk i.2
+
+/-- `e ≤ f` holds in the language model. -/
+def ModelLe (i : Inst) : Prop := pl (mk i.1 : TD ℕ) ≤ pl (mk i.2)
+
+/-- A provable inequality holds in the language model. -/
+theorem Provable.modelLe {i : Inst} (h : Provable i) : ModelLe i := pl_mono h
+
+/-- **The reduction.** The inequality `(init)_r R_M∗ ≤ Σ∗ (C_M + T_true)_r + Σ∗ Σ^≠ ρ_M` for `M`
+run on its own code, with letters renamed to their codes. -/
+def kaRed (M : EncodableTM Bool) : Inst :=
+  letI := M.stateEncodable
+  letI : DecidableEq M.State := Encodable.decidableEqOfEncodable _
+  ((Enc.lhsS M.toSingleTapeTM (encodeBoolTM M)).map (dmap Encodable.encode),
+    (Enc.rhsS M.toSingleTapeTM true).map (dmap Encodable.encode))
+
+/-- If `M` outputs `true` on its own code, then `kaRed M` is provable. -/
+theorem kaRed_pos {M : EncodableTM Bool} (h : SelfOut true M) : Provable (kaRed M) := by
+  let := M.stateEncodable
+  let : DecidableEq M.State := Encodable.decidableEqOfEncodable _
+  exact le_map _ (Enc.le_of_outputs h)
+
+/-- If `M` outputs `false` on its own code, then `kaRed M` fails in the language model. -/
+theorem kaRed_neg {M : EncodableTM Bool} (h : SelfOut false M) : ¬ ModelLe (kaRed M) := by
+  let := M.stateEncodable
+  let : DecidableEq M.State := Encodable.decidableEqOfEncodable _
+  exact fun hle => Enc.not_pl_le_of_outputs h (by decide)
+    (pl_le_of_map Encodable.encode_injective hle)
+
+/-- **Separation.** `kaRed` sends machines with output `1` into any theory `S` containing
+pre-KA provability, and machines with output `0` outside any `S` sound for the language model. -/
+def sepReducesOfBetween (S : Inst → Prop) (h₁ : ∀ i, Provable i → S i)
+    (h₂ : ∀ i, S i → ModelLe i) : SepReduces (SelfOut true) (SelfOut false) S :=
+  ⟨kaRed, fun _ h => h₁ _ (kaRed_pos h), fun _ h hS => kaRed_neg h (h₂ _ hS)⟩
+
+/-- Every `S` between `Provable` and `ModelLe` satisfies `InsepUndecidable`. -/
+theorem insepUndecidable_of_between (S : Inst → Prop) (h₁ : ∀ i, Provable i → S i)
+    (h₂ : ∀ i, S i → ModelLe i) : InsepUndecidable S :=
+  ⟨sepReducesOfBetween S h₁ h₂⟩
+
+/-- **Pre-Kleene algebra with commutativity conditions is undecidable.** -/
+theorem insepUndecidable_provable : InsepUndecidable Provable :=
+  insepUndecidable_of_between _ (fun _ h => h) fun _ h => h.modelLe
+
+/-- Inclusion in the language model (with commutativity) is undecidable too. -/
+theorem insepUndecidable_modelLe : InsepUndecidable ModelLe :=
+  insepUndecidable_of_between _ (fun _ h => h.modelLe) fun _ h => h
+
+/-- **No Turing machine decides any theory between pre-KA provability and the language model**,
+for any encoding of instances under which a Turing machine computes `kaRed`. -/
+theorem not_machineDecidable_of_between {enc : Inst → List Bool} {R : SingleTapeTM Bool}
+    (hR : ComputesReduction R encodeBoolTM enc kaRed) (S : Inst → Prop)
+    (h₁ : ∀ i, Provable i → S i) (h₂ : ∀ i, S i → ModelLe i) : ¬ MachineDecidable enc S :=
+  not_machineDecidable_of_sepReduces (sepReducesOfBetween S h₁ h₂) hR
+
+/-- **The reduction from `HaltProblem`.** `(M, w) ↦ ((init w)_r R_M∗, Σ∗ (C_M)_r + Σ∗ Σ^≠ ρ_M)`,
+with letters renamed to their codes. -/
+def haltRed (p : EncodableTM Bool × List Bool) : Inst :=
+  letI := p.1.stateEncodable
+  letI : DecidableEq p.1.State := Encodable.decidableEqOfEncodable _
+  ((Enc.lhsS p.1.toSingleTapeTM p.2).map (dmap Encodable.encode),
+    (Enc.rhsHS p.1.toSingleTapeTM).map (dmap Encodable.encode))
+
+/-- `M` halts on `w` iff the instance `haltRed (M, w)` fails in the language model. -/
+theorem halt_iff_not_modelLe (p : EncodableTM Bool × List Bool) :
+    HaltProblem p ↔ ¬ ModelLe (haltRed p) := by
+  obtain ⟨M, w⟩ := p
+  let := M.stateEncodable
+  let : DecidableEq M.State := Encodable.decidableEqOfEncodable _
+  show Halts M.toSingleTapeTM w ↔ _
+  rw [Enc.halts_iff_not_pl_le_syntax]
+  exact not_congr ⟨pl_map_le_of_le _, pl_le_of_map Encodable.encode_injective⟩
+
+/-- `HaltProblem` many-one reduces to the failure of language-model inclusion. -/
+def haltReduces : HaltProblem ⪯ₘ Complement ModelLe := ⟨haltRed, halt_iff_not_modelLe⟩
+
+/-- **Undecidability in the library's sense:** `HaltProblem ⪯ₘ` the complement of language-model
+inclusion for KA with commutativity conditions. -/
+theorem undecidable_not_modelLe : Undecidable (Complement ModelLe) := ⟨haltReduces⟩
+
+end DiagonaLean.KAComm.Undec

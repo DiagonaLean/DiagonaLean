@@ -1,7 +1,6 @@
 /-
-Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anonymous
+Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.PartrecToCslib
@@ -335,8 +334,8 @@ theorem exists_blockEnc :
       have : ¬ (List.Vector.replicate (k + 2) false).toList.getLast? = some true := by
         simp [List.Vector.toList, List.Vector.replicate, List.getLast?_replicate]
       show dec (enc default) = default
-      rw [show enc default = List.Vector.replicate (k + 2) false from if_pos rfl]
-      exact dif_neg this
+      rw [show enc default = List.Vector.replicate (k + 2) false from ite_eq_left rfl]
+      exact dite_eq_right this
     · have h₁ : (enc a).toList = mid a := by simp [enc, ha, List.Vector.toList]
       have h₂ : (enc a).toList.getLast? = some true := by
         rw [h₁, List.getLast?_eq_some_iff]

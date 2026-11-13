@@ -1,7 +1,6 @@
 /-
-Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anonymous
+Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.RunAfterWrite
@@ -82,13 +81,13 @@ theorem trNat_step {n : ℕ} (hn : n ≠ 0) : PartrecToTM2.trNat n =
     have h2 : ((q.bit0 : PosNum) : ℕ) = q + q := PosNum.cast_bit0 q
     have h3 : ((q : ℕ) + q) % 2 ≠ 1 := by omega
     have h4 : ((q : ℕ) + q) / 2 = q := by omega
-    rw [h2, ← h2, trNat_pos, h2, h4, trNat_pos, ite_cond_eq_false _ _ (eq_false h3)]
+    rw [h2, ← h2, trNat_pos, h2, h4, trNat_pos, ite_eq_right_of_eq_false _ _ (eq_false h3)]
     rfl
   | bit1 q =>
     have h2 : ((q.bit1 : PosNum) : ℕ) = q + q + 1 := PosNum.cast_bit1 q
     have h3 : ((q : ℕ) + q + 1) % 2 = 1 := by omega
     have h4 : ((q : ℕ) + q + 1) / 2 = q := by omega
-    rw [h2, ← h2, trNat_pos, h2, h4, trNat_pos, ite_cond_eq_true _ _ (eq_true h3)]
+    rw [h2, ← h2, trNat_pos, h2, h4, trNat_pos, ite_eq_left_of_eq_true _ _ (eq_true h3)]
     rfl
 
 theorem bits_iter (f m : ℕ) (acc : List Bool) (hm : m ≤ f) :

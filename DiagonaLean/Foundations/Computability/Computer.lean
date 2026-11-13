@@ -1,7 +1,6 @@
 /-
-Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anonymous
+Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.Compiler
@@ -58,7 +57,7 @@ theorem trNat_numOf (l : List Bool) : trNat (numOf l) = l.reverse.map bitG ++ [.
     have hne : numOf (l ++ [b]) ≠ 0 := (numOf_pos _).ne'
     rw [trNat_step hne, numOf_snoc]
     have h1 : (2 * numOf l + b.toNat) % 2 = b.toNat := by cases b <;> simp
-    have h2 : (2 * numOf l + b.toNat) / 2 = numOf l := by cases b <;> simp <;> omega
+    have h2 : (2 * numOf l + b.toNat) / 2 = numOf l := by cases b <;> simp; omega
     rw [h1, h2, ih]
     cases b <;> simp
 
@@ -110,7 +109,7 @@ theorem exists_computer (f : List Bool → List Bool) (hf : Computable f) :
       e₀ ++ (e .bit1 ++ l.flatMap fun b => e (bitG b)) := by
     intro l
     rw [trNat_numOf]
-    simp [List.flatMap_map, Function.comp_def]
+    simp [List.flatMap_map]
   -- expansion
   let wE : Bool → List Bool := fun b => e (bitG b)
   let PE : List Bool := e₀ ++ e .bit1
@@ -134,7 +133,7 @@ theorem exists_computer (f : List Bool → List Bool) (hf : Computable f) :
     rw [htape]
     have hout : PE ++ (List.drop 0 (l.map fun b => (b, ([] : List Bool)))).flatMap
         (fun x => wE x.1) = e₀ ++ (e .bit1 ++ l.flatMap fun b => e (bitG b)) := by
-      simp [PE, wE, List.flatMap_map, Function.comp_def, List.append_assoc]
+      simp [PE, wE, List.flatMap_map, List.append_assoc]
     rw [hout] at this
     exact this
   -- contraction
@@ -163,7 +162,7 @@ theorem exists_computer (f : List Bool → List Bool) (hf : Computable f) :
         cases b
         · simpa [bitG] using h0
         · simpa [bitG] using h1
-      simp only [flat, List.flatMap_cons, List.flatMap_map, Function.comp_def, hb]
+      simp only [flat, List.flatMap_cons, List.flatMap_map, hb]
     rw [hflat] at this
     have hout : [] ++ (List.drop 2 ((h₀, t₀) :: (true, r1) ::
         l.map fun b => (b, if b then r1 else r0))).flatMap (fun x => [x.1]) = l := by

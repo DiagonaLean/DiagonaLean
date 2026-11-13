@@ -1,7 +1,6 @@
 /-
-Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anonymous
+Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.PartrecToCslib
@@ -168,7 +167,7 @@ theorem writer_run (suf pre : List Bool) (hl : pre ++ suf = l) :
       simp
     have hr : rowFn K l pre.length (hc (tp none pre.reverse []).head) =
         mkRow (bitCode a) 2 (pre.length + 1 + 1) := by
-      simp only [rowFn, if_pos hlen, hget]
+      simp only [rowFn, ite_eq_left hlen, hget]
     have hs := cf_step (K := K) (hj := by simp only [NN]; omega) hr
     have htape : (((tp none pre.reverse []).write (optOf (bitCode a))).optionMove (mvOf 2)) =
         tp none (pre ++ [a]).reverse [] := by
@@ -288,7 +287,7 @@ theorem exists_uconst (W : SingleTapeTM Bool) :
         have h1 : ¬ off + (e q).val < l.length := by simp only [off]; omega
         have h2 : off + (e q).val ≠ l.length := by simp only [off]; omega
         have h3 : off + (e q).val ≠ l.length + 1 := by simp only [off]; omega
-        simp only [rowFn, if_neg h1, if_neg h2, if_neg h3]
+        simp only [rowFn, ite_eq_right h1, ite_eq_right h2, ite_eq_right h3]
         have hsub : off + (e q).val - (l.length + 2) = (e q).val := by simp only [off]; omega
         rw [hsub]
         have := rowsOf_get W e (e q) t.head
@@ -298,7 +297,7 @@ theorem exists_uconst (W : SingleTapeTM Bool) :
       rw [hv, hrow] at hn
       refine hn.trans ?_
       rcases hx : W.tr q t.head with ⟨⟨wr, mv⟩, _ | q'⟩
-      · simp [ψ, shift, rowEnc, off, nxOf]
+      · simp [ψ, shift, rowEnc, nxOf]
         rfl
       · have hadd : (e q').val + 1 + off = (off + (e q').val) + 1 := by omega
         simp [ψ, shift, rowEnc, nxOf, hadd]

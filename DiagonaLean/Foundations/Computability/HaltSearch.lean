@@ -1,7 +1,6 @@
 /-
-Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anonymous
+Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.RunAfterWrite
@@ -112,10 +111,10 @@ theorem sstep_absD (d : Data M.toSingleTapeTM) :
     have hne : Encodable.encode q + 1 ≠ 0 := Nat.succ_ne_zero _
     simp only [absD, sstep, qc, hne, ite_false, hl]
     rcases htr : M.tr q h with ⟨⟨wr, _ | _ | _⟩, q'⟩
-    · simp [rowT, mvc, dstep, htr, absD]
+    · simp [rowT, mvc, dstep, htr]
       cases q' <;> rfl
-    · cases l <;> simp [rowT, mvc, dstep, htr, absD, hc] <;> cases q' <;> rfl
-    · cases r <;> simp [rowT, mvc, dstep, htr, absD, hc] <;> cases q' <;> rfl
+    · cases l <;> simp [rowT, mvc, dstep, htr, hc] <;> cases q' <;> rfl
+    · cases r <;> simp [rowT, mvc, dstep, htr, hc] <;> cases q' <;> rfl
 
 theorem iterate_absD (d : Data M.toSingleTapeTM) (k : ℕ) :
     (sstep (rowsE M))^[k] (absD d) = absD ((dstep M.toSingleTapeTM)^[k] d) := by

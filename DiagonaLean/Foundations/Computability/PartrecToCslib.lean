@@ -1,7 +1,6 @@
 /-
-Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anonymous
+Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.TM0ToCslib
@@ -177,7 +176,7 @@ theorem bitOf_top (m : ℕ) : bitOf (trList [m]).head? = decide (m ≠ 0) := by
       decide_true]
     cases x <;> first | rfl | simp [natEnd] at hend
 
-instance : Fintype K' := ⟨{K'.main, K'.rev, K'.aux, K'.stack}, by rintro ⟨⟩ <;> simp⟩
+instance instFintypeK' : Fintype K' := ⟨{K'.main, K'.rev, K'.aux, K'.stack}, by rintro ⟨⟩ <;> simp⟩
 
 /-- The alphabet of the TM1 machine. -/
 abbrev Γ2 := TM2to1.Γ' K' (fun _ : K' => Γ')

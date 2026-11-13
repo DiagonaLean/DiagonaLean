@@ -1,7 +1,6 @@
 /-
-Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anonymous
+Authors: Prathamesh TVH, Claude Opus
 -/
 
 import Mathlib.Computability.PartrecBasis
@@ -79,7 +78,7 @@ theorem prim_ite {c : α → Prop} [DecidablePred c] {f g : α → β} (hc : Pri
     (hf : Primrec f) (hg : Primrec g) : Primrec fun x => if c x then f x else g x :=
   Primrec.ite hc hf hg
 
-theorem pred_eq [DecidableEq β] {f g : α → β} (hf : Primrec f) (hg : Primrec g) :
+theorem pred_eq {f g : α → β} (hf : Primrec f) (hg : Primrec g) :
     PrimrecPred fun x => f x = g x := Primrec.eq.comp hf hg
 
 theorem pred_lt {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
@@ -91,7 +90,7 @@ theorem pred_le {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
 theorem pred_and {p q : α → Prop} (hp : PrimrecPred p) (hq : PrimrecPred q) :
     PrimrecPred fun x => p x ∧ q x := hp.and hq
 
-theorem pred_ne [DecidableEq β] {f g : α → β} (hf : Primrec f) (hg : Primrec g) :
+theorem pred_ne {f g : α → β} (hf : Primrec f) (hg : Primrec g) :
     PrimrecPred fun x => f x ≠ g x := (pred_eq hf hg).not
 
 theorem prim_map {f : α → List β} {g : α → β → γ} (hf : Primrec f)
@@ -106,7 +105,7 @@ end Prim
 
 open Lean Meta Elab Tactic in
 /-- Succeeds when the target is `Primrec fun x => (_).1` or `Primrec fun x => (_).2`. -/
-elab "guard_proj" : tactic => do
+elab (name := guardProj) "guard_proj" : tactic => do
   let t ← instantiateMVars (← getMainTarget)
   let some f := t.getAppArgs.back? | throwError "not an application"
   unless f.isLambda do throwError "not a lambda"
@@ -115,14 +114,14 @@ elab "guard_proj" : tactic => do
 
 open Lean Meta Elab Tactic in
 /-- Succeeds when the target is `Primrec fun x => (_, _)`. -/
-elab "guard_mk" : tactic => do
+elab (name := guardMk) "guard_mk" : tactic => do
   let t ← instantiateMVars (← getMainTarget)
   let some f := t.getAppArgs.back? | throwError "not an application"
   unless f.isLambda do throwError "not a lambda"
   unless f.bindingBody!.isAppOf ``Prod.mk do throwError "not a pair"
 
 /-- One step of `prim`. Later files add rules for their own definitions. -/
-syntax "prim_step" : tactic
+syntax (name := primStep) "prim_step" : tactic
 
 macro_rules
   | `(tactic| prim_step) => `(tactic| with_reducible first

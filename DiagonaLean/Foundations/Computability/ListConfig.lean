@@ -1,7 +1,6 @@
 /-
-Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anonymous
+Authors: Prathamesh TVH, Claude Opus
 -/
 
 import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
@@ -29,9 +28,13 @@ variable {Sym : Type} [Inhabited Sym] [Fintype Sym] (M : SingleTapeTM Sym)
 /-- A list-level configuration: state (`none` = halted), left cells (nearest first), head
 symbol, right cells (nearest first). -/
 structure Data where
+  /-- The control state, or `none` once the machine has halted. -/
   state : Option M.State
+  /-- The cells left of the head, nearest first. -/
   l : List (Option Sym)
+  /-- The symbol under the head. -/
   h : Option Sym
+  /-- The cells right of the head, nearest first. -/
   r : List (Option Sym)
 
 variable {M}

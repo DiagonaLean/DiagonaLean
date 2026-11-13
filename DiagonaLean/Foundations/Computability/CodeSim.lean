@@ -1,7 +1,6 @@
 /-
-Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anonymous
+Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.HaltSearch
@@ -219,7 +218,7 @@ theorem lookup_absent {rows : List (ℕ × ℕ)} {key : ℕ} (h : ∀ kv ∈ row
   | cons r rows ih =>
     unfold lookup
     simp only [List.foldr_cons]
-    rw [if_neg (h r List.mem_cons_self)]
+    rw [ite_eq_right (h r List.mem_cons_self)]
     exact ih fun kv hkv => h kv (List.mem_cons_of_mem _ hkv)
 
 theorem lookup_none {q : M.State} {h : Option Bool} (hq : (M.tr q h).2 = none) :
@@ -247,17 +246,17 @@ theorem sstep_of_some (q : M.State) (l : List (Option Bool)) (h : Option Bool)
   have hne : Encodable.encode q + 1 ≠ 0 := Nat.succ_ne_zero _
   simp only [absD, sstep, qc, hne, ite_false, hl]
   rcases htr : M.tr q h with ⟨⟨wr, _ | _ | _⟩, q''⟩
-  · simp [rowT, mvc, dstep, htr, absD]
+  · simp [rowT, mvc, dstep, htr]
     cases q'' <;> rfl
-  · cases l <;> simp [rowT, mvc, dstep, htr, absD, hc] <;> cases q'' <;> rfl
-  · cases r <;> simp [rowT, mvc, dstep, htr, absD, hc] <;> cases q'' <;> rfl
+  · cases l <;> simp [rowT, mvc, dstep, htr, hc] <;> cases q'' <;> rfl
+  · cases r <;> simp [rowT, mvc, dstep, htr, hc] <;> cases q'' <;> rfl
 
 theorem sstep_of_none (q : M.State) (l : List (Option Bool)) (h : Option Bool)
     (r : List (Option Bool)) (hq : (M.tr q h).2 = none) :
     (sstep (rowsC (encodeBoolTM M)) (absD ⟨some q, l, h, r⟩)).1 = 0 := by
   have hl := lookup_none hq
   have hne : Encodable.encode q + 1 ≠ 0 := Nat.succ_ne_zero _
-  simp [absD, sstep, qc, hne, hl, rowM, rowX]
+  simp [absD, sstep, qc, hl, rowM, rowX]
 
 theorem dstep_state_none (q : M.State) (l : List (Option Bool)) (h : Option Bool)
     (r : List (Option Bool)) (hq : (M.tr q h).2 = none) :
@@ -265,9 +264,9 @@ theorem dstep_state_none (q : M.State) (l : List (Option Bool)) (h : Option Bool
   simp only [dstep]
   rcases htr : M.tr q h with ⟨⟨wr, _ | _ | _⟩, q''⟩
   all_goals rw [htr] at hq; obtain rfl : q'' = none := hq
-  · simp [htr]
-  · cases l <;> simp [htr]
-  · cases r <;> simp [htr]
+  · simp
+  · cases l <;> simp
+  · cases r <;> simp
 
 theorem state_absD {d : Data M.toSingleTapeTM} : (absD d).1 = 0 ↔ d.state = none := by
   rcases hd : d.state with _ | q

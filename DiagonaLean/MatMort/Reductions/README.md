@@ -1,7 +1,6 @@
 ```
-Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anonymous
+Authors: Claude Sonnet 4.6, Akhilesh Balaji
 ```
 # `MatMort.Reductions`: The `3 × 3` Matrix Mortality Problem
 1. [`PCP ⪯ₘ MatMort`](#pcp-ₘ-matmort)

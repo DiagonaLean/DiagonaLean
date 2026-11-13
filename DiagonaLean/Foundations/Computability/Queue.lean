@@ -1,7 +1,6 @@
 /-
-Copyright (c) 2026 Anonymous. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Anonymous
+Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.ListConfig
@@ -465,7 +464,7 @@ theorem queue_outputs (hM : ∀ src, (srcW w P src).length ≤ M) (bs : List (Bo
       cases flat bs with
       | nil => rfl
       | cons o O =>
-        simp only [tq, List.map_cons, List.cons_append, List.nil_append, List.append_nil,
+        simp only [tq, List.map_cons, List.append_nil,
           List.headD_cons, List.tail_cons, stk_map_some, BiTape.mk₁]
         rfl
     simp only [SingleTapeTM.initCfg, this]
