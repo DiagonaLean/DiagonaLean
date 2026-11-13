@@ -1,11 +1,10 @@
 /-
-Copyright (c) 2026 Prathamesh Turaga. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh Turaga
 -/
 
 import DiagonaLean.Synthetic.Undecidability
-import DiagonaLean.PCP.Reductions.Halt_to_PCP
+import DiagonaLean.PCP.Undecidable
 import DiagonaLean.PCP.Basic
 
 /-! # The `reduceFromPCP` tactic

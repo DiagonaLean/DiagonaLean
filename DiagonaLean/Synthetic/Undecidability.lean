@@ -1,5 +1,4 @@
 /-
-Copyright (c) 2026 Akhilesh Balaji. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Akhilesh Balaji
 -/
@@ -21,17 +20,14 @@ open DiagonaLean.Halt DiagonaLean.Halt.Encoding Cslib.Turing DiagonaLean.Synthet
 
 variable {X Y : Type*}
 
-/-- The Turing machine halting problem. -/
-def HALT : EncodableTM Bool × List Bool → Prop := fun ⟨M, w⟩ => Halts M.toSingleTapeTM w
-
-/-- `p` is undecidable: `HALT` many-one reduces to `p`, so any decider for `p` would yield one
-for `HALT`. `HALT ⪯ₘ p` is itself data (see `ManyOneReduces`), so it's wrapped in `Nonempty`
-here to keep `Undecidable` a `Prop`, matching its role as the fact one states/cites, not as a
-value one unpacks for its reduction witness. This relies on `⪯ₘ` actually carrying algorithmic
-content -- see the convention noted on `ManyOneReduces` -- since otherwise `HALT ⪯ₘ p` would
+/-- `p` is undecidable: `HaltProblem` many-one reduces to `p`, so any decider for `p` would yield
+one for `HaltProblem`. `HaltProblem ⪯ₘ p` is itself data (see `ManyOneReduces`), so it's wrapped in
+`Nonempty` here to keep `Undecidable` a `Prop`, matching its role as the fact one states/cites, not
+as a value one unpacks for its reduction witness. This relies on `⪯ₘ` actually carrying algorithmic
+content -- see the convention noted on `ManyOneReduces` -- since otherwise `HaltProblem ⪯ₘ p` would
 hold classically for essentially every non-trivial `p`, making this predicate vacuous the way
 `SDecidable` already is. -/
-def Undecidable (p : X → Prop) : Prop := Nonempty (HALT ⪯ₘ p)
+def Undecidable (p : X → Prop) : Prop := Nonempty (HaltProblem ⪯ₘ p)
 
 /-- If a predicate `p` is synthetically decidable, then its complement is also synthetically decidable. -/
 private lemma dec_compl {X : Type*} {p : X → Prop}

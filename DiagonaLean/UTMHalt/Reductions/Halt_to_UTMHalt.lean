@@ -1,5 +1,4 @@
 /-
-Copyright (c) 2026 Akhilesh Balaji. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic), Akhilesh Balaji
 -/
@@ -38,13 +37,6 @@ theorem isHaltDecider_of_isHaltDeciderFor {D : SingleTapeTM Bool}
   intro tm w
   refine ⟨fun h => (hD _).1 ((hU tm w).mpr h), fun h => (hD _).2 ?_⟩
   exact fun h' => h ((hU tm w).mp h')
-
-/-- The halting problem of a single weakly universal machine is undecidable. -/
-theorem not_exists_haltDeciderFor_of_isWeaklyUniversal (hU : IsWeaklyUniversal U) :
-    ¬ ∃ D : SingleTapeTM Bool, IsHaltDeciderFor U D := by
-  rintro ⟨D, hD⟩
-  exact halt_undecidable
-    ⟨D, isHaltDecider_of_isHaltDeciderFor hU hD⟩
 
 /-- The halting problem many-one reduces to the halting problem of any weakly universal
 machine: an instance `(M, w)` is mapped to the encoded instance `encodeInstance M w`. -/

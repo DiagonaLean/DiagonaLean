@@ -1,5 +1,4 @@
 /-
-Copyright (c) 2026 Akhilesh Balaji. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Akhilesh Balaji
 -/
@@ -83,14 +82,32 @@ structure is still satisfiable by excluded-middle-style case splits on `p x` its
 positive witness of `q` when `p x` holds and a negative one otherwise, producing an `f` with no
 algorithmic content that "reduces" almost any non-trivial `p` to almost any non-trivial `q`.
 Bundling `f` into a structure does not by itself rule this out -- the case split can still live
-inside the `f` field. To keep `⪯ₘ` meaningful, every witness must be a function built from the
-*data* of `x` (and, where needed, other data-level facts, such as an `Encodable` instance or a
-normalized-machine witness) -- never one that inspects `p` or `q` to decide what to return.
-Noncomputability from unrelated data-level choices is fine (see e.g. `PCP.Reduction.pcpRed`'s
-use of a classically chosen `Encodable` instance for a TM's state type); noncomputability that
-comes from deciding `p` or `q` is exactly the failure mode this rules out.
-`scripts/check-classical-reductions.sh` gives a best-effort automated check for the most direct
-form of this (see its header for what it does and does not catch). -/
+inside the `f` field. To keep `⪯ₘ` meaningful, every witness function must be a named `def` that
+is not tagged `noncomputable` and does not use `implemented_by`, `extern` or `unsafe`. It may
+read data carried by its input, such as a machine's `stateEncodable` field (see
+`PCP.Reduction.haltToPcp`). Lean's compiler then rejects a case split on `p x`, because the
+`Decidable (p x)` instance can only come from `Classical.propDecidable`, which is
+`noncomputable`; `Synthetic/VacuousExample.lean` shows the tagged form this rules out.
+
+Since `Undecidable` is a `Prop` and proofs are not compiled, the same case split raises no error
+when it is written inline in a `theorem`. So an undecidability proof must obtain its reduction
+from such a `def`, not construct the function in the proof.
+
+The `def` may also take parameters, and a closed undecidability proof may obtain their values
+classically, but only if each is a *finite constant* that does not vary with the input: a letter,
+a number, a program code (see `PCP.Reduction.pcp_undecidable`). One constant cannot hide infinitely
+many answers. A parameter that is a function of the input can: a classically obtained `f` passed
+to an untagged `def` is the same case split in another place. A theorem that takes such a parameter
+as a hypothesis (`TermEq.Reduction.undecidable_termEq_of_family` and its `SmullyanFamily`) is therefore
+only conditional, and its hypothesis must itself be discharged by a `def` that follows this
+convention.
+
+This convention is evidence of computability, not a proof of it: a witness that follows it runs
+as a Lean program, but that does not show a Turing machine computes it on encoded inputs. That
+stronger statement is the `ComputesReduction` hypothesis of
+`not_machineDecidable_of_halt_reduces`. `scripts/check-classical-reductions.sh` gives a
+best-effort textual check for the most direct form of the case split (see its header for what it
+does and does not catch); it does not check this convention as a whole. -/
 structure ManyOneReduces (p : X → Prop) (q : Y → Prop) where
   /-- The reduction function. -/
   f : X → Y

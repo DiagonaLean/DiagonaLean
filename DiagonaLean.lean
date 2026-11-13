@@ -6,22 +6,45 @@ import DiagonaLean.Halt.Undecidable
 
 import DiagonaLean.UTMHalt.Basic
 import DiagonaLean.UTMHalt.Reductions.Halt_to_UTMHalt
+import DiagonaLean.UTMHalt.Undecidable
 
 import DiagonaLean.MPCP.Basic
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
+import DiagonaLean.MPCP.Undecidable
 
 import DiagonaLean.PCP.Basic
+import DiagonaLean.PCP.AlphabetLift
 import DiagonaLean.PCP.Reductions.Halt_to_PCP
 import DiagonaLean.PCP.Reductions.MPCP_to_PCP
+import DiagonaLean.PCP.Undecidable
 
 import DiagonaLean.AmbigCFG.Basic
 import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFG
+import DiagonaLean.AmbigCFG.Undecidable
 
 import DiagonaLean.EmpCFG.Basic
 import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFG
+import DiagonaLean.EmpCFG.Undecidable
 
 import DiagonaLean.MatMort.Basic
 import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
+import DiagonaLean.MatMort.Undecidable
+
+import DiagonaLean.TermEq.Basic
+import DiagonaLean.TermEq.Reductions.Halt_to_TermEq
+import DiagonaLean.TermEq.Undecidable
+
+import DiagonaLean.KATermEq.Basic
+import DiagonaLean.KATermEq.Reductions.Halt_to_KATermEq
+import DiagonaLean.KATermEq.Undecidable
+
+import DiagonaLean.LangEq.Basic
+import DiagonaLean.LangEq.Reductions.Halt_to_LangEq
+import DiagonaLean.LangEq.Undecidable
+
+import DiagonaLean.ModelLe.Basic
+import DiagonaLean.ModelLe.Reductions.Halt_to_ModelLe
+import DiagonaLean.ModelLe.Undecidable
 
 import DiagonaLean.Foundations.UniversalTuringMachine.Basic
 import DiagonaLean.Foundations.UniversalTuringMachine.Translation
@@ -40,3 +63,49 @@ import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
 import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
+
+import DiagonaLean.Foundations.Computability.Prim
+import DiagonaLean.Foundations.Computability.ListConfig
+import DiagonaLean.Foundations.Computability.TM0ToCslib
+import DiagonaLean.Foundations.Computability.PartrecToCslib
+import DiagonaLean.Foundations.Computability.RunAfterWrite
+import DiagonaLean.Foundations.Computability.HaltSearch
+import DiagonaLean.Foundations.Computability.Interpreter
+import DiagonaLean.Foundations.Computability.Queue
+import DiagonaLean.Foundations.Computability.Compiler
+import DiagonaLean.Foundations.Computability.Computer
+import DiagonaLean.Foundations.Computability.CodeSim
+import DiagonaLean.Foundations.Computability.Inseparable
+
+import DiagonaLean.Foundations.KleeneAlgebra.PreKleene
+import DiagonaLean.Foundations.KleeneAlgebra.PreKleeneNotKleene
+import DiagonaLean.Foundations.KleeneAlgebra.Free
+import DiagonaLean.Foundations.KleeneAlgebra.FiniteLangCounterexample
+import DiagonaLean.Foundations.KleeneAlgebra.FiniteLangExpansion
+import DiagonaLean.Foundations.KleeneAlgebra.SetStar
+import DiagonaLean.Foundations.KleeneAlgebra.Doubled
+import DiagonaLean.Foundations.KleeneAlgebra.Representable
+import DiagonaLean.Foundations.KleeneAlgebra.Automata
+import DiagonaLean.Foundations.KleeneAlgebra.Expansion
+import DiagonaLean.Foundations.KleeneAlgebra.BoundedOutput
+import DiagonaLean.Foundations.KleeneAlgebra.SingleStep
+import DiagonaLean.Foundations.KleeneAlgebra.Completeness
+import DiagonaLean.Foundations.KleeneAlgebra.Copy
+import DiagonaLean.Foundations.KleeneAlgebra.Syntax
+import DiagonaLean.Foundations.KleeneAlgebra.Soundness
+import DiagonaLean.Foundations.KleeneAlgebra.FreeKA
+import DiagonaLean.Foundations.KleeneAlgebra.Inequality
+import DiagonaLean.Foundations.KleeneAlgebra.Separation
+import DiagonaLean.Foundations.KleeneAlgebra.ExprCode
+import DiagonaLean.Foundations.KleeneAlgebra.ProofSearch
+import DiagonaLean.Foundations.KleeneAlgebra.Instance
+import DiagonaLean.Foundations.KleeneAlgebra.InstanceCode
+import DiagonaLean.Foundations.KleeneAlgebra.BinarySubst
+import DiagonaLean.Foundations.KleeneAlgebra.Race
+
+import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.Configurations
+import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.Transition
+import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.TraceCompleteness
+import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.LanguageSoundness
+import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.MachineTerms
+import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.Halting

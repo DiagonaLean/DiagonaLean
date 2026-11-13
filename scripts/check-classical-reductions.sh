@@ -23,11 +23,12 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 pattern='Classical\.(propDecidable|byCases|choice|dec)\b'
-dirs=(DiagonaLean/Synthetic DiagonaLean/Halt DiagonaLean/*/Reductions)
+dirs=(DiagonaLean/Synthetic DiagonaLean/Halt DiagonaLean/*/Reductions DiagonaLean/*/Undecidable.lean
+  DiagonaLean/Foundations/Computability DiagonaLean/Foundations/KleeneAlgebra)
 
 existing_dirs=()
 for d in "${dirs[@]}"; do
-  [ -d "$d" ] && existing_dirs+=("$d")
+  [ -e "$d" ] && existing_dirs+=("$d")
 done
 
 # Deliberately demonstrates the banned pattern as a documentation fixture (see its docstring);
