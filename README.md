@@ -10,3 +10,7 @@ A continuation of https://github.com/aalok-thakkar/undecidability/.
 - **Phase 2 : Base Theorems (Months 4–7).** We formalize the acceptance problem and several more undecidability problems. Further, we formalize more theorems: after Rice, Rice-Shapiro and Greibach. Each undecidable problem is registered in the reduction graph via `@[reduction_graph]`. We also introduce a tactic to traverse the reduction graph. The reduction tactic also matures more at this stage.
 - **Phase 3 : Standard Reduction Library (Months 8–).** We now move on to formalizing more models of computation and show their equivalence to Turing Machines (if they are not already in Cslib, such as λ-calculus): RAM Machines, register machines, and μ-recursive functions.
 
+
+## Soundness of undecidability results
+
+Lean's logic is classical, so `Undecidable p` means something only if its reduction is a program; otherwise the reduction can simply case-split on whether a machine halts. CI checks every reduction in the library with `#check_reductions` (`DiagonaLean/Synthetic/ReductionCheck.lean`). The check relies on conventions for how reductions are stated, built and passed to theorems; they are listed under [Reductions in CONTRIBUTING.md](CONTRIBUTING.md#reductions). Read them before adding an undecidability result.

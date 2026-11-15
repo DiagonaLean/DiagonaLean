@@ -45,12 +45,26 @@ One logical change per commit; if you find yourself writing "and" in the message
 
 # Reductions
 
-Lean's logic is classical, so `Undecidable p` on its own holds for every `p` with a positive and a negative instance: the reduction can be the case split `if HaltProblem x then a else b`. An undecidability result means something only if its reduction is a program. CI enforces this with `#check_reductions` (`DiagonaLean/Synthetic/ReductionCheck.lean`):
+Lean's logic is classical, so `Undecidable p` on its own holds for every `p` with a positive and a negative instance: the reduction can be the case split `if HaltProblem x then a else b`. An undecidability result means something only if its reduction is a program. CI enforces this with `#check_reductions` (`DiagonaLean/Synthetic/ReductionCheck.lean`). The check reads the compiled terms, so it can only enforce the conventions below; a result that steps outside them is not checked, even if CI passes.
 
-- Build every reduction (`p ⪯ₘ q`, or `SepReduces`) in a named `def` that Lean compiles: not `noncomputable`, and without `implemented_by`, `extern` or `unsafe`. Put it in `Reductions/Y_to_X.lean`.
-- Do not build a reduction inside a theorem with `⟨f, h⟩`; use the `def`. For reductions from PCP, write `reduceFromPCP over_type α via R`.
-- A theorem may pass the `def` finite data obtained classically, such as a letter or a program code, but not a function or a decidability instance obtained classically.
-- Do not use `implemented_by`, `extern`, `opaque`, `partial` or `unsafe` anywhere a reduction depends on, directly or indirectly. These let a definition compile while its logical meaning is classical, so the check walks every definition a reduction, or an argument passed to one, depends on. Code from Lean, Batteries, Mathlib, Cslib and the other dependencies is trusted.
+## Writing an undecidability result
 
-To check locally after `lake build`, run `lake env lean scripts/CheckReductions.lean`. `scripts/CheckReductionsTest.lean` holds the cases the check must reject.
+1. **State it with the library's notions.** Use `Undecidable p`, `p ⪯ₘ q`, `SepReduces` or `InsepUndecidable`, or a definition that unfolds to one of them. The check does not see a home-made statement such as `¬ ∃ M, decides M p` or a new reduction structure. Reduce from the library's `HaltProblem` or `PCP.DecisionProblem`, not from a local copy.
+2. **Build every reduction in a named `def` that Lean compiles.** It must not be `noncomputable` and must not use `implemented_by`, `extern` or `unsafe`. Put it in `Reductions/Y_to_X.lean`. If Lean asks for `noncomputable`, the reduction is not a program; fix the definition rather than adding the marker.
+3. **Theorems only assemble.** Do not build a reduction inside a theorem with `⟨f, h⟩`; pass the `def` to a lemma such as `undecidability_from_reducibility`. For reductions from PCP, write `reduceFromPCP over_type α via R`.
+4. **Only finite data may come from classical reasoning.** A theorem may pass the `def` a letter, a number or a program code obtained with `obtain`, `Classical.choose` or `by_cases`. It may not pass a function, a decision procedure or a `Decidable` instance obtained that way. If a reduction needs `DecidableEq α`, take it as a parameter of the statement or use a concrete instance, not `Classical.decEq`.
+5. **No escape hatches in anything a reduction depends on.** Do not use `implemented_by`, `extern`, `opaque`, `partial` or `unsafe` in any definition a reduction depends on, directly or indirectly. These let a definition compile while its logical meaning is classical, so the check walks every definition a reduction, or a constant passed to one, depends on. For faster code, use `@[csimp]` with a proof that the two functions are equal. For recursion, prove termination (structural recursion or `termination_by`) rather than using `partial`.
+6. **Put the result where CI looks.** The check covers modules under `DiagonaLean/` that the root module `DiagonaLean` imports. Results in `scripts/` or test files are not checked.
+
+## Maintaining the check
+
+7. **Register new reduction structures.** Add a new structure to `reductionStructs` and its constructor to `reductionCtors`; otherwise the check ignores it. Definitions that unfold to an existing reduction structure, such as `Undecidable`, are found automatically.
+8. **Trust packages deliberately.** `trustedPrefixes` lists the packages whose code the dependency walk does not enter: Lean, Batteries, Mathlib, Cslib and the other current dependencies. When adding a dependency, decide whether to trust it before adding it there; leave small or unaudited packages untrusted.
+9. **Add every new way of cheating to the tests.** `scripts/CheckReductionsTest.lean` holds the cases the check must reject and the honest cases it must accept. Add a case there, with its expected error, together with the fix that catches it.
+
+## What the check guarantees
+
+Under these conventions, the function a reduction computes when compiled is the function the proof reasons about. It does not prove that the function is `Computable`, and it says nothing about whether the encoding of inputs is reasonable; reductions proved through `ComputesReduction` or Mathlib's `Computable` carry that guarantee themselves.
+
+To check locally after `lake build`, run `lake env lean scripts/CheckReductions.lean` and `lake env lean scripts/CheckReductionsTest.lean`.
 
