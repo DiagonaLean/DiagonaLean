@@ -5,7 +5,7 @@ Authors: Prathamesh Turaga
 
 import DiagonaLean.PCP.Basic
 import DiagonaLean.Synthetic.Definitions
-import Mathlib.Data.Nat.SuccPred
+import Mathlib.Order.SuccPred.Nat
 
 /-! # Transporting PCP across alphabets
 

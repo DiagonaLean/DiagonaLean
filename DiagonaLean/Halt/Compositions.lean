@@ -6,7 +6,7 @@ Authors: Akhilesh Balaji, Aristotle (Harmonic).
 import Mathlib.Tactic
 import DiagonaLean.Halt.Basic
 import DiagonaLean.Halt.Helpers
-import Mathlib.Data.Nat.SuccPred
+import Mathlib.Order.SuccPred.Nat
 
 variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
 
@@ -275,13 +275,9 @@ lemma macro_step (w : List Bool) (i : ℕ) (hi : i < w.length) :
     exact PairSelfState.fwd1 ( w[i]! )
     exact none
     all_goals unfold startRight
-    all_goals first
-      | rfl
-      | aesop
+    all_goals aesop
   · convert scan_right _ _ _ _ using 1
-    all_goals first
-      | rfl
-      | (intro b; rfl)
+    all_goals (intro b; rfl)
   · convert Relation.ReflTransGen.trans ( Relation.ReflTransGen.head _ _ ) _ using 1
     exact cfgOf ( .fwd2 w[i]! ) ( none :: List.map some ( List.drop ( i + 1 ) w ).reverse ++
       none :: startLeft w i ) ( none :: List.map some ( List.take i w ) )
