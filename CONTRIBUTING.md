@@ -50,6 +50,7 @@ Lean's logic is classical, so `Undecidable p` on its own holds for every `p` wit
 - Build every reduction (`p ⪯ₘ q`, or `SepReduces`) in a named `def` that Lean compiles: not `noncomputable`, and without `implemented_by`, `extern` or `unsafe`. Put it in `Reductions/Y_to_X.lean`.
 - Do not build a reduction inside a theorem with `⟨f, h⟩`; use the `def`. For reductions from PCP, write `reduceFromPCP over_type α via R`.
 - A theorem may pass the `def` finite data obtained classically, such as a letter or a program code, but not a function or a decidability instance obtained classically.
+- Do not use `implemented_by`, `extern`, `opaque`, `partial` or `unsafe` anywhere a reduction depends on, directly or indirectly. These let a definition compile while its logical meaning is classical, so the check walks every definition a reduction, or an argument passed to one, depends on. Code from Lean, Batteries, Mathlib, Cslib and the other dependencies is trusted.
 
 To check locally after `lake build`, run `lake env lean scripts/CheckReductions.lean`. `scripts/CheckReductionsTest.lean` holds the cases the check must reject.
 
