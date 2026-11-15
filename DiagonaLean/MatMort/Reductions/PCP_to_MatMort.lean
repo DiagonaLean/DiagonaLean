@@ -151,7 +151,6 @@ private lemma mortal_extract
               simp +decide;
               ext i; fin_cases i <;> norm_num [ Matrix.vecMul, Matrix.mul_apply ] <;> ring_nf;
               · unfold T; norm_num [ Fin.sum_univ_succ, vecHead, vecTail ] ; ring_nf;
-                erw [ Matrix.cons_val_succ' ] ; norm_num;
               · simp +decide [ vecHead, vecTail, T ] ; ring_nf;
                 simp +decide [ Fin.sum_univ_three ] ; ring_nf;
               · simp +decide [ vecHead, vecTail, T ] ; ring_nf;
@@ -180,12 +179,9 @@ private lemma mortal_extract
           convert hzero using 1;
           ext i j ; fin_cases i ; fin_cases j <;> norm_num [ Matrix.mul_apply, Fin.sum_univ_succ ]
             <;> ring_nf!;
-          · unfold W'; norm_num ; ring_nf;
-            simp +decide;
-          · unfold W'; norm_num ; ring_nf;
-            simp +decide;
-          · unfold W'; norm_num ; ring_nf;
-            simp +decide ) using 1;
+          · unfold W'; norm_num
+          · unfold W'; norm_num
+          · unfold W'; norm_num ) using 1;
       · convert ih hMem.2 ( δ • !![x * p, y * r, 0] ) ( R ++ [ W' p q r s hpq hrs ] ) _ _ _ using 1;
         · grind;
         · refine Or.inr ⟨ δ, hδ, x * p, by nlinarith, y * r, by nlinarith, ?_, ?_ ⟩;

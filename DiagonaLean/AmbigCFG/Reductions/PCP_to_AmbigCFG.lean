@@ -315,7 +315,6 @@ theorem buildA_yield : ∀ (is : List (Fin P.length)) (h : is ≠ []),
   rcases is with ( _ | ⟨ i, _ | ⟨ j, is ⟩ ⟩ ) <;> simp_all +decide [ encodeA_cons ] ;
   · contradiction;
   · convert liftForestBase_yield i P[i].top using 1; exact List.toList_toArray;
-    exact (List.append_right_inj (List.map Sum.inl P[↑i].top)).mpr rfl
   · convert liftForestRec_yield PCPNonterm.A i P[i].top (
       buildA ( j :: is ) ( by simp ) ) using 1; exact List.toList_toArray; grind +suggestions
 
@@ -327,7 +326,6 @@ theorem buildB_yield : ∀ (is : List (Fin P.length)) (h : is ≠ []),
   · tauto;
   · cases is <;> simp_all +decide [ encodeB_cons ];
     · convert liftForestBase_yield i P[i].bot using 1; exact List.toList_toArray;
-      exact (List.append_right_inj (List.map Sum.inl P[↑i].bot)).mpr rfl
     · convert liftForestRec_yield PCPNonterm.B i P[i].bot (
         buildB ( ‹_› :: ‹_› ) ( by simp ) ) using 1; exact List.toList_toArray
       grind
