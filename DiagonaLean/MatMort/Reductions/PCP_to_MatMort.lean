@@ -289,7 +289,7 @@ lemma wordToInt_injective : Function.Injective wordToInt := by
   intro w1 w2 h; induction' w1 using List.reverseRecOn with d1 w1 ih generalizing w2 <;>
     induction' w2 using List.reverseRecOn with d2 w2 ih' <;> simp_all +decide [wordToInt_append]
   · have h_wordToInt_nil : wordToInt [] = 0 := by rfl
-    have h_wordToInt_singleton : ∀ w : S123, wordToInt [w] = w.val + 1 := by native_decide +revert
+    have h_wordToInt_singleton : ∀ w : S123, wordToInt [w] = w.val + 1 := by decide +revert
     simp_all +decide [shift] ; linarith [Fin.is_lt w2, wordToInt_nonneg d2]
   · unfold wordToInt at h; simp_all +decide [ shift ] ;
     linarith [ show ( w1 : ℕ ) < 3 by exact Fin.is_lt w1,

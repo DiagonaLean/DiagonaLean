@@ -163,6 +163,72 @@ def bad17 : Undecidable fun n : ℕ => Even n :=
   ⟨fun p => if HaltProblem p then 0 else 1, fun p => by
     by_cases h : HaltProblem p <;> simp [h, Nat.not_even_one]⟩
 
+/-! ### Proofs that lie, code swapped by `@[csimp]`, and names that look generated -/
+
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
+/-- A false correctness proof, behind a theorem, which the dependency walk does not enter. -/
+theorem liesSorry : ∀ x : EncodableTM Bool × List Bool, HaltProblem x ↔ Even (0 : ℕ) := sorry
+
+/-- Honest code with that proof. -/
+def bad18 : Undecidable fun n : ℕ => Even n := ⟨fun _ => 0, liesSorry⟩
+
+/-- A false axiom that mentions no reduction. -/
+axiom liesAxiom : ∀ x : EncodableTM Bool × List Bool, HaltProblem x ↔ Even (0 : ℕ)
+
+/-- The axiom behind a theorem. -/
+theorem liesAxiom' : ∀ x : EncodableTM Bool × List Bool, HaltProblem x ↔ Even (0 : ℕ) := liesAxiom
+
+/-- Honest code with that proof. -/
+def bad19 : Undecidable fun n : ℕ => Even n := ⟨fun _ => 0, liesAxiom'⟩
+
+/-- Logically `true`, but runs as `false`. -/
+@[implemented_by oracleStub]
+def honestTrue {α : Type u} (_ : α → Prop) (_ : α) : Bool := true
+
+/-- `native_decide` trusts the compiled code, so it proves a false equation. -/
+theorem nativeLie : honestTrue (fun _ : Unit => True) () = false := by native_decide
+
+/-- A reduction whose proof goes through it. -/
+def bad20 : Undecidable fun n : ℕ => Even n :=
+  ⟨fun _ => 0, absurd nativeLie (by simp [honestTrue])⟩
+
+/-- The case split, logically. -/
+noncomputable def classicalF (x : EncodableTM Bool × List Bool) : ℕ :=
+  haveI := Classical.propDecidable (HaltProblem x); if HaltProblem x then 0 else 1
+
+theorem classicalF_spec : HaltProblem ⪯ₘ[classicalF] fun n : ℕ => Even n := fun x => by
+  unfold classicalF; split <;> simp_all [Nat.not_even_one]
+
+/-- The code that runs in its place. -/
+def stubF (_ : EncodableTM Bool × List Bool) : ℕ := 0
+
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
+/-- A false `@[csimp]` lemma: the compiler replaces `classicalF` by `stubF`. -/
+@[csimp] theorem classicalF_eq : @classicalF = @stubF := sorry
+
+/-- So this compiles without `noncomputable`. It is reported through `classicalF_eq`, the lemma
+that changes its code. -/
+def bad21 : Undecidable fun n : ℕ => Even n := ⟨classicalF, classicalF_spec⟩
+
+/-- A name inside a reduction structure's namespace. -/
+noncomputable def DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad22 :
+    Undecidable fun n : ℕ => Even n := ⟨classicalF, classicalF_spec⟩
+
+/-- A name under a constructor, like the generated `Foo.mk.injEq`. -/
+noncomputable def Nat.succ.bad23 : Undecidable fun n : ℕ => Even n :=
+  ⟨classicalF, classicalF_spec⟩
+
+/-- A name with an internal component, like the generated `foo._proof_1`. -/
+noncomputable def bad24._hidden : Undecidable fun n : ℕ => Even n :=
+  ⟨classicalF, classicalF_spec⟩
+
+/-- The name of a generated curried constructor (`Hidden.intro` has none), whose body is not the
+constructor. -/
+noncomputable def Hidden.intro._flat_ctor : Undecidable fun n : ℕ => Even n :=
+  ⟨classicalF, classicalF_spec⟩
+
 /-! ### Honest declarations -/
 
 /-- A compiled reduction of `HaltProblem` to itself. -/
@@ -217,7 +283,13 @@ error: `bad16` builds a reduction that depends on `sorryAx`, which is `sorry`, v
 ---
 error: `bad17` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad17 → haltDecidable → oracle
 ---
+error: `bad18` builds a reduction that depends on `sorry`
+---
+error: `bad19` builds a reduction that depends on the axiom `liesAxiom`
+---
 error: `bad2` builds a reduction but is marked `noncomputable`
+---
+error: `bad20` builds a reduction that depends on the axiom `nativeLie._native.native_decide.ax_1_1`
 ---
 error: `bad3` builds a reduction but is marked `noncomputable`
 ---
@@ -240,6 +312,16 @@ error: `dependent` returns a reduction inside another type
 error: `Bad10.mk` stores a reduction inside another type
 ---
 error: `Hidden.intro` stores a reduction inside another type
+---
+error: `bad24._hidden` builds a reduction but is marked `noncomputable`
+---
+error: `Hidden.intro._flat_ctor` builds a reduction but is marked `noncomputable`
+---
+error: `Nat.succ.bad23` builds a reduction but is marked `noncomputable`
+---
+error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad22` builds a reduction but is marked `noncomputable`
+---
+error: `classicalF_eq` is a `@[csimp]` lemma that depends on `sorry`, so the compiled code of `classicalF` may differ from its meaning
 -/
 #guard_msgs in
 #check_reductions local
