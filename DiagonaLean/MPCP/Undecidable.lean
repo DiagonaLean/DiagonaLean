@@ -7,7 +7,7 @@ import DiagonaLean.PCP.Reductions.Halt_to_PCP
 
 /-! # Undecidability of MPCP
 
-MPCP is undecidable over the fixed alphabet `Alpha ℕ Sym2` (`mpcp_undecidable`). `halt_iff_mpcp`
+MPCP is undecidable over the fixed alphabet `Alpha ℕ Sym2` (`mpcpUndecidable`). `halt_iff_mpcp`
 assumes `NoBlankWrites` and `NoLeftBoundary`, so `haltToMpcpNorm` first normalizes the machine and
 its input with `Foundations.Normalize`, then renames states to their codes. The composition lives
 here because `Foundations.Normalize` imports `Halt_to_MPCP`.
@@ -75,9 +75,9 @@ def haltReducesMPCP :
   ⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩
 
 /-- MPCP is undecidable over the fixed alphabet `Alpha ℕ Sym2`. -/
-theorem mpcp_undecidable :
+def mpcpUndecidable :
     Undecidable fun x : Tile (Alpha ℕ Foundations.Normalize.Sym2) ×
       Stack (Alpha ℕ Foundations.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 :=
-  ⟨haltReducesMPCP⟩
+  haltReducesMPCP
 
 end DiagonaLean.MPCP.Reduction

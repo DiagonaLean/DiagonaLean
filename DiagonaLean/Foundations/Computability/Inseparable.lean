@@ -69,12 +69,11 @@ theorem selfOut_inseparable {S : EncodableTM Bool → Prop}
   · exact hS.2 E (compComputer_seq_outputs (hpos hE) flipTM_true) hE
   · exact hE (hS.1 E (compComputer_seq_outputs (hneg hE) flipTM_false))
 
-/-- `p` is undecidable via the inseparable pair. Like `Undecidable`, the reduction is wrapped in
-`Nonempty` to keep this a `Prop`, and like `Undecidable`, the statement alone holds classically for
-every `p` with a positive and a negative instance. Its meaning comes from the convention on
-`SepReduces`, checked by `#check_reductions`; the statement about machines is
+/-- `p` is undecidable via the inseparable pair: a separation reduction of `SelfOut true`,
+`SelfOut false` to `p`. Like `Undecidable`, this is data, and means something because the result is
+a definition that Lean compiles, checked by `#check_reductions`; the statement about machines is
 `not_machineDecidable_of_sepReduces`. -/
-def InsepUndecidable (p : Y → Prop) : Prop := Nonempty (SepReduces (SelfOut true) (SelfOut false) p)
+abbrev InsepUndecidable (p : Y → Prop) : Type _ := SepReduces (SelfOut true) (SelfOut false) p
 
 /-- A separation reduction computed by a Turing machine transfers inseparability: `p` has no
 machine decider. -/

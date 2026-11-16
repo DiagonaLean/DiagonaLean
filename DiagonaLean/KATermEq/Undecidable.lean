@@ -10,11 +10,12 @@ import DiagonaLean.KATermEq.Reductions.Halt_to_KATermEq
 /-! # Undecidability of equality on `K Σ̈`
 
 Provable equality in Kleene algebra with commutativity is `Undecidable` over `ℕ`
-(`undecidable_kaTermEq`) and over `{0, 1}` (`undecidable_kaTermEq_bool`). No Turing machine decides
+(`undecidableKATermEq`) and over `{0, 1}` (`undecidableKATermEqBool`), given finite constants
+that are only known to exist. No Turing machine decides
 it under the encoding of a pair of expressions as the binary digits of its code
 (`not_machineDecidable_kaTermEq_nat`, `not_machineDecidable_kaTermEq_bool`), nor on the instances
 `eqRed M` given the code of `M` (`not_machineDecidable_kaTermEq`). It separates the computably
-inseparable pair `SelfOut true`, `SelfOut false` (`kaTermEq_separated`).
+inseparable pair `SelfOut true`, `SelfOut false` (`kaTermEqSeparated`).
 
 ## References
 
@@ -31,17 +32,21 @@ open Cslib.Turing RExp TD FreePreKA Nat.Partrec DiagonaLean.Foundations.Computab
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
   DiagonaLean.Synthetic.Notation
 
-/-- **Provable equality in Kleene algebra with commutativity is `Undecidable`.** -/
-theorem undecidable_kaTermEq : Undecidable (@KATermEq.DecisionProblem ℕ) := by
-  obtain ⟨B, hB⟩ := exists_base
-  obtain ⟨C, hC⟩ := exists_raceProg true B
-  exact ⟨haltReducesKATermEq B C hB hC⟩
+/-- **Provable equality in Kleene algebra with commutativity is `Undecidable`**, given the
+interpreter constants `B` (`exists_base`) and the race program `C` (`exists_raceProg`). These finite
+constants are only known to exist, since Mathlib's construction of a program from a `Partrec`
+function is not executable, so they are arguments rather than computed here. The statement without
+them is `not_machineDecidable_kaTermEq_nat`. -/
+def undecidableKATermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg true B C) :
+    Undecidable (@KATermEq.DecisionProblem ℕ) :=
+  haltReducesKATermEq B C hB hC
 
-/-- **Provable equality in Kleene algebra with commutativity over `{0, 1}` is `Undecidable`.** -/
-theorem undecidable_kaTermEq_bool : Undecidable KATermEqProblem := by
-  obtain ⟨B, hB⟩ := exists_base
-  obtain ⟨C, hC⟩ := exists_raceProgB true B
-  exact ⟨haltReducesKATermEqBool B C hB hC⟩
+/-- **Provable equality in Kleene algebra with commutativity over `{0, 1}` is `Undecidable`**,
+given the constants `B` (`exists_base`) and `C` (`exists_raceProgB`), as in `undecidableKATermEq`. The
+statement without them is `not_machineDecidable_kaTermEq_bool`. -/
+def undecidableKATermEqBool (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB true B C) :
+    Undecidable KATermEqProblem :=
+  haltReducesKATermEqBool B C hB hC
 
 /-- **No Turing machine decides provable equality in Kleene algebra over `ℕ`.** -/
 theorem not_machineDecidable_kaTermEq_nat :
@@ -64,7 +69,7 @@ theorem not_machineDecidable_kaTermEq :
 
 /-- `eqRed` separates the inseparable pair by provable equality of terms in Kleene algebra with
 commutativity, the theory of the paper's title. -/
-theorem kaTermEq_separated : InsepUndecidable fun i : Inst => KAEquiv DComm i.1 i.2 :=
-  ⟨sepReducesKATermEq⟩
+def kaTermEqSeparated : InsepUndecidable fun i : Inst => KAEquiv DComm i.1 i.2 :=
+  sepReducesKATermEq
 
 end DiagonaLean.KATermEq.Reduction

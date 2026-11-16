@@ -10,11 +10,12 @@ import DiagonaLean.TermEq.Reductions.Halt_to_TermEq
 /-! # Undecidability of equality on `T Σ̈`
 
 Provable equality in pre-Kleene algebra with commutativity is `Undecidable` over `ℕ`
-(`undecidable_termEq`) and over `{0, 1}` (`undecidable_termEq_bool`). No Turing machine decides it
+(`undecidableTermEq`) and over `{0, 1}` (`undecidableTermEqBool`), given finite constants that
+are only known to exist. No Turing machine decides it
 under the encoding of a pair of expressions as the binary digits of its code
 (`not_machineDecidable_termEq_nat`, `not_machineDecidable_termEq_bool`), nor on the instances
 `eqRed M` given the code of `M` (`not_machineDecidable_termEq`). It separates the computably
-inseparable pair `SelfOut true`, `SelfOut false` (`termEq_separated`).
+inseparable pair `SelfOut true`, `SelfOut false` (`termEqSeparated`).
 
 ## References
 
@@ -31,18 +32,21 @@ open Cslib.Turing RExp TD FreePreKA Nat.Partrec DiagonaLean.Foundations.Computab
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
   DiagonaLean.Synthetic.Notation
 
-/-- **Provable equality in pre-Kleene algebra with commutativity is `Undecidable`.** -/
-theorem undecidable_termEq : Undecidable (@TermEq.DecisionProblem ℕ) := by
-  obtain ⟨B, hB⟩ := exists_base
-  obtain ⟨C, hC⟩ := exists_raceProg false B
-  exact ⟨haltReducesTermEq B C hB hC⟩
+/-- **Provable equality in pre-Kleene algebra with commutativity is `Undecidable`**, given the
+interpreter constants `B` (`exists_base`) and the race program `C` (`exists_raceProg`). These finite
+constants are only known to exist, since Mathlib's construction of a program from a `Partrec`
+function is not executable, so they are arguments rather than computed here. The statement without
+them is `not_machineDecidable_termEq_nat`. -/
+def undecidableTermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg false B C) :
+    Undecidable (@TermEq.DecisionProblem ℕ) :=
+  haltReducesTermEq B C hB hC
 
-/-- **Provable equality in pre-Kleene algebra with commutativity over `{0, 1}` is
-`Undecidable`.** -/
-theorem undecidable_termEq_bool : Undecidable TermEqProblem := by
-  obtain ⟨B, hB⟩ := exists_base
-  obtain ⟨C, hC⟩ := exists_raceProgB false B
-  exact ⟨haltReducesTermEqBool B C hB hC⟩
+/-- **Provable equality in pre-Kleene algebra with commutativity over `{0, 1}` is `Undecidable`**,
+given the constants `B` (`exists_base`) and `C` (`exists_raceProgB`), as in `undecidableTermEq`. The
+statement without them is `not_machineDecidable_termEq_bool`. -/
+def undecidableTermEqBool (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB false B C) :
+    Undecidable TermEqProblem :=
+  haltReducesTermEqBool B C hB hC
 
 /-- **No Turing machine decides provable equality in pre-Kleene algebra over `ℕ`.** -/
 theorem not_machineDecidable_termEq_nat :
@@ -65,7 +69,7 @@ theorem not_machineDecidable_termEq :
 
 /-- `eqRed` separates the inseparable pair by provable equality of terms in pre-Kleene algebra
 with commutativity. -/
-theorem termEq_separated : InsepUndecidable fun i : Inst => Equiv DComm i.1 i.2 :=
-  ⟨sepReducesTermEq⟩
+def termEqSeparated : InsepUndecidable fun i : Inst => Equiv DComm i.1 i.2 :=
+  sepReducesTermEq
 
 end DiagonaLean.TermEq.Reduction

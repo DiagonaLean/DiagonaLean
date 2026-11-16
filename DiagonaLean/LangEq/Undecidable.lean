@@ -9,9 +9,9 @@ import DiagonaLean.LangEq.Reductions.Halt_to_LangEq
 
 /-! # Undecidability of equality on `L Σ̈`
 
-The failure of language equality is `Undecidable` over `ℕ` (`undecidable_not_langEq`) and over
-`{0, 1}` (`undecidable_not_langEq_bool`). Language equality separates the computably inseparable
-pair `SelfOut true`, `SelfOut false` (`langEq_separated`).
+The failure of language equality is `Undecidable` over `ℕ` (`undecidableNotLangEq`) and over
+`{0, 1}` (`undecidableNotLangEqBool`). Language equality separates the computably inseparable
+pair `SelfOut true`, `SelfOut false` (`langEqSeparated`).
 
 ## References
 
@@ -29,17 +29,17 @@ open Cslib.Turing RExp TD FreePreKA Nat.Partrec DiagonaLean.Foundations.Computab
   DiagonaLean.Synthetic.Notation
 
 /-- **`Undecidable` for language inequality of two terms.** -/
-theorem undecidable_not_langEq :
+def undecidableNotLangEq :
     Undecidable (Complement (@LangEq.DecisionProblem ℕ)) :=
-  ⟨haltReducesNotLangEq⟩
+  haltReducesNotLangEq
 
 /-- **The failure of language equality over `{0, 1}` is `Undecidable`.** -/
-theorem undecidable_not_langEq_bool :
+def undecidableNotLangEqBool :
     Undecidable (Complement LangEqProblem) :=
-  ⟨haltReducesNotLangEqBool⟩
+  haltReducesNotLangEqBool
 
 /-- `eqRed` separates the inseparable pair by equality of the languages of two terms. -/
-theorem langEq_separated : InsepUndecidable fun i : Inst => pl (mk i.1 : TD ℕ) = pl (mk i.2) :=
-  ⟨sepReducesLangEq⟩
+def langEqSeparated : InsepUndecidable fun i : Inst => pl (mk i.1 : TD ℕ) = pl (mk i.2) :=
+  sepReducesLangEq
 
 end DiagonaLean.LangEq.Reduction

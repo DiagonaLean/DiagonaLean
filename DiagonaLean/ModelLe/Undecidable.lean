@@ -9,9 +9,9 @@ import DiagonaLean.ModelLe.Reductions.Halt_to_ModelLe
 
 /-! # Undecidability of inclusion in `L Σ̈`
 
-The failure of language inclusion is `Undecidable` (`undecidable_not_modelLe`). Language inclusion
+The failure of language inclusion is `Undecidable` (`undecidableNotModelLe`). Language inclusion
 separates the computably inseparable pair `SelfOut true`, `SelfOut false`
-(`insepUndecidable_modelLe`).
+(`insepUndecidableModelLe`).
 
 ## References
 
@@ -30,11 +30,11 @@ open Cslib.Turing RExp TD FreePreKA DiagonaLean.Foundations.Computability
 
 /-- **Undecidability in the library's sense:** `HaltProblem ⪯ₘ` the complement of language-model
 inclusion for KA with commutativity conditions. -/
-theorem undecidable_not_modelLe : Undecidable (Complement (@DecisionProblem ℕ)) :=
-  ⟨haltReducesNotModelLe⟩
+def undecidableNotModelLe : Undecidable (Complement (@DecisionProblem ℕ)) :=
+  haltReducesNotModelLe
 
 /-- Inclusion in the language model (with commutativity) is undecidable too. -/
-theorem insepUndecidable_modelLe : InsepUndecidable (@DecisionProblem ℕ) :=
-  insepUndecidable_of_between _ (fun _ h => h.modelLe) fun _ h => h
+def insepUndecidableModelLe : InsepUndecidable (@DecisionProblem ℕ) :=
+  insepUndecidableOfBetween _ (fun _ h => h.modelLe) fun _ h => h
 
 end DiagonaLean.ModelLe.Reduction

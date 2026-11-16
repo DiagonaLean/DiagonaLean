@@ -2,28 +2,21 @@ import DiagonaLean.Synthetic.ReductionCheck
 import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
-/-! Negative tests for `#check_reductions`, run by CI. Each `bad*` declaration, `dependent` and
-`badAxiom` proves or enables `Undecidable` of a decidable predicate (`Even`, or `b = true` on `Bool`)
-by a classical case split, possibly hidden behind an escape hatch in a dependency, and must be
-reported. `withFunction`, `withInstance`, `withBoolFunction`, `withPCPFunction` and the `good*`
-declarations follow the convention and must not be. -/
+/-! Negative tests for `#check_reductions`, run by CI. Each `bad*` declaration, `Bad*` structure,
+`Hidden`, `dependent` and `badAxiom` produces or claims a reduction of `HaltProblem` (or PCP) to a
+decidable predicate (`Even`, or `b = true` on `Bool`) by a classical case split, possibly hidden
+behind an escape hatch in a dependency or `sorry`, and must be reported. The other declarations
+follow the convention and must not be.
+
+Since `Undecidable` is a type, a `theorem` cannot state it: Lean rejects
+`theorem t : Undecidable p` itself. The cases below are what can still be written. -/
 
 open DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
   DiagonaLean.Synthetic.Notation
 
-/-- The case split inline in a theorem, through the `classical` tactic. -/
-theorem bad1 : Undecidable (fun n : ℕ => Even n) := by
-  classical
-  exact ⟨⟨fun p => if HaltProblem p then 0 else 1, fun p => by
-    by_cases h : HaltProblem p <;> simp [h, Nat.not_even_one]⟩⟩
-
-/-- The case split inline, through `Classical.decEq`. -/
-theorem bad2 : Undecidable (fun n : ℕ => Even n) :=
-  ⟨⟨fun p => @ite _ (HaltProblem p = True) (Classical.decEq Prop _ _) 0 1, fun p => by
-    by_cases h : HaltProblem p <;> simp [h, Nat.not_even_one]⟩⟩
-
-/-- The case split in a `noncomputable` definition. -/
-noncomputable def bad3 : HaltProblem ⪯ₘ (fun n : ℕ => Even n) := by
+/-- The classical case split, stated as an existential. -/
+theorem classicalFn :
+    ∃ f : EncodableTM Bool × List Bool → ℕ, HaltProblem ⪯ₘ[f] fun n => Even n := by
   classical
   exact ⟨fun p => if HaltProblem p then 0 else 1, fun p => by
     by_cases h : HaltProblem p <;> simp [h, Nat.not_even_one]⟩
@@ -33,36 +26,62 @@ def withFunction (f : EncodableTM Bool × List Bool → ℕ)
     (h : HaltProblem ⪯ₘ[f] (fun n : ℕ => Even n)) : HaltProblem ⪯ₘ (fun n : ℕ => Even n) :=
   ⟨f, h⟩
 
-/-- The case split obtained from an existential and passed as a function. -/
-theorem bad4 : Undecidable (fun n : ℕ => Even n) := by
-  obtain ⟨f, hf⟩ : ∃ f : EncodableTM Bool × List Bool → ℕ, HaltProblem ⪯ₘ[f] (fun n => Even n) := by
-    classical
-    exact ⟨fun p => if HaltProblem p then 0 else 1, fun p => by
-      by_cases h : HaltProblem p <;> simp [h, Nat.not_even_one]⟩
-  exact ⟨withFunction f hf⟩
+/-! ### Definitions that are not compiled -/
+
+/-- The case split in a `noncomputable` definition. -/
+noncomputable def bad1 : Undecidable (fun n : ℕ => Even n) := by
+  classical
+  exact ⟨fun p => if HaltProblem p then 0 else 1, fun p => by
+    by_cases h : HaltProblem p <;> simp [h, Nat.not_even_one]⟩
+
+/-- The case split obtained from an existential by `Classical.choose`. -/
+noncomputable def bad2 : Undecidable (fun n : ℕ => Even n) :=
+  withFunction _ classicalFn.choose_spec
+
+/-- A private reduction: private names start with `_private`, like generated ones. -/
+private noncomputable def bad3 : Undecidable (fun n : ℕ => Even n) :=
+  withFunction _ classicalFn.choose_spec
 
 /-- A compiled definition that decides `HaltProblem` with an instance parameter. -/
 def withInstance [DecidablePred HaltProblem] : HaltProblem ⪯ₘ (fun n : ℕ => Even n) :=
   ⟨fun p => if HaltProblem p then 0 else 1, fun p => by
     by_cases h : HaltProblem p <;> simp [h, Nat.not_even_one]⟩
 
-/-- A classical instance passed directly. -/
-theorem bad5 : Undecidable (fun n : ℕ => Even n) :=
-  ⟨@withInstance (Classical.decPred _)⟩
+/-- A classical instance passed to it. -/
+noncomputable def bad4 : Undecidable (fun n : ℕ => Even n) :=
+  @withInstance (Classical.decPred _)
 
-/-- A classical instance obtained from `Nonempty` and passed on. -/
-theorem bad6 : Undecidable (fun n : ℕ => Even n) := by
-  obtain ⟨inst⟩ : Nonempty (DecidablePred HaltProblem) := ⟨Classical.decPred _⟩
-  exact ⟨@withInstance inst⟩
+/-! ### Propositions that claim a reduction exists -/
 
-/-- A function wrapped in a subtype, passed through `Nonempty.map`. -/
-theorem bad7 : Undecidable (fun n : ℕ => Even n) := by
-  have h : Nonempty
-      {f : EncodableTM Bool × List Bool → ℕ // HaltProblem ⪯ₘ[f] (fun n => Even n)} := by
-    classical
-    exact ⟨⟨fun p => if HaltProblem p then 0 else 1, fun p => by
-      by_cases h : HaltProblem p <;> simp [h, Nat.not_even_one]⟩⟩
-  exact h.map fun s => withFunction s.1 s.2
+/-- The old `Prop`-valued statement. -/
+theorem bad5 : Nonempty (Undecidable fun n : ℕ => Even n) :=
+  ⟨withFunction _ classicalFn.choose_spec⟩
+
+/-- An existential over reductions. -/
+theorem bad6 : ∃ _ : HaltProblem ⪯ₘ fun n : ℕ => Even n, True :=
+  ⟨withFunction _ classicalFn.choose_spec, trivial⟩
+
+/-- A `Prop`-valued alias, as `Undecidable` used to be. Defining it is allowed. -/
+def OldUndecidable (p : ℕ → Prop) : Prop := Nonempty (HaltProblem ⪯ₘ p)
+
+/-- A theorem through the alias. -/
+theorem bad7 : OldUndecidable fun n : ℕ => Even n := ⟨withFunction _ classicalFn.choose_spec⟩
+
+/-- An inductive proposition that stores a reduction. -/
+inductive Hidden : Prop
+  | intro (r : HaltProblem ⪯ₘ fun n : ℕ => Even n)
+
+/-- A reduction postulated as an axiom. -/
+axiom badAxiom : HaltProblem ⪯ₘ fun n : ℕ => Even n
+
+/-- An axiom stated with `Undecidable`. -/
+axiom bad8 : Undecidable fun n : ℕ => Even n
+
+/-- An `opaque` reduction. -/
+noncomputable opaque bad9 : Undecidable fun n : ℕ => Even n :=
+  withFunction _ classicalFn.choose_spec
+
+/-! ### Reductions wrapped in another type -/
 
 /-- A definition that turns any function into a reduction, inside an `Equiv`. -/
 def dependent :
@@ -73,27 +92,9 @@ def dependent :
   left_inv _ := rfl
   right_inv _ := rfl
 
-/-- The case split fed to `dependent` through `Nonempty.map`. -/
-theorem bad8 : Undecidable (fun n : ℕ => Even n) := by
-  have h : Nonempty (∀ x : EncodableTM Bool × List Bool, {n : ℕ // HaltProblem x ↔ Even n}) := by
-    classical
-    exact ⟨fun x => if h : HaltProblem x then ⟨0, by simp [h]⟩
-      else ⟨1, by simp [h, Nat.not_even_one]⟩⟩
-  exact h.map dependent
-
-/-- A reduction postulated as an axiom. -/
-axiom badAxiom : HaltProblem ⪯ₘ fun n : ℕ => Even n
-
-/-- A compiled reduction of `HaltProblem` to itself. -/
-def goodReduction : HaltProblem ⪯ₘ HaltProblem := ⟨id, fun _ => Iff.rfl⟩
-
-/-- Undecidability through the compiled reduction. -/
-theorem good1 : Undecidable HaltProblem := ⟨goodReduction⟩
-
-/-- A finite constant obtained from an existential is allowed. -/
-theorem good2 : Undecidable HaltProblem := by
-  obtain ⟨n, -⟩ : ∃ n : ℕ, n = n := ⟨0, rfl⟩
-  exact ⟨(fun _ => goodReduction) n⟩
+/-- A structure that stores a reduction in a field. -/
+structure Bad10 where
+  r : HaltProblem ⪯ₘ fun n : ℕ => Even n
 
 /-! ### Escape hatches in dependencies
 
@@ -121,44 +122,25 @@ def haltOracle (x : EncodableTM Bool × List Bool) : Bool := oracle HaltProblem 
 def haltOracle' (x : EncodableTM Bool × List Bool) : Bool := !(!haltOracle x)
 
 /-- A reduction whose dependencies hide the oracle, two calls down. -/
-def bad9 : HaltProblem ⪯ₘ fun b : Bool => b = true :=
+def bad11 : Undecidable fun b : Bool => b = true :=
   ⟨haltOracle', fun x => by simp [haltOracle', haltOracle, oracle_spec]⟩
 
-/-- A compiled definition that takes the reduction function to `Bool` as a parameter. -/
-def withBoolFunction (f : EncodableTM Bool × List Bool → Bool)
-    (h : HaltProblem ⪯ₘ[f] fun b : Bool => b = true) : HaltProblem ⪯ₘ fun b : Bool => b = true :=
-  ⟨f, h⟩
-
-/-- The oracle passed as a named constant to a compiled definition. -/
-theorem bad10 : Undecidable fun b : Bool => b = true :=
-  ⟨withBoolFunction haltOracle fun x => by simp [haltOracle, oracle_spec]⟩
+/-- `implemented_by` on the reduction itself. -/
+@[implemented_by bad11]
+noncomputable def bad12 : Undecidable fun b : Bool => b = true :=
+  ⟨fun x => oracle HaltProblem x, fun x => by simp [oracle_spec]⟩
 
 /-- Compiles with no flag of its own; logically decides PCP. -/
 def pcpOracle {α : Type} (P : DiagonaLean.PCP.Stack α) : Bool :=
   oracle DiagonaLean.PCP.DecisionProblem P
 
 /-- A reduction from PCP whose dependencies hide the oracle. -/
-def bad11 {α : Type} : @DiagonaLean.PCP.DecisionProblem α ⪯ₘ fun b : Bool => b = true :=
+def bad13 {α : Type} : @DiagonaLean.PCP.DecisionProblem α ⪯ₘ fun b : Bool => b = true :=
   ⟨pcpOracle, fun P => by simp [pcpOracle, oracle_spec]⟩
 
-/-- `reduceFromPCP` with that reduction. -/
-theorem bad12 : Undecidable fun b : Bool => b = true := by
-  reduceFromPCP over_type Bool via bad11
-
-/-- A compiled definition that takes a reduction function from PCP as a parameter. -/
-def withPCPFunction {α : Type} (f : DiagonaLean.PCP.Stack α → Bool)
-    (h : @DiagonaLean.PCP.DecisionProblem α ⪯ₘ[f] fun b : Bool => b = true) :
-    @DiagonaLean.PCP.DecisionProblem α ⪯ₘ fun b : Bool => b = true :=
-  ⟨f, h⟩
-
-/-- `reduceFromPCP` with the oracle passed as an argument. -/
-theorem bad13 : Undecidable fun b : Bool => b = true := by
-  reduceFromPCP over_type Bool via
-    withPCPFunction pcpOracle fun P => by simp [pcpOracle, oracle_spec]
-
-/-- A classical instance passed to `pcp_undecidable`, whose type mentions `Undecidable`, not `⪯ₘ`. -/
-theorem bad14 : Undecidable (@DiagonaLean.PCP.DecisionProblem ℕ) :=
-  @DiagonaLean.PCP.Reduction.pcp_undecidable ℕ (Classical.decEq ℕ) inferInstance
+/-- `reduceFromPCP` with that reduction: the composite depends on the oracle too. -/
+def bad14 : Undecidable fun b : Bool => b = true := by
+  reduceFromPCP over_letters true false via bad13
 
 /-- A `partial def`: compiled, with no logical body. -/
 partial def spin (n : ℕ) : ℕ := spin (n + 1)
@@ -167,57 +149,97 @@ partial def spin (n : ℕ) : ℕ := spin (n + 1)
 def bad15 : (fun n : ℕ => Even n) ⪯ₘ fun n : ℕ => Even n :=
   ⟨fun n => if spin n = 0 then n else n, fun _ => by simp⟩
 
+/-- warning: declaration uses `sorry` -/
+#guard_msgs in
+/-- A reduction whose function is `sorry`: it compiles, and `sorryAx` is in `Init`. -/
+def bad16 : Undecidable fun n : ℕ => Even n := ⟨sorry, sorry⟩
+
+/-- The oracle hidden in an instance, so the reduction reaches it through instance resolution. -/
+instance haltDecidable : DecidablePred HaltProblem := fun x =>
+  decidable_of_iff (oracle HaltProblem x = true) (oracle_spec _ _)
+
+/-- A reduction that decides `HaltProblem` with that instance. -/
+def bad17 : Undecidable fun n : ℕ => Even n :=
+  ⟨fun p => if HaltProblem p then 0 else 1, fun p => by
+    by_cases h : HaltProblem p <;> simp [h, Nat.not_even_one]⟩
+
+/-! ### Honest declarations -/
+
+/-- A compiled reduction of `HaltProblem` to itself. -/
+def goodReduction : Undecidable HaltProblem := ⟨id, fun _ => Iff.rfl⟩
+
+/-- Composition of compiled reductions. -/
+def good1 : Undecidable HaltProblem := undecidabilityFromReducibility goodReduction goodReduction
+
 /-- Honest local helpers are allowed. -/
 def double (n : ℕ) : ℕ := 2 * n
 
 /-- A reduction through a local helper. -/
-def good3 : (fun n : ℕ => Even (double n)) ⪯ₘ fun _ : ℕ => True :=
+def good2 : (fun n : ℕ => Even (double n)) ⪯ₘ fun _ : ℕ => True :=
   ⟨double, fun n => by simp [double]⟩
 
 /-- An honest reduction from PCP. -/
 def goodPCP : @DiagonaLean.PCP.DecisionProblem Bool ⪯ₘ @DiagonaLean.PCP.DecisionProblem Bool :=
   ⟨id, fun _ => Iff.rfl⟩
 
-/-- `reduceFromPCP` with an honest reduction. -/
-theorem good4 : Undecidable (@DiagonaLean.PCP.DecisionProblem Bool) := by
-  reduceFromPCP over_type Bool via goodPCP
+/-- `reduceFromPCP` with an honest reduction and explicit letters. -/
+def good3 : Undecidable (@DiagonaLean.PCP.DecisionProblem Bool) := by
+  reduceFromPCP over_letters true false via goodPCP
+
+/-- A theorem may take reductions as hypotheses. -/
+theorem good4 {p : ℕ → Prop} (r : HaltProblem ⪯ₘ p) (x : EncodableTM Bool × List Bool) :
+    p (r.f x) ↔ HaltProblem x :=
+  (r.hf x).symm
+
+/-- A predicate on reductions is not a carrier, so theorems about it are allowed. -/
+def IsId (r : HaltProblem ⪯ₘ HaltProblem) : Prop := r.f = id
+
+/-- A theorem about a named reduction. -/
+theorem good5 : IsId goodReduction := rfl
+
+/-- A reduction's function passed without its input is not a reduction. -/
+theorem good6 : goodReduction.f = id := rfl
 
 /--
-error: `bad1` builds a reduction with `DiagonaLean.Synthetic.Definitions.ManyOneReduces.mk`
+error: `bad1` builds a reduction but is marked `noncomputable`
 ---
-error: `bad1` passes the noncomputable `Classical.propDecidable` to a reduction
+error: `bad11` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad11 → haltOracle' → haltOracle → oracle
 ---
-error: `bad10` passes `haltOracle` to a reduction, which depends on `oracle`, which uses `implemented_by`, via haltOracle → oracle
+error: `bad12` builds a reduction but is marked `noncomputable`
 ---
-error: `bad11` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad11 → pcpOracle → oracle
+error: `bad13` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad13 → pcpOracle → oracle
 ---
-error: `bad12` passes `bad11` to a reduction, which depends on `oracle`, which uses `implemented_by`, via bad11 → pcpOracle → oracle
----
-error: `bad13` passes `pcpOracle` to a reduction, which depends on `oracle`, which uses `implemented_by`, via pcpOracle → oracle
----
-error: `bad14` passes the noncomputable `Classical.decEq` to a reduction
+error: `bad14` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad14 → bad13 → pcpOracle → oracle
 ---
 error: `bad15` builds a reduction that depends on `spin`, which is `opaque` or `partial`, via bad15 → spin
 ---
-error: `bad2` builds a reduction with `DiagonaLean.Synthetic.Definitions.ManyOneReduces.mk`
+error: `bad16` builds a reduction that depends on `sorryAx`, which is `sorry`, via bad16 → sorryAx
 ---
-error: `bad2` passes the noncomputable `Classical.decEq` to a reduction
+error: `bad17` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad17 → haltDecidable → oracle
+---
+error: `bad2` builds a reduction but is marked `noncomputable`
 ---
 error: `bad3` builds a reduction but is marked `noncomputable`
 ---
-error: `bad4` passes `f`, which carries a function and is bound inside the proof, to a reduction
+error: `bad4` builds a reduction but is marked `noncomputable`
 ---
-error: `bad5` passes the noncomputable `Classical.decPred` to a reduction
+error: `bad5` states a proposition about a reduction; state the result as a definition whose value is the reduction
 ---
-error: `bad6` passes `inst`, which carries a function and is bound inside the proof, to a reduction
+error: `bad6` states a proposition about a reduction; state the result as a definition whose value is the reduction
 ---
-error: `bad7` passes `s`, which carries a function and is bound inside the proof, to a reduction
+error: `bad7` states a proposition about a reduction; state the result as a definition whose value is the reduction
 ---
-error: `bad9` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad9 → haltOracle' → haltOracle → oracle
+error: `bad8` is an axiom about reductions
+---
+error: `bad9` is an opaque or partial declaration about reductions
 ---
 error: `badAxiom` is an axiom about reductions
 ---
 error: `dependent` returns a reduction inside another type
+---
+error: `Bad10.mk` stores a reduction inside another type
+---
+error: `Hidden.intro` stores a reduction inside another type
 -/
 #guard_msgs in
 #check_reductions local

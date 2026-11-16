@@ -66,18 +66,18 @@ def sepReducesOfBetween (S : Inst → Prop) (h₁ : ∀ i, Provable i → S i)
   ⟨kaRed, fun _ h => h₁ _ (kaRed_pos h), fun _ h hS => kaRed_neg h (h₂ _ hS)⟩
 
 /-- Every `S` between `Provable` and `ModelLe` satisfies `InsepUndecidable`. -/
-theorem insepUndecidable_of_between (S : Inst → Prop) (h₁ : ∀ i, Provable i → S i)
+def insepUndecidableOfBetween (S : Inst → Prop) (h₁ : ∀ i, Provable i → S i)
     (h₂ : ∀ i, S i → ModelLe i) : InsepUndecidable S :=
-  ⟨sepReducesOfBetween S h₁ h₂⟩
+  sepReducesOfBetween S h₁ h₂
 
 /-- **Pre-Kleene algebra with commutativity conditions is undecidable.** -/
-theorem insepUndecidable_provable : InsepUndecidable Provable :=
-  insepUndecidable_of_between _ (fun _ h => h) fun _ h => h.modelLe
+def insepUndecidableProvable : InsepUndecidable Provable :=
+  insepUndecidableOfBetween _ (fun _ h => h) fun _ h => h.modelLe
 
 /-- **`KAProvable` satisfies `InsepUndecidable`**, since it lies between `Provable` and
 `ModelLe`. -/
-theorem insepUndecidable_kaProvable : InsepUndecidable KAProvable :=
-  insepUndecidable_of_between _ (fun _ h => h.kaProvable) fun _ h => h.modelLe
+def insepUndecidableKAProvable : InsepUndecidable KAProvable :=
+  insepUndecidableOfBetween _ (fun _ h => h.kaProvable) fun _ h => h.modelLe
 
 /-- **No Turing machine decides any theory between pre-KA provability and the language model**,
 for any encoding of instances under which a Turing machine computes `kaRed`. -/
@@ -195,9 +195,9 @@ def haltReducesNotEqVia (F : LangFactor X)
     (not_congr ((modelLe_iff_langEq _).trans (eqVia_iff_langEq F hF (haltEqRed p)).symm))⟩
 
 /-- **`Undecidable` for the failure of equality on `X`.** -/
-theorem undecidable_not_eqVia (F : LangFactor X)
+def undecidableNotEqVia (F : LangFactor X)
     (hF : ∀ a b : TD ℕ, pl a = pl b → F.l' a = F.l' b) : Undecidable (Complement (EqVia F)) :=
-  ⟨haltReducesNotEqVia F hF⟩
+  haltReducesNotEqVia F hF
 
 /-- The machines whose instance `eqRed M` holds in `X`: the paper's set `A'` (Theorem 19). -/
 def SelfEq (F : LangFactor X) (M : EncodableTM Bool) : Prop := EqVia F (eqRed M)
