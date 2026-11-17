@@ -43,6 +43,10 @@ One logical change per commit; if you find yourself writing "and" in the message
 - Scope to the Lean module name when possible: `feat(MyProject.Eval): ...`
 - Never commit directly to `main`. Commit to a new branch.
 
+# Layout
+
+Each problem has a folder under `DiagonaLean/`: `Basic.lean` states it, `Reductions/` holds the reductions to it, and `Undecidable.lean` the results (`Halt`, where every reduction starts, has no `Reductions/`). Code that only one problem uses lives in that problem's folder, as `MPCP/Normalize/` and `KACommUndecidable/KleeneAlgebra/` do. `Foundations/` holds general results and may depend, even through other imports, only on `Foundations`, `Synthetic` and `Halt`; `scripts/check_layering.py` checks this in CI.
+
 # Reductions
 
 `Undecidable p` is the type `HaltProblem ⪯ₘ p`, so an undecidability result is a definition whose value is the reduction, and composing results composes their functions. Lean's logic is classical, so a term of that type exists for every `p` with a positive and a negative instance: the case split `if HaltProblem x then a else b`. That case split is not a program, and Lean refuses to compile it. So a result means something because it is a definition that Lean compiles, and CI checks this with `#check_reductions` (`DiagonaLean/Synthetic/ReductionCheck.lean`). It enforces conventions 2–4, and `scripts/check_metaprograms.py` enforces convention 9. Conventions 1 and 5–7 are what let it see a result at all, and only review enforces them: a result that steps outside them is not checked, even if CI passes.
