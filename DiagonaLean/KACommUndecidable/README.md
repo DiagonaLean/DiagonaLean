@@ -22,8 +22,9 @@ Each problem keeps its own namespace, so its results read as `TermEq.Reduction.u
 * `Basic.lean`: the four problems.
 * `Reductions/Halt_to_X.lean`: a reduction from `HaltProblem` to each problem (to its complement for `LangEq` and `ModelLe`); see `Reductions/README.md`.
 * `Undecidable.lean`: the headline results, side by side.
+* `KleeneAlgebra/`: the algebra, the encoding of Turing machines as terms (`KleeneAlgebra/MachineEncoding/`) and the race program.
 
-The algebra, the encoding of Turing machines as terms and the race program are in `Foundations/KleeneAlgebra/`, and the interpreter they rely on is in `Foundations/Computability/`.
+The interpreter the race program relies on is in `Foundations/Computability/`.
 
 ## Results
 * **`T Σ̈` and `K Σ̈`.** `undecidableTermEq` and `undecidableKATermEq` (over `ℕ`) and their `Bool` versions (over `{0, 1}`) are `Undecidable`, given finite constants that are only known to exist: the interpreter's table `B` and the race program `C`. They are arguments, since a compiled definition cannot extract them from an existence proof. Without them, the results are stated at the level of machines: `not_machineDecidable_termEq_nat`, `not_machineDecidable_termEq_bool` and the `kaTermEq` versions say that no Turing machine decides these problems.
@@ -31,7 +32,7 @@ The algebra, the encoding of Turing machines as terms and the race program are i
 * **Any theory in between.** The machine-level results on the instances `eqRed M` rest on computable inseparability (`Halt/Inseparable.lean`): `kaRed` sends machines that output `1` on their own code to inequalities provable in pre-Kleene algebra, and machines that output `0` to inequalities false in the language model. So no machine decides any relation between pre-Kleene algebra provability and the language model: on the instances `eqRed M` without any assumption (`not_machineDecidable_selfEq`), and on all instances given a machine that computes `kaRed` (`not_machineDecidable_of_between`).
 
 ## Where the paper's results are
-Files under `Foundations/KleeneAlgebra/` unless stated otherwise.
+Files under `KleeneAlgebra/` unless stated otherwise.
 
 | Paper | File |
 |---|---|

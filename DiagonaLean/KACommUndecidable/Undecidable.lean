@@ -27,7 +27,7 @@ The headline results of the paper, for the four problems of `KACommUndecidable.B
 
 The reductions from `HaltProblem` to equality on `T Σ̈` and `K Σ̈`, and the machine-level
 statements over `ℕ` and `{0, 1}`, go through the race program of Theorem 19
-(`Foundations/KleeneAlgebra/Race.lean`). The machine-level statements on the instances `eqRed M`
+(`KACommUndecidable/KleeneAlgebra/Race.lean`). The machine-level statements on the instances `eqRed M`
 use computable inseparability instead (`Halt/Inseparable.lean`): `eqRed` sends machines that output
 `1` on their own code to provably equal pairs and machines that output `0` to pairs with different
 languages, so no machine decides any relation between pre-Kleene algebra provability and the
@@ -45,7 +45,7 @@ open scoped Computability
 
 namespace DiagonaLean.TermEq.Reduction
 
-open DiagonaLean.Foundations.KleeneAlgebra
+open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 open Cslib.Turing RExp TD FreePreKA Nat.Partrec DiagonaLean.Foundations.Computability
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
@@ -92,7 +92,7 @@ end DiagonaLean.TermEq.Reduction
 
 namespace DiagonaLean.KATermEq.Reduction
 
-open DiagonaLean.Foundations.KleeneAlgebra
+open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 open Cslib.Turing RExp TD FreePreKA Nat.Partrec DiagonaLean.Foundations.Computability
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
@@ -139,7 +139,7 @@ end DiagonaLean.KATermEq.Reduction
 
 namespace DiagonaLean.LangEq.Reduction
 
-open DiagonaLean.Foundations.KleeneAlgebra
+open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 open Cslib.Turing RExp TD FreePreKA Nat.Partrec DiagonaLean.Foundations.Computability
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
@@ -161,7 +161,7 @@ end DiagonaLean.LangEq.Reduction
 
 namespace DiagonaLean.ModelLe.Reduction
 
-open DiagonaLean.Foundations.KleeneAlgebra
+open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 open Cslib.Turing RExp TD FreePreKA DiagonaLean.Foundations.Computability
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions

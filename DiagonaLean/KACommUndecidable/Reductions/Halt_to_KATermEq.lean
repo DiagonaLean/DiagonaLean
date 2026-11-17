@@ -4,8 +4,8 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.KACommUndecidable.Basic
-import DiagonaLean.Foundations.KleeneAlgebra.Race
-import DiagonaLean.Foundations.KleeneAlgebra.Separation
+import DiagonaLean.KACommUndecidable.KleeneAlgebra.Race
+import DiagonaLean.KACommUndecidable.KleeneAlgebra.Separation
 
 @[expose] public section
 
@@ -26,7 +26,7 @@ open scoped Computability
 
 namespace DiagonaLean.KATermEq.Reduction
 
-open DiagonaLean.Foundations.KleeneAlgebra
+open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 open Cslib.Turing RExp TD FreePreKA Nat.Partrec DiagonaLean.Foundations.Computability
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
@@ -37,7 +37,7 @@ commutativity. -/
 theorem halt_reducesto_kaTermEq_spec {B : Base} {C : Code} (hB : B.Good) (hC : RaceProg true B C) :
     HaltProblem ⪯ₘ[reduction B C] @KATermEq.DecisionProblem ℕ :=
   fun p => by
-    simpa [Foundations.KleeneAlgebra.Rel, KATermEq.DecisionProblem] using halt_iff_rel hB hC p
+    simpa [KACommUndecidable.KleeneAlgebra.Rel, KATermEq.DecisionProblem] using halt_iff_rel hB hC p
 
 /-- `HaltProblem` many-one reduces to provable equality in Kleene algebra with commutativity. -/
 def haltReducesKATermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg true B C) :
@@ -49,7 +49,7 @@ theorem halt_reducesto_kaTermEq_bool_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProgB true B C) :
     HaltProblem ⪯ₘ[reductionB B C] KATermEqProblem := fun p =>
   (halt_iff_qb hB hC p).trans (by
-    simpa [QB, Foundations.KleeneAlgebra.Rel, reductionB, KATermEq.DecisionProblem]
+    simpa [QB, KACommUndecidable.KleeneAlgebra.Rel, reductionB, KATermEq.DecisionProblem]
       using kaEquiv_iff_map)
 
 /-- `HaltProblem` many-one reduces to provable equality in Kleene algebra over `{0, 1}`. -/

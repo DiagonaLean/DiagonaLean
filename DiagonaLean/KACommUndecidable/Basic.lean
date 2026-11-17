@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.Foundations.KleeneAlgebra.Inequality
+import DiagonaLean.KACommUndecidable.KleeneAlgebra.Inequality
 
 @[expose] public section
 
@@ -33,7 +33,7 @@ four questions about such a pair, from the most syntactic to the most semantic:
 
 namespace DiagonaLean.TermEq
 
-open DiagonaLean.Foundations.KleeneAlgebra
+open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 /-- `DecisionProblem i` holds iff the two sides of `i` are provably equal in pre-Kleene algebra
 with the commutations `DComm` between left and right letters: equality on `T Σ̈`. -/
@@ -46,7 +46,7 @@ end DiagonaLean.TermEq
 
 namespace DiagonaLean.KATermEq
 
-open DiagonaLean.Foundations.KleeneAlgebra
+open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 /-- `DecisionProblem i` holds iff the two sides of `i` are provably equal in Kleene algebra with
 the commutations `DComm` between left and right letters: equality on `K Σ̈`. -/
@@ -59,7 +59,7 @@ end DiagonaLean.KATermEq
 
 namespace DiagonaLean.LangEq
 
-open DiagonaLean.Foundations.KleeneAlgebra
+open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 /-- `DecisionProblem i` holds iff the two sides of `i` have the same language in the model
 `TD.pl`: equality on `L Σ̈`. -/
@@ -73,7 +73,7 @@ end DiagonaLean.LangEq
 
 namespace DiagonaLean.ModelLe
 
-open DiagonaLean.Foundations.KleeneAlgebra
+open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 /-- `DecisionProblem i` holds iff the language of `i.1` is contained in the language of `i.2` in
 the model `TD.pl`: `e ≤ f` in `L Σ̈`. -/

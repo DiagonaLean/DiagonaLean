@@ -4,8 +4,8 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.KACommUndecidable.Basic
-import DiagonaLean.Foundations.KleeneAlgebra.Race
-import DiagonaLean.Foundations.KleeneAlgebra.Separation
+import DiagonaLean.KACommUndecidable.KleeneAlgebra.Race
+import DiagonaLean.KACommUndecidable.KleeneAlgebra.Separation
 
 @[expose] public section
 
@@ -25,7 +25,7 @@ open scoped Computability
 
 namespace DiagonaLean.LangEq.Reduction
 
-open DiagonaLean.Foundations.KleeneAlgebra
+open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 open Cslib.Turing RExp TD FreePreKA Nat.Partrec DiagonaLean.Foundations.Computability
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
