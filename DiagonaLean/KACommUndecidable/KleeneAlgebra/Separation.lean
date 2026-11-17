@@ -17,8 +17,9 @@ algebra, and a machine that outputs `0` to an inequality that fails in the langu
 (`kaRed_pos`, `kaRed_neg`). So every theory between `Provable` and `ModelLe` separates the
 computably inseparable pair `SelfOut true`, `SelfOut false`, and no machine decides it given a
 machine that computes `kaRed` (`not_machineDecidable_of_between`). The same statements without that
-hypothesis are in `Between.lean`, which uses the interpreter's instances instead of `kaRed`. `haltRed` drops the halting term: `M` halts on `w` iff
-`haltRed (M, w)` fails in the language model.
+hypothesis are in `Between.lean`, which uses the interpreter's instances instead of `kaRed`.
+`haltRed` drops the halting term: `M` halts on `w` iff `haltRed (M, w)` fails in the language
+model.
 
 For equality, the paper states Theorem 18 for any factoring `l = g ∘ l'` of the language map through
 `l' : T Σ̈ → X` (`LangFactor X`). Since `e ≤ f` means `e + f = f`, `eqRed` sends `M` to
