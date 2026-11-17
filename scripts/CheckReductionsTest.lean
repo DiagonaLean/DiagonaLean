@@ -3,7 +3,8 @@ import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
 /-! Negative tests for `#check_reductions`, run by CI. Each `bad*` declaration, `Bad*` structure,
-`Hidden`, `dependent` and `badAxiom` produces or claims a reduction of `HaltProblem` (or PCP) to a
+`Hidden`, `dependent`, `classicalFn`, `badAxiom` and the declarations with generated-looking names
+produces or claims a reduction of `HaltProblem` (or PCP) to a
 decidable predicate (`Even`, or `b = true` on `Bool`) by a classical case split, possibly hidden
 behind an escape hatch in a dependency or `sorry`, and must be reported. The other declarations
 follow the convention and must not be.
@@ -14,7 +15,7 @@ Since `Undecidable` is a type, a `theorem` cannot state it: Lean rejects
 open DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
   DiagonaLean.Synthetic.Notation
 
-/-- The classical case split, stated as an existential. -/
+/-- The classical case split, stated as an existential: a claim that a reduction exists. -/
 theorem classicalFn :
     ∃ f : EncodableTM Bool × List Bool → ℕ, HaltProblem ⪯ₘ[f] fun n => Even n := by
   classical
@@ -229,6 +230,78 @@ constructor. -/
 noncomputable def Hidden.intro._flat_ctor : Undecidable fun n : ℕ => Even n :=
   ⟨classicalF, classicalF_spec⟩
 
+/-- A name that ends like the generated `foo._sunfold`. -/
+noncomputable def bad25_sunfold : Undecidable fun n : ℕ => Even n := ⟨classicalF, classicalF_spec⟩
+
+/-- A definition for the next one to be named after. -/
+def sunfoldBase : ℕ := 0
+
+/-- The generated name `foo._sunfold` itself, for a definition `foo` of another type. -/
+noncomputable def sunfoldBase._sunfold : Undecidable fun n : ℕ => Even n := ⟨classicalF, classicalF_spec⟩
+
+/-- The name of a generated `SizeOf` instance, for a type (`Hidden`, a proposition) that has none. -/
+noncomputable def Hidden._sizeOf_inst : Undecidable fun n : ℕ => Even n :=
+  ⟨classicalF, classicalF_spec⟩
+
+/-! ### Theorems with names that look generated -/
+
+/-- An internal name, like the generated `foo._proof_1`. -/
+theorem bad26._hidden : Nonempty (Undecidable fun n : ℕ => Even n) := ⟨⟨classicalF, classicalF_spec⟩⟩
+
+/-- A name under a constructor, like the generated `Foo.mk.injEq`. -/
+theorem Nat.succ.bad27 : Nonempty (Undecidable fun n : ℕ => Even n) := ⟨⟨classicalF, classicalF_spec⟩⟩
+
+/-- A theorem inside a reduction structure's namespace. -/
+theorem DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad28 :
+    Nonempty (Undecidable fun n : ℕ => Even n) := ⟨⟨classicalF, classicalF_spec⟩⟩
+
+/-- An axiom inside a reduction structure's namespace. -/
+axiom DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad29 :
+    Nonempty (Undecidable fun n : ℕ => Even n)
+
+/-- A structure inside a reduction structure's namespace, whose constructor stores a reduction. -/
+structure DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30 where
+  r : HaltProblem ⪯ₘ fun n : ℕ => Even n
+
+/-! ### Aliases that are not literally types -/
+
+/-- An alias whose declared type is a sort only after β-reduction. -/
+def TBeta : (fun _ : Unit => Type 1) () := Undecidable fun n : ℕ => Even n
+
+/-- A reduction stated with it. -/
+noncomputable def bad31 : TBeta := (⟨classicalF, classicalF_spec⟩ : Undecidable fun n : ℕ => Even n)
+
+/-- A structure with a type field. -/
+structure Box where
+  /-- The stored type. -/
+  T : Type 1
+
+/-- `Undecidable` stored in it. -/
+def box : Box := ⟨Undecidable fun n : ℕ => Even n⟩
+
+/-- A reduction stated with the field. -/
+noncomputable def bad32 : box.T := (⟨classicalF, classicalF_spec⟩ : Undecidable fun n : ℕ => Even n)
+
+/-- A proposition alias whose declared type is a sort only after β-reduction. -/
+def PBeta : (fun _ : Unit => Prop) () := Nonempty (Undecidable fun n : ℕ => Even n)
+
+/-- A theorem through it. -/
+theorem bad33 : PBeta := ⟨⟨classicalF, classicalF_spec⟩⟩
+
+/-! ### Claims with the reduction in a hypothesis of a hypothesis, or a quantified function -/
+
+/-- Double negation. -/
+theorem bad34 : ¬¬ Nonempty (Undecidable fun n : ℕ => Even n) :=
+  fun h => h ⟨⟨classicalF, classicalF_spec⟩⟩
+
+/-- The Church encoding of `Nonempty`. -/
+theorem bad35 : ∀ c : Prop, (Undecidable (fun n : ℕ => Even n) → c) → c :=
+  fun _ h => h ⟨classicalF, classicalF_spec⟩
+
+/-- The relation `⪯ₘ[f]` with `f` quantified. -/
+theorem bad36 : ∃ f : EncodableTM Bool × List Bool → ℕ, HaltProblem ⪯ₘ[f] fun n => Even n :=
+  classicalFn
+
 /-! ### Honest declarations -/
 
 /-- A compiled reduction of `HaltProblem` to itself. -/
@@ -266,6 +339,16 @@ theorem good5 : IsId goodReduction := rfl
 /-- A reduction's function passed without its input is not a reduction. -/
 theorem good6 : goodReduction.f = id := rfl
 
+/-- That no reduction exists may be stated: the reduction occurs only in a hypothesis. -/
+theorem good7 : ¬ Nonempty ((fun _ : Unit => True) ⪯ₘ fun _ : Unit => False) :=
+  fun ⟨r⟩ => (r.hf ()).mp trivial
+
+/-- The relation `⪯ₘ[f]` for a given function. -/
+theorem good8 (r : HaltProblem ⪯ₘ HaltProblem) : HaltProblem ⪯ₘ[r.f] HaltProblem := r.hf
+
+/-- A hypothesis that produces reductions. -/
+theorem good9 (_ : ℕ → Undecidable HaltProblem) : True := trivial
+
 /--
 error: `bad1` builds a reduction but is marked `noncomputable`
 ---
@@ -291,15 +374,29 @@ error: `bad2` builds a reduction but is marked `noncomputable`
 ---
 error: `bad20` builds a reduction that depends on the axiom `nativeLie._native.native_decide.ax_1_1`
 ---
+error: `bad25_sunfold` builds a reduction but is marked `noncomputable`
+---
 error: `bad3` builds a reduction but is marked `noncomputable`
+---
+error: `bad31` builds a reduction but is marked `noncomputable`
+---
+error: `bad32` builds a reduction but is marked `noncomputable`
+---
+error: `bad33` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `bad34` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `bad35` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `bad36` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `bad4` builds a reduction but is marked `noncomputable`
 ---
-error: `bad5` states a proposition about a reduction; state the result as a definition whose value is the reduction
+error: `bad5` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `bad6` states a proposition about a reduction; state the result as a definition whose value is the reduction
+error: `bad6` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `bad7` states a proposition about a reduction; state the result as a definition whose value is the reduction
+error: `bad7` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `bad8` is an axiom about reductions
 ---
@@ -307,19 +404,51 @@ error: `bad9` is an opaque or partial declaration about reductions
 ---
 error: `badAxiom` is an axiom about reductions
 ---
+error: `classicalFn` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
 error: `dependent` returns a reduction inside another type
 ---
 error: `Bad10.mk` stores a reduction inside another type
 ---
+error: `Hidden._sizeOf_inst` builds a reduction but is marked `noncomputable`
+---
 error: `Hidden.intro` stores a reduction inside another type
 ---
+error: `bad2._proof_1` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
 error: `bad24._hidden` builds a reduction but is marked `noncomputable`
+---
+error: `bad26._hidden` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `dependent._proof_6` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `sunfoldBase._sunfold` builds a reduction but is marked `noncomputable`
+---
+error: `Bad10.mk.inj` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `Bad10.mk.injEq` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `Bad10.mk.sizeOf_spec` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `Hidden.intro._flat_ctor` builds a reduction but is marked `noncomputable`
 ---
 error: `Nat.succ.bad23` builds a reduction but is marked `noncomputable`
 ---
+error: `Nat.succ.bad27` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
 error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad22` builds a reduction but is marked `noncomputable`
+---
+error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad28` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad29` is an axiom about reductions
+---
+error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30.mk` stores a reduction inside another type
+---
+error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30.mk.inj` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30.mk.injEq` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30.mk.sizeOf_spec` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `classicalF_eq` is a `@[csimp]` lemma that depends on `sorry`, so the compiled code of `classicalF` may differ from its meaning
 -/
