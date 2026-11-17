@@ -28,6 +28,11 @@ For equality on any `X` through which the language map factors (`LangFactor`), n
 machine that computes `l'` on the codes of expressions (`not_machineDecidable_eqOn`), which is the
 paper's hypothesis that `l'` is computable.
 
+Each statement over `encNat` has an `_of_conv` version for an arbitrary encoding `enc`, given a
+machine that converts `encNat i` into `enc i` (`not_machineDecidable_of_conv`). Some condition of
+this kind is needed: an injective encoding that records whether `S i` holds in its first bit makes
+`S` decidable. `encNat` is the reference encoding the proofs use, not part of the result.
+
 ## References
 
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18
@@ -97,6 +102,12 @@ theorem not_machineDecidable_between (S : Inst → Prop) (h₁ : ∀ i, Provable
     (fun _ _ h => h₁ _ ((provable_iff_equiv _).2 (rInst_pos h)))
     (fun _ _ h hS => not_modelLe h (h₂ _ hS))
 
+/-- **Theorem 18 for inequalities, under any encoding** that a machine computes from `encNat`. -/
+theorem not_machineDecidable_between_of_conv (S : Inst → Prop) (h₁ : ∀ i, Provable i → S i)
+    (h₂ : ∀ i, S i → ModelLe i) {enc : Inst → List Bool} {R : SingleTapeTM Bool}
+    (hR : ComputesReduction R encNat enc id) : ¬ MachineDecidable enc S :=
+  not_machineDecidable_of_conv (not_machineDecidable_between S h₁ h₂) hR
+
 /-- **Theorem 18 for equations.** No machine decides any predicate on pairs of expressions that
 contains provable equality in pre-Kleene algebra and is contained in equality of languages. -/
 theorem not_machineDecidable_eq_between (S : Inst → Prop) (h₁ : ∀ i, Equiv DComm i.1 i.2 → S i)
@@ -108,11 +119,24 @@ theorem not_machineDecidable_eq_between (S : Inst → Prop) (h₁ : ∀ i, Equiv
       rwa [show (rInst K l).1 = plus (redA K l) (redB K l) from rfl,
         show (rInst K l).2 = redB K l from rfl, mk_plus, pl_add, add_eq_right_iff_le] at hl))
 
+/-- **Theorem 18 for equations, under any encoding** that a machine computes from `encNat`. -/
+theorem not_machineDecidable_eq_between_of_conv (S : Inst → Prop)
+    (h₁ : ∀ i, Equiv DComm i.1 i.2 → S i) (h₂ : ∀ i, S i → pl (mk i.1 : TD ℕ) = pl (mk i.2))
+    {enc : Inst → List Bool} {R : SingleTapeTM Bool} (hR : ComputesReduction R encNat enc id) :
+    ¬ MachineDecidable enc S :=
+  not_machineDecidable_of_conv (not_machineDecidable_eq_between S h₁ h₂) hR
+
 /-- **Theorem 18 on syntax.** For any `X` through which the language map factors, no machine
 decides whether two expressions denote the same element of `X`. -/
 theorem not_machineDecidable_eqVia (F : LangFactor X) : ¬ MachineDecidable encNat (EqVia F) :=
   not_machineDecidable_eq_between _ (fun _ h => congrArg F.l' (mk_eq_mk.2 h))
     (fun _ h => by simpa only [F.fac] using congrArg F.g h)
+
+/-- **Theorem 18 on syntax, under any encoding** that a machine computes from `encNat`. -/
+theorem not_machineDecidable_eqVia_of_conv (F : LangFactor X) {enc : Inst → List Bool}
+    {R : SingleTapeTM Bool} (hR : ComputesReduction R encNat enc id) :
+    ¬ MachineDecidable enc (EqVia F) :=
+  not_machineDecidable_of_conv (not_machineDecidable_eqVia F) hR
 
 /-- **Theorem 18.** If a machine computes `l'` on the codes of expressions, no machine decides
 equality on `X`, under any encoding of `X × X`. -/

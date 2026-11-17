@@ -39,6 +39,8 @@ language model on these instances (`not_machineDecidable_selfEq`).
   `not_machineDecidable_eq_between` in `KACommUndecidable/KleeneAlgebra/Between.lean`). In
   particular no machine decides equality or inclusion of languages
   (`not_machineDecidable_langEq_nat`, `not_machineDecidable_modelLe_nat`).
+* **Encodings.** Each machine-level statement over `encNat` or `encBool` has an `_of_conv` version
+  for any encoding that a machine computes from that one (`not_machineDecidable_of_conv`).
 
 ## References
 
@@ -54,8 +56,8 @@ namespace DiagonaLean.TermEq.Reduction
 open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 open Cslib.Turing RExp TD FreePreKA Nat.Partrec DiagonaLean.Foundations.Computability
-  DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
-  DiagonaLean.Synthetic.Notation
+  DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Halt.Undecidable
+  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
 
 /-- **Provable equality in pre-Kleene algebra with commutativity is `Undecidable`**, given the
 interpreter constants `B` (`exists_base`) and the race program `C` (`exists_raceProg`). These finite
@@ -79,12 +81,24 @@ theorem not_machineDecidable_termEq_nat :
   not_machineDecidable_of_family (ka := false) instCode instCode_prim rInst enc_nat iff_nat
     (fun _ _ h => rInst_pos h) (fun _ _ h => rInst_neg h)
 
+/-- **No Turing machine decides provable equality in pre-Kleene algebra over `ℕ`, under any encoding** that a machine computes from `encNat`. -/
+theorem not_machineDecidable_termEq_nat_of_conv {enc : Inst → List Bool} {R : SingleTapeTM Bool}
+    (hR : ComputesReduction R encNat enc id) :
+    ¬ MachineDecidable enc fun i : Inst => Equiv DComm i.1 i.2 :=
+  Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_termEq_nat hR
+
 /-- **No Turing machine decides provable equality in pre-Kleene algebra over `{0, 1}`.** -/
 theorem not_machineDecidable_termEq_bool :
     ¬ MachineDecidable encBool fun i : InstB => Equiv DComm i.1 i.2 :=
   not_machineDecidable_of_family (ka := false) instCodeB instCodeB_prim
     (fun K l => sbI (rInst K l)) enc_bool iff_bool (fun _ _ h => pos_bool h)
     (fun _ _ h => neg_bool h)
+
+/-- **No Turing machine decides provable equality in pre-Kleene algebra over `{0, 1}`, under any encoding** that a machine computes from `encBool`. -/
+theorem not_machineDecidable_termEq_bool_of_conv {enc : InstB → List Bool} {R : SingleTapeTM Bool}
+    (hR : ComputesReduction R encBool enc id) :
+    ¬ MachineDecidable enc fun i : InstB => Equiv DComm i.1 i.2 :=
+  Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_termEq_bool hR
 
 /-- The case `X = T Σ̈`: on machine codes, provable equality in pre-KA has no machine decider. -/
 theorem not_machineDecidable_termEq :
@@ -101,8 +115,8 @@ namespace DiagonaLean.KATermEq.Reduction
 open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 open Cslib.Turing RExp TD FreePreKA Nat.Partrec DiagonaLean.Foundations.Computability
-  DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
-  DiagonaLean.Synthetic.Notation
+  DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Halt.Undecidable
+  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
 
 /-- **Provable equality in Kleene algebra with commutativity is `Undecidable`**, given the
 interpreter constants `B` (`exists_base`) and the race program `C` (`exists_raceProg`). These finite
@@ -126,12 +140,24 @@ theorem not_machineDecidable_kaTermEq_nat :
   not_machineDecidable_of_family (ka := true) instCode instCode_prim rInst enc_nat iff_nat_ka
     (fun _ _ h => rInst_pos_ka h) (fun _ _ h => rInst_neg_ka h)
 
+/-- **No Turing machine decides provable equality in Kleene algebra over `ℕ`, under any encoding** that a machine computes from `encNat`. -/
+theorem not_machineDecidable_kaTermEq_nat_of_conv {enc : Inst → List Bool} {R : SingleTapeTM Bool}
+    (hR : ComputesReduction R encNat enc id) :
+    ¬ MachineDecidable enc fun i : Inst => KAEquiv DComm i.1 i.2 :=
+  Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_kaTermEq_nat hR
+
 /-- **No Turing machine decides provable equality in Kleene algebra over `{0, 1}`.** -/
 theorem not_machineDecidable_kaTermEq_bool :
     ¬ MachineDecidable encBool fun i : InstB => KAEquiv DComm i.1 i.2 :=
   not_machineDecidable_of_family (ka := true) instCodeB instCodeB_prim
     (fun K l => sbI (rInst K l)) enc_bool iff_bool_ka (fun _ _ h => pos_bool_ka h)
     (fun _ _ h => neg_bool_ka h)
+
+/-- **No Turing machine decides provable equality in Kleene algebra over `{0, 1}`, under any encoding** that a machine computes from `encBool`. -/
+theorem not_machineDecidable_kaTermEq_bool_of_conv {enc : InstB → List Bool} {R : SingleTapeTM Bool}
+    (hR : ComputesReduction R encBool enc id) :
+    ¬ MachineDecidable enc fun i : InstB => KAEquiv DComm i.1 i.2 :=
+  Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_kaTermEq_bool hR
 
 /-- The case `X = K Σ̈`: on machine codes, provable equality in KA has no machine decider. -/
 theorem not_machineDecidable_kaTermEq :
@@ -148,8 +174,8 @@ namespace DiagonaLean.LangEq.Reduction
 open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 open Cslib.Turing RExp TD FreePreKA Nat.Partrec DiagonaLean.Foundations.Computability
-  DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
-  DiagonaLean.Synthetic.Notation
+  DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Halt.Undecidable
+  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
 
 /-- **`Undecidable` for language inequality of two terms.** -/
 def undecidableNotLangEq :
@@ -166,6 +192,12 @@ theorem not_machineDecidable_langEq_nat :
     ¬ MachineDecidable encNat fun i : Inst => pl (mk i.1 : TD ℕ) = pl (mk i.2) :=
   not_machineDecidable_eq_between _ (fun _ h => congrArg pl (mk_eq_mk.2 h)) fun _ h => h
 
+/-- **No Turing machine decides equality of languages over `ℕ`, under any encoding** that a machine computes from `encNat`. -/
+theorem not_machineDecidable_langEq_nat_of_conv {enc : Inst → List Bool} {R : SingleTapeTM Bool}
+    (hR : ComputesReduction R encNat enc id) :
+    ¬ MachineDecidable enc fun i : Inst => pl (mk i.1 : TD ℕ) = pl (mk i.2) :=
+  Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_langEq_nat hR
+
 end DiagonaLean.LangEq.Reduction
 
 /-! ### Inclusion in `L Σ̈` -/
@@ -175,8 +207,8 @@ namespace DiagonaLean.ModelLe.Reduction
 open DiagonaLean.KACommUndecidable.KleeneAlgebra
 
 open Cslib.Turing RExp TD FreePreKA DiagonaLean.Foundations.Computability
-  DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
-  DiagonaLean.Synthetic.Notation
+  DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Halt.Undecidable
+  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
 
 /-- **Undecidability in the library's sense:** `HaltProblem ⪯ₘ` the complement of language-model
 inclusion for KA with commutativity conditions. -/
@@ -186,5 +218,11 @@ def undecidableNotModelLe : Undecidable (Complement (@DecisionProblem ℕ)) :=
 /-- **No Turing machine decides inclusion of languages over `ℕ`.** -/
 theorem not_machineDecidable_modelLe_nat : ¬ MachineDecidable encNat ModelLe :=
   not_machineDecidable_between _ (fun _ h => h.modelLe) fun _ h => h
+
+/-- **No Turing machine decides inclusion of languages over `ℕ`, under any encoding** that a machine computes from `encNat`. -/
+theorem not_machineDecidable_modelLe_nat_of_conv {enc : Inst → List Bool} {R : SingleTapeTM Bool}
+    (hR : ComputesReduction R encNat enc id) :
+    ¬ MachineDecidable enc ModelLe :=
+  Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_modelLe_nat hR
 
 end DiagonaLean.ModelLe.Reduction

@@ -28,7 +28,7 @@ theorem not_machineDecidable_kaTermEq_bool :
 
 * **The problem:** two expressions over `{0, 1}` doubled into four letters, under the hypotheses that every left letter commutes with every right letter (`DComm`): a fixed, finite set of commutativity conditions on primitives.
 * **"Decides":** no `SingleTapeTM Bool` outputs `[true]` on the binary encoding of the pair exactly when the equation is provable.
-* **The encoding** `encBool` (and `encNat` over `ℕ`) is injective (`encNat_injective`), so the statement cannot hold for a trivial reason.
+* **The encoding** `encBool` (and `encNat` over `ℕ`) is injective (`encNat_injective`), so the statement cannot hold for a trivial reason. It is a reference encoding, not part of the result: `not_machineDecidable_kaTermEq_bool_of_conv` and the other `_of_conv` statements give the same result for any encoding that a machine computes from it.
 * **Axioms:** only `propext`, `Classical.choice` and `Quot.sound`; no `sorry` and no `native_decide`.
 
 ## Caveats
