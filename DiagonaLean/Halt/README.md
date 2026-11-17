@@ -84,3 +84,6 @@ The machine `D'` is thus `pairSelfTM` composed with `D`, where `pairSelfTM` maps
 tape `encodeBoolTM M` to `encodePair (encodeBoolTM M) (encodeBoolTM M)` before handing off to `D`.
 
 The contrapositive of this lemma tells us that there is no TM which is a halt-decider. ∎
+
+## Computable inseparability
+`Inseparable.lean` proves a second diagonal fact: no machine decides a set that contains every machine halting on its own code with output `1` (`SelfOut true`) and no machine halting on its own code with output `0` (`SelfOut false`) (`selfOut_inseparable`). It is a proof technique for statements `¬ MachineDecidable enc p` (`not_machineDecidable_of_separation`), used by the Kleene algebra results, not a notion of undecidability: a function that separates the two sets says nothing about machines in neither, so it does not give `Undecidable p`.

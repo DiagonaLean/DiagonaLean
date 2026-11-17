@@ -18,8 +18,9 @@ run and ends in a running configuration word, or has diverging sides and so lies
 term (Lemma 33).
 
 This gives a many-one reduction from `HaltProblem` to the complement of language-model inclusion
-(`ModelLe/Reductions/Halt_to_ModelLe.lean`). It says nothing about pre-Kleene-algebra provability:
-for a machine that runs forever, whether the inequality is provable is left open, as in the paper.
+(`KACommUndecidable/Reductions/Halt_to_ModelLe.lean`). It says nothing about pre-Kleene-algebra
+provability: for a machine that runs forever, whether the inequality is provable is left open, as
+in the paper.
 -/
 open scoped Computability
 

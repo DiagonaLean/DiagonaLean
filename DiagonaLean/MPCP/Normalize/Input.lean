@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic)
 -/
 
-import DiagonaLean.Foundations.Normalize.Invariant
+import DiagonaLean.MPCP.Normalize.Invariant
 
 /-! # The encoded input
 
@@ -12,7 +12,7 @@ machine.
 -/
 
 @[expose] public section
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -87,4 +87,4 @@ theorem invAt_init (w : List Bool) :
   left n hn := by
     rw [sub_zero, cellAt_mk₁, ite_eq_right (by omega)]
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.MPCP.Normalize

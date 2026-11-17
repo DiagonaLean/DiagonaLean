@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.TermEq.Basic
+import DiagonaLean.KACommUndecidable.Basic
 import DiagonaLean.Foundations.KleeneAlgebra.Race
 import DiagonaLean.Foundations.KleeneAlgebra.Separation
 
@@ -16,9 +16,6 @@ import DiagonaLean.Foundations.KleeneAlgebra.Separation
 the two sides are provably equal in pre-Kleene algebra with commutativity (`halt_iff_rel`,
 `halt_iff_qb`). The constants `B` and `C` are the interpreter's table and the race program from the
 recursion theorem.
-
-`sepReducesTermEq` sends machines that output `1` on their own code to provably equal pairs and
-machines that output `0` to pairs that are not, separating `SelfOut true` from `SelfOut false`.
 
 ## References
 
@@ -60,12 +57,5 @@ theorem halt_reducesto_termEq_bool_spec {B : Base} {C : Code} (hB : B.Good)
 def haltReducesTermEqBool (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB false B C) :
     HaltProblem ⪯ₘ TermEqProblem :=
   ⟨reductionB B C, halt_reducesto_termEq_bool_spec hB hC⟩
-
-/-- `eqRed` separates `SelfOut true` from `SelfOut false` by provable equality in pre-Kleene algebra
-with commutativity. -/
-def sepReducesTermEq :
-    SepReduces (SelfOut true) (SelfOut false) fun i : Inst => Equiv DComm i.1 i.2 :=
-  ⟨eqRed, fun _ h => (eqVia_factorT _).1 (eqVia_eqRed_pos factorT h),
-    fun _ h hE => eqVia_eqRed_neg factorT h ((eqVia_factorT _).2 hE)⟩
 
 end DiagonaLean.TermEq.Reduction

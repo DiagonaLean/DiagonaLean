@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic)
 -/
 
-import DiagonaLean.Foundations.Normalize.Machine
+import DiagonaLean.MPCP.Normalize.Machine
 
 /-! # The simulation invariant
 
@@ -13,7 +13,7 @@ absolute index `i`.
 -/
 
 @[expose] public section
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -146,4 +146,4 @@ lemma InvAt.write_preserve (h : InvAt t i t' p) (hp : 0 ≤ p) :
 /-- Writing the marker back when standing on it. -/
 lemma write_head_self (t' : BiTape Sym2) : t'.write t'.head = t' := rfl
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.MPCP.Normalize

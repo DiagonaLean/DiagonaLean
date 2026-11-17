@@ -3,6 +3,7 @@ import DiagonaLean.Halt.Encoding
 import DiagonaLean.Halt.Helpers
 import DiagonaLean.Halt.Compositions
 import DiagonaLean.Halt.Undecidable
+import DiagonaLean.Halt.Inseparable
 
 import DiagonaLean.UTMHalt.Basic
 import DiagonaLean.UTMHalt.Reductions.Halt_to_UTMHalt
@@ -30,34 +31,25 @@ import DiagonaLean.MatMort.Basic
 import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
 import DiagonaLean.MatMort.Undecidable
 
-import DiagonaLean.TermEq.Basic
-import DiagonaLean.TermEq.Reductions.Halt_to_TermEq
-import DiagonaLean.TermEq.Undecidable
-
-import DiagonaLean.KATermEq.Basic
-import DiagonaLean.KATermEq.Reductions.Halt_to_KATermEq
-import DiagonaLean.KATermEq.Undecidable
-
-import DiagonaLean.LangEq.Basic
-import DiagonaLean.LangEq.Reductions.Halt_to_LangEq
-import DiagonaLean.LangEq.Undecidable
-
-import DiagonaLean.ModelLe.Basic
-import DiagonaLean.ModelLe.Reductions.Halt_to_ModelLe
-import DiagonaLean.ModelLe.Undecidable
+import DiagonaLean.KACommUndecidable.Basic
+import DiagonaLean.KACommUndecidable.Reductions.Halt_to_TermEq
+import DiagonaLean.KACommUndecidable.Reductions.Halt_to_KATermEq
+import DiagonaLean.KACommUndecidable.Reductions.Halt_to_LangEq
+import DiagonaLean.KACommUndecidable.Reductions.Halt_to_ModelLe
+import DiagonaLean.KACommUndecidable.Undecidable
 
 import DiagonaLean.Foundations.UniversalTuringMachine.Basic
 import DiagonaLean.Foundations.UniversalTuringMachine.Translation
 
-import DiagonaLean.Foundations.Normalize.Normalize
-import DiagonaLean.Foundations.Normalize.Cell
-import DiagonaLean.Foundations.Normalize.Halting
-import DiagonaLean.Foundations.Normalize.Input
-import DiagonaLean.Foundations.Normalize.Invariant
-import DiagonaLean.Foundations.Normalize.Machine
-import DiagonaLean.Foundations.Normalize.Properties
-import DiagonaLean.Foundations.Normalize.Sim
-import DiagonaLean.Foundations.Normalize.Steps
+import DiagonaLean.MPCP.Normalize.Normalize
+import DiagonaLean.MPCP.Normalize.Cell
+import DiagonaLean.MPCP.Normalize.Halting
+import DiagonaLean.MPCP.Normalize.Input
+import DiagonaLean.MPCP.Normalize.Invariant
+import DiagonaLean.MPCP.Normalize.Machine
+import DiagonaLean.MPCP.Normalize.Properties
+import DiagonaLean.MPCP.Normalize.Sim
+import DiagonaLean.MPCP.Normalize.Steps
 
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
@@ -76,7 +68,6 @@ import DiagonaLean.Foundations.Computability.Queue
 import DiagonaLean.Foundations.Computability.Compiler
 import DiagonaLean.Foundations.Computability.Computer
 import DiagonaLean.Foundations.Computability.CodeSim
-import DiagonaLean.Foundations.Computability.Inseparable
 
 import DiagonaLean.Foundations.KleeneAlgebra.PreKleene
 import DiagonaLean.Foundations.KleeneAlgebra.PreKleeneNotKleene

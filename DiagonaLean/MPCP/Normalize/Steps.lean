@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic)
 -/
 
-import DiagonaLean.Foundations.Normalize.Invariant
+import DiagonaLean.MPCP.Normalize.Invariant
 
 /-! # Single steps of the normalised machine
 
@@ -12,7 +12,7 @@ satisfying the appropriate instance of the simulation invariant.
 -/
 
 @[expose] public section
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -186,4 +186,4 @@ lemma step_sim_left_L {wr : Option Bool} {q₂ : tm.State} (hi : i < 0)
   · have := ((h.write wr).moveRight).tm_moveLeft
     rwa [show fold i + 1 = fold (i - 1) - 1 by rw [fold_pred_of_neg hi]; ring] at this
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.MPCP.Normalize

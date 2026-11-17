@@ -6,7 +6,7 @@ Authors: Aalok Thakkar, Prathamesh Turaga
 import DiagonaLean.PCP.Reductions.MPCP_to_PCP
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.Synthetic.Undecidability
-import DiagonaLean.Foundations.Normalize.Normalize
+import DiagonaLean.MPCP.Normalize.Normalize
 import DiagonaLean.PCP.AlphabetLift
 
 /-! # Halt ⪯ₘ PCP
@@ -14,7 +14,7 @@ import DiagonaLean.PCP.AlphabetLift
 The composition `Halt ⪯ₘ MPCP ⪯ₘ PCP`, giving a direct equivalence between halting of a TM
 `tm` on input `w` and solvability of the PCP instance `mpcpToPcp (startTile tm w) (haltTiles tm)`.
 
-`MPCP_to_PCP` supplies the intermediate step; `Foundations.Normalize` removes the
+`MPCP_to_PCP` supplies the intermediate step; `MPCP.Normalize` removes the
 `NoBlankWrites` and `NoLeftBoundary` side conditions by simulating an arbitrary TM by a
 normalised one. This shifts the tape alphabet to `Bool × Bool`, landing the reduction in
 `Stack (Ext (Alpha ℕ (Bool × Bool)))`. Finally, `AlphabetLift` transports the resulting
@@ -160,11 +160,11 @@ normalizer's `Ctrl` control states, to stay computable), and lifts the result to
 alphabet `Ext (Alpha ℕ Bool)`. -/
 def haltToPcp (p : EncodableTM Bool × List Bool) : Stack (Ext (Alpha ℕ Bool)) :=
   letI := p.1.stateEncodable
-  letI hEnc : Encodable (Foundations.Normalize.normTM p.1.toSingleTapeTM).State :=
-    (inferInstance : Encodable (p.1.State × Foundations.Normalize.Ctrl))
+  letI hEnc : Encodable (MPCP.Normalize.normTM p.1.toSingleTapeTM).State :=
+    (inferInstance : Encodable (p.1.State × MPCP.Normalize.Ctrl))
   AlphabetLift.liftInstance Ext.hash Ext.rupee
-    (PCPRed ⟨Foundations.Normalize.normTM p.1.toSingleTapeTM, hEnc⟩
-      (Foundations.Normalize.encInput p.2))
+    (PCPRed ⟨MPCP.Normalize.normTM p.1.toSingleTapeTM, hEnc⟩
+      (MPCP.Normalize.encInput p.2))
 
 /-- `haltToPcp` witnesses that the halting problem many-one reduces to PCP over the fixed
 alphabet `Ext (Alpha ℕ Bool)`. Combines TM normalization, MPCP reduction, and alphabet
@@ -174,16 +174,16 @@ theorem halt_reducesto_pcp_spec :
   rintro ⟨tm, w⟩
   show Halts tm.toSingleTapeTM w ↔ _
   let _ := tm.stateEncodable
-  let hEnc : Encodable (Foundations.Normalize.normTM tm.toSingleTapeTM).State :=
-    (inferInstance : Encodable (tm.State × Foundations.Normalize.Ctrl))
-  let normTMEnc : EncodableTM _ := ⟨Foundations.Normalize.normTM tm.toSingleTapeTM, hEnc⟩
-  rw [Foundations.Normalize.halts_normTM_iff tm.toSingleTapeTM w,
-    halt_iff_pcp normTMEnc (Foundations.Normalize.encInput w)
-      (Foundations.Normalize.normTM_noBlankWrites tm.toSingleTapeTM)
-      (Foundations.Normalize.normTM_noLeftBoundary tm.toSingleTapeTM w),
-    pcpRed_iff normTMEnc (Foundations.Normalize.encInput w)]
+  let hEnc : Encodable (MPCP.Normalize.normTM tm.toSingleTapeTM).State :=
+    (inferInstance : Encodable (tm.State × MPCP.Normalize.Ctrl))
+  let normTMEnc : EncodableTM _ := ⟨MPCP.Normalize.normTM tm.toSingleTapeTM, hEnc⟩
+  rw [MPCP.Normalize.halts_normTM_iff tm.toSingleTapeTM w,
+    halt_iff_pcp normTMEnc (MPCP.Normalize.encInput w)
+      (MPCP.Normalize.normTM_noBlankWrites tm.toSingleTapeTM)
+      (MPCP.Normalize.normTM_noLeftBoundary tm.toSingleTapeTM w),
+    pcpRed_iff normTMEnc (MPCP.Normalize.encInput w)]
   exact AlphabetLift.decisionProblem_lifts Ext.hash Ext.rupee
-    (PCPRed normTMEnc (Foundations.Normalize.encInput w))
+    (PCPRed normTMEnc (MPCP.Normalize.encInput w))
     (by decide)
 
 /-- The halting problem many-one reduces to PCP over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/

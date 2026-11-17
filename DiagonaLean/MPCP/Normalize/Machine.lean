@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic)
 -/
 
-import DiagonaLean.Foundations.Normalize.Cell
+import DiagonaLean.MPCP.Normalize.Cell
 import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
 
 /-! # The normalised machine
@@ -39,7 +39,7 @@ control states in `Ctrl`.
 -/
 
 @[expose] public section
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -232,4 +232,4 @@ lemma fold_zero : fold 0 = 1 := rfl
 
 lemma fold_neg_one : fold (-1) = 2 := rfl
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.MPCP.Normalize

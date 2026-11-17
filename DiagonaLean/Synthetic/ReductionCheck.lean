@@ -16,7 +16,7 @@ compiles and that its compiled code is its logical meaning. `#check_reductions` 
 every declaration of a `DiagonaLean` module (with `local`, over the declarations of the current
 file instead), private ones included.
 
-A reduction is a term of `ManyOneReduces` or `SepReduces`. A *carrier* is a reduction structure or a
+A reduction is a term of `ManyOneReduces`. A *carrier* is a reduction structure or a
 definition of a type or a proposition that unfolds to one, such as `Undecidable`.
 
 1. **Every reduction is a compiled definition with honest proofs.** A definition whose type ends in a
@@ -71,8 +71,7 @@ open Lean Meta Elab Command
 
 /-- The structures whose terms are reductions. -/
 def reductionStructs : List Name :=
-  [`DiagonaLean.Synthetic.Definitions.ManyOneReduces,
-    `DiagonaLean.Foundations.Computability.SepReduces]
+  [`DiagonaLean.Synthetic.Definitions.ManyOneReduces]
 
 /-- The reduction structures, as a set. -/
 def reductionStructSet : NameSet :=
@@ -278,8 +277,7 @@ def declViolations (env : Environment) (tainted carriers : NameSet) (c : Name) (
   | _ => return #[]
 
 /-- The reduction structures, and every untrusted definition of a type or a proposition whose body
-mentions one of them, directly or through another such definition, such as `Undecidable` or
-`InsepUndecidable`. Only the body after the parameters counts, so a predicate on reductions, such
+mentions one of them, directly or through another such definition, such as `Undecidable`. Only the body after the parameters counts, so a predicate on reductions, such
 as `fun r : p ⪯ₘ q => Computable r.f`, is not a carrier. Definitions of terms, such as a reduction
 itself, are not carriers. -/
 def reductionCarriers (env : Environment) : NameSet := Id.run do

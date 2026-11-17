@@ -8,7 +8,7 @@ import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
 import Cslib.Foundations.Data.BiTape
 import DiagonaLean.Halt.Basic
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
-import DiagonaLean.Foundations.Normalize.Properties
+import DiagonaLean.MPCP.Normalize.Properties
 
 /-! # Normalisation of Turing machines
 
@@ -29,7 +29,7 @@ blank written by `tm` represented by a dedicated non-blank symbol.
 @[expose] public section
 open Cslib.Turing SingleTapeTM
 
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.MPCP.Normalize
 
 open MPCP.Reduction DiagonaLean.Halt
 
@@ -43,4 +43,4 @@ theorem normalize_tm (tm : SingleTapeTM Bool) (w : List Bool) :
   ⟨normTM tm, encInput w, normTM_noBlankWrites tm, normTM_noLeftBoundary tm w,
     halts_normTM_iff tm w⟩
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.MPCP.Normalize

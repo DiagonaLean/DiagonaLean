@@ -3,8 +3,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic)
 -/
 
-import DiagonaLean.Foundations.Normalize.Sim
-import DiagonaLean.Foundations.Normalize.Input
+import DiagonaLean.MPCP.Normalize.Sim
+import DiagonaLean.MPCP.Normalize.Input
 import DiagonaLean.Halt.Basic
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 
@@ -17,7 +17,7 @@ gives both the halting equivalence and the `NoLeftBoundary` property.
 -/
 
 @[expose] public section
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -261,4 +261,4 @@ theorem halts_normTM_iff (w : List Bool) :
     obtain ⟨q, t, i, hp, _⟩ := reach_phase_noHalt tm w hnh hreach
     exact hp.state_ne_none rfl
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.MPCP.Normalize

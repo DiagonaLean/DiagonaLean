@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.LangEq.Basic
+import DiagonaLean.KACommUndecidable.Basic
 import DiagonaLean.Foundations.KleeneAlgebra.Race
 import DiagonaLean.Foundations.KleeneAlgebra.Separation
 
@@ -48,10 +48,5 @@ theorem halt_reducesto_not_langEq_bool :
 def haltReducesNotLangEqBool :
     HaltProblem ⪯ₘ Complement LangEqProblem :=
   ⟨haltEqRedB, halt_reducesto_not_langEq_bool⟩
-
-/-- `eqRed` separates `SelfOut true` from `SelfOut false` by equality of languages. -/
-def sepReducesLangEq :
-    SepReduces (SelfOut true) (SelfOut false) fun i : Inst => pl (mk i.1 : TD ℕ) = pl (mk i.2) :=
-  ⟨eqRed, fun _ h => eqVia_eqRed_pos factorL h, fun _ h => eqVia_eqRed_neg factorL h⟩
 
 end DiagonaLean.LangEq.Reduction

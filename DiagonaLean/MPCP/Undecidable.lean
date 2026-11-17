@@ -9,8 +9,8 @@ import DiagonaLean.PCP.Reductions.Halt_to_PCP
 
 MPCP is undecidable over the fixed alphabet `Alpha ℕ Sym2` (`mpcpUndecidable`). `halt_iff_mpcp`
 assumes `NoBlankWrites` and `NoLeftBoundary`, so `haltToMpcpNorm` first normalizes the machine and
-its input with `Foundations.Normalize`, then renames states to their codes. The composition lives
-here because `Foundations.Normalize` imports `Halt_to_MPCP`.
+its input with `MPCP.Normalize`, then renames states to their codes. The composition lives
+here because `MPCP.Normalize` imports `Halt_to_MPCP`.
 -/
 
 namespace DiagonaLean.MPCP.Reduction
@@ -40,44 +40,44 @@ satisfy `NoBlankWrites` and `NoLeftBoundary`, builds the MPCP instance of `halt_
 renames states by `tm.stateEncodable` composed with the `Encodable` instance for the normalizer's
 control states. -/
 def haltToMpcpNorm (p : EncodableTM Bool × List Bool) :
-    Tile (Alpha ℕ Foundations.Normalize.Sym2) × Stack (Alpha ℕ Foundations.Normalize.Sym2) :=
+    Tile (Alpha ℕ MPCP.Normalize.Sym2) × Stack (Alpha ℕ MPCP.Normalize.Sym2) :=
   letI := p.1.stateEncodable
-  letI hEnc : Encodable (Foundations.Normalize.normTM p.1.toSingleTapeTM).State :=
-    (inferInstance : Encodable (p.1.State × Foundations.Normalize.Ctrl))
-  let tm : EncodableTM _ := ⟨Foundations.Normalize.normTM p.1.toSingleTapeTM, hEnc⟩
+  letI hEnc : Encodable (MPCP.Normalize.normTM p.1.toSingleTapeTM).State :=
+    (inferInstance : Encodable (p.1.State × MPCP.Normalize.Ctrl))
+  let tm : EncodableTM _ := ⟨MPCP.Normalize.normTM p.1.toSingleTapeTM, hEnc⟩
   (Tile.map (Alpha.map Encodable.encode)
-      (startTile tm.toSingleTapeTM (Foundations.Normalize.encInput p.2)),
+      (startTile tm.toSingleTapeTM (MPCP.Normalize.encInput p.2)),
     (haltTiles tm).map (Tile.map (Alpha.map Encodable.encode)))
 
 /-- `haltToMpcpNorm` witnesses that the halting problem many-one reduces to MPCP over the fixed
 alphabet `Alpha ℕ Sym2`. -/
 theorem halt_reducesto_mpcp_spec :
     HaltProblem ⪯ₘ[haltToMpcpNorm]
-      fun x : Tile (Alpha ℕ Foundations.Normalize.Sym2) ×
-        Stack (Alpha ℕ Foundations.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 := by
+      fun x : Tile (Alpha ℕ MPCP.Normalize.Sym2) ×
+        Stack (Alpha ℕ MPCP.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 := by
   rintro ⟨tm, w⟩
   show Halts tm.toSingleTapeTM w ↔ _
   let _ := tm.stateEncodable
-  let hEnc : Encodable (Foundations.Normalize.normTM tm.toSingleTapeTM).State :=
-    (inferInstance : Encodable (tm.State × Foundations.Normalize.Ctrl))
-  let normTMEnc : EncodableTM _ := ⟨Foundations.Normalize.normTM tm.toSingleTapeTM, hEnc⟩
-  rw [Foundations.Normalize.halts_normTM_iff tm.toSingleTapeTM w,
-    halt_iff_mpcp normTMEnc (Foundations.Normalize.normTM_noBlankWrites tm.toSingleTapeTM)
-      (Foundations.Normalize.encInput w)
-      (Foundations.Normalize.normTM_noLeftBoundary tm.toSingleTapeTM w)]
+  let hEnc : Encodable (MPCP.Normalize.normTM tm.toSingleTapeTM).State :=
+    (inferInstance : Encodable (tm.State × MPCP.Normalize.Ctrl))
+  let normTMEnc : EncodableTM _ := ⟨MPCP.Normalize.normTM tm.toSingleTapeTM, hEnc⟩
+  rw [MPCP.Normalize.halts_normTM_iff tm.toSingleTapeTM w,
+    halt_iff_mpcp normTMEnc (MPCP.Normalize.normTM_noBlankWrites tm.toSingleTapeTM)
+      (MPCP.Normalize.encInput w)
+      (MPCP.Normalize.normTM_noLeftBoundary tm.toSingleTapeTM w)]
   exact decisionProblem_map_iff _ (Alpha.map_injective Encodable.encode_injective) _ _
 
 /-- The halting problem many-one reduces to MPCP over the fixed alphabet `Alpha ℕ Sym2`, through
 `haltToMpcpNorm`. -/
 def haltReducesMPCP :
-    HaltProblem ⪯ₘ fun x : Tile (Alpha ℕ Foundations.Normalize.Sym2) ×
-      Stack (Alpha ℕ Foundations.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 :=
+    HaltProblem ⪯ₘ fun x : Tile (Alpha ℕ MPCP.Normalize.Sym2) ×
+      Stack (Alpha ℕ MPCP.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 :=
   ⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩
 
 /-- MPCP is undecidable over the fixed alphabet `Alpha ℕ Sym2`. -/
 def mpcpUndecidable :
-    Undecidable fun x : Tile (Alpha ℕ Foundations.Normalize.Sym2) ×
-      Stack (Alpha ℕ Foundations.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 :=
+    Undecidable fun x : Tile (Alpha ℕ MPCP.Normalize.Sym2) ×
+      Stack (Alpha ℕ MPCP.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 :=
   haltReducesMPCP
 
 end DiagonaLean.MPCP.Reduction

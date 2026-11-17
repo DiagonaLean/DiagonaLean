@@ -10,35 +10,28 @@ import DiagonaLean.Halt.Undecidable
 /-! # Computably inseparable sets
 
 `SelfOut b M` holds when `M` halts on its own code with output `[b]`. No Turing machine decides a
-set containing `SelfOut true` and disjoint from `SelfOut false` (`selfOut_inseparable`). A
-separation reduction (`SepReduces`) maps the first set into a predicate and the second into its
-complement, so it transfers this inseparability (`InsepUndecidable`).
+set containing `SelfOut true` and disjoint from `SelfOut false` (`selfOut_inseparable`), by a
+diagonal argument like the one for the halting problem.
+
+This is a proof technique, not a notion of undecidability: a function `f` that sends `SelfOut true`
+into `p` and `SelfOut false` outside it, and that a machine computes, shows that no machine decides
+`p` (`not_machineDecidable_of_separation`). Unlike a many-one reduction from `HaltProblem`, it says
+nothing about the machines in neither set, so it does not give `Undecidable p`.
 
 ## References
 
 * R. M. Smullyan, *Undecidability and recursive inseparability* (1958)
 -/
 
-namespace DiagonaLean.Foundations.Computability
+namespace DiagonaLean.Halt.Inseparable
 
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt.Encoding DiagonaLean.Halt.Compositions
   DiagonaLean.Halt.Undecidable DiagonaLean.Synthetic.Definitions
 
-variable {X Y : Type*}
+variable {Y : Type*}
 
-/-- `S` separates `A` from `B`. -/
-def Separates (A B S : X → Prop) : Prop := (∀ x, A x → S x) ∧ ∀ x, B x → ¬ S x
-
-/-- `f` maps `A` into `p` and `B` into the complement of `p`. As with `ManyOneReduces`, every
-term of this structure must be built by a compiled definition, never by a case split on `A`, `B` or
-`p`; `#check_reductions` checks this. -/
-structure SepReduces (A B : X → Prop) (p : Y → Prop) where
-  /-- The reduction function. -/
-  f : X → Y
-  /-- `A` lands in `p`. -/
-  pos : ∀ x, A x → p (f x)
-  /-- `B` lands outside `p`. -/
-  neg : ∀ x, B x → ¬ p (f x)
+/-- `S` separates `A` from `B`: it contains `A` and is disjoint from `B`. -/
+def Separates {X : Type*} (A B S : X → Prop) : Prop := (∀ x, A x → S x) ∧ ∀ x, B x → ¬ S x
 
 /-- `M` halts on its own code with output `[b]`. -/
 def SelfOut (b : Bool) (M : EncodableTM Bool) : Prop :=
@@ -59,7 +52,8 @@ theorem flipTM_true : flipTM.Outputs [true] [false] := Relation.ReflTransGen.sin
 /-- `flipTM` turns `[false]` into `[true]`. -/
 theorem flipTM_false : flipTM.Outputs [false] [true] := Relation.ReflTransGen.single rfl
 
-/-- **The pair `SelfOut true`, `SelfOut false` is computably inseparable.** -/
+/-- **The pair `SelfOut true`, `SelfOut false` is computably inseparable**: no machine decides a
+set that separates them. -/
 theorem selfOut_inseparable {S : EncodableTM Bool → Prop}
     (hS : Separates (SelfOut true) (SelfOut false) S) : ¬ MachineDecidable encodeBoolTM S := by
   rintro ⟨D, hD⟩
@@ -69,18 +63,13 @@ theorem selfOut_inseparable {S : EncodableTM Bool → Prop}
   · exact hS.2 E (compComputer_seq_outputs (hpos hE) flipTM_true) hE
   · exact hE (hS.1 E (compComputer_seq_outputs (hneg hE) flipTM_false))
 
-/-- `p` is undecidable via the inseparable pair: a separation reduction of `SelfOut true`,
-`SelfOut false` to `p`. Like `Undecidable`, this is data, and means something because the result is
-a definition that Lean compiles, checked by `#check_reductions`; the statement about machines is
-`not_machineDecidable_of_sepReduces`. -/
-abbrev InsepUndecidable (p : Y → Prop) : Type _ := SepReduces (SelfOut true) (SelfOut false) p
-
-/-- A separation reduction computed by a Turing machine transfers inseparability: `p` has no
-machine decider. -/
-theorem not_machineDecidable_of_sepReduces {enc : Y → List Bool} {p : Y → Prop}
-    (r : SepReduces (SelfOut true) (SelfOut false) p) {R : SingleTapeTM Bool}
-    (hR : ComputesReduction R encodeBoolTM enc r.f) : ¬ MachineDecidable enc p := fun hp =>
-  selfOut_inseparable (S := p ∘ r.f) ⟨r.pos, r.neg⟩
+/-- **No machine decides `p`** if a function computed by a machine sends `SelfOut true` into `p` and
+`SelfOut false` outside it. -/
+theorem not_machineDecidable_of_separation {enc : Y → List Bool} {p : Y → Prop}
+    {f : EncodableTM Bool → Y} (pos : ∀ M, SelfOut true M → p (f M))
+    (neg : ∀ M, SelfOut false M → ¬ p (f M)) {R : SingleTapeTM Bool}
+    (hR : ComputesReduction R encodeBoolTM enc f) : ¬ MachineDecidable enc p := fun hp =>
+  selfOut_inseparable (S := p ∘ f) ⟨pos, neg⟩
     (machineDecidable_of_computes_reduction hR (fun _ => Iff.rfl) hp)
 
 /-- A machine-level undecidability result transfers to any encoding that a machine can compute
@@ -90,4 +79,4 @@ theorem not_machineDecidable_of_conv {enc enc' : Y → List Bool} {P : Y → Pro
     (hR : ComputesReduction R enc enc' id) : ¬ MachineDecidable enc' P := fun hd =>
   h (machineDecidable_of_computes_reduction hR (fun _ => Iff.rfl) hd)
 
-end DiagonaLean.Foundations.Computability
+end DiagonaLean.Halt.Inseparable

@@ -15,7 +15,7 @@ lemmas describing how it interacts with `write`, `move` and `mk₁`.
 -/
 
 @[expose] public section
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing
 
@@ -161,4 +161,4 @@ lemma cellAt_eq_none_of_left_nil {t : BiTape S} (h : t.left.toList = []) {d : �
 lemma left_toList_ne_nil {t : BiTape S} {d : ℤ} (hd : d < 0) (h : cellAt t d ≠ none) :
     t.left.toList ≠ [] := fun hnil => h (cellAt_eq_none_of_left_nil hnil hd)
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.MPCP.Normalize
