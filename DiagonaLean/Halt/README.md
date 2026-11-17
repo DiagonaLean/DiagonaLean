@@ -20,9 +20,9 @@ where `IsHaltDecider D` asserts that for every TM `M` and input `w`, `D` outputs
 ### Encodings
 We first define encodings of TMs as Boolean strings as described in [HopcroftMotwaniUllman2006]. TMs over `Bool` are encoded as binary strings via `encodeBoolTM`:
 ```
-encodeBoolTM : (tm : SingleTapeTM Bool) → [DecidableEq tm.State] → List Bool
+encodeBoolTM : EncodableTM Bool → List Bool
 ```
-The encoding records the initial state index and the transition table.
+The encoding records the initial state index and the transition table, with a row for every state and every tape symbol. A halting transition still writes and moves, so it is recorded too, with successor index `0`; states have indices from `1`. So the code determines the machine's behaviour: machines with the same code halt on the same inputs and produce the same outputs (`halts_iff_of_code_eq` and `outputs_iff_of_code_eq` in `Foundations/Computability/CodeSim.lean`).
 
 States, tape symbols, and directions are assigned unary indices separated by
 `true`. A transition `δ(q, x) = (q', sym, dir)` is encoded as five

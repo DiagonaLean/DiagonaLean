@@ -4,7 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 ```
 # Status of the formalisation
 
-How much of *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979) is formalised, and what is still open. Assessed on 2026-11-16; update it when a gap below is closed.
+How much of *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979) is formalised, and what is still open. Assessed on 2026-11-16, updated 2026-11-17; update it when a gap below is closed.
 
 The paper's main result, from its abstract: *"the equational theory of Kleene algebra with commutativity conditions on primitives (or atomic terms) is undecidable … our results hold even for weaker theories that do not support the induction axioms of Kleene algebra."*
 
@@ -33,12 +33,14 @@ theorem not_machineDecidable_kaTermEq_bool :
 ## Caveats
 
 1. **The definition of the theory has not been checked against the paper line by line.** `KAEquiv` is the pre-Kleene theory `Equiv` plus right unfolding (`e∗ e ≤ e∗`) and both induction rules, closed under congruence, and it is proved sound for Mathlib's `KleeneAlgebra` (`eval_ka_sound`). The axioms of `Equiv` should still be compared with the paper's definition of pre-Kleene algebra.
-2. **The machine encoding drops halting transitions.** `toBoolMachineData` (`Halt/Encoding.lean`) omits every transition that halts, so two machines that differ only in what they write as they halt have the same `encodeBoolTM` code and can produce different outputs on it. Statements whose input is a machine code may then hold for that reason alone: `selfOut_inseparable`, `not_machineDecidable_selfEq`, and `not_machineDecidable_termEq` / `not_machineDecidable_kaTermEq` (on the instances `eqRed M`). Their proofs are correct, but they say less than they appear to. The main `_nat` and `_bool` theorems are not affected, since their input encoding is injective.
-3. **The `Undecidable` forms take arguments.** `undecidableTermEq B C hB hC` and `undecidableKATermEq B C hB hC` need the interpreter's constants `B` and the race program `C`, which are only known to exist, so a compiled definition cannot obtain them itself. The statements without them are the machine-level theorems above.
+2. **The `Undecidable` forms take arguments.** `undecidableTermEq B C hB hC` and `undecidableKATermEq B C hB hC` need the interpreter's constants `B` and the race program `C`, which are only known to exist, so a compiled definition cannot obtain them itself. The statements without them are the machine-level theorems above.
+
+## Resolved
+
+* **The machine encoding used to drop halting transitions** (until 2026-11-17). `encodeBoolTM` omitted every transition that halts, so two machines that differ only in what they write as they halt had the same code, and statements whose input is a machine code (`selfOut_inseparable`, `not_machineDecidable_selfEq`, and `not_machineDecidable_termEq` / `not_machineDecidable_kaTermEq` on the instances `eqRed M`) could hold for that reason alone. The code now records every transition, and `outputs_iff_of_code_eq` (`Foundations/Computability/CodeSim.lean`) proves that machines with the same code behave the same, so these statements now mean what they say. This also removes the obstacle to a machine computing `kaRed`, which used to be impossible because `kaRed` differs on two machines with the same code.
 
 ## Open work
 
-1. Make `encodeBoolTM` encode halting transitions (caveat 2). This affects every problem, since `HaltProblem` uses the same encoding.
-2. Supply a machine that computes `kaRed`, which makes `not_machineDecidable_of_between`, the paper's general form of Theorem 18, unconditional.
-3. Compare `Equiv` and `KAEquiv` with the paper's definitions (caveat 1).
-4. Optionally, a machine-level result for `L Σ̈`; it is not part of the paper's main claim.
+1. Supply a machine that computes `kaRed`, which makes `not_machineDecidable_of_between`, the paper's general form of Theorem 18, unconditional.
+2. Compare `Equiv` and `KAEquiv` with the paper's definitions (caveat 1).
+3. Optionally, a machine-level result for `L Σ̈`; it is not part of the paper's main claim.
