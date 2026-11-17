@@ -20,7 +20,7 @@ A universal Turing machine is a single machine that can simulate every other mac
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding
      DiagonaLean.Halt.Helpers
 
-namespace DiagonaLean.Foundations.UniversalTuringMachine
+namespace DiagonaLean.UTMHalt.UniversalTuringMachine
 
 variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
 
@@ -94,4 +94,4 @@ theorem IsUniversalWrt.behaviour_congr {U₁ U₂ : SingleTapeTM Bool}
   ⟨((h₁ tm w).1).trans ((h₂ tm w).1).symm,
     fun v => ((h₁ tm w).2 v).trans (((h₂ tm w).2 v).symm)⟩
 
-end DiagonaLean.Foundations.UniversalTuringMachine
+end DiagonaLean.UTMHalt.UniversalTuringMachine

@@ -38,8 +38,8 @@ import DiagonaLean.KACommUndecidable.Reductions.Halt_to_LangEq
 import DiagonaLean.KACommUndecidable.Reductions.Halt_to_ModelLe
 import DiagonaLean.KACommUndecidable.Undecidable
 
-import DiagonaLean.Foundations.UniversalTuringMachine.Basic
-import DiagonaLean.Foundations.UniversalTuringMachine.Translation
+import DiagonaLean.UTMHalt.UniversalTuringMachine.Basic
+import DiagonaLean.UTMHalt.UniversalTuringMachine.Translation
 
 import DiagonaLean.MPCP.Normalize.Normalize
 import DiagonaLean.MPCP.Normalize.Cell

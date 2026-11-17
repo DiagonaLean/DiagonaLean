@@ -17,7 +17,7 @@ machine is constructed, so there is no many-one reduction to `UTMHaltProblem`.
 namespace DiagonaLean.UTMHalt.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Foundations.UniversalTuringMachine DiagonaLean.Halt.Undecidable
+  DiagonaLean.UTMHalt.UniversalTuringMachine DiagonaLean.Halt.Undecidable
 
 /-- The halting problem of a single weakly universal machine is undecidable. -/
 theorem not_exists_haltDeciderFor_of_isWeaklyUniversal (hU : IsWeaklyUniversal U) :

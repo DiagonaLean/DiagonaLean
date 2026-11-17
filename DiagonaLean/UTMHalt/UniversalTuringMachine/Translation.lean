@@ -3,12 +3,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic)
 -/
 
-import DiagonaLean.Foundations.UniversalTuringMachine.Basic
+import DiagonaLean.UTMHalt.UniversalTuringMachine.Basic
 import DiagonaLean.Halt.Helpers
 
 /-! # Invariance of Universality Under Machine-Computable Re-Encodings
 
-Universality (`DiagonaLean.Foundations.UniversalTuringMachine.IsUniversalWrt`) is stated relative to
+Universality (`DiagonaLean.UTMHalt.UniversalTuringMachine.IsUniversalWrt`) is stated relative to
 a way `pair` of packaging the encoding of a machine and an input into a single string. This file
 shows that the choice of packaging does not matter, as long as one packaging can be translated into
 the other by a Turing machine: prefixing a universal machine with such a translator again yields a
@@ -31,7 +31,7 @@ machine back into runs of its second component, which yields the equivalences
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding
      DiagonaLean.Halt.Helpers DiagonaLean.Halt.Compositions
 
-namespace DiagonaLean.Foundations.UniversalTuringMachine
+namespace DiagonaLean.UTMHalt.UniversalTuringMachine
 section Reflection
 
 variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
@@ -156,4 +156,4 @@ theorem IsUniversalWrt.comp_translator (hU : IsUniversalWrt pair2 U)
   exact ⟨(compComputer_halts_iff (hT tm w)).trans (hU tm w).1,
     fun v => (compComputer_outputs_iff (hT tm w)).trans ((hU tm w).2 v)⟩
 
-end DiagonaLean.Foundations.UniversalTuringMachine
+end DiagonaLean.UTMHalt.UniversalTuringMachine
