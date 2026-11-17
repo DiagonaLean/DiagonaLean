@@ -78,6 +78,83 @@ theorem eval_ka_sound {α : Type*} [KleeneAlgebra α] {C : X → X → Prop} (f 
   | kstar_mul_le_self _ ih =>
     exact add_eq_right_iff_le.2 (kstar_mul_le_self (add_eq_right_iff_le.1 ih))
 
+/-- Provable equality in Kleene algebra with commutation hypotheses `C`, exactly as the paper
+defines Kleene algebra (Section 2): the pre-Kleene theory `Equiv C`, closed under congruence, plus
+left and right induction. Unlike `KAEquiv`, which follows Mathlib's `KleeneAlgebra`, it has no
+right unfolding `e∗ e ≤ e∗`; that rule is derivable (`paperKAEquiv_kstar_mul_le`), so the two
+theories coincide (`kaEquiv_iff_paperKAEquiv`). -/
+inductive PaperKAEquiv (C : X → X → Prop) : RExp X → RExp X → Prop where
+  /-- Provable equality in the pre-Kleene theory. -/
+  | ofEquiv {e f} : Equiv C e f → PaperKAEquiv C e f
+  /-- Symmetry. -/
+  | symm {e f} : PaperKAEquiv C e f → PaperKAEquiv C f e
+  /-- Transitivity. -/
+  | trans {e f g} : PaperKAEquiv C e f → PaperKAEquiv C f g → PaperKAEquiv C e g
+  /-- Congruence for `plus`. -/
+  | plus {e e' f f'} : PaperKAEquiv C e e' → PaperKAEquiv C f f' →
+      PaperKAEquiv C (plus e f) (plus e' f')
+  /-- Congruence for `mul`. -/
+  | mul {e e' f f'} : PaperKAEquiv C e e' → PaperKAEquiv C f f' →
+      PaperKAEquiv C (mul e f) (mul e' f')
+  /-- Congruence for `star`. -/
+  | star {e e'} : PaperKAEquiv C e e' → PaperKAEquiv C (star e) (star e')
+  /-- Right induction: `x y ≤ x` implies `x y∗ ≤ x`. -/
+  | mul_kstar_le_self {a b} : PaperKAEquiv C (plus (mul b a) b) b →
+      PaperKAEquiv C (plus (mul b (star a)) b) b
+  /-- Left induction: `x y ≤ y` implies `x∗ y ≤ y`. -/
+  | kstar_mul_le_self {a b} : PaperKAEquiv C (plus (mul a b) b) b →
+      PaperKAEquiv C (plus (mul (star a) b) b) b
+
+section PaperKA
+
+variable {C : X → X → Prop}
+
+/-- An inequality of the free pre-Kleene algebra is a provable equation `a + b = b`. -/
+theorem equiv_of_le {a b : RExp X} (h : (FreePreKA.mk a : FreePreKA X C) ≤ FreePreKA.mk b) :
+    Equiv C (plus a b) b :=
+  FreePreKA.mk_eq_mk.1 (add_eq_right_iff_le.2 h)
+
+/-- **Right unfolding is derivable** from the paper's axioms: `a∗ a ≤ a∗ a∗ ≤ a∗`, where the
+second step is left induction applied to `a a∗ ≤ a∗`. -/
+theorem paperKAEquiv_kstar_mul_le (a : RExp X) :
+    PaperKAEquiv C (plus (mul (star a) a) (star a)) (star a) := by
+  have h₁ : PaperKAEquiv C (plus (mul (star a) (star a)) (star a)) (star a) :=
+    .kstar_mul_le_self (.ofEquiv (equiv_of_le (C := C)
+      (mul_kstar_le_kstar' (FreePreKA.mk a : FreePreKA X C))))
+  have h₂ : Equiv C (plus (mul (star a) a) (mul (star a) (star a))) (mul (star a) (star a)) :=
+    equiv_of_le (C := C)
+      (mul_le_mul_right (le_kstar' (FreePreKA.mk a : FreePreKA X C)) (FreePreKA.mk (star a)))
+  exact ((PaperKAEquiv.plus (.ofEquiv (.refl _)) h₁.symm).trans
+    (.ofEquiv (.symm (.plus_assoc _ _ _)))).trans ((PaperKAEquiv.plus (.ofEquiv h₂)
+      (.ofEquiv (.refl _))).trans h₁)
+
+/-- **`KAEquiv` is the paper's Kleene algebra theory.** -/
+theorem kaEquiv_iff_paperKAEquiv {e f : RExp X} : KAEquiv C e f ↔ PaperKAEquiv C e f := by
+  constructor
+  · intro h
+    induction h with
+    | ofEquiv h => exact .ofEquiv h
+    | symm _ ih => exact ih.symm
+    | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
+    | plus _ _ ih₁ ih₂ => exact ih₁.plus ih₂
+    | mul _ _ ih₁ ih₂ => exact ih₁.mul ih₂
+    | star _ ih => exact ih.star
+    | kstar_mul_le e => exact paperKAEquiv_kstar_mul_le e
+    | mul_kstar_le_self _ ih => exact .mul_kstar_le_self ih
+    | kstar_mul_le_self _ ih => exact .kstar_mul_le_self ih
+  · intro h
+    induction h with
+    | ofEquiv h => exact .ofEquiv h
+    | symm _ ih => exact ih.symm
+    | trans _ _ ih₁ ih₂ => exact ih₁.trans ih₂
+    | plus _ _ ih₁ ih₂ => exact ih₁.plus ih₂
+    | mul _ _ ih₁ ih₂ => exact ih₁.mul ih₂
+    | star _ ih => exact ih.star
+    | mul_kstar_le_self _ ih => exact .mul_kstar_le_self ih
+    | kstar_mul_le_self _ ih => exact .kstar_mul_le_self ih
+
+end PaperKA
+
 end RExp
 
 /-- The free Kleene algebra `K X` over `X` with commutation hypotheses `C`. -/
