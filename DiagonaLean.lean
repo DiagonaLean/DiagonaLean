@@ -68,6 +68,7 @@ import DiagonaLean.Foundations.Computability.Queue
 import DiagonaLean.Foundations.Computability.Compiler
 import DiagonaLean.Foundations.Computability.Computer
 import DiagonaLean.Foundations.Computability.CodeSim
+import DiagonaLean.Foundations.Computability.OutBit
 
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.PreKleene
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.PreKleeneNotKleene
@@ -94,6 +95,7 @@ import DiagonaLean.KACommUndecidable.KleeneAlgebra.Instance
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.InstanceCode
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.BinarySubst
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.Race
+import DiagonaLean.KACommUndecidable.KleeneAlgebra.Between
 
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.MachineEncoding.Configurations
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.MachineEncoding.Transition

@@ -14,8 +14,9 @@ The paper's main result, from its abstract: *"the equational theory of Kleene al
 |---|---|---|
 | Kleene algebra with commutativity conditions is undecidable | `KATermEq.Reduction.not_machineDecidable_kaTermEq_nat`, `…_bool` | **Done, no hypotheses** |
 | …even for weaker theories without the induction axioms | `TermEq.Reduction.not_machineDecidable_termEq_nat`, `…_bool` (pre-Kleene algebra) | **Done, no hypotheses** |
-| Any theory between pre-Kleene algebra and the language model (Theorem 18, general form) | `not_machineDecidable_of_between` | Conditional on a machine computing `kaRed`, not yet supplied. The paper also assumes its map `η` is computable. |
-| Equality of languages, `L Σ̈` | `LangEq.Reduction.undecidableNotLangEq` (`Undecidable`, for the complement) | No machine-level result |
+| Any theory between pre-Kleene algebra and the language model (Theorem 18, general form) | `not_machineDecidable_between` (inequalities), `not_machineDecidable_eq_between` (equations), `not_machineDecidable_eqVia` (any `X` the language map factors through), all in `KleeneAlgebra/Between.lean` | **Done, no hypotheses**, over `ℕ` (`encNat`) |
+| Theorem 18 on `X` itself | `not_machineDecidable_eqOn` | Given a machine computing `l'` on expression codes, which is the paper's hypothesis that `l'` is computable |
+| Equality and inclusion of languages, `L Σ̈` | `not_machineDecidable_langEq_nat`, `not_machineDecidable_modelLe_nat`; `undecidableNotLangEq` (`Undecidable`, for the complement) | **Done, no hypotheses** |
 | Theorem 6, Corollary 7 | `FiniteLangCounterexample.lean`, `FiniteLangExpansion.lean` | False as stated (counterexample at `e = 1∗`); a repaired version is proved |
 
 The headline statement:
@@ -44,7 +45,9 @@ theorem not_machineDecidable_kaTermEq_bool :
 
 * **The machine encoding used to drop halting transitions** (until 2026-11-17). `encodeBoolTM` omitted every transition that halts, so two machines that differ only in what they write as they halt had the same code, and statements whose input is a machine code (`selfOut_inseparable`, `not_machineDecidable_selfEq`, and `not_machineDecidable_termEq` / `not_machineDecidable_kaTermEq` on the instances `eqRed M`) could hold for that reason alone. The code now records every transition, and `outputs_iff_of_code_eq` (`Foundations/Computability/CodeSim.lean`) proves that machines with the same code behave the same, so these statements now mean what they say. This also removes the obstacle to a machine computing `kaRed`, which used to be impossible because `kaRed` differs on two machines with the same code.
 
+* **Theorem 18 in general form used to be conditional** (until 2026-11-17) on a machine computing `kaRed`. `KleeneAlgebra/Between.lean` now proves it without one. The paper reduces from the inseparable pair `SelfOut true`, `SelfOut false` through its map `η`; the proof here reduces from the same pair, but sends a machine `M` to the interpreter's instance for a program that simulates `M` on its own code and returns its output bit (`outBit`, `Foundations/Computability/OutBit.lean`). That instance's code is primitive recursive in the code of `M`, so a machine computes the reduction. The statements that take a machine computing `kaRed` or `eqRed` (`not_machineDecidable_of_between`, `not_machineDecidable_eqVia_of_computes`, `not_machineDecidable_eqOn_of_computes`) remain, for any encoding under which one exists.
+
 ## Open work
 
-1. Supply a machine that computes `kaRed`, which makes `not_machineDecidable_of_between`, the paper's general form of Theorem 18, unconditional.
-2. Optionally, a machine-level result for `L Σ̈`; it is not part of the paper's main claim.
+1. Optionally, prove `kaRed` itself computable, which would make the `…_of_computes` statements unconditional and follow the paper's proof more closely. The main cost is recomputing the derived `Encodable Letter` codes on numbers.
+2. Optionally, `{0, 1}` versions of the Theorem 18 statements (via `sbI` and `instCodeB`, as for the headline results).

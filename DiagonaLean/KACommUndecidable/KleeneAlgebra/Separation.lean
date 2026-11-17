@@ -15,8 +15,9 @@ import DiagonaLean.Synthetic.Undecidability
 `kaRed` sends a machine that outputs `1` on its own code to an inequality provable in pre-Kleene
 algebra, and a machine that outputs `0` to an inequality that fails in the language model
 (`kaRed_pos`, `kaRed_neg`). So every theory between `Provable` and `ModelLe` separates the
-computably inseparable pair `SelfOut true`, `SelfOut false`, and no machine decides it
-(`not_machineDecidable_of_between`). `haltRed` drops the halting term: `M` halts on `w` iff
+computably inseparable pair `SelfOut true`, `SelfOut false`, and no machine decides it given a
+machine that computes `kaRed` (`not_machineDecidable_of_between`). The same statements without that
+hypothesis are in `Between.lean`, which uses the interpreter's instances instead of `kaRed`. `haltRed` drops the halting term: `M` halts on `w` iff
 `haltRed (M, w)` fails in the language model.
 
 For equality, the paper states Theorem 18 for any factoring `l = g ∘ l'` of the language map through
@@ -61,7 +62,8 @@ theorem kaRed_neg {M : EncodableTM Bool} (h : SelfOut false M) : ¬ ModelLe (kaR
     (pl_le_of_map Encodable.encode_injective hle)
 
 /-- **No Turing machine decides any theory between pre-KA provability and the language model**,
-for any encoding of instances under which a Turing machine computes `kaRed`. -/
+for any encoding of instances under which a Turing machine computes `kaRed`. For the encoding
+`encNat`, `not_machineDecidable_between` proves this without the hypothesis. -/
 theorem not_machineDecidable_of_between {enc : Inst → List Bool} {R : SingleTapeTM Bool}
     (hR : ComputesReduction R encodeBoolTM enc kaRed) (S : Inst → Prop)
     (h₁ : ∀ i, Provable i → S i) (h₂ : ∀ i, S i → ModelLe i) : ¬ MachineDecidable enc S :=
@@ -122,7 +124,9 @@ theorem eqVia_eqRed_neg (F : LangFactor X) {M : EncodableTM Bool} (h : SelfOut f
   rwa [eqRed, mk_plus, pl_add] at hl
 
 /-- **Theorem 18, machine form.** If `l'` is computable, in the sense that some machine computes
-`η`, then no machine decides equality on `X`. The paper assumes the computability of `η`. -/
+`η`, then no machine decides equality on `X`. The paper assumes the computability of `η`.
+`not_machineDecidable_eqOn` (`Between.lean`) assumes instead that a machine computes `l'` on the
+codes of expressions. -/
 theorem not_machineDecidable_eqOn_of_computes (F : LangFactor X) {enc : X × X → List Bool} {R : SingleTapeTM Bool}
     (hR : ComputesReduction R encodeBoolTM enc (eta F)) : ¬ MachineDecidable enc (EqOn X) :=
   not_machineDecidable_of_separation (f := eta F) (fun _ h => eqVia_eqRed_pos F h)

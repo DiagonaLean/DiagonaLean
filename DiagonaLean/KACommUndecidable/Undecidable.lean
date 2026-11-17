@@ -7,6 +7,7 @@ import DiagonaLean.KACommUndecidable.Reductions.Halt_to_TermEq
 import DiagonaLean.KACommUndecidable.Reductions.Halt_to_KATermEq
 import DiagonaLean.KACommUndecidable.Reductions.Halt_to_LangEq
 import DiagonaLean.KACommUndecidable.Reductions.Halt_to_ModelLe
+import DiagonaLean.KACommUndecidable.KleeneAlgebra.Between
 
 @[expose] public section
 
@@ -31,8 +32,13 @@ statements over `ℕ` and `{0, 1}`, go through the race program of Theorem 19
 use computable inseparability instead (`Halt/Inseparable.lean`): `eqRed` sends machines that output
 `1` on their own code to provably equal pairs and machines that output `0` to pairs with different
 languages, so no machine decides any relation between pre-Kleene algebra provability and the
-language model on these instances (`not_machineDecidable_selfEq`), nor on all instances given a
-machine that computes `kaRed` (`not_machineDecidable_of_between`).
+language model on these instances (`not_machineDecidable_selfEq`).
+* **Every theory in between** (Theorem 18, general form): no machine decides any predicate on pairs
+  of expressions over `ℕ` that contains provability in pre-Kleene algebra and is contained in the
+  language model, for inequalities and for equations (`not_machineDecidable_between`,
+  `not_machineDecidable_eq_between` in `KACommUndecidable/KleeneAlgebra/Between.lean`). In
+  particular no machine decides equality or inclusion of languages
+  (`not_machineDecidable_langEq_nat`, `not_machineDecidable_modelLe_nat`).
 
 ## References
 
@@ -155,6 +161,11 @@ def undecidableNotLangEqBool :
     Undecidable (Complement LangEqProblem) :=
   haltReducesNotLangEqBool
 
+/-- **No Turing machine decides equality of languages over `ℕ`.** -/
+theorem not_machineDecidable_langEq_nat :
+    ¬ MachineDecidable encNat fun i : Inst => pl (mk i.1 : TD ℕ) = pl (mk i.2) :=
+  not_machineDecidable_eq_between _ (fun _ h => congrArg pl (mk_eq_mk.2 h)) fun _ h => h
+
 end DiagonaLean.LangEq.Reduction
 
 /-! ### Inclusion in `L Σ̈` -/
@@ -171,5 +182,9 @@ open Cslib.Turing RExp TD FreePreKA DiagonaLean.Foundations.Computability
 inclusion for KA with commutativity conditions. -/
 def undecidableNotModelLe : Undecidable (Complement (@DecisionProblem ℕ)) :=
   haltReducesNotModelLe
+
+/-- **No Turing machine decides inclusion of languages over `ℕ`.** -/
+theorem not_machineDecidable_modelLe_nat : ¬ MachineDecidable encNat ModelLe :=
+  not_machineDecidable_between _ (fun _ h => h.modelLe) fun _ h => h
 
 end DiagonaLean.ModelLe.Reduction
