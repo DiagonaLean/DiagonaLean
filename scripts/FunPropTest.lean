@@ -144,3 +144,28 @@ example : ∃ R : SingleTapeTM Bool,
   tm_computes fun w => bitsOf (countTrue w)
   intro l
   rfl
+
+/-! ### Theorem A: finitely branching trees are `Primcodable` -/
+
+section PTree
+
+open DiagonaLean.Foundations.Computability.PTree
+
+/-- Binary trees: shape `true` has two children, `false` none. -/
+def binAr (b : Bool) : ℕ := if b then 2 else 0
+instance : Fact (Primrec binAr) := ⟨by unfold binAr; fun_prop⟩
+example : Primcodable (PTree Bool binAr) := inferInstance
+example : Primrec fun t : PTree Bool binAr => Encodable.encode t := Primrec.encode
+example : Primrec (Encodable.decode (α := PTree Bool binAr)) := Primrec.decode
+
+/-- The shapes of regular expressions over `ℕ ⊕ ℕ`: `0`, `1`, a letter, `+`, `·`, `∗`. -/
+def rexpAr : Fin 6 ⊕ (ℕ ⊕ ℕ) → ℕ
+  | .inl i => if i.val = 3 ∨ i.val = 4 then 2 else if i.val = 5 then 1 else 0
+  | .inr _ => 0
+instance : Fact (Primrec rexpAr) := ⟨(Primrec.sumCasesOn Primrec.id
+  ((Primrec.dom_finite fun i : Fin 6 =>
+    if i.val = 3 ∨ i.val = 4 then 2 else if i.val = 5 then 1 else 0).comp₂ Primrec₂.right)
+  ((Primrec.const 0).comp₂ Primrec₂.right)).of_eq fun x => by cases x <;> rfl⟩
+example : Primcodable (PTree (Fin 6 ⊕ (ℕ ⊕ ℕ)) rexpAr) := inferInstance
+
+end PTree

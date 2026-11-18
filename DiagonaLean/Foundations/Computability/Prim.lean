@@ -32,7 +32,7 @@ own definitions with `@[fun_prop]`. -/
 
 attribute [fun_prop] Primrec PrimrecPred
 attribute [fun_prop] Primrec.id Primrec.const Primrec.comp PrimrecPred.comp PrimrecPred.not
-  PrimrecPred.or Primrec.ofNat Primrec.encode
+  PrimrecPred.or Primrec.ofNat Primrec.encode Primrec.decode₂
 
 section Prim
 
@@ -140,6 +140,25 @@ variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
 
 @[fun_prop] theorem prim_boolToNat {f : α → Bool} (hf : Primrec f) :
     Primrec fun x => (f x).toNat := (Primrec.dom_finite Bool.toNat).comp hf
+
+@[fun_prop] theorem prim_band {f g : α → Bool} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => f x && g x := Primrec.and.comp hf hg
+
+@[fun_prop] theorem prim_decide {p : α → Prop} [DecidablePred p] (hp : PrimrecPred p) :
+    Primrec fun x => decide (p x) := hp.decide
+
+@[fun_prop] theorem prim_elim {o : α → Option β} {f : α → γ} {g : α → β → γ} (ho : Primrec o)
+    (hf : Primrec f) (hg : Primrec fun y : α × β => g y.1 y.2) :
+    Primrec fun x => (o x).elim (f x) (g x) :=
+  (Primrec.option_casesOn ho hf hg).of_eq fun x => by cases o x <;> rfl
+
+@[fun_prop] theorem prim_all {f : α → List β} {p : α → β → Bool} (hf : Primrec f)
+    (hp : Primrec fun y : α × β => p y.1 y.2) : Primrec fun x => (f x).all (p x) := by
+  have h : Primrec fun x => (f x).foldr (fun b acc => p x b && acc) true := by fun_prop
+  refine h.of_eq fun x => ?_
+  induction f x with
+  | nil => rfl
+  | cons b l ih => simp [List.all_cons, ih]
 
 @[fun_prop] theorem prim_flatMap {f : α → List β} {g : α → β → List γ} (hf : Primrec f)
     (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).flatMap (g x) :=
