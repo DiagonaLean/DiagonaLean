@@ -78,14 +78,53 @@ def sumSums : ℕ → ℕ
   | n + 1 => sumSums n + sumTo n
 example : Primrec sumSums := by primrec_rec
 
-/-- Rejected: a nested pattern gives three equation lemmas. -/
+-- several parameters, packed into a product
+def addMul (a b : ℕ) : ℕ → ℕ
+  | 0 => a
+  | n + 1 => addMul a b n * b + a
+example : Primrec₂ fun (p : ℕ × ℕ) n => addMul p.1 p.2 n := by primrec_rec
+
+def three (a b c : ℕ) : List ℕ → ℕ
+  | [] => a
+  | x :: l => three a b c l + x * b + c
+example : Primrec₂ fun (p : ℕ × ℕ × ℕ) l => three p.1 p.2.1 p.2.2 l := by primrec_rec
+
+-- course-of-values recursion
+def halfSum : ℕ → ℕ
+  | 0 => 0
+  | n + 1 => halfSum ((n + 1) / 2) + n
+example : Primrec halfSum := by primrec_rec
+
+def back3 (a : ℕ) : ℕ → ℕ
+  | 0 => a
+  | n + 1 => back3 a (n - 2) + back3 a n + 1
+example : Primrec₂ back3 := by primrec_rec
+
+-- nested patterns
+def fib : ℕ → ℕ
+  | 0 => 0
+  | 1 => 1
+  | n + 2 => fib n + fib (n + 1)
+example : Primrec fib := by primrec_rec
+
 def iterTwice : ℕ → ℕ
   | 0 => 0
   | n + 1 => match n with
     | 0 => 1
     | k + 1 => iterTwice (k + 1) + 2
+example : Primrec iterTwice := by primrec_rec
+
+def tri : ℕ → ℕ
+  | 0 => 5
+  | 1 => 7
+  | 2 => 9
+  | n + 3 => tri n * tri (n + 2)
+example : Primrec tri := by primrec_rec
+
+-- rejected: several parameters must be packed into a product in the goal
+set_option linter.unreachableTactic false in
 example : True := by
-  fail_if_success (have : Primrec iterTwice := by primrec_rec)
+  fail_if_success (have : Primrec₂ (three 1) := by primrec_rec)
   trivial
 
 /-! ### `tm_computer`, `tm_computes`: machines from `fun_prop` -/

@@ -94,6 +94,12 @@ variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
 @[fun_prop] theorem prim_getD {f : α → List β} {g : α → ℕ} (d : β) (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => (f x).getD (g x) d := (Primrec.list_getD d).comp hf hg
 
+/-- `List.getD` with a default that varies. -/
+@[fun_prop] theorem prim_getD' {f : α → List β} {g : α → ℕ} {d : α → β} (hf : Primrec f)
+    (hg : Primrec g) (hd : Primrec d) : Primrec fun x => (f x).getD (g x) (d x) :=
+  (Primrec.option_getD.comp (Primrec.list_getElem?.comp hf hg) hd).of_eq fun x =>
+    (List.getD_eq_getElem?_getD ..).symm
+
 @[fun_prop] theorem prim_ite {c : α → Prop} [DecidablePred c] {f g : α → β} (hc : PrimrecPred c)
     (hf : Primrec f) (hg : Primrec g) : Primrec fun x => if c x then f x else g x :=
   Primrec.ite hc hf hg
