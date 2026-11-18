@@ -282,3 +282,50 @@ def swapPlus : RExp (ℕ ⊕ ℕ) → RExp (ℕ ⊕ ℕ)
 example : Primrec swapPlus := by primrec_rec
 
 end M7
+
+/-! ### `derive_primcodable` -/
+
+section Derive
+
+inductive Tree2 | leaf | node (l r : Tree2)
+derive_primcodable Tree2
+def tsize : Tree2 → ℕ
+  | .leaf => 1
+  | .node l r => tsize l + tsize r + 1
+example : Primrec tsize := by primrec_rec
+
+inductive Expr2
+  | lit (n : ℕ)
+  | var (x : ℕ ⊕ Bool)
+  | neg (e : Expr2)
+  | add (a : Expr2) (k : ℕ) (b : Expr2)
+derive_primcodable Expr2
+def eval2 (v : ℕ) : Expr2 → ℕ
+  | .lit n => n
+  | .var x => x.elim (fun _ => v) (fun _ => 0)
+  | .neg e => eval2 v e
+  | .add a k b => eval2 v a + k * eval2 v b
+example : Primrec₂ eval2 := by primrec_rec
+
+inductive Pt | mk (x y : ℕ) (b : Bool)
+derive_primcodable Pt
+def ptSum : Pt → ℕ | .mk x y _ => x + y
+example : Primrec ptSum := by primrec_rec
+
+inductive Color | red | green | blue
+derive_primcodable Color
+def colorN : Color → ℕ | .red => 0 | .green => 1 | .blue => 2
+example : Primrec colorN := by primrec_rec
+
+inductive NSeq | nil | cons (a b : ℕ) (rest : NSeq)
+derive_primcodable NSeq
+def seqSum : NSeq → ℕ | .nil => 0 | .cons a b r => a * b + seqSum r
+example : Primrec seqSum := by primrec_rec
+example : Primrec fun n : ℕ => NSeq.cons n (n + 1) .nil := by fun_prop
+
+inductive Box (α : Type) | mk (a : α)
+/-- error: derive_primcodable: `Box` has parameters or indices, which are not supported -/
+#guard_msgs in
+derive_primcodable Box
+
+end Derive

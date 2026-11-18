@@ -69,6 +69,7 @@ import DiagonaLean.Foundations.Computability.Prim
 import DiagonaLean.Foundations.Computability.PrimrecRec
 import DiagonaLean.Foundations.Computability.PolyTree
 import DiagonaLean.Foundations.Computability.TaggedCode
+import DiagonaLean.Foundations.Computability.DerivePrimcodable
 import DiagonaLean.Foundations.Computability.ListConfig
 import DiagonaLean.Foundations.Computability.TM0ToCslib
 import DiagonaLean.Foundations.Computability.PartrecToCslib
