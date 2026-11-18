@@ -4,7 +4,6 @@ Authors: Aalok Thakkar, Claude Opus
 -/
 
 import DiagonaLean.SKIConv.Reductions.Halt_to_SKIConv
-import DiagonaLean.Foundations.KleeneAlgebra.Race
 
 @[expose] public section
 
@@ -37,11 +36,11 @@ theorem undecidable_skiConv : Undecidable SKIConvProblem := by
   exact ⟨haltReducesSKIConv u.toSKI C hu (Code.toSKI_correct u) hC⟩
 
 /-- A pair of SKI terms, as the binary digits of the pair of their codes. -/
-def encSKI (i : SKI × SKI) : List Bool := Foundations.KleeneAlgebra.bitsPair (skc i.1) (skc i.2)
+def encSKI (i : SKI × SKI) : List Bool := bitsPair (skc i.1) (skc i.2)
 
 /-- `encSKI` is injective. -/
 theorem encSKI_injective : Function.Injective encSKI := fun i j h => by
-  obtain ⟨h₁, h₂⟩ := Foundations.KleeneAlgebra.bitsPair_injective h
+  obtain ⟨h₁, h₂⟩ := bitsPair_injective h
   exact Prod.ext (skc_injective h₁) (skc_injective h₂)
 
 /-- **No Turing machine decides convertibility of SKI terms.** -/
@@ -49,7 +48,7 @@ theorem not_machineDecidable_skiConv : ¬ MachineDecidable encSKI SKIConvProblem
   obtain ⟨u, hu⟩ := exists_isUniversal
   exact ProofRace.not_machineDecidable_of_race chk_prim (instCode_prim u.toSKI)
     (fun c n => (inst u.toSKI c n, FF))
-    (fun _ _ => by simp only [encSKI, instCode, Foundations.KleeneAlgebra.bitsPair])
+    (fun _ _ => by simp only [encSKI, instCode, bitsPair])
     (fun _ _ => conv_inst_iff_chk _ _ _)
     (fun _ _ h => conv_inst_of_one hu (Code.toSKI_correct u) h)
     (fun _ _ h => not_conv_inst_of_zero hu (Code.toSKI_correct u) h)

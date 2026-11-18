@@ -290,37 +290,6 @@ theorem halt_iff_qb {ka : Bool} {B : Base} {C : Code} (hB : B.Good) (hC : RacePr
       rw [QB, rel_iff_checks, instCodeB_eq])
     (fun _ h => qb_pos h) (fun _ h => qb_neg h) p
 
-/-- The value of a digit string. -/
-def valG : List Turing.PartrecToTM2.Γ' → ℕ
-  | [] => 0
-  | d :: t => 2 * valG t + (if d = Turing.PartrecToTM2.Γ'.bit1 then 1 else 0)
-
-/-- `valG` inverts `trNat`. -/
-theorem valG_trNat (n : ℕ) : valG (Turing.PartrecToTM2.trNat n) = n := by
-  induction n using Nat.strong_induction_on with
-  | _ n ih =>
-    by_cases h0 : n = 0
-    · subst h0
-      simp [valG, Turing.PartrecToTM2.trNat_zero]
-    · rw [trNat_step h0, valG, ih (n / 2) (by omega)]
-      by_cases h1 : n % 2 = 1
-      · simp [bitG, h1]
-        omega
-      · simp [bitG, h1]
-        omega
-
-/-- `bitsOf` is injective. -/
-theorem bitsOf_injective : Function.Injective bitsOf := fun a b h => by
-  have := congrArg (fun l => valG (l.map bitG)) h
-  simpa [bitsOf_map, valG_trNat] using this
-
-/-- The binary digits of the pair of two numbers. -/
-def bitsPair (a b : ℕ) : List Bool := bitsOf (Nat.pair a b)
-
-/-- `bitsPair` is injective in both arguments. -/
-theorem bitsPair_injective {a b c d : ℕ} (h : bitsPair a b = bitsPair c d) : a = c ∧ b = d :=
-  Nat.pair_eq_pair.1 (bitsOf_injective h)
-
 /-- **No machine decides a predicate with a suitable family of instances.** For each constant `K`,
 `G K` is a primitive recursive family of codes, and `inst K l` an instance with those codes under
 `enc`. If the predicate on instances holds exactly when the proof test passes on those codes, holds

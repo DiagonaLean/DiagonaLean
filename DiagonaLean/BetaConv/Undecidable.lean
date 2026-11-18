@@ -4,7 +4,6 @@ Authors: Aalok Thakkar, Claude Opus
 -/
 
 import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
-import DiagonaLean.Foundations.KleeneAlgebra.Race
 
 @[expose] public section
 
@@ -37,12 +36,11 @@ theorem undecidable_betaConv : Undecidable BetaConvProblem := by
   exact ⟨haltReducesBetaConv u.toSKI C hu (Code.toSKI_correct u) hC⟩
 
 /-- A pair of λ-terms, as the binary digits of the pair of their codes. -/
-def encBeta (i : Term ℕ × Term ℕ) : List Bool :=
-  Foundations.KleeneAlgebra.bitsPair (tc i.1) (tc i.2)
+def encBeta (i : Term ℕ × Term ℕ) : List Bool := bitsPair (tc i.1) (tc i.2)
 
 /-- `encBeta` is injective. -/
 theorem encBeta_injective : Function.Injective encBeta := fun i j h => by
-  obtain ⟨h₁, h₂⟩ := Foundations.KleeneAlgebra.bitsPair_injective h
+  obtain ⟨h₁, h₂⟩ := bitsPair_injective h
   exact Prod.ext (tc_injective h₁) (tc_injective h₂)
 
 /-- **No Turing machine decides β-conversion of λ-terms.** -/
@@ -50,7 +48,7 @@ theorem not_machineDecidable_betaConv : ¬ MachineDecidable encBeta BetaConvProb
   obtain ⟨u, hu⟩ := Foundations.CombinatoryLogic.exists_isUniversal
   have henc : ∀ c n, encBeta (linst u.toSKI c n, tr FF) =
       bitsOf (Nat.pair (instCode u.toSKI c n).1 (instCode u.toSKI c n).2) := fun _ _ => by
-    simp only [encBeta, instCode, Foundations.KleeneAlgebra.bitsPair]
+    simp only [encBeta, instCode, bitsPair]
   have hQ : ∀ c n, BetaConvProblem (linst u.toSKI c n, tr FF) ↔
       ∃ k, chk k (instCode u.toSKI c n) = true := fun _ _ => betaConv_iff_chk _ _ _
   have pos : ∀ (c : Code) n, 1 ∈ c.eval n → BetaConvProblem (linst u.toSKI c n, tr FF) :=

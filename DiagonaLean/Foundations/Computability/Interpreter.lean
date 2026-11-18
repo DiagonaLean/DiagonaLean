@@ -127,6 +127,37 @@ theorem bitsOf_prim : Primrec bitsOf :=
   prim_snd (Primrec.nat_iterate Primrec.id (prim_pair Primrec.id (Primrec.const []))
     (Primrec₂.mk (bitsStep_prim.comp Primrec.snd)))
 
+/-- The value of a digit string. -/
+def valG : List PartrecToTM2.Γ' → ℕ
+  | [] => 0
+  | d :: t => 2 * valG t + (if d = PartrecToTM2.Γ'.bit1 then 1 else 0)
+
+/-- `valG` inverts `trNat`. -/
+theorem valG_trNat (n : ℕ) : valG (PartrecToTM2.trNat n) = n := by
+  induction n using Nat.strong_induction_on with
+  | _ n ih =>
+    by_cases h0 : n = 0
+    · subst h0
+      simp [valG, PartrecToTM2.trNat_zero]
+    · rw [trNat_step h0, valG, ih (n / 2) (by omega)]
+      by_cases h1 : n % 2 = 1
+      · simp [bitG, h1]
+        omega
+      · simp [bitG, h1]
+        omega
+
+/-- `bitsOf` is injective. -/
+theorem bitsOf_injective : Function.Injective bitsOf := fun a b h => by
+  have := congrArg (fun l => valG (l.map bitG)) h
+  simpa [bitsOf_map, valG_trNat] using this
+
+/-- The binary digits of the pair of two numbers. -/
+def bitsPair (a b : ℕ) : List Bool := bitsOf (Nat.pair a b)
+
+/-- `bitsPair` is injective in both arguments. -/
+theorem bitsPair_injective {a b c d : ℕ} (h : bitsPair a b = bitsPair c d) : a = c ∧ b = d :=
+  Nat.pair_eq_pair.1 (bitsOf_injective h)
+
 theorem tapeOf_prim (B : Base) : Primrec (tapeOf B) := by
   unfold tapeOf
   have h := bitsOf_prim
