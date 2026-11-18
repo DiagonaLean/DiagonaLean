@@ -119,6 +119,90 @@ theorem primrec₂_of_nat_cov_eqns {f : α → ℕ → σ} (z : α → σ) (s : 
     | zero => simp [h0]
     | succ n => simp [hs]
 
+/-! ### Recursion on `ℕ` with a changing parameter
+
+`f a (n + 1) = s a n (f (h n a) n)`: the recursive call is on `n`, with the parameter changed by
+`h`. First compute the parameter each level sees (`paramAt`), by iterating `h` downwards from `a`;
+then fold the results back up (`eq_fold_of_param_eqns`). -/
+
+section ParamRec
+
+variable {α σ : Type}
+
+/-- The parameter at depth `i` of a recursion of depth `n` started with `a`. -/
+def paramAt (h : ℕ → α → α) (n : ℕ) (a : α) (i : ℕ) : α :=
+  ((fun q : ℕ × α => (q.1 + 1, h (n - 1 - q.1) q.2))^[i] (0, a)).2
+
+theorem iter_shift (h : ℕ → α → α) (n : ℕ) (a : α) (i : ℕ) :
+    (fun q : ℕ × α => (q.1 + 1, h (n + 1 - 1 - q.1) q.2))^[i + 1] (0, a) =
+      ((fun q : ℕ × α => (q.1 + 1, h (n - 1 - q.1) q.2))^[i] (0, h n a)).map (· + 1) id := by
+  induction i with
+  | zero => simp
+  | succ i ih =>
+    rw [Function.iterate_succ_apply', ih, Function.iterate_succ_apply']
+    simp only [Prod.map]
+    congr 2
+    omega
+
+theorem paramAt_succ (h : ℕ → α → α) (n : ℕ) (a : α) (i : ℕ) :
+    paramAt h (n + 1) a (i + 1) = paramAt h n (h n a) i := by
+  unfold paramAt; rw [iter_shift]; rfl
+
+theorem eq_fold_of_param_eqns {f : α → ℕ → σ} (z : α → σ) (h : ℕ → α → α) (s : α → ℕ → σ → σ)
+    (h0 : ∀ a, f a 0 = z a) (hs : ∀ a n, f a (n + 1) = s a n (f (h n a) n)) (n : ℕ) :
+    ∀ a, f a n = (List.range n).foldr (fun i r => s (paramAt h n a i) (n - 1 - i) r)
+      (z (paramAt h n a n)) := by
+  induction n with
+  | zero => intro a; simp [h0, paramAt]
+  | succ n ih =>
+    intro a
+    rw [hs, ih, List.range_succ_eq_map, List.foldr_cons, List.foldr_map]
+    simp only [paramAt_succ]
+    congr 1
+    simp only [paramAt, Nat.sub_sub, Nat.add_comm 1, Nat.succ_eq_add_one, Nat.add_sub_add_right]
+
+variable [Primcodable α] [Primcodable σ] in
+theorem paramAt_primrec {h : ℕ → α → α} (hh : Primrec fun q : ℕ × α => h q.1 q.2) :
+    Primrec fun y : (ℕ × α) × ℕ => paramAt h y.1.1 y.1.2 y.2 := by
+  unfold paramAt
+  have hstep : Primrec₂ fun (y : (ℕ × α) × ℕ) (q : ℕ × α) => (q.1 + 1, h (y.1.1 - 1 - q.1) q.2) :=
+    Primrec₂.mk (prim_pair (prim_add (prim_fst Primrec.snd) (Primrec.const 1))
+      (hh.comp (prim_pair (prim_sub (prim_sub (prim_fst (prim_fst Primrec.fst)) (Primrec.const 1))
+        (prim_fst Primrec.snd)) (prim_snd Primrec.snd))))
+  exact prim_snd (Primrec.nat_iterate Primrec.snd
+    (prim_pair (Primrec.const 0) (prim_snd (prim_fst Primrec.id))) hstep)
+
+variable [Primcodable α] [Primcodable σ] in
+/-- **Recursion on `ℕ` with a changing parameter**: `f a (n + 1) = s a n (f (h n a) n)`. -/
+theorem primrec₂_of_nat_param_eqns {f : α → ℕ → σ} (z : α → σ) (h : ℕ → α → α)
+    (s : α → ℕ → σ → σ) (h0 : ∀ a, f a 0 = z a) (hs : ∀ a n, f a (n + 1) = s a n (f (h n a) n))
+    (hz : Primrec z) (hh : Primrec fun q : ℕ × α => h q.1 q.2)
+    (hsp : Primrec fun q : α × (ℕ × σ) => s q.1 q.2.1 q.2.2) : Primrec₂ f := by
+  have hp := paramAt_primrec hh
+  have hstep : Primrec fun w : (α × ℕ) × (ℕ × σ) =>
+      s (paramAt h w.1.2 w.1.1 w.2.1) (w.1.2 - 1 - w.2.1) w.2.2 :=
+    hsp.comp (prim_pair (hp.comp (prim_pair (prim_pair (prim_snd Primrec.fst) (prim_fst Primrec.fst))
+      (prim_fst Primrec.snd))) (prim_pair (prim_sub (prim_sub (prim_snd Primrec.fst)
+        (Primrec.const 1)) (prim_fst Primrec.snd)) (prim_snd Primrec.snd)))
+  have hbase : Primrec fun q : α × ℕ => z (paramAt h q.2 q.1 q.2) :=
+    hz.comp (hp.comp (prim_pair (prim_pair Primrec.snd Primrec.fst) Primrec.snd))
+  have hfold : Primrec fun q : α × ℕ => (List.range q.2).foldr
+      (fun i r => s (paramAt h q.2 q.1 i) (q.2 - 1 - i) r) (z (paramAt h q.2 q.1 q.2)) :=
+    prim_foldr (prim_range Primrec.snd) hbase hstep
+  exact hfold.of_eq fun q => (eq_fold_of_param_eqns z h s h0 hs q.2 q.1).symm
+
+variable [Primcodable α] [Primcodable σ] in
+/-- `primrec₂_of_nat_param_eqns` with the argument recursed on first:
+`f (n + 1) a = s a n (f n (h n a))`. -/
+theorem primrec₂_of_nat_param_eqns' {f : ℕ → α → σ} (z : α → σ) (h : ℕ → α → α)
+    (s : α → ℕ → σ → σ) (h0 : ∀ a, f 0 a = z a) (hs : ∀ n a, f (n + 1) a = s a n (f n (h n a)))
+    (hz : Primrec z) (hh : Primrec fun q : ℕ × α => h q.1 q.2)
+    (hsp : Primrec fun q : α × (ℕ × σ) => s q.1 q.2.1 q.2.2) : Primrec₂ f :=
+  (primrec₂_of_nat_param_eqns (f := fun a n => f n a) z h s h0 (fun a n => hs n a) hz hh
+    hsp).swap
+
+end ParamRec
+
 /-- A function is primitive recursive if it is so paired with its argument; `primrec_rec` uses
 this for paramorphisms, where a right-hand side also uses the subterms themselves. -/
 theorem primrec₂_of_pair {T : Type*} [Primcodable T] {f : α → T → σ}
@@ -258,6 +342,51 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
   if (fx.args.any fun a => a.hasLooseBVars) then
     throwError "primrec_rec: the implicit arguments of `{fn}` depend on the parameters"
   let fnE := mkAppN (mkConst fn lvls) fx.args
+  -- recursion on the first of two arguments, the second changing: `f (n + 1) a = … f n (h n a) …`
+  let firstRec ← forallTelescopeReducing (← fx.eqnType eqns[0]!) fun _ body => do
+    let some (_, lhs, _) := body.eq? | return false
+    let args := lhs.getAppArgs[nf:].toArray
+    return args.size == 2 && !args[0]!.isFVar && args[1]!.isFVar &&
+      (← whnfR (← inferType args[0]!)).isConstOf ``Nat
+  if two && firstRec && eqns.size == 2 then
+    let parts ← forallTelescopeReducing (← fx.eqnType eqns[0]!) fun _ body => do
+      let some (_, lhs, rhs) := body.eq? | throwError "primrec_rec: internal error"
+      let a := lhs.appArg!
+      unless (← natPat lhs.appFn!.appArg!).1 matches .lit 0 do
+        throwError "primrec_rec: `{eqns[0]!}` is not the equation for `0`"
+      pure (← mkLambdaFVars #[a] rhs, ← inferType a, ← inferType rhs)
+    let (z, _, σ) := parts
+    let (h, s) ← forallTelescopeReducing (← fx.eqnType eqns[1]!) fun _ body => do
+      let some (_, lhs, rhs) := body.eq? | throwError "primrec_rec: internal error"
+      let a := lhs.appArg!
+      let (pat, some n) ← natPat lhs.appFn!.appArg!
+        | throwError "primrec_rec: `{eqns[1]!}` is not the equation for `n + 1`"
+      unless pat matches .var 1 do throwError "primrec_rec: `{eqns[1]!}` is not for `n + 1`"
+      -- the recursive call `f n e`, the same in every occurrence
+      let some call := rhs.find? fun t => t.isAppOfArity fn (nf + 2)
+        | throwError "primrec_rec: `{fn}` does not call itself"
+      unless call.appFn!.appArg! == n do
+        throwError "primrec_rec: `{fn}` calls itself on something other than `{n}`"
+      let e := call.appArg!
+      let abst ← kabstract rhs call
+      if (abst.find? (·.isConstOf fn)).isSome then
+        throwError "primrec_rec: `{fn}` makes recursive calls with different arguments"
+      let h ← mkLambdaFVars #[n, a] e
+      let s ← withLocalDeclD `r σ fun r => mkLambdaFVars #[a, n, r] (abst.instantiate1 r)
+      pure (h, s)
+    let rest ← applyLemma goal ``primrec₂_of_nat_param_eqns' [(`f, F), (`z, z), (`h, h), (`s, s)]
+    let lems ← (eqns.map mkIdent).mapM fun i => `(Parser.Tactic.simpLemma| $i:ident)
+    for g in rest do
+      setGoals [g]
+      let ty ← instantiateMVars (← g.getType)
+      if ty.isAppOf ``Primrec then
+        evalTactic (← `(tactic| (beta_reduce; fun_prop)))
+      else
+        evalTactic (← `(tactic| (intros; first | (simp only [$lems,*]; done) | simp [$lems,*])))
+      unless (← getGoals).isEmpty do
+        throwError "primrec_rec: could not prove `{ty}`"
+    setGoals []
+    return
   -- the number of parameters, their types, and the type recursed on
   let (k, paramTys, recTy) ←
     forallTelescopeReducing (← fx.eqnType eqns[0]!) fun _ body => do

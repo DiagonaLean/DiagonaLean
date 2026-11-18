@@ -255,6 +255,161 @@ theorem dedup_eq_foldr [DecidableEq β] (l : List β) :
     (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).flatMap (g x) :=
   Primrec.list_flatMap hf hg.to₂
 
+/-! #### Further list, option, `Bool` and `ℕ` operations
+
+Where Mathlib's lemma fixes the predicate, the wrapper lets it depend on the outer variable,
+by a rewrite into `foldr` or `map`. -/
+
+@[fun_prop] theorem prim_take {f : α → ℕ} {g : α → List β} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => (g x).take (f x) := Primrec.list_take.comp hf hg
+
+@[fun_prop] theorem prim_drop {f : α → ℕ} {g : α → List β} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => (g x).drop (f x) := Primrec.list_drop.comp hf hg
+
+@[fun_prop] theorem prim_head? {f : α → List β} (hf : Primrec f) : Primrec fun x => (f x).head? :=
+  Primrec.list_head?.comp hf
+
+@[fun_prop] theorem prim_flatten {f : α → List (List β)} (hf : Primrec f) :
+    Primrec fun x => (f x).flatten := Primrec.list_flatten.comp hf
+
+@[fun_prop] theorem prim_concat {f : α → List β} {g : α → β} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => (f x).concat (g x) :=
+  (Primrec.list_concat.comp hf hg).of_eq fun _ => (List.concat_eq_append ..).symm
+
+@[fun_prop] theorem prim_set {f : α → List β} {g : α → ℕ} {h : α → β} (hf : Primrec f)
+    (hg : Primrec g) (hh : Primrec h) : Primrec fun x => (f x).set (g x) (h x) :=
+  Primrec.list_set.comp hf (hg.pair hh)
+
+omit [Primcodable β] in
+theorem replicate_eq_iterate (n : ℕ) (b : β) : List.replicate n b = (b :: ·)^[n] [] := by
+  induction n with
+  | zero => rfl
+  | succ n ih => rw [Function.iterate_succ_apply', ← ih, List.replicate_succ]
+
+@[fun_prop] theorem prim_replicate {f : α → ℕ} {g : α → β} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => List.replicate (f x) (g x) := by
+  have h : Primrec fun x => (g x :: ·)^[f x] [] := by fun_prop
+  exact h.of_eq fun x => (replicate_eq_iterate _ _).symm
+
+@[fun_prop] theorem prim_succ {f : α → ℕ} (hf : Primrec f) : Primrec fun x => (f x).succ :=
+  Primrec.succ.comp hf
+
+@[fun_prop] theorem prim_pred {f : α → ℕ} (hf : Primrec f) : Primrec fun x => (f x).pred :=
+  Primrec.pred.comp hf
+
+@[fun_prop] theorem prim_bodd {f : α → ℕ} (hf : Primrec f) : Primrec fun x => (f x).bodd :=
+  Primrec.nat_bodd.comp hf
+
+@[fun_prop] theorem prim_bnot {f : α → Bool} (hf : Primrec f) : Primrec fun x => !f x :=
+  Primrec.not.comp hf
+
+@[fun_prop] theorem prim_bor {f g : α → Bool} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => f x || g x := Primrec.or.comp hf hg
+
+@[fun_prop] theorem prim_cond {c : α → Bool} {f g : α → β} (hc : Primrec c) (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => cond (c x) (f x) (g x) := Primrec.cond hc hf hg
+
+@[fun_prop] theorem prim_beq [DecidableEq β] {f g : α → β} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => f x == g x := Primrec.beq.comp hf hg
+
+@[fun_prop] theorem prim_optionBind {f : α → Option β} {g : α → β → Option γ} (hf : Primrec f)
+    (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).bind (g x) :=
+  Primrec.option_bind hf hg.to₂
+
+@[fun_prop] theorem prim_isSome {f : α → Option β} (hf : Primrec f) :
+    Primrec fun x => (f x).isSome := Primrec.option_isSome.comp hf
+
+@[fun_prop] theorem prim_orElse {f g : α → Option β} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => (f x <|> g x) := Primrec.option_orElse.comp hf hg
+
+@[fun_prop] theorem prim_optionToList {f : α → Option β} (hf : Primrec f) :
+    Primrec fun x => (f x).toList := Primrec.optionToList.comp hf
+
+@[fun_prop] theorem prim_filter {f : α → List β} {p : α → β → Bool} (hf : Primrec f)
+    (hp : Primrec fun y : α × β => p y.1 y.2) : Primrec fun x => (f x).filter (p x) := by
+  have h : Primrec fun x => (f x).foldr (fun b acc => if p x b then b :: acc else acc) [] := by
+    fun_prop
+  refine h.of_eq fun x => ?_
+  induction f x with
+  | nil => rfl
+  | cons b l ih => rw [List.foldr_cons, ih, List.filter_cons]
+
+@[fun_prop] theorem prim_any {f : α → List β} {p : α → β → Bool} (hf : Primrec f)
+    (hp : Primrec fun y : α × β => p y.1 y.2) : Primrec fun x => (f x).any (p x) := by
+  have h : Primrec fun x => (f x).foldr (fun b acc => p x b || acc) false := by fun_prop
+  refine h.of_eq fun x => ?_
+  induction f x with
+  | nil => rfl
+  | cons b l ih => rw [List.foldr_cons, ih, List.any_cons]
+
+@[fun_prop] theorem prim_find? {f : α → List β} {p : α → β → Bool} (hf : Primrec f)
+    (hp : Primrec fun y : α × β => p y.1 y.2) : Primrec fun x => (f x).find? (p x) := by
+  have h : Primrec fun x => (f x).foldr (fun b acc => if p x b then some b else acc) none := by
+    fun_prop
+  refine h.of_eq fun x => ?_
+  induction f x with
+  | nil => rfl
+  | cons b l ih => rw [List.foldr_cons, ih, List.find?_cons]; cases p x b <;> rfl
+
+@[fun_prop] theorem prim_findIdx {f : α → List β} {p : α → β → Bool} (hf : Primrec f)
+    (hp : Primrec fun y : α × β => p y.1 y.2) : Primrec fun x => (f x).findIdx (p x) := by
+  have h : Primrec fun x => (f x).foldr (fun b acc => if p x b then 0 else acc + 1) 0 := by
+    fun_prop
+  refine h.of_eq fun x => ?_
+  induction f x with
+  | nil => rfl
+  | cons b l ih => rw [List.foldr_cons, ih, List.findIdx_cons]
+
+@[fun_prop] theorem prim_takeWhile {f : α → List β} {p : α → β → Bool} (hf : Primrec f)
+    (hp : Primrec fun y : α × β => p y.1 y.2) : Primrec fun x => (f x).takeWhile (p x) := by
+  have h : Primrec fun x => (f x).take ((f x).findIdx fun b => !p x b) := by fun_prop
+  exact h.of_eq fun x => List.takeWhile_eq_take_findIdx_not.symm
+
+@[fun_prop] theorem prim_dropWhile {f : α → List β} {p : α → β → Bool} (hf : Primrec f)
+    (hp : Primrec fun y : α × β => p y.1 y.2) : Primrec fun x => (f x).dropWhile (p x) := by
+  have h : Primrec fun x => (f x).drop ((f x).findIdx fun b => !p x b) := by fun_prop
+  exact h.of_eq fun x => List.dropWhile_eq_drop_findIdx_not.symm
+
+@[fun_prop] theorem prim_count [DecidableEq β] {f : α → List β} {g : α → β} (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => (f x).count (g x) := by
+  have h : Primrec fun x => (f x).foldr (fun b acc => if b == g x then acc + 1 else acc) 0 := by
+    fun_prop
+  refine h.of_eq fun x => ?_
+  induction f x with
+  | nil => rfl
+  | cons b l ih => rw [List.foldr_cons, ih, List.count_cons]; split <;> simp_all
+
+@[fun_prop] theorem prim_sum {f : α → List ℕ} (hf : Primrec f) : Primrec fun x => (f x).sum := by
+  have h : Primrec fun x => (f x).foldr (· + ·) 0 := by fun_prop
+  exact h.of_eq fun x => (List.sum_eq_foldr).symm
+
+@[fun_prop] theorem pred_forall_mem {f : α → List β} {p : α → β → Prop}
+    (hf : Primrec f) (hp : PrimrecPred fun y : α × β => p y.1 y.2) :
+    PrimrecPred fun x => ∀ b ∈ f x, p x b := by
+  have h := (PrimrecPred.forall_mem_list hp).comp (prim_map (g := fun x b => (x, b)) hf
+    (Primrec.pair (Primrec.fst) (Primrec.snd)))
+  exact h.of_eq fun x => by simp
+
+@[fun_prop] theorem pred_exists_mem {f : α → List β} {p : α → β → Prop}
+    (hf : Primrec f) (hp : PrimrecPred fun y : α × β => p y.1 y.2) :
+    PrimrecPred fun x => ∃ b ∈ f x, p x b := by
+  have h := (PrimrecPred.exists_mem_list hp).comp (prim_map (g := fun x b => (x, b)) hf
+    (Primrec.pair (Primrec.fst) (Primrec.snd)))
+  exact h.of_eq fun x => by simp
+
+@[fun_prop] theorem pred_forall_lt {f : α → ℕ} {p : α → ℕ → Prop} (hf : Primrec f)
+    (hp : PrimrecPred fun y : α × ℕ => p y.1 y.2) : PrimrecPred fun x => ∀ n < f x, p x n :=
+  (pred_forall_mem (prim_range hf) hp).of_eq fun x => by simp
+
+@[fun_prop] theorem pred_exists_lt {f : α → ℕ} {p : α → ℕ → Prop} (hf : Primrec f)
+    (hp : PrimrecPred fun y : α × ℕ => p y.1 y.2) : PrimrecPred fun x => ∃ n < f x, p x n :=
+  (pred_exists_mem (prim_range hf) hp).of_eq fun x => by simp
+
+@[fun_prop] theorem pred_mem {f : α → List β} {g : α → β} (hf : Primrec f)
+    (hg : Primrec g) : PrimrecPred fun x => g x ∈ f x :=
+  (pred_exists_mem (p := fun x b => b = g x) hf
+    (pred_eq Primrec.snd (hg.comp Primrec.fst))).of_eq fun x => by simp
+
 end Prim
 
 /-! ### `fun_prop` for `Computable`
