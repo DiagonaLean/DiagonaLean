@@ -11,7 +11,7 @@ import DiagonaLean.Foundations.Computability.Prim
 /-! # SKI terms as natural numbers
 
 `skc` codes an SKI term as a natural number, so that application is plain arithmetic, and registers
-the lemmas for it with the `prim` tactic. The code of the Church numeral `toChurch n` is primitive
+the lemmas for it with `fun_prop`. The code of the Church numeral `toChurch n` is primitive
 recursive in `n` (`skc_toChurch_prim`).
 -/
 
@@ -50,13 +50,11 @@ section Prim
 variable {α : Type*} [Primcodable α]
 
 /-- `ca` applied to primitive recursive functions is primitive recursive. -/
-theorem prim_ca {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_ca {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => ca (f x) (g x) := prim_natPair (Primrec.const 3) (prim_natPair hf hg)
 
 end Prim
 
-macro_rules
-  | `(tactic| prim_step) => `(tactic| with_reducible apply prim_ca)
 
 /-- The code of `toChurch n` is the code of `Zero` with `n` applications of `Succ` in front. -/
 theorem skc_toChurch (n : ℕ) :

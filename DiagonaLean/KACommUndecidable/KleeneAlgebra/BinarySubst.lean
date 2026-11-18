@@ -471,7 +471,7 @@ theorem subC_rc (e : RExp (ℕ ⊕ ℕ)) : subC (rc e) = rc (toNat (sbB e)) := b
     rw [subC_ct, ih]
 
 /-- `wC` is primitive recursive. -/
-theorem wC_prim : Primrec wC := by
+@[fun_prop] theorem wC_prim : Primrec wC := by
   unfold wC
   exact Primrec.nat_iterate (prim_div Primrec.id (Primrec.const 2))
     (prim_cm (prim_cs (prim_mod Primrec.id (Primrec.const 2))) (Primrec.const co))
@@ -479,15 +479,12 @@ theorem wC_prim : Primrec wC := by
       (prim_mod Primrec.fst (Primrec.const 2)))) Primrec.snd))
 
 /-- `subV` is primitive recursive. -/
-theorem subV_prim : Primrec subV := by
+@[fun_prop] theorem subV_prim : Primrec subV := by
   unfold subV
-  have hw := wC_prim
-  repeat' first
-    | exact hw.comp (prim_snd (prim_unpair (prim_length Primrec.id)))
-    | prim_step
+  fun_prop
 
 /-- `subC` is primitive recursive. -/
-theorem subC_prim : Primrec subC := by
+@[fun_prop] theorem subC_prim : Primrec subC := by
   have hT : Primrec subT :=
     Primrec.nat_iterate Primrec.id (Primrec.const [])
       (Primrec₂.mk (prim_append Primrec.snd

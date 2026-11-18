@@ -179,20 +179,18 @@ theorem lookup_prim : Primrec fun y : List (ℕ × ℕ) × ℕ => lookup y.1 y.2
   have h : Primrec₂ fun (x : List (ℕ × ℕ) × ℕ) (y : (ℕ × ℕ) × ℕ) =>
       if y.1.1 = x.2 then y.1.2 else y.2 := by
     apply Primrec₂.mk
-    prim
+    fun_prop
   exact Primrec.list_foldr Primrec.fst (Primrec.const 0) h
 
-theorem prim_lookup {f : α → List (ℕ × ℕ)} {g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_lookup {f : α → List (ℕ × ℕ)} {g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => lookup (f x) (g x) := lookup_prim.comp (hf.pair hg)
 
 end Prim
 
-macro_rules
-  | `(tactic| prim_step) => `(tactic| with_reducible apply prim_lookup)
 
 theorem sstep_prim : Primrec fun y : List (ℕ × ℕ) × SC => sstep y.1 y.2 := by
   unfold sstep
-  prim
+  fun_prop
 
 /-- **The halting test is primitive recursive.** -/
 theorem test_prim : PrimrecPred fun x : (List (ℕ × ℕ) × SC) × ℕ => Test x.1 x.2 := by

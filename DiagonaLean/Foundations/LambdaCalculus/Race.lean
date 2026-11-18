@@ -75,7 +75,7 @@ theorem tc_linst_prim (U : SKI) : Primrec fun x : Code × ℕ => tc (linst U x.1
   have h' : Primrec fun x : Code × ℕ =>
       cp (cp (cp (tc (tr U)) (tc (tr (toChurch (Nat.pair (Encodable.encode x.1) x.2)))))
         (tc (tr (K ⬝ FF)))) (tc (tr TT)) := by
-    prim
+    fun_prop
   exact h'.of_eq fun x => (tc_linst U x.1 x.2).symm
 
 /-- The proof test: `k` codes a program that checks the β-conversion with codes `i`. -/

@@ -51,6 +51,9 @@ open Cslib.Turing SingleTapeTM Enc RExp FreePreKA TD Nat.Partrec
 
 variable {X : Type*}
 
+-- the instance codes are `Nat.pair`s of literals; unfolding them makes elaboration time out
+attribute [local irreducible] Nat.pair
+
 /-- A program that, on `⟨d, m⟩`, returns the output bit of the run with numeric data `d`. -/
 theorem exists_outProg :
     ∃ C : Code, C.eval = fun n => readOut (Denumerable.ofNat HD n.unpair.1) := by
@@ -94,7 +97,7 @@ theorem not_machineDecidable_of_interp {Y : Type*} {enc : Y → List Bool} {P : 
 
 /-- The codes of the inequality `redA K l ≤ redB K l` are primitive recursive in `l`. -/
 theorem instAB_prim (K : UConst) : Primrec fun l : List Bool => (instA K l, instB K l) := by
-  prim
+  fun_prop
 
 /-- **Theorem 18 for inequalities.** No machine decides any predicate on pairs of expressions that
 contains provable inequality in pre-Kleene algebra and is contained in inclusion of languages. -/
@@ -147,11 +150,6 @@ The same statements over the paper's alphabet `Σ = {0, 1}`, under `encBool`. Th
 images under `sbB`, which writes the letter `n` as the word `1ⁿ0`; this substitution preserves
 provability (`Equiv.sb`) and reflects language inclusion (`pl_le_of_sb`). -/
 
-/-- Applying `subC` to both components keeps a function primitive recursive. -/
-theorem prim_subC_pair {f : List Bool → ℕ × ℕ} (hf : Primrec f) :
-    Primrec fun l => (subC (f l).1, subC (f l).2) :=
-  ((subC_prim.comp Primrec.fst).pair (subC_prim.comp Primrec.snd)).comp hf
-
 /-- An instance over `{0, 1}` whose inequality fails in the language model maps back to one over
 `ℕ`: `sbB` reflects inclusion. -/
 theorem modelLe_of_sbB {e f : RExp (ℕ ⊕ ℕ)}
@@ -165,11 +163,9 @@ theorem not_machineDecidable_between_bool (S : InstB → Prop)
     (h₁ : ∀ i : InstB, (mk i.1 : TD Bool) ≤ mk i.2 → S i)
     (h₂ : ∀ i : InstB, S i → pl (mk i.1 : TD Bool) ≤ pl (mk i.2)) :
     ¬ MachineDecidable encBool S :=
-  not_machineDecidable_of_interp
-    (fun K l => (subC (instA K l, instB K l).1, subC (instA K l, instB K l).2))
-    (fun K => prim_subC_pair (f := fun l => (instA K l, instB K l)) (instAB_prim K))
-    (fun K l => (sbB (redA K l), sbB (redB K l)))
-    (fun K l => by dsimp only; rw [← rc_redA, ← rc_redB, subC_rc, subC_rc, encBool])
+  not_machineDecidable_of_interp (fun K l => (subC (instA K l), subC (instB K l)))
+    (fun _ => by fun_prop) (fun K l => (sbB (redA K l), sbB (redB K l)))
+    (fun K l => by rw [← rc_redA, ← rc_redB, subC_rc, subC_rc, encBool])
     (fun _ _ h => h₁ _ (mk_le_mk.2 (Equiv.sb wordOf
       ((provable_iff_equiv (redA _ _, redB _ _)).1 ((provable_iff_equiv _).2 (rInst_pos h))))))
     (fun _ _ h hS => not_modelLe h (modelLe_of_sbB (h₂ _ hS)))

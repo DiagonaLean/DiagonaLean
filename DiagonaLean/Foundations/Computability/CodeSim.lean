@@ -316,21 +316,19 @@ theorem tokens_prim : Primrec tokens := by
   have h : Primrec₂ fun (_ : List Bool) (y : Bool × List ℕ) =>
       if y.1 = true then 0 :: y.2 else (y.2.headI + 1) :: y.2.tail := by
     apply Primrec₂.mk
-    prim
+    fun_prop
   exact (Primrec.list_foldr (h := fun _ y => if y.1 = true then 0 :: y.2 else
     (y.2.headI + 1) :: y.2.tail) Primrec.id (Primrec.const [0]) h).of_eq fun w => by
       congr 1
 
-theorem prim_tokens {f : α → List Bool} (hf : Primrec f) : Primrec fun x => tokens (f x) :=
+@[fun_prop] theorem prim_tokens {f : α → List Bool} (hf : Primrec f) : Primrec fun x => tokens (f x) :=
   tokens_prim.comp hf
 
 end Prim
 
-macro_rules
-  | `(tactic| prim_step) => `(tactic| with_reducible apply prim_tokens)
 
 theorem dataC_prim : Primrec dataC := by
   unfold dataC rowsC rowTok
-  prim
+  fun_prop
 
 end DiagonaLean.Foundations.Computability

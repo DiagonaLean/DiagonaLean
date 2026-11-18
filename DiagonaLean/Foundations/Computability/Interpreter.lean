@@ -121,7 +121,7 @@ theorem tape_eq (B : Base) (e : PartrecToTM2.Γ' → List Bool) (h0 : e .bit0 = 
 
 theorem bitsStep_prim : Primrec bitsStep := by
   unfold bitsStep
-  prim
+  fun_prop
 
 theorem bitsOf_prim : Primrec bitsOf :=
   prim_snd (Primrec.nat_iterate Primrec.id (prim_pair Primrec.id (Primrec.const []))
@@ -131,7 +131,7 @@ theorem tapeOf_prim (B : Base) : Primrec (tapeOf B) := by
   unfold tapeOf
   have h := bitsOf_prim
   refine prim_append (Primrec.const _) (prim_flatMap (prim_reverse h) ?_)
-  prim
+  fun_prop
 
 /-! ### The interpreter -/
 

@@ -435,9 +435,9 @@ theorem kaEquiv_iff_checks {e f : RExp (ℕ ⊕ ℕ)} :
 /-- `results ka` is primitive recursive. -/
 theorem results_prim (ka : Bool) : Primrec fun y : Stk × ℕ => results ka y.2 y.1 := by
   have hcomm : PrimrecPred fun x : Stk × ℕ => commC x.2.unpair.1 x.2.unpair.2 :=
-    pred_ne (by prim) (by prim)
+    pred_ne (by fun_prop) (by fun_prop)
   cases ka <;> simp only [results, Bool.false_eq_true, ite_true, ite_false]
-    <;> prim
+    <;> fun_prop
 
 /-- `stepS ka` is primitive recursive. -/
 theorem stepS_prim (ka : Bool) : Primrec fun y : Stk × ℕ => stepS ka y.1 y.2 := by

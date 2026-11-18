@@ -589,7 +589,7 @@ theorem betaConv_iff_checks {M N : Term ℕ} (hM : LC M) (hN : LC N) :
 /-- `results` is primitive recursive. -/
 theorem results_prim : Primrec fun y : Stk × ℕ => results y.2 y.1 := by
   unfold results
-  prim
+  fun_prop
 
 attribute [local irreducible] results in
 /-- `stepS` is primitive recursive. -/

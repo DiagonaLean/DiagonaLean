@@ -554,81 +554,67 @@ section Prim
 variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
 
 /-- `pp` applied to primitive recursive functions is primitive recursive. -/
-theorem prim_pp {f g : α → P} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_pp {f g : α → P} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => pp (f x) (g x) :=
   prim_pair (prim_cp (prim_fst hf) (prim_fst hg))
     (prim_cp (Primrec.const _) (prim_cp (prim_snd hf) (prim_snd hg)))
 
 /-- `pm` applied to primitive recursive functions is primitive recursive. -/
-theorem prim_pm {f g : α → P} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_pm {f g : α → P} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => pm (f x) (g x) :=
   prim_pair (prim_cm (prim_fst hf) (prim_fst hg))
     (prim_cp (Primrec.const _) (prim_cm (prim_snd hf) (prim_snd hg)))
 
 /-- `pt` applied to a primitive recursive function is primitive recursive. -/
-theorem prim_pt {f : α → P} (hf : Primrec f) : Primrec fun x => pt (f x) :=
+@[fun_prop] theorem prim_pt {f : α → P} (hf : Primrec f) : Primrec fun x => pt (f x) :=
   prim_pair (prim_ct (prim_fst hf))
     (prim_cp (Primrec.const _) (prim_cm (prim_snd hf) (prim_ct (prim_fst hf))))
 
 /-- `ps` applied to a primitive recursive function is primitive recursive. -/
-theorem prim_ps {f : α → ℕ} (hf : Primrec f) : Primrec fun x => ps (f x) :=
+@[fun_prop] theorem prim_ps {f : α → ℕ} (hf : Primrec f) : Primrec fun x => ps (f x) :=
   prim_pair (prim_cs hf) (prim_cp (Primrec.const _) (prim_cs hf))
 
 /-- `psum` applied to a primitive recursive function is primitive recursive. -/
-theorem prim_psum {f : α → List P} (hf : Primrec f) : Primrec fun x => psum (f x) :=
+@[fun_prop] theorem prim_psum {f : α → List P} (hf : Primrec f) : Primrec fun x => psum (f x) :=
   Primrec.list_foldr (h := fun _ y => pp y.1 y.2) hf (Primrec.const pz)
     (Primrec₂.mk (prim_pp (prim_fst Primrec.snd) (prim_snd Primrec.snd)))
 
 /-- `pprod` applied to a primitive recursive function is primitive recursive. -/
-theorem prim_pprod {f : α → List P} (hf : Primrec f) : Primrec fun x => pprod (f x) :=
+@[fun_prop] theorem prim_pprod {f : α → List P} (hf : Primrec f) : Primrec fun x => pprod (f x) :=
   Primrec.list_foldr (h := fun _ y => pm y.1 y.2) hf (Primrec.const po)
     (Primrec₂.mk (prim_pm (prim_fst Primrec.snd) (prim_snd Primrec.snd)))
 
 /-- `lw` applied to a primitive recursive function is primitive recursive. -/
-theorem prim_lw {f : α → List ℕ} (hf : Primrec f) : Primrec fun x => lw (f x) :=
+@[fun_prop] theorem prim_lw {f : α → List ℕ} (hf : Primrec f) : Primrec fun x => lw (f x) :=
   prim_pprod (prim_map hf (prim_ps (prim_mul (Primrec.const 2) Primrec.snd)))
 
 /-- `rw'` applied to a primitive recursive function is primitive recursive. -/
-theorem prim_rw' {f : α → List ℕ} (hf : Primrec f) : Primrec fun x => rw' (f x) :=
+@[fun_prop] theorem prim_rw' {f : α → List ℕ} (hf : Primrec f) : Primrec fun x => rw' (f x) :=
   prim_pprod (prim_map hf
     (prim_ps (prim_add (prim_mul (Primrec.const 2) Primrec.snd) (Primrec.const 1))))
 
 /-- `pairC` applied to primitive recursive functions is primitive recursive. -/
-theorem prim_pairC {f g : α → List ℕ} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_pairC {f g : α → List ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => pairC (f x) (g x) := prim_pm (prim_lw hf) (prim_rw' hg)
 
 /-- `ctxC` applied to primitive recursive functions is primitive recursive. -/
-theorem prim_ctxC {f g : α → List ℕ} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_ctxC {f g : α → List ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => ctxC (f x) (g x) :=
   prim_pm (prim_pm (prim_pm (prim_pm (Primrec.const _) (Primrec.const _)) (prim_pairC hf hg))
     (Primrec.const _)) (Primrec.const _)
 
 /-- `ctxRC` applied to primitive recursive functions is primitive recursive. -/
-theorem prim_ctxRC {f g : α → List ℕ} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_ctxRC {f g : α → List ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => ctxRC (f x) (g x) :=
   prim_pm (Primrec.const _) (prim_pairC hf hg)
 
 /-- `ctxLC` applied to primitive recursive functions is primitive recursive. -/
-theorem prim_ctxLC {f g : α → List ℕ} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_ctxLC {f g : α → List ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => ctxLC (f x) (g x) :=
   prim_pm (prim_pm (prim_pairC hf hg) (Primrec.const _)) (Primrec.const _)
 
 end Prim
 
-macro_rules
-  | `(tactic| prim_step) => `(tactic| with_reducible first
-    | apply prim_ctxC
-    | apply prim_ctxRC
-    | apply prim_ctxLC
-    | apply prim_pairC
-    | apply prim_lw
-    | apply prim_rw'
-    | apply prim_psum
-    | apply prim_pprod
-    | apply prim_pp
-    | apply prim_pm
-    | apply prim_pt
-    | apply prim_ps)
 
 section Prim
 
@@ -638,22 +624,20 @@ variable {α : Type*} [Primcodable α]
 theorem ruleOf_prim : Primrec fun y : ℕ × ℕ × ℕ × ℕ × ℕ =>
     ruleOf y.1 y.2.1 y.2.2.1 y.2.2.2.1 y.2.2.2.2 := by
   unfold ruleOf
-  prim
+  fun_prop
 
 /-- `ruleOf` applied to primitive recursive functions is primitive recursive. -/
-theorem prim_ruleOf {q h a qn m : α → ℕ} (hq : Primrec q) (hh : Primrec h) (ha : Primrec a)
+@[fun_prop] theorem prim_ruleOf {q h a qn m : α → ℕ} (hq : Primrec q) (hh : Primrec h) (ha : Primrec a)
     (hn : Primrec qn) (hm : Primrec m) :
     Primrec fun x => ruleOf (q x) (h x) (a x) (qn x) (m x) :=
   ruleOf_prim.comp (hq.pair (hh.pair (ha.pair (hn.pair hm))))
 
 end Prim
 
-macro_rules
-  | `(tactic| prim_step) => `(tactic| with_reducible apply prim_ruleOf)
 
 /-- `instCode K l` is primitive recursive in `l`. -/
 theorem instCode_prim (K : UConst) : Primrec fun l : List Bool => instCode K l := by
   show Primrec fun l : List Bool => (cp (instA K l) (instB K l), instB K l)
-  prim
+  fun_prop
 
 end DiagonaLean.KACommUndecidable.KleeneAlgebra

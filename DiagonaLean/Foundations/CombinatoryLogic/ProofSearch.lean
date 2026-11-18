@@ -230,7 +230,7 @@ theorem conv_iff_checks {t u : SKI} : Conv t u ↔ ∃ k, Checks k (skc t) (skc 
 /-- `results` is primitive recursive. -/
 theorem results_prim : Primrec results := by
   unfold results
-  prim
+  fun_prop
 
 /-- `stepS` is primitive recursive. -/
 theorem stepS_prim : Primrec fun y : Stk × ℕ => stepS y.1 y.2 := by
