@@ -269,6 +269,66 @@ theorem primrec_iff_rc {β : Type} [Primcodable β] {f : β → RExp (ℕ ⊕ �
     Primrec f ↔ Primrec fun b => rc (f b) :=
   TaggedCode.primrec_iff rcKids rcKids_lt rcBuild rc_spec rc_primrec rcKids_primrec rcBuild_primrec
 
+/-! ### Structural recursion on regular expressions -/
+
+/-- **Structural recursion on regular expressions is primitive recursive.** A function given by one
+equation per constructor, each with a primitive recursive right-hand side in the parameter, the
+constructor's data and the results on the subexpressions, is primitive recursive. -/
+theorem primrec_of_eqns {X P σ : Type} [Primcodable X] [Primcodable P] [Primcodable σ]
+    [Inhabited σ] {f : P → RExp X → σ} (gzero gone gplus gmul gstar : P → List σ → σ)
+    (gsym : P → X → List σ → σ)
+    (hzero : ∀ p, f p zero = gzero p []) (hone : ∀ p, f p one = gone p [])
+    (hsym : ∀ p x, f p (sym x) = gsym p x [])
+    (hplus : ∀ p e g, f p (plus e g) = gplus p [f p e, f p g])
+    (hmul : ∀ p e g, f p (mul e g) = gmul p [f p e, f p g])
+    (hstar : ∀ p e, f p (star e) = gstar p [f p e])
+    (hgzero : Primrec fun q : P × List σ => gzero q.1 q.2)
+    (hgone : Primrec fun q : P × List σ => gone q.1 q.2)
+    (hgplus : Primrec fun q : P × List σ => gplus q.1 q.2)
+    (hgmul : Primrec fun q : P × List σ => gmul q.1 q.2)
+    (hgstar : Primrec fun q : P × List σ => gstar q.1 q.2)
+    (hgsym : Primrec fun q : P × (X × List σ) => gsym q.1 q.2.1 q.2.2) : Primrec₂ f := by
+  let step : P → Fin 5 ⊕ X → List σ → σ := fun p s rs =>
+    s.elim (fun i => if i.val = 0 then gzero p rs else if i.val = 1 then gone p rs
+        else if i.val = 2 then gplus p rs else if i.val = 3 then gmul p rs else gstar p rs)
+      fun x => gsym p x rs
+  have hstep : Primrec fun q : P × ((Fin 5 ⊕ X) × List σ) => step q.1 q.2.1 q.2.2 := by
+    have lift : ∀ {g : P → List σ → σ}, (Primrec fun q : P × List σ => g q.1 q.2) →
+        Primrec fun y : (P × ((Fin 5 ⊕ X) × List σ)) × Fin 5 => g y.1.1 y.1.2.2 := fun h =>
+      h.comp ((Primrec.fst.comp Primrec.fst).pair (Primrec.snd.comp (Primrec.snd.comp Primrec.fst)))
+    have h₁ : Primrec fun y : (P × ((Fin 5 ⊕ X) × List σ)) × Fin 5 =>
+        if y.2.val = 0 then gzero y.1.1 y.1.2.2 else if y.2.val = 1 then gone y.1.1 y.1.2.2
+        else if y.2.val = 2 then gplus y.1.1 y.1.2.2 else if y.2.val = 3 then gmul y.1.1 y.1.2.2
+        else gstar y.1.1 y.1.2.2 := by
+      have := lift hgzero; have := lift hgone; have := lift hgplus; have := lift hgmul
+      have := lift hgstar
+      fun_prop
+    have h₂ : Primrec fun y : (P × ((Fin 5 ⊕ X) × List σ)) × X => gsym y.1.1 y.2 y.1.2.2 :=
+      hgsym.comp ((Primrec.fst.comp Primrec.fst).pair
+        (Primrec.snd.pair (Primrec.snd.comp (Primrec.snd.comp Primrec.fst))))
+    exact prim_sumElim (o := fun q : P × ((Fin 5 ⊕ X) × List σ) => q.2.1)
+      (f := fun y (i : Fin 5) => if i.val = 0 then gzero y.1 y.2.2 else if i.val = 1 then
+        gone y.1 y.2.2 else if i.val = 2 then gplus y.1 y.2.2 else if i.val = 3 then
+        gmul y.1 y.2.2 else gstar y.1 y.2.2)
+      (g := fun y x => gsym y.1 x y.2.2) (Primrec.fst.comp Primrec.snd) h₁ h₂
+  have heq : ∀ p e, f p e = fold step p (toTree e) := by
+    intro p e
+    induction e with
+    | zero => rw [hzero]; rfl
+    | one => rw [hone]; rfl
+    | sym x => rw [hsym]; rfl
+    | plus e g ihe ihg =>
+      rw [hplus, ihe, ihg]
+      simp [toTree, fold, step, List.ofFn, rexpAr, Fin.foldr_succ, Fin.foldr_zero]
+    | mul e g ihe ihg =>
+      rw [hmul, ihe, ihg]
+      simp [toTree, fold, step, List.ofFn, rexpAr, Fin.foldr_succ, Fin.foldr_zero]
+    | star e ih =>
+      rw [hstar, ih]
+      simp [toTree, fold, step, List.ofFn, rexpAr, Fin.foldr_succ, Fin.foldr_zero]
+  exact ((fold_primrec hstep).comp Primrec.fst (toTree_primrec.comp Primrec.snd)).of_eq
+    fun q => (heq q.1 q.2).symm
+
 end RExp
 
 end DiagonaLean.KACommUndecidable.KleeneAlgebra

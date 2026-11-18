@@ -147,4 +147,41 @@ theorem primrec_iff_skc {β : Type} [Primcodable β] {f : β → SKI} :
   TaggedCode.primrec_iff skcKids skcKids_lt skcBuild skc_spec skc_primrec skcKids_primrec
     skcBuild_primrec
 
+/-! ### Structural recursion on SKI terms -/
+
+/-- **Structural recursion on SKI terms is primitive recursive.** A function given by one equation
+per constructor, each with a primitive recursive right-hand side in the parameter and the results
+on the subterms, is primitive recursive. -/
+theorem _root_.Cslib.SKI.primrec_of_eqns {P σ : Type} [Primcodable P] [Primcodable σ] [Inhabited σ]
+    {f : P → SKI → σ} (gS gK gI gapp : P → List σ → σ)
+    (hS : ∀ p, f p S = gS p []) (hK : ∀ p, f p K = gK p []) (hI : ∀ p, f p I = gI p [])
+    (happ : ∀ p x y, f p (app x y) = gapp p [f p x, f p y])
+    (hgS : Primrec fun q : P × List σ => gS q.1 q.2) (hgK : Primrec fun q : P × List σ => gK q.1 q.2)
+    (hgI : Primrec fun q : P × List σ => gI q.1 q.2)
+    (hgapp : Primrec fun q : P × List σ => gapp q.1 q.2) : Primrec₂ f := by
+  let step : P → Fin 4 → List σ → σ := fun p i rs =>
+    if i.val = 0 then gS p rs else if i.val = 1 then gK p rs else if i.val = 2 then gI p rs
+    else gapp p rs
+  have hstep : Primrec fun q : P × (Fin 4 × List σ) => step q.1 q.2.1 q.2.2 := by
+    have h₁ : Primrec fun q : P × (Fin 4 × List σ) => gS q.1 q.2.2 :=
+      hgS.comp (Primrec.fst.pair (Primrec.snd.comp Primrec.snd))
+    have h₂ : Primrec fun q : P × (Fin 4 × List σ) => gK q.1 q.2.2 :=
+      hgK.comp (Primrec.fst.pair (Primrec.snd.comp Primrec.snd))
+    have h₃ : Primrec fun q : P × (Fin 4 × List σ) => gI q.1 q.2.2 :=
+      hgI.comp (Primrec.fst.pair (Primrec.snd.comp Primrec.snd))
+    have h₄ : Primrec fun q : P × (Fin 4 × List σ) => gapp q.1 q.2.2 :=
+      hgapp.comp (Primrec.fst.pair (Primrec.snd.comp Primrec.snd))
+    fun_prop
+  have heq : ∀ p x, f p x = fold step p (toTree x) := by
+    intro p x
+    induction x with
+    | S => rw [hS]; rfl
+    | K => rw [hK]; rfl
+    | I => rw [hI]; rfl
+    | app x y ihx ihy =>
+      rw [happ, ihx, ihy]
+      simp [toTree, fold, step, List.ofFn, skiAr, Fin.foldr_succ, Fin.foldr_zero]
+  exact ((fold_primrec hstep).comp Primrec.fst (toTree_primrec.comp Primrec.snd)).of_eq
+    fun q => (heq q.1 q.2).symm
+
 end DiagonaLean.Foundations.CombinatoryLogic

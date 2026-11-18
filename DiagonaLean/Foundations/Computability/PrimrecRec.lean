@@ -272,7 +272,70 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
     finish rest
     return
   unless recTy.isConstOf ``Nat do
-    throwError "primrec_rec: `{fn}` does not recurse on `ℕ` or on a list"
+    -- structural recursion on an inductive type `T` with a lemma `T.primrec_of_eqns`
+    let .const tName _ := recTy.getAppFn
+      | throwError "primrec_rec: `{fn}` does not recurse on `ℕ`, a list or an inductive type"
+    let lemName := tName ++ `primrec_of_eqns
+    unless (← getEnv).contains lemName do
+      throwError "primrec_rec: `{fn}` recurses on `{tName}`, which has no lemma `{lemName}`"
+    -- the equation lemma of each constructor
+    let mut byCtor : Std.HashMap Name Name := {}
+    for e in eqns do
+      let c ← withEqn e k fun _ _ pat _ => do
+        let .const c _ := pat.getAppFn
+          | throwError "primrec_rec: the equation `{e}` does not match a constructor"
+        pure c
+      byCtor := byCtor.insert c e
+    let lem ← mkConstWithFreshMVarLevels lemName
+    let (mvs, bis, concl) ← forallMetaTelescopeReducing (← inferType lem)
+    unless ← isDefEq concl (← goal₂.getType) do
+      throwError "primrec_rec: could not match `{lemName}` with the goal"
+    for mv in mvs, bi in bis do
+      if bi.isInstImplicit && !(← mv.mvarId!.isAssigned) then
+        let inst ← synthInstance (← inferType mv)
+        unless ← isDefEq mv inst do
+          throwError "primrec_rec: could not synthesize `{← inferType mv}`"
+    for mv in mvs do
+      if ← mv.mvarId!.isAssigned then continue
+      let ty ← instantiateMVars (← inferType mv)
+      -- an equation hypothesis `∀ p fields, f p (c fields) = ?g p data [f p r, …]`
+      let info? ← forallTelescopeReducing ty fun _ body => do
+        let some (_, lhs, rhs) := body.eq? | return none
+        let lhs ← whnfR lhs.headBeta
+        let .const c _ := lhs.appArg!.getAppFn | return none
+        unless rhs.getAppFn.isMVar do return none
+        return some (c, rhs.getAppFn)
+      let some (c, gmv) := info? | continue
+      let some e := byCtor.get? c
+        | throwError "primrec_rec: `{fn}` has no equation for the constructor `{c}`"
+      -- `g`: the right-hand side over the packed parameter, with recursive calls looked up
+      let σ ← withEqn e k fun _ _ _ rhs => inferType rhs
+      let listσ ← mkAppM ``List #[σ]
+      let dflt ← mkAppOptM ``Inhabited.default #[σ, none]
+      let g ← withLocalDeclD `a P fun a => withLocalDeclD `rs listσ fun rs => do
+        let pa ← projs a k
+        withEqn e k fun _ ps pat rhs => do
+          let fields := pat.getAppArgs.filter (·.isFVar)
+          let recFields ← fields.filterM fun x => do isDefEq (← inferType x) recTy
+          let dataFields ← fields.filterM fun x => return !(recFields.contains x)
+          let rhs' ← Meta.transform rhs (pre := fun t => do
+            if t.isAppOfArity fn (k + 1) && t.getAppArgs[:k].toArray == ps then
+              match recFields.idxOf? t.appArg! with
+              | some j => return .done (← mkAppM ``List.getD #[rs, mkNatLit j, dflt])
+              | none => return .continue
+            return .continue)
+          if (rhs'.find? (·.isConstOf fn)).isSome then
+            throwError "primrec_rec: `{fn}` calls itself on something other than a direct \
+              subterm (only structural recursion on `{tName}` is supported)"
+          mkLambdaFVars (#[a] ++ dataFields ++ #[rs]) (rhs'.replaceFVars ps pa)
+      unless ← isDefEq gmv g do
+        throwError "primrec_rec: the equation `{e}` does not fit `{lemName}`"
+      unless ← isDefEq mv (← eqnOverPack e P k) do
+        throwError "primrec_rec: the equation `{e}` does not have the expected form"
+    goal₂.assign (mkAppN lem mvs)
+    let open_ ← mvs.filterM fun mv => return !(← mv.mvarId!.isAssigned)
+    finish (open_.map Expr.mvarId!)
+    return
   let pats ← eqns.mapM fun e => withEqn e k fun _ _ pat _ => do pure (← natPat pat).1
   -- the structural fast path: `f … 0` and `f … (x + 1)`, calling itself only on `x`
   let structS ← if eqns.size != 2 then pure none else

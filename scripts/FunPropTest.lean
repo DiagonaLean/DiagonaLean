@@ -239,3 +239,46 @@ example : Primrec₂ (para (ar := binAr) fun (_ : Unit) _ cs (_ : List ℕ) => c
   para_primrec (by fun_prop)
 
 end PTree
+
+/-! ### `primrec_rec` on inductive types with a `primrec_of_eqns` lemma (M7) -/
+
+section M7
+
+open Cslib DiagonaLean.KACommUndecidable.KleeneAlgebra
+
+def skiSize : SKI → ℕ
+  | .S => 1
+  | .K => 1
+  | .I => 1
+  | .app x y => skiSize x + skiSize y + 1
+example : Primrec skiSize := by primrec_rec
+
+open LambdaCalculus.LocallyNameless.Untyped in
+def fvCount (k : ℕ) : Term ℕ → ℕ
+  | .bvar _ => 0
+  | .fvar x => if x = k then 1 else 0
+  | .abs M => fvCount k M
+  | .app M N => fvCount k M + fvCount k N
+example : Primrec₂ fvCount := by primrec_rec
+
+def starDepth : RExp (ℕ ⊕ ℕ) → ℕ
+  | .zero => 0
+  | .one => 0
+  | .sym _ => 0
+  | .plus e f => max (starDepth e) (starDepth f)
+  | .mul e f => max (starDepth e) (starDepth f)
+  | .star e => starDepth e + 1
+example : Primrec starDepth := by primrec_rec
+
+instance : Inhabited (RExp (ℕ ⊕ ℕ)) := ⟨.zero⟩
+
+def swapPlus : RExp (ℕ ⊕ ℕ) → RExp (ℕ ⊕ ℕ)
+  | .zero => .zero
+  | .one => .one
+  | .sym x => .sym x
+  | .plus e f => .plus (swapPlus f) (swapPlus e)
+  | .mul e f => .mul (swapPlus e) (swapPlus f)
+  | .star e => .star (swapPlus e)
+example : Primrec swapPlus := by primrec_rec
+
+end M7

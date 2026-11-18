@@ -191,4 +191,61 @@ theorem primrec_iff_tc {β : Type} [Primcodable β] {f : β → Term ℕ} :
   TaggedCode.primrec_iff tcKids tcKids_lt tcBuild tc_spec tc_primrec tcKids_primrec
     tcBuild_primrec
 
+/-! ### Structural recursion on λ-terms -/
+
+/-- **Structural recursion on λ-terms is primitive recursive.** A function given by one equation
+per constructor, each with a primitive recursive right-hand side in the parameter, the
+constructor's data and the results on the subterms, is primitive recursive. -/
+theorem _root_.Cslib.LambdaCalculus.LocallyNameless.Untyped.Term.primrec_of_eqns {P σ : Type}
+    [Primcodable P] [Primcodable σ] [Inhabited σ] {f : P → Term ℕ → σ}
+    (gbvar gfvar : P → ℕ → List σ → σ) (gabs gapp : P → List σ → σ)
+    (hbvar : ∀ p i, f p (.bvar i) = gbvar p i []) (hfvar : ∀ p x, f p (.fvar x) = gfvar p x [])
+    (habs : ∀ p M, f p (.abs M) = gabs p [f p M])
+    (happ : ∀ p M N, f p (.app M N) = gapp p [f p M, f p N])
+    (hgbvar : Primrec fun q : P × (ℕ × List σ) => gbvar q.1 q.2.1 q.2.2)
+    (hgfvar : Primrec fun q : P × (ℕ × List σ) => gfvar q.1 q.2.1 q.2.2)
+    (hgabs : Primrec fun q : P × List σ => gabs q.1 q.2)
+    (hgapp : Primrec fun q : P × List σ => gapp q.1 q.2) : Primrec₂ f := by
+  let step : P → Fin 2 ⊕ (ℕ ⊕ ℕ) → List σ → σ := fun p s rs =>
+    s.elim (fun i => if i.val = 0 then gabs p rs else gapp p rs)
+      fun v => v.elim (fun i => gbvar p i rs) fun x => gfvar p x rs
+  have hstep : Primrec fun q : P × ((Fin 2 ⊕ (ℕ ⊕ ℕ)) × List σ) => step q.1 q.2.1 q.2.2 := by
+    have h₁ : Primrec fun y : (P × ((Fin 2 ⊕ (ℕ ⊕ ℕ)) × List σ)) × Fin 2 =>
+        if y.2.val = 0 then gabs y.1.1 y.1.2.2 else gapp y.1.1 y.1.2.2 := by
+      have ha : Primrec fun y : (P × ((Fin 2 ⊕ (ℕ ⊕ ℕ)) × List σ)) × Fin 2 =>
+          gabs y.1.1 y.1.2.2 :=
+        hgabs.comp ((Primrec.fst.comp Primrec.fst).pair
+          (Primrec.snd.comp (Primrec.snd.comp Primrec.fst)))
+      have hb : Primrec fun y : (P × ((Fin 2 ⊕ (ℕ ⊕ ℕ)) × List σ)) × Fin 2 =>
+          gapp y.1.1 y.1.2.2 :=
+        hgapp.comp ((Primrec.fst.comp Primrec.fst).pair
+          (Primrec.snd.comp (Primrec.snd.comp Primrec.fst)))
+      exact prim_ite (pred_eq (prim_finVal Primrec.snd) (Primrec.const 0)) ha hb
+    have h₂ : Primrec fun y : (P × ((Fin 2 ⊕ (ℕ ⊕ ℕ)) × List σ)) × (ℕ ⊕ ℕ) =>
+        y.2.elim (fun i => gbvar y.1.1 i y.1.2.2) fun x => gfvar y.1.1 x y.1.2.2 := by
+      refine prim_sumElim (o := fun y : (P × ((Fin 2 ⊕ (ℕ ⊕ ℕ)) × List σ)) × (ℕ ⊕ ℕ) => y.2)
+        (f := fun y i => gbvar y.1.1 i y.1.2.2) (g := fun y x => gfvar y.1.1 x y.1.2.2)
+        Primrec.snd ?_ ?_
+      · exact hgbvar.comp ((Primrec.fst.comp (Primrec.fst.comp Primrec.fst)).pair
+          (Primrec.snd.pair (Primrec.snd.comp (Primrec.snd.comp (Primrec.fst.comp Primrec.fst)))))
+      · exact hgfvar.comp ((Primrec.fst.comp (Primrec.fst.comp Primrec.fst)).pair
+          (Primrec.snd.pair (Primrec.snd.comp (Primrec.snd.comp (Primrec.fst.comp Primrec.fst)))))
+    exact prim_sumElim (o := fun q : P × ((Fin 2 ⊕ (ℕ ⊕ ℕ)) × List σ) => q.2.1)
+      (f := fun y (i : Fin 2) => if i.val = 0 then gabs y.1 y.2.2 else gapp y.1 y.2.2)
+      (g := fun y (v : ℕ ⊕ ℕ) => v.elim (fun i => gbvar y.1 i y.2.2) fun x => gfvar y.1 x y.2.2)
+      (Primrec.fst.comp Primrec.snd) h₁ h₂
+  have heq : ∀ p M, f p M = fold step p (toTree M) := by
+    intro p M
+    induction M with
+    | bvar i => rw [hbvar]; rfl
+    | fvar x => rw [hfvar]; rfl
+    | abs M ih =>
+      rw [habs, ih]
+      simp [toTree, fold, step, List.ofFn, termAr, Fin.foldr_succ, Fin.foldr_zero]
+    | app M N ihM ihN =>
+      rw [happ, ihM, ihN]
+      simp [toTree, fold, step, List.ofFn, termAr, Fin.foldr_succ, Fin.foldr_zero]
+  exact ((fold_primrec hstep).comp Primrec.fst (toTree_primrec.comp Primrec.snd)).of_eq
+    fun q => (heq q.1 q.2).symm
+
 end DiagonaLean.Foundations.LambdaCalculus
