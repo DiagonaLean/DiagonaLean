@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.Foundations.Computability.OutBit
+import DiagonaLean.Foundations.Computability.ReadOutCode
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.Race
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.Separation
 
@@ -19,7 +19,7 @@ be recursively enumerable, so the race program of Theorem 19 does not apply.
 The argument separates the computably inseparable pair `SelfOut true`, `SelfOut false`
 (`Halt/Inseparable.lean`), as the paper does with its map `η`. Instead of compiling the paper's
 instance of a machine `M`, it uses the instance of the interpreter running a program that simulates
-`M` on its own code and returns the bit `M` outputs (`outBit`). The code of that instance is a
+`M` on its own code and returns the bit `M` outputs (`readOutC`). The code of that instance is a
 primitive recursive function of the code of `M` (`instCode_prim`), so a machine computes the
 reduction (`exists_computes`), with no hypothesis.
 
@@ -53,9 +53,9 @@ variable {X : Type*}
 
 /-- A program that, on `⟨d, m⟩`, returns the output bit of the run with numeric data `d`. -/
 theorem exists_outProg :
-    ∃ C : Code, C.eval = fun n => outBit (Denumerable.ofNat HD n.unpair.1) := by
-  have h : Partrec fun n : ℕ => outBit (Denumerable.ofNat HD n.unpair.1) :=
-    outBit_part.comp ((Primrec.ofNat HD).comp (Primrec.fst.comp Primrec.unpair)).to_comp
+    ∃ C : Code, C.eval = fun n => readOutC (Denumerable.ofNat HD n.unpair.1) := by
+  have h : Partrec fun n : ℕ => readOutC (Denumerable.ofNat HD n.unpair.1) :=
+    readOutC_part.comp ((Primrec.ofNat HD).comp (Primrec.fst.comp Primrec.unpair)).to_comp
   exact Code.exists_code.1 (Partrec.nat_iff.1 h)
 
 /-- **No machine decides a predicate with a suitable family of interpreter instances.** For each
@@ -83,7 +83,7 @@ theorem not_machineDecidable_of_interp {Y : Type*} {enc : Y → List Bool} {P : 
       (NM B.K (tape (encodeBoolTM M))).Outputs [] [b] := by
     intro b M h
     have heval : (C.curry (Encodable.encode (dataC (encodeBoolTM M)))).eval 0 =
-        outBit (dataC (encodeBoolTM M)) := by
+        readOutC (dataC (encodeBoolTM M)) := by
       simp only [Code.eval_curry, hC, Nat.unpair_pair, Denumerable.ofNat_encode]
     have hm := hB _ _ (heval ▸ selfOut_mem h)
     cases b <;> simpa using hm

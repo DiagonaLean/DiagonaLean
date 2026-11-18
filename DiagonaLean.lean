@@ -51,6 +51,14 @@ import DiagonaLean.MPCP.Normalize.Properties
 import DiagonaLean.MPCP.Normalize.Sim
 import DiagonaLean.MPCP.Normalize.Steps
 
+import DiagonaLean.SKIConv.Basic
+import DiagonaLean.SKIConv.Reductions.Halt_to_SKIConv
+import DiagonaLean.SKIConv.Undecidable
+
+import DiagonaLean.BetaConv.Basic
+import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
+import DiagonaLean.BetaConv.Undecidable
+
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
 import DiagonaLean.Synthetic.Undecidability
@@ -68,7 +76,18 @@ import DiagonaLean.Foundations.Computability.Queue
 import DiagonaLean.Foundations.Computability.Compiler
 import DiagonaLean.Foundations.Computability.Computer
 import DiagonaLean.Foundations.Computability.CodeSim
-import DiagonaLean.Foundations.Computability.OutBit
+import DiagonaLean.Foundations.Computability.ProofRace
+import DiagonaLean.Foundations.Computability.OutputSearch
+import DiagonaLean.Foundations.Computability.ReadOutCode
+
+import DiagonaLean.Foundations.CombinatoryLogic.Code
+import DiagonaLean.Foundations.CombinatoryLogic.ProofSearch
+import DiagonaLean.Foundations.CombinatoryLogic.Race
+
+import DiagonaLean.Foundations.LambdaCalculus.Code
+import DiagonaLean.Foundations.LambdaCalculus.ProofSearch
+import DiagonaLean.Foundations.LambdaCalculus.Translation
+import DiagonaLean.Foundations.LambdaCalculus.Race
 
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.PreKleene
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.PreKleeneNotKleene
