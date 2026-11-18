@@ -44,3 +44,46 @@ example : Primrec DiagonaLean.KACommUndecidable.KleeneAlgebra.subC :=
   DiagonaLean.KACommUndecidable.KleeneAlgebra.subC_prim
 example : Primrec fun n => (DiagonaLean.KACommUndecidable.KleeneAlgebra.subC n, n + 1) := by
   fun_prop
+
+/-! ### `primrec_rec`: structural recursion from equation lemmas -/
+
+def sumTo : ℕ → ℕ
+  | 0 => 0
+  | n + 1 => sumTo n + n
+@[fun_prop] theorem primrec_sumTo : Primrec sumTo := by primrec_rec
+example : Primrec fun n => sumTo (sumTo n) + 1 := by fun_prop
+
+def lenPlus : List ℕ → ℕ
+  | [] => 1
+  | a :: l => lenPlus l + a
+example : Primrec lenPlus := by primrec_rec
+
+def powAdd (a : ℕ) : ℕ → ℕ
+  | 0 => a
+  | n + 1 => powAdd a n * 2 + a
+example : Primrec₂ powAdd := by primrec_rec
+
+def scale (k : ℕ) : List ℕ → List ℕ
+  | [] => []
+  | a :: l => (a * k) :: scale k l
+example : Primrec₂ scale := by primrec_rec
+
+def twice : ℕ → ℕ × ℕ
+  | 0 => (0, 1)
+  | n + 1 => (if (twice n).1 < n then (twice n).2 else n, Nat.pair (twice n).1 n)
+example : Primrec twice := by primrec_rec
+
+def sumSums : ℕ → ℕ
+  | 0 => 0
+  | n + 1 => sumSums n + sumTo n
+example : Primrec sumSums := by primrec_rec
+
+/-- Rejected: a nested pattern gives three equation lemmas. -/
+def iterTwice : ℕ → ℕ
+  | 0 => 0
+  | n + 1 => match n with
+    | 0 => 1
+    | k + 1 => iterTwice (k + 1) + 2
+example : True := by
+  fail_if_success (have : Primrec iterTwice := by primrec_rec)
+  trivial
