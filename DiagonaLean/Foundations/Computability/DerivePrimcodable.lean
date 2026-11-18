@@ -166,7 +166,7 @@ def {ar} {implB} : {shTy} → ℕ\n" ++ "\n".intercalate arCases]
       e := s!"fun s => s.elim (fun _ => {m cs[i]!}) ({e})"
     return if n == 1 then s!"fun _ => {m cs[0]!}" else e
   let sPat := "rcases s with " ++ " | ".intercalate ((List.range n).map fun _ => "_")
-  out := out ++ [s!"instance {implB} {instB} : Fact (Primrec ({ar} : {shTy} → ℕ)) := ⟨by
+  out := out ++ [s!"instance {t}.factPrimrecAr {implB} {instB} : Fact (Primrec ({ar} : {shTy} → ℕ)) := ⟨by
   have h : Primrec (({elimForm}) : {shTy} → ℕ) := by fun_prop
   exact h.of_eq fun s => by {sPat} <;> rfl⟩"]
   -- the tree of a term, and back
