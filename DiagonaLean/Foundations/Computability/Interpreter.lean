@@ -125,14 +125,16 @@ theorem bitsStep_prim : Primrec bitsStep := by
 
 attribute [fun_prop] bitsStep_prim
 
-theorem bitsOf_prim : Primrec bitsOf := by
+@[fun_prop] theorem bitsOf_prim : Primrec bitsOf := by
   unfold bitsOf; fun_prop
 
-theorem tapeOf_prim (B : Base) : Primrec (tapeOf B) := by
-  unfold tapeOf
-  have h := bitsOf_prim
-  refine prim_append (Primrec.const _) (prim_flatMap (prim_reverse h) ?_)
-  fun_prop
+@[fun_prop] theorem tapeOf_prim (B : Base) : Primrec (tapeOf B) := by
+  unfold tapeOf; fun_prop
+
+/-- `Code.curry` applied to primitive recursive functions is primitive recursive. -/
+@[fun_prop] theorem prim_curry {α : Type*} [Primcodable α] {f : α → Code} {g : α → ℕ}
+    (hf : Primrec f) (hg : Primrec g) : Primrec fun x => (f x).curry (g x) :=
+  Code.primrec₂_curry.comp hf hg
 
 /-! ### The interpreter -/
 
@@ -180,5 +182,10 @@ def bitsPair (a b : ℕ) : List Bool := bitsOf (Nat.pair a b)
 /-- `bitsPair` is injective in both arguments. -/
 theorem bitsPair_injective {a b c d : ℕ} (h : bitsPair a b = bitsPair c d) : a = c ∧ b = d :=
   Nat.pair_eq_pair.1 (bitsOf_injective h)
+
+/-- `bitsPair` applied to primitive recursive functions is primitive recursive. -/
+@[fun_prop] theorem prim_bitsPair {α : Type*} [Primcodable α] {f g : α → ℕ} (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => bitsPair (f x) (g x) := by
+  unfold bitsPair; fun_prop
 
 end DiagonaLean.Foundations.Computability

@@ -178,4 +178,17 @@ theorem exists_computes {X Y : Type*} {enc₁ : X → List Bool} {enc₂ : Y →
   obtain ⟨R, hR⟩ := exists_computer F hF
   exact ⟨R, fun x => h x ▸ hR (enc₁ x)⟩
 
+/-- `tm_computes F` reduces a goal `∃ R : SingleTapeTM Bool, ComputesReduction R enc₁ enc₂ f` to
+`∀ x, F (enc₁ x) = enc₂ (f x)`, proving that `F : List Bool → List Bool` is `Computable` with
+`fun_prop`: first as `Primrec`, then directly. -/
+macro "tm_computes " F:term : tactic =>
+  `(tactic| refine exists_computes $F
+    (by first | exact Primrec.to_comp (by fun_prop) | fun_prop) ?_)
+
+/-- `tm_computer F` proves `∃ R : SingleTapeTM Bool, ∀ l, R.Outputs l (F l)`, proving that `F` is
+`Computable` with `fun_prop`: first as `Primrec`, then directly. -/
+macro "tm_computer " F:term : tactic =>
+  `(tactic| exact exists_computer $F
+    (by first | exact Primrec.to_comp (by fun_prop) | fun_prop))
+
 end DiagonaLean.Foundations.Computability

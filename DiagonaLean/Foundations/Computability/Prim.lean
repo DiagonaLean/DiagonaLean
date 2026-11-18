@@ -32,7 +32,7 @@ own definitions with `@[fun_prop]`. -/
 
 attribute [fun_prop] Primrec PrimrecPred
 attribute [fun_prop] Primrec.id Primrec.const Primrec.comp PrimrecPred.comp PrimrecPred.not
-  PrimrecPred.or Primrec.ofNat
+  PrimrecPred.or Primrec.ofNat Primrec.encode
 
 section Prim
 

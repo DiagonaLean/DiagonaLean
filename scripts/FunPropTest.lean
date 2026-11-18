@@ -87,3 +87,21 @@ def iterTwice : ℕ → ℕ
 example : True := by
   fail_if_success (have : Primrec iterTwice := by primrec_rec)
   trivial
+
+/-! ### `tm_computer`, `tm_computes`: machines from `fun_prop` -/
+
+open Cslib.Turing in
+example : ∃ R : SingleTapeTM Bool, ∀ l, R.Outputs l (l ++ l.reverse) := by
+  tm_computer fun l => l ++ l.reverse
+
+def countTrue : List Bool → ℕ
+  | [] => 0
+  | b :: l => countTrue l + b.toNat
+@[fun_prop] theorem primrec_countTrue : Primrec countTrue := by primrec_rec
+
+open Cslib.Turing in
+example : ∃ R : SingleTapeTM Bool,
+    DiagonaLean.Halt.Undecidable.ComputesReduction R id bitsOf countTrue := by
+  tm_computes fun w => bitsOf (countTrue w)
+  intro l
+  rfl

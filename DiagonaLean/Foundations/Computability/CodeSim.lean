@@ -320,7 +320,7 @@ theorem tokens_prim : Primrec tokens := by
 end Prim
 
 
-theorem dataC_prim : Primrec dataC := by
+@[fun_prop] theorem dataC_prim : Primrec dataC := by
   unfold dataC rowsC rowTok
   fun_prop
 
