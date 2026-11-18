@@ -230,6 +230,118 @@ instance primcodable [Fact (Primrec ar)] : Primcodable (PTree α ar) where
 
 end Prim
 
+section Fold
+
+variable {P σ : Type}
+
+/-- The fold of a tree with parameter `p`: a node with shape `a` gets `step p a` of the results
+on its children, in order. -/
+def fold (step : P → α → List σ → σ) (p : P) : PTree α ar → σ
+  | node a cs => step p a (List.ofFn fun i => fold step p (cs i))
+
+variable [Encodable α] [Inhabited σ]
+
+/-- The fold on codes: `default` on a number that is not a code. -/
+def codeFold (step : P → α → List σ → σ) (p : P) (n : ℕ) : σ :=
+  match decode₂ α n.unpair.1, decode₂ (List ℕ) n.unpair.2 with
+  | some a, some l =>
+    if hl : ∀ c ∈ l, c < n then
+      step p a (l.attach.map fun (c : {c // c ∈ l}) =>
+        have : c.val < n := hl _ c.property
+        codeFold step p c.val)
+    else default
+  | _, _ => default
+termination_by n
+
+/-- On the code of a tree, the fold on codes is the fold. -/
+theorem codeFold_code (step : P → α → List σ → σ) (p : P) (t : PTree α ar) :
+    codeFold step p (code t) = fold step p t := by
+  induction t with
+  | node a cs ih =>
+    rw [codeFold, code, Nat.unpair_pair, encodek₂, encodek₂]
+    simp only
+    have hl : ∀ c ∈ List.ofFn (fun i => code (cs i)), c < Nat.pair (encode a)
+        (encode (List.ofFn fun i => code (cs i))) := fun c hc =>
+      (lt_encode_of_mem hc).trans_le (Nat.right_le_pair _ _)
+    rw [dite_eq_left_of_eq_true (eq_true hl), fold]
+    congr 1
+    rw [List.attach_map_val (f := fun c => codeFold step p c), List.map_ofFn]
+    congr 1
+    funext i
+    exact ih i
+
+/-- One step of the fold on codes, given the table `T` of its values below `n`. -/
+def foldStep (step : P → α → List σ → σ) (p : P) (n : ℕ) (T : List σ) : σ :=
+  (decode₂ α n.unpair.1).elim default fun a =>
+    (decode₂ (List ℕ) n.unpair.2).elim default fun l =>
+      if l.all fun c => decide (c < n) then step p a (l.map fun c => T.getD c default)
+      else default
+
+/-- The fold on codes satisfies the course-of-values equation of `foldStep`. -/
+theorem codeFold_eq (step : P → α → List σ → σ) (p : P) (n : ℕ) :
+    codeFold step p n = foldStep step p n ((List.range n).map (codeFold step p)) := by
+  rw [codeFold, foldStep]
+  split
+  · rename_i a l ha hl'
+    rw [ha, hl']
+    simp only [Option.elim]
+    by_cases hl : ∀ c ∈ l, c < n
+    · have hall : (l.all fun c => decide (c < n)) = true := List.all_eq_true.2 fun c hc =>
+        decide_eq_true (hl c hc)
+      rw [dite_eq_left_of_eq_true (eq_true hl), ite_eq_left hall]
+      congr 1
+      rw [List.attach_map_val (f := fun c => codeFold step p c)]
+      exact List.map_congr_left fun c hc => (getD_map_range_of_lt _ (hl c hc)).symm
+    · have hall : ¬ (l.all fun c => decide (c < n)) = true := fun h =>
+        hl fun c hc => of_decide_eq_true (List.all_eq_true.1 h c hc)
+      rw [dite_eq_right_of_eq_false (eq_false hl), ite_eq_right hall]
+  · rename_i x y hxy
+    cases ha : decode₂ α n.unpair.1 <;> cases hl' : decode₂ (List ℕ) n.unpair.2 <;>
+      simp_all [Option.elim]
+
+end Fold
+
+section FoldPrim
+
+variable {P σ : Type} [Primcodable α] [Fact (Primrec ar)] [Primcodable P] [Primcodable σ]
+  [Inhabited σ]
+
+/-- **Theorem B.** A fold with a primitive recursive step is primitive recursive, in the
+parameter and the tree. -/
+theorem fold_primrec
+    {step : P → α → List σ → σ}
+    (hstep : Primrec fun q : P × (α × List σ) => step q.1 q.2.1 q.2.2) :
+    Primrec₂ (fold (ar := ar) step) := by
+  have hst : Primrec fun q : P × (ℕ × List σ) => foldStep step q.1 q.2.1 q.2.2 := by
+    unfold foldStep
+    have hm : Primrec fun z : ((P × (ℕ × List σ)) × α) × List ℕ =>
+        z.2.map fun c => z.1.1.2.2.getD c default := by fun_prop
+    have hs : Primrec fun z : ((P × (ℕ × List σ)) × α) × List ℕ =>
+        step z.1.1.1 z.1.2 (z.2.map fun c => z.1.1.2.2.getD c default) :=
+      hstep.comp ((Primrec.fst.comp (Primrec.fst.comp Primrec.fst)).pair
+        ((Primrec.snd.comp Primrec.fst).pair hm))
+    have hc : PrimrecPred fun z : ((P × (ℕ × List σ)) × α) × List ℕ =>
+        (z.2.all fun c => decide (c < z.1.1.2.1)) = true := by fun_prop
+    have hi := prim_ite hc hs (Primrec.const default)
+    have ho := prim_elim (o := fun y : (P × (ℕ × List σ)) × α => decode₂ (List ℕ) y.1.2.1.unpair.2)
+      (g := fun y (l : List ℕ) => if (l.all fun c => decide (c < y.1.2.1)) = true then
+        step y.1.1 y.2 (l.map fun c => y.1.2.2.getD c default) else default)
+      (by fun_prop) (Primrec.const default) hi
+    exact prim_elim (o := fun q : P × (ℕ × List σ) => decode₂ α q.2.1.unpair.1)
+      (g := fun q a => (decode₂ (List ℕ) q.2.1.unpair.2).elim default fun l =>
+        if (l.all fun c => decide (c < q.2.1)) = true then
+          step q.1 a (l.map fun c => q.2.2.getD c default) else default)
+      (by fun_prop) (Primrec.const default) ho
+  have hc : Primrec₂ (codeFold step) := Primrec.nat_strong_rec _
+    (g := fun p T => some (foldStep step p T.length T))
+    (Primrec.option_some.comp (hst.comp (Primrec.fst.pair
+      ((prim_length Primrec.snd).pair Primrec.snd))))
+    (fun p n => by rw [List.length_map, List.length_range, ← codeFold_eq])
+  exact (hc.comp Primrec.fst (Primrec.encode.comp Primrec.snd)).of_eq fun q =>
+    codeFold_code step q.1 q.2
+
+end FoldPrim
+
 end PTree
 
 end DiagonaLean.Foundations.Computability

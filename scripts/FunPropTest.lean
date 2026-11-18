@@ -168,4 +168,15 @@ instance : Fact (Primrec rexpAr) := ⟨(Primrec.sumCasesOn Primrec.id
   ((Primrec.const 0).comp₂ Primrec₂.right)).of_eq fun x => by cases x <;> rfl⟩
 example : Primcodable (PTree (Fin 6 ⊕ (ℕ ⊕ ℕ)) rexpAr) := inferInstance
 
+/-! ### Theorem B: folds with a primitive recursive step are primitive recursive -/
+
+/-- The number of nodes of a binary tree. -/
+def size : PTree Bool binAr → ℕ := fold (fun (_ : Unit) _ rs => rs.foldr (· + ·) 1) ()
+example : size (.node false Fin.elim0) = 1 := rfl
+example : Primrec size := (fold_primrec (by fun_prop)).comp (Primrec.const ()) Primrec.id
+
+/-- With a parameter: the sum of `k` over the leaves. -/
+example : Primrec₂ (fold (ar := binAr) fun (k : ℕ) b rs => if b then rs.foldr (· + ·) 0 else k) :=
+  fold_primrec (by fun_prop)
+
 end PTree
