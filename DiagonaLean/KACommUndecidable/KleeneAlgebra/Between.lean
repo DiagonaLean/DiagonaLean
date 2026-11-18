@@ -33,6 +33,9 @@ machine that converts `encNat i` into `enc i` (`not_machineDecidable_of_conv`). 
 this kind is needed: an injective encoding that records whether `S i` holds in its first bit makes
 `S` decidable. `encNat` is the reference encoding the proofs use, not part of the result.
 
+The `_bool` statements give the same results over the paper's alphabet `{0, 1}` under `encBool`,
+through the substitution `sbB` that writes the letter `n` as the word `1ⁿ0`.
+
 ## References
 
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18
@@ -137,6 +140,72 @@ theorem not_machineDecidable_eqVia_of_conv (F : LangFactor X) {enc : Inst → Li
     {R : SingleTapeTM Bool} (hR : ComputesReduction R encNat enc id) :
     ¬ MachineDecidable enc (EqVia F) :=
   not_machineDecidable_of_conv (not_machineDecidable_eqVia F) hR
+
+/-! ### Over `{0, 1}`
+
+The same statements over the paper's alphabet `Σ = {0, 1}`, under `encBool`. The instances are the
+images under `sbB`, which writes the letter `n` as the word `1ⁿ0`; this substitution preserves
+provability (`Equiv.sb`) and reflects language inclusion (`pl_le_of_sb`). -/
+
+/-- Applying `subC` to both components keeps a function primitive recursive. -/
+theorem prim_subC_pair {f : List Bool → ℕ × ℕ} (hf : Primrec f) :
+    Primrec fun l => (subC (f l).1, subC (f l).2) :=
+  ((subC_prim.comp Primrec.fst).pair (subC_prim.comp Primrec.snd)).comp hf
+
+/-- An instance over `{0, 1}` whose inequality fails in the language model maps back to one over
+`ℕ`: `sbB` reflects inclusion. -/
+theorem modelLe_of_sbB {e f : RExp (ℕ ⊕ ℕ)}
+    (h : pl (mk (sbB e) : TD Bool) ≤ pl (mk (sbB f))) : ModelLe (e, f) :=
+  pl_le_of_sb cd_injective h
+
+/-- **Theorem 18 for inequalities over `{0, 1}`.** No machine decides any predicate on pairs of
+expressions over `{0, 1}` that contains provable inequality in pre-Kleene algebra and is contained
+in inclusion of languages. -/
+theorem not_machineDecidable_between_bool (S : InstB → Prop)
+    (h₁ : ∀ i : InstB, (mk i.1 : TD Bool) ≤ mk i.2 → S i)
+    (h₂ : ∀ i : InstB, S i → pl (mk i.1 : TD Bool) ≤ pl (mk i.2)) :
+    ¬ MachineDecidable encBool S :=
+  not_machineDecidable_of_interp
+    (fun K l => (subC (instA K l, instB K l).1, subC (instA K l, instB K l).2))
+    (fun K => prim_subC_pair (f := fun l => (instA K l, instB K l)) (instAB_prim K))
+    (fun K l => (sbB (redA K l), sbB (redB K l)))
+    (fun K l => by dsimp only; rw [← rc_redA, ← rc_redB, subC_rc, subC_rc, encBool])
+    (fun _ _ h => h₁ _ (mk_le_mk.2 (Equiv.sb wordOf
+      ((provable_iff_equiv (redA _ _, redB _ _)).1 ((provable_iff_equiv _).2 (rInst_pos h))))))
+    (fun _ _ h hS => not_modelLe h (modelLe_of_sbB (h₂ _ hS)))
+
+/-- **Theorem 18 for inequalities over `{0, 1}`, under any encoding** that a machine computes from
+`encBool`. -/
+theorem not_machineDecidable_between_bool_of_conv (S : InstB → Prop)
+    (h₁ : ∀ i : InstB, (mk i.1 : TD Bool) ≤ mk i.2 → S i)
+    (h₂ : ∀ i : InstB, S i → pl (mk i.1 : TD Bool) ≤ pl (mk i.2)) {enc : InstB → List Bool}
+    {R : SingleTapeTM Bool} (hR : ComputesReduction R encBool enc id) :
+    ¬ MachineDecidable enc S :=
+  not_machineDecidable_of_conv (not_machineDecidable_between_bool S h₁ h₂) hR
+
+/-- **Theorem 18 for equations over `{0, 1}`.** No machine decides any predicate on pairs of
+expressions over `{0, 1}` that contains provable equality in pre-Kleene algebra and is contained in
+equality of languages. -/
+theorem not_machineDecidable_eq_between_bool (S : InstB → Prop)
+    (h₁ : ∀ i : InstB, Equiv DComm i.1 i.2 → S i)
+    (h₂ : ∀ i : InstB, S i → pl (mk i.1 : TD Bool) = pl (mk i.2)) :
+    ¬ MachineDecidable encBool S :=
+  not_machineDecidable_of_interp instCodeB instCodeB_prim (fun K l => sbI (rInst K l)) enc_bool
+    (fun _ _ h => h₁ _ (pos_bool h))
+    (fun K l h hS => not_modelLe h (modelLe_of_sbB (by
+      have hl := h₂ _ hS
+      rwa [show (sbI (rInst K l)).1 = plus (sbB (redA K l)) (sbB (redB K l)) from rfl,
+        show (sbI (rInst K l)).2 = sbB (redB K l) from rfl, mk_plus, pl_add,
+        add_eq_right_iff_le] at hl)))
+
+/-- **Theorem 18 for equations over `{0, 1}`, under any encoding** that a machine computes from
+`encBool`. -/
+theorem not_machineDecidable_eq_between_bool_of_conv (S : InstB → Prop)
+    (h₁ : ∀ i : InstB, Equiv DComm i.1 i.2 → S i)
+    (h₂ : ∀ i : InstB, S i → pl (mk i.1 : TD Bool) = pl (mk i.2)) {enc : InstB → List Bool}
+    {R : SingleTapeTM Bool} (hR : ComputesReduction R encBool enc id) :
+    ¬ MachineDecidable enc S :=
+  not_machineDecidable_of_conv (not_machineDecidable_eq_between_bool S h₁ h₂) hR
 
 /-- **Theorem 18.** If a machine computes `l'` on the codes of expressions, no machine decides
 equality on `X`, under any encoding of `X × X`. -/

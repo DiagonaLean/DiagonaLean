@@ -38,7 +38,9 @@ language model on these instances (`not_machineDecidable_selfEq`).
   language model, for inequalities and for equations (`not_machineDecidable_between`,
   `not_machineDecidable_eq_between` in `KACommUndecidable/KleeneAlgebra/Between.lean`). In
   particular no machine decides equality or inclusion of languages
-  (`not_machineDecidable_langEq_nat`, `not_machineDecidable_modelLe_nat`).
+  (`not_machineDecidable_langEq_nat`, `not_machineDecidable_modelLe_nat`). The same holds over
+  `{0, 1}` (`not_machineDecidable_between_bool`, `not_machineDecidable_eq_between_bool`,
+  `not_machineDecidable_langEq_bool`, `not_machineDecidable_modelLe_bool`).
 * **Encodings.** Each machine-level statement over `encNat` or `encBool` has an `_of_conv` version
   for any encoding that a machine computes from that one (`not_machineDecidable_of_conv`).
 
@@ -203,6 +205,18 @@ theorem not_machineDecidable_langEq_nat_of_conv {enc : Inst → List Bool} {R : 
     ¬ MachineDecidable enc fun i : Inst => pl (mk i.1 : TD ℕ) = pl (mk i.2) :=
   Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_langEq_nat hR
 
+/-- **No Turing machine decides equality of languages over `{0, 1}`.** -/
+theorem not_machineDecidable_langEq_bool :
+    ¬ MachineDecidable encBool fun i : InstB => pl (mk i.1 : TD Bool) = pl (mk i.2) :=
+  not_machineDecidable_eq_between_bool _ (fun _ h => congrArg pl (mk_eq_mk.2 h)) fun _ h => h
+
+/-- **No Turing machine decides equality of languages over `{0, 1}`, under any encoding** that a
+machine computes from `encBool`. -/
+theorem not_machineDecidable_langEq_bool_of_conv {enc : InstB → List Bool}
+    {R : SingleTapeTM Bool} (hR : ComputesReduction R encBool enc id) :
+    ¬ MachineDecidable enc fun i : InstB => pl (mk i.1 : TD Bool) = pl (mk i.2) :=
+  Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_langEq_bool hR
+
 end DiagonaLean.LangEq.Reduction
 
 /-! ### Inclusion in `L Σ̈` -/
@@ -230,5 +244,17 @@ theorem not_machineDecidable_modelLe_nat_of_conv {enc : Inst → List Bool} {R :
     (hR : ComputesReduction R encNat enc id) :
     ¬ MachineDecidable enc ModelLe :=
   Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_modelLe_nat hR
+
+/-- **No Turing machine decides inclusion of languages over `{0, 1}`.** -/
+theorem not_machineDecidable_modelLe_bool :
+    ¬ MachineDecidable encBool fun i : InstB => pl (mk i.1 : TD Bool) ≤ pl (mk i.2) :=
+  not_machineDecidable_between_bool _ (fun _ h => pl_mono h) fun _ h => h
+
+/-- **No Turing machine decides inclusion of languages over `{0, 1}`, under any encoding** that a
+machine computes from `encBool`. -/
+theorem not_machineDecidable_modelLe_bool_of_conv {enc : InstB → List Bool}
+    {R : SingleTapeTM Bool} (hR : ComputesReduction R encBool enc id) :
+    ¬ MachineDecidable enc fun i : InstB => pl (mk i.1 : TD Bool) ≤ pl (mk i.2) :=
+  Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_modelLe_bool hR
 
 end DiagonaLean.ModelLe.Reduction

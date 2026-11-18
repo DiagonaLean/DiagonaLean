@@ -4,7 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 ```
 # Status of the formalisation
 
-How much of *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979) is formalised, and what is still open. Assessed on 2026-11-16, updated 2026-11-17; update it when a gap below is closed.
+How much of *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979) is formalised, and what is still open. Assessed on 2026-11-16, updated 2026-11-18; update it when a gap below is closed.
 
 The paper's main result, from its abstract: *"the equational theory of Kleene algebra with commutativity conditions on primitives (or atomic terms) is undecidable … our results hold even for weaker theories that do not support the induction axioms of Kleene algebra."*
 
@@ -14,9 +14,9 @@ The paper's main result, from its abstract: *"the equational theory of Kleene al
 |---|---|---|
 | Kleene algebra with commutativity conditions is undecidable | `KATermEq.Reduction.not_machineDecidable_kaTermEq_nat`, `…_bool` | **Done, no hypotheses** |
 | …even for weaker theories without the induction axioms | `TermEq.Reduction.not_machineDecidable_termEq_nat`, `…_bool` (pre-Kleene algebra) | **Done, no hypotheses** |
-| Any theory between pre-Kleene algebra and the language model (Theorem 18, general form) | `not_machineDecidable_between` (inequalities), `not_machineDecidable_eq_between` (equations), `not_machineDecidable_eqVia` (any `X` the language map factors through), all in `KleeneAlgebra/Between.lean` | **Done, no hypotheses**, over `ℕ` (`encNat`) |
+| Any theory between pre-Kleene algebra and the language model (Theorem 18, general form) | `not_machineDecidable_between` (inequalities), `not_machineDecidable_eq_between` (equations), `not_machineDecidable_eqVia` (any `X` the language map factors through), all in `KleeneAlgebra/Between.lean` | **Done, no hypotheses**, over `ℕ` (`encNat`); the first two also over `{0, 1}` (`…_bool`, `encBool`) |
 | Theorem 18 on `X` itself | `not_machineDecidable_eqOn` | Given a machine computing `l'` on expression codes, which is the paper's hypothesis that `l'` is computable |
-| Equality and inclusion of languages, `L Σ̈` | `not_machineDecidable_langEq_nat`, `not_machineDecidable_modelLe_nat`; `undecidableNotLangEq` (`Undecidable`, for the complement) | **Done, no hypotheses** |
+| Equality and inclusion of languages, `L Σ̈` | `not_machineDecidable_langEq_{nat,bool}`, `not_machineDecidable_modelLe_{nat,bool}`; `undecidableNotLangEq` (`Undecidable`, for the complement) | **Done, no hypotheses** |
 | Theorem 6, Corollary 7 | `FiniteLangCounterexample.lean`, `FiniteLangExpansion.lean` | False as stated (counterexample at `e = 1∗`); a repaired version is proved |
 
 The headline statement:
@@ -50,4 +50,4 @@ theorem not_machineDecidable_kaTermEq_bool :
 ## Open work
 
 1. Optionally, prove `kaRed` itself computable, which would make the `…_of_computes` statements unconditional and follow the paper's proof more closely. The main cost is recomputing the derived `Encodable Letter` codes on numbers.
-2. Optionally, `{0, 1}` versions of the Theorem 18 statements (via `sbI` and `instCodeB`, as for the headline results).
+2. Optionally, `{0, 1}` versions of `not_machineDecidable_eqVia` and `not_machineDecidable_eqOn` (Theorem 18 on a model `X`). These need `LangFactor` over `TD Bool`. The between-forms over `{0, 1}` are done (2026-11-18).
