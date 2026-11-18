@@ -184,6 +184,9 @@ variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
 @[fun_prop] theorem prim_some {f : α → β} (hf : Primrec f) : Primrec fun x => some (f x) :=
   Primrec.option_some.comp hf
 
+@[fun_prop] theorem prim_getElem? {f : α → List β} {g : α → ℕ} (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => (f x)[g x]? := Primrec.list_getElem?.comp hf hg
+
 @[fun_prop] theorem prim_flatMap {f : α → List β} {g : α → β → List γ} (hf : Primrec f)
     (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).flatMap (g x) :=
   Primrec.list_flatMap hf hg.to₂

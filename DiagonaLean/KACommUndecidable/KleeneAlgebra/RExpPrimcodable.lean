@@ -5,6 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.ExprCode
 import DiagonaLean.Foundations.Computability.PolyTree
+import DiagonaLean.Foundations.Computability.TaggedCode
 
 @[expose] public section
 
@@ -210,85 +211,69 @@ theorem unpair_snd_lt {n : ℕ} (h : n.unpair.1 ≠ 0) : n.unpair.2 < n := by
     (Nat.pair_lt_pair_left n.unpair.2 (Nat.pos_of_ne_zero h))
   rwa [Nat.pair_unpair] at this
 
-/-- Decoding an `rc` code. -/
-def rcDec (n : ℕ) : Option (RExp (ℕ ⊕ ℕ)) :=
-  if h : n.unpair.1 = 0 then (if n.unpair.2 = 0 then some zero else none)
-  else if n.unpair.1 = 1 then (if n.unpair.2 = 0 then some one else none)
-  else if n.unpair.1 = 2 then some (sym (symDec n.unpair.2))
-  else if n.unpair.1 = 3 then
-    have : n.unpair.2.unpair.1 < n :=
-      (Nat.unpair_left_le _).trans_lt (unpair_snd_lt h)
-    have : n.unpair.2.unpair.2 < n :=
-      (Nat.unpair_right_le _).trans_lt (unpair_snd_lt h)
-    (rcDec n.unpair.2.unpair.1).elim none fun e =>
-      (rcDec n.unpair.2.unpair.2).elim none fun f => some (plus e f)
-  else if n.unpair.1 = 4 then
-    have : n.unpair.2.unpair.1 < n :=
-      (Nat.unpair_left_le _).trans_lt (unpair_snd_lt h)
-    have : n.unpair.2.unpair.2 < n :=
-      (Nat.unpair_right_le _).trans_lt (unpair_snd_lt h)
-    (rcDec n.unpair.2.unpair.1).elim none fun e =>
-      (rcDec n.unpair.2.unpair.2).elim none fun f => some (mul e f)
-  else if n.unpair.1 = 5 then
-    have : n.unpair.2 < n := unpair_snd_lt h
-    (rcDec n.unpair.2).elim none fun e => some (star e)
-  else none
-termination_by n
+/-- The child codes packed into an `rc` code. -/
+def rcKids (n : ℕ) : List ℕ :=
+  if n.unpair.1 = 3 ∨ n.unpair.1 = 4 then [n.unpair.2.unpair.1, n.unpair.2.unpair.2]
+  else if n.unpair.1 = 5 then [n.unpair.2] else []
 
-/-- **`rcDec` decodes `rc`.** -/
-theorem rcDec_rc (e : RExp (ℕ ⊕ ℕ)) : rcDec (rc e) = some e := by
-  induction e with
-  | zero => rw [rcDec]; simp [rc, cz]
-  | one => rw [rcDec]; simp [rc, co]
-  | sym x => rw [rcDec]; simp [rc, cs, symDec_symC]
-  | plus e f ihe ihf => rw [rcDec]; simp [rc, cp, ihe, ihf, Option.elim]
-  | mul e f ihe ihf => rw [rcDec]; simp [rc, cm, ihe, ihf, Option.elim]
-  | star e ih => rw [rcDec]; simp [rc, ct, ih, Option.elim]
+theorem rcKids_lt (n : ℕ) : ∀ m ∈ rcKids n, m < n := by
+  intro m hm
+  unfold rcKids at hm
+  split_ifs at hm with h₁ h₂
+  · have h : n.unpair.1 ≠ 0 := by omega
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hm
+    rcases hm with rfl | rfl
+    · exact (Nat.unpair_left_le _).trans_lt (unpair_snd_lt h)
+    · exact (Nat.unpair_right_le _).trans_lt (unpair_snd_lt h)
+  · simp only [List.mem_singleton] at hm
+    exact hm ▸ unpair_snd_lt (by omega)
+  · simp at hm
 
-/-- One step of `rcDec`, with the recursive calls looked up in the table `T` below `n`. -/
-def rcDecStep (n : ℕ) (T : List (Option (RExp (ℕ ⊕ ℕ)))) : Option (RExp (ℕ ⊕ ℕ)) :=
+/-- One decoding step of `rc`: the node of code `n`, from its decoded children `ts`. -/
+def rcBuild (n : ℕ) (ts : List (RExp (ℕ ⊕ ℕ))) : Option (RExp (ℕ ⊕ ℕ)) :=
   if n.unpair.1 = 0 then (if n.unpair.2 = 0 then some zero else none)
   else if n.unpair.1 = 1 then (if n.unpair.2 = 0 then some one else none)
   else if n.unpair.1 = 2 then some (sym (symDec n.unpair.2))
-  else if n.unpair.1 = 3 then
-    (T.getD n.unpair.2.unpair.1 none).elim none fun e =>
-      (T.getD n.unpair.2.unpair.2 none).elim none fun f => some (plus e f)
-  else if n.unpair.1 = 4 then
-    (T.getD n.unpair.2.unpair.1 none).elim none fun e =>
-      (T.getD n.unpair.2.unpair.2 none).elim none fun f => some (mul e f)
-  else if n.unpair.1 = 5 then (T.getD n.unpair.2 none).elim none fun e => some (star e)
+  else if n.unpair.1 = 3 then ts[0]?.elim none fun e => ts[1]?.elim none fun f => some (plus e f)
+  else if n.unpair.1 = 4 then ts[0]?.elim none fun e => ts[1]?.elim none fun f => some (mul e f)
+  else if n.unpair.1 = 5 then ts[0]?.elim none fun e => some (star e)
   else none
 
-theorem rcDec_eq (n : ℕ) : rcDec n = rcDecStep n ((List.range n).map rcDec) := by
-  rw [rcDec, rcDecStep]
-  by_cases h : n.unpair.1 = 0
-  · simp [h]
-  · have h1 : n.unpair.2.unpair.1 < n := (Nat.unpair_left_le _).trans_lt (unpair_snd_lt h)
-    have h2 : n.unpair.2.unpair.2 < n := (Nat.unpair_right_le _).trans_lt (unpair_snd_lt h)
-    simp only [h, dite_false, ite_false, getD_map_range_of_lt _ (unpair_snd_lt h),
-      getD_map_range_of_lt _ h1, getD_map_range_of_lt _ h2]
+/-- `rc` decodes in one step from its children. -/
+theorem rc_spec (e : RExp (ℕ ⊕ ℕ)) :
+    ∃ ts, rcKids (rc e) = ts.map rc ∧ rcBuild (rc e) ts = some e := by
+  cases e with
+  | zero => exact ⟨[], by simp [rcKids, rc, cz], by simp [rcBuild, rc, cz]⟩
+  | one => exact ⟨[], by simp [rcKids, rc, co], by simp [rcBuild, rc, co]⟩
+  | sym x => exact ⟨[], by simp [rcKids, rc, cs], by simp [rcBuild, rc, cs, symDec_symC]⟩
+  | plus e f => exact ⟨[e, f], by simp [rcKids, rc, cp], by simp [rcBuild, rc, cp, Option.elim]⟩
+  | mul e f => exact ⟨[e, f], by simp [rcKids, rc, cm], by simp [rcBuild, rc, cm, Option.elim]⟩
+  | star e => exact ⟨[e], by simp [rcKids, rc, ct], by simp [rcBuild, rc, ct, Option.elim]⟩
+
+theorem rcKids_primrec : Primrec rcKids := by unfold rcKids; fun_prop
+
+theorem rcBuild_primrec : Primrec fun q : ℕ × List (RExp (ℕ ⊕ ℕ)) => rcBuild q.1 q.2 := by
+  have := symDec_primrec
+  unfold rcBuild
+  fun_prop
+
+/-- The decoder of `rc`, from `TaggedCode`. -/
+abbrev rcDec : ℕ → Option (RExp (ℕ ⊕ ℕ)) := TaggedCode.decode rcKids rcKids_lt rcBuild
+
+/-- **`rcDec` decodes `rc`.** -/
+theorem rcDec_rc (e : RExp (ℕ ⊕ ℕ)) : rcDec (rc e) = some e :=
+  TaggedCode.decode_code rcKids rcKids_lt rcBuild rc_spec e
 
 /-- **The decoder of `rc` is primitive recursive.** -/
-theorem rcDec_primrec : Primrec rcDec := by
-  have hs : Primrec fun q : ℕ × List (Option (RExp (ℕ ⊕ ℕ))) => rcDecStep q.1 q.2 := by
-    have := symDec_primrec
-    unfold rcDecStep
-    fun_prop
-  have h := Primrec.nat_strong_rec (fun (_ : Unit) n => rcDec n)
-    (g := fun _ T => some (rcDecStep T.length T))
-    (Primrec.option_some.comp (hs.comp ((prim_length Primrec.snd).pair Primrec.snd)))
-    (fun _ n => by rw [List.length_map, List.length_range, ← rcDec_eq])
-  exact h.comp (Primrec.const ()) Primrec.id
+theorem rcDec_primrec : Primrec rcDec :=
+  TaggedCode.decode_primrec rcKids rcKids_lt rcBuild rcKids_primrec rcBuild_primrec
 
 /-- **`rc` is a correct encoding.** A function into expressions is primitive recursive exactly
 when it is so through `rc`: the hand-made code and the `Primcodable` encoding are primitive
-recursively isomorphic (`rc_primrec`, `rcDec_primrec`, `rcDec_rc`). -/
+recursively isomorphic. -/
 theorem primrec_iff_rc {β : Type} [Primcodable β] {f : β → RExp (ℕ ⊕ ℕ)} :
-    Primrec f ↔ Primrec fun b => rc (f b) := by
-  refine ⟨fun h => rc_primrec.comp h, fun h => ?_⟩
-  have hs : ∀ b, (rcDec (rc (f b))).isSome := fun b => by rw [rcDec_rc]; rfl
-  exact (Primrec.option_get (h := hs) (rcDec_primrec.comp h)).of_eq fun b => by
-    simp [rcDec_rc]
+    Primrec f ↔ Primrec fun b => rc (f b) :=
+  TaggedCode.primrec_iff rcKids rcKids_lt rcBuild rc_spec rc_primrec rcKids_primrec rcBuild_primrec
 
 end RExp
 
