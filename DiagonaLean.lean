@@ -46,6 +46,10 @@ import DiagonaLean.ModelLe.Basic
 import DiagonaLean.ModelLe.Reductions.Halt_to_ModelLe
 import DiagonaLean.ModelLe.Undecidable
 
+import DiagonaLean.SKIConv.Basic
+import DiagonaLean.SKIConv.Reductions.Halt_to_SKIConv
+import DiagonaLean.SKIConv.Undecidable
+
 import DiagonaLean.Foundations.UniversalTuringMachine.Basic
 import DiagonaLean.Foundations.UniversalTuringMachine.Translation
 
@@ -77,6 +81,12 @@ import DiagonaLean.Foundations.Computability.Compiler
 import DiagonaLean.Foundations.Computability.Computer
 import DiagonaLean.Foundations.Computability.CodeSim
 import DiagonaLean.Foundations.Computability.Inseparable
+import DiagonaLean.Foundations.Computability.ProofRace
+import DiagonaLean.Foundations.Computability.OutputSearch
+
+import DiagonaLean.Foundations.CombinatoryLogic.Code
+import DiagonaLean.Foundations.CombinatoryLogic.ProofSearch
+import DiagonaLean.Foundations.CombinatoryLogic.Race
 
 import DiagonaLean.Foundations.KleeneAlgebra.PreKleene
 import DiagonaLean.Foundations.KleeneAlgebra.PreKleeneNotKleene
