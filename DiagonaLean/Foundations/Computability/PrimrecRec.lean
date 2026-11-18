@@ -119,6 +119,12 @@ theorem primrec₂_of_nat_cov_eqns {f : α → ℕ → σ} (z : α → σ) (s : 
     | zero => simp [h0]
     | succ n => simp [hs]
 
+/-- A function is primitive recursive if it is so paired with its argument; `primrec_rec` uses
+this for paramorphisms, where a right-hand side also uses the subterms themselves. -/
+theorem primrec₂_of_pair {T : Type*} [Primcodable T] {f : α → T → σ}
+    (h : Primrec₂ fun p t => (t, f p t)) : Primrec₂ f :=
+  Primrec.snd.comp h
+
 /-! ### The tactic -/
 
 open Lean Meta Elab Tactic
@@ -286,9 +292,35 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
           | throwError "primrec_rec: the equation `{e}` does not match a constructor"
         pure c
       byCtor := byCtor.insert c e
+    -- a paramorphism: some right-hand side uses a subterm outside a recursive call
+    let para ← eqns.anyM fun e => withEqn e k fun _ ps pat rhs => do
+      let fields := pat.getAppArgs.filter (·.isFVar)
+      let recFields ← fields.filterM fun x => do isDefEq (← inferType x) recTy
+      let rhs' ← Meta.transform rhs (pre := fun t => do
+        if t.isAppOfArity fn (k + 1) && t.getAppArgs[:k].toArray == ps then
+          return .done (mkConst ``Unit.unit)
+        return .continue)
+      return recFields.any fun r => (rhs'.find? (· == r)).isSome
+    -- for a paramorphism, prove the pair `(t, f p t)` primitive recursive instead
+    let σ₀ ← withEqn eqns[0]! k fun _ _ _ rhs => inferType rhs
+    let goal₃ ← if !para then pure goal₂ else do
+      let F₃ ← withLocalDeclD `a P fun a => withLocalDeclD `t recTy fun t => do
+        mkLambdaFVars #[a, t] (← mkAppM ``Prod.mk #[t, (mkApp2 F₂ a t).headBeta])
+      let g₃ ← mkFreshExprMVar (← mkAppM ``Primrec₂ #[F₃])
+      let br ← mkConstWithFreshMVarLevels ``primrec₂_of_pair
+      let (bmvs, bbis, bconcl) ← forallMetaTelescopeReducing (← inferType br)
+      unless ← isDefEq bconcl (← goal₂.getType) do
+        throwError "primrec_rec: internal error (paramorphism)"
+      for mv in bmvs, bi in bbis do
+        if bi.isInstImplicit && !(← mv.mvarId!.isAssigned) then
+          unless ← isDefEq mv (← synthInstance (← inferType mv)) do
+            throwError "primrec_rec: could not synthesize `{← inferType mv}`"
+      unless ← isDefEq bmvs.back! g₃ do throwError "primrec_rec: internal error (paramorphism)"
+      goal₂.assign (mkAppN br bmvs)
+      pure g₃.mvarId!
     let lem ← mkConstWithFreshMVarLevels lemName
     let (mvs, bis, concl) ← forallMetaTelescopeReducing (← inferType lem)
-    unless ← isDefEq concl (← goal₂.getType) do
+    unless ← isDefEq concl (← goal₃.getType) do
       throwError "primrec_rec: could not match `{lemName}` with the goal"
     for mv in mvs, bi in bis do
       if bi.isInstImplicit && !(← mv.mvarId!.isAssigned) then
@@ -301,15 +333,24 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
       -- an equation hypothesis `∀ p fields, f p (c fields) = ?g p data [f p r, …]`
       let info? ← forallTelescopeReducing ty fun _ body => do
         let some (_, lhs, rhs) := body.eq? | return none
-        let lhs ← whnfR lhs.headBeta
-        let .const c _ := lhs.appArg!.getAppFn | return none
+        -- the constructor: the first subterm headed by a constructor of `T` (for a paramorphism
+        -- the left-hand side is the pair `(c fields, f p (c fields))`)
+        let env ← getEnv
+        let isCtor (t : Expr) : Bool := match t.getAppFn with
+          | .const n _ => match env.find? n with
+            | some (.ctorInfo ci) => ci.induct == tName
+            | _ => false
+          | _ => false
+        let some ct := lhs.find? isCtor | return none
+        let .const c _ := ct.getAppFn | return none
         unless rhs.getAppFn.isMVar do return none
         return some (c, rhs.getAppFn)
       let some (c, gmv) := info? | continue
       let some e := byCtor.get? c
         | throwError "primrec_rec: `{fn}` has no equation for the constructor `{c}`"
-      -- `g`: the right-hand side over the packed parameter, with recursive calls looked up
-      let σ ← withEqn e k fun _ _ _ rhs => inferType rhs
+      -- `g`: the right-hand side over the packed parameter, with recursive calls looked up; for a
+      -- paramorphism, the entries are pairs `(subterm, result)`, and `g` also rebuilds the node
+      let σ ← if para then mkAppM ``Prod #[recTy, σ₀] else pure σ₀
       let listσ ← mkAppM ``List #[σ]
       let dflt ← mkAppOptM ``Inhabited.default #[σ, none]
       let g ← withLocalDeclD `a P fun a => withLocalDeclD `rs listσ fun rs => do
@@ -318,21 +359,40 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
           let fields := pat.getAppArgs.filter (·.isFVar)
           let recFields ← fields.filterM fun x => do isDefEq (← inferType x) recTy
           let dataFields ← fields.filterM fun x => return !(recFields.contains x)
+          let entry (j : ℕ) : MetaM Expr := mkAppM ``List.getD #[rs, mkNatLit j, dflt]
           let rhs' ← Meta.transform rhs (pre := fun t => do
             if t.isAppOfArity fn (k + 1) && t.getAppArgs[:k].toArray == ps then
               match recFields.idxOf? t.appArg! with
-              | some j => return .done (← mkAppM ``List.getD #[rs, mkNatLit j, dflt])
+              | some j =>
+                return .done (← if para then mkAppM ``Prod.snd #[← entry j] else entry j)
               | none => return .continue
             return .continue)
           if (rhs'.find? (·.isConstOf fn)).isSome then
             throwError "primrec_rec: `{fn}` calls itself on something other than a direct \
               subterm (only structural recursion on `{tName}` is supported)"
-          mkLambdaFVars (#[a] ++ dataFields ++ #[rs]) (rhs'.replaceFVars ps pa)
+          let body ← if !para then pure rhs' else do
+            let subs ← (List.range recFields.size).toArray.mapM fun j => do
+              mkAppM ``Prod.fst #[← entry j]
+            let rhs'' := rhs'.replaceFVars recFields subs
+            let node := pat.replaceFVars recFields subs
+            mkAppM ``Prod.mk #[node, rhs'']
+          mkLambdaFVars (#[a] ++ dataFields ++ #[rs]) (body.replaceFVars ps pa)
       unless ← isDefEq gmv g do
         throwError "primrec_rec: the equation `{e}` does not fit `{lemName}`"
-      unless ← isDefEq mv (← eqnOverPack e P k) do
-        throwError "primrec_rec: the equation `{e}` does not have the expected form"
-    goal₂.assign (mkAppN lem mvs)
+      if para then
+        -- prove `(c fields, f p (c fields)) = g p data [(r, f p r), …]` from the equation
+        let eqId := mkIdent e
+        setGoals [mv.mvarId!]
+        evalTactic (← `(tactic| (intros; first
+          | (simp only [$eqId:ident, List.getD_cons_zero, List.getD_cons_succ]; done)
+          | (simp only [$eqId:ident, List.getD_cons_zero, List.getD_cons_succ]; rfl)
+          | simp [$eqId:ident])))
+        unless (← getGoals).isEmpty do
+          throwError "primrec_rec: could not prove the paired equation for `{e}`"
+      else
+        unless ← isDefEq mv (← eqnOverPack e P k) do
+          throwError "primrec_rec: the equation `{e}` does not have the expected form"
+    goal₃.assign (mkAppN lem mvs)
     let open_ ← mvs.filterM fun mv => return !(← mv.mvarId!.isAssigned)
     finish (open_.map Expr.mvarId!)
     return

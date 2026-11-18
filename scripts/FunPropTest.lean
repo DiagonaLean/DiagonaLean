@@ -328,4 +328,27 @@ inductive Box (α : Type) | mk (a : α)
 #guard_msgs in
 derive_primcodable Box
 
+/-! ### Paramorphisms: right-hand sides that use the subterms themselves -/
+
+instance : Inhabited Cslib.SKI := ⟨.S⟩
+def sameSides : Cslib.SKI → ℕ
+  | .S => 0
+  | .K => 0
+  | .I => 0
+  | .app x y => if x = y then 1 else sameSides x + sameSides y
+example : Primrec sameSides := by primrec_rec
+
+inductive Tree3 | leaf (n : ℕ) | node (l r : Tree3)
+  deriving DecidableEq
+derive_primcodable Tree3
+instance : Inhabited Tree3 := ⟨.leaf 0⟩
+def leftmost : Tree3 → Tree3
+  | .leaf n => .leaf n
+  | .node l _ => leftmost l
+example : Primrec leftmost := by primrec_rec
+def countEq (k : ℕ) : Tree3 → ℕ
+  | .leaf n => if n = k then 1 else 0
+  | .node l r => (if l = r then 1 else 0) + countEq k l + countEq k r
+example : Primrec₂ countEq := by primrec_rec
+
 end Derive
