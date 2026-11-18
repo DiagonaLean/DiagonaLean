@@ -74,13 +74,7 @@ theorem listOf_numOf (l : List Bool) : listOf (numOf l) = l := by
   simp [listOf, bitsOf_numOf]
 
 theorem numOf_prim : Primrec numOf := by
-  unfold numOf
-  have h : Primrec₂ fun (_ : List Bool) (y : ℕ × Bool) => 2 * y.1 + y.2.toNat := by
-    apply Primrec₂.mk
-    have hb : Primrec fun z : List Bool × (ℕ × Bool) => z.2.2.toNat :=
-      (Primrec.dom_finite Bool.toNat).comp (prim_snd Primrec.snd)
-    exact prim_add (prim_mul (Primrec.const 2) (prim_fst Primrec.snd)) hb
-  exact Primrec.list_foldl Primrec.id (Primrec.const 1) h
+  unfold numOf; fun_prop
 
 theorem listOf_prim : Primrec listOf :=
   prim_tail (prim_reverse bitsOf_prim)

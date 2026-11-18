@@ -575,14 +575,13 @@ variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
   prim_pair (prim_cs hf) (prim_cp (Primrec.const _) (prim_cs hf))
 
 /-- `psum` applied to a primitive recursive function is primitive recursive. -/
-@[fun_prop] theorem prim_psum {f : α → List P} (hf : Primrec f) : Primrec fun x => psum (f x) :=
-  Primrec.list_foldr (h := fun _ y => pp y.1 y.2) hf (Primrec.const pz)
-    (Primrec₂.mk (prim_pp (prim_fst Primrec.snd) (prim_snd Primrec.snd)))
+@[fun_prop] theorem prim_psum {f : α → List P} (hf : Primrec f) : Primrec fun x => psum (f x) := by
+  unfold psum; fun_prop
 
 /-- `pprod` applied to a primitive recursive function is primitive recursive. -/
-@[fun_prop] theorem prim_pprod {f : α → List P} (hf : Primrec f) : Primrec fun x => pprod (f x) :=
-  Primrec.list_foldr (h := fun _ y => pm y.1 y.2) hf (Primrec.const po)
-    (Primrec₂.mk (prim_pm (prim_fst Primrec.snd) (prim_snd Primrec.snd)))
+@[fun_prop] theorem prim_pprod {f : α → List P} (hf : Primrec f) :
+    Primrec fun x => pprod (f x) := by
+  unfold pprod; fun_prop
 
 /-- `lw` applied to a primitive recursive function is primitive recursive. -/
 @[fun_prop] theorem prim_lw {f : α → List ℕ} (hf : Primrec f) : Primrec fun x => lw (f x) :=

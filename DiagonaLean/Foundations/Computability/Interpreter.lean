@@ -123,9 +123,10 @@ theorem bitsStep_prim : Primrec bitsStep := by
   unfold bitsStep
   fun_prop
 
-theorem bitsOf_prim : Primrec bitsOf :=
-  prim_snd (Primrec.nat_iterate Primrec.id (prim_pair Primrec.id (Primrec.const []))
-    (Primrec₂.mk (bitsStep_prim.comp Primrec.snd)))
+attribute [fun_prop] bitsStep_prim
+
+theorem bitsOf_prim : Primrec bitsOf := by
+  unfold bitsOf; fun_prop
 
 theorem tapeOf_prim (B : Base) : Primrec (tapeOf B) := by
   unfold tapeOf

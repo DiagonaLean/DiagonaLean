@@ -449,9 +449,14 @@ theorem stepS_prim (ka : Bool) : Primrec fun y : Stk × ℕ => stepS ka y.1 y.2 
       Primrec.fst
   exact h.of_eq fun y => (List.getD_eq_getElem?_getD ..).symm
 
+/-- `stepS ka` applied to primitive recursive functions is primitive recursive. -/
+@[fun_prop] theorem prim_stepS {α : Type*} [Primcodable α] (ka : Bool) {f : α → Stk} {g : α → ℕ}
+    (hf : Primrec f) (hg : Primrec g) : Primrec fun x => stepS ka (f x) (g x) :=
+  (stepS_prim ka).comp (hf.pair hg)
+
 /-- Running the program with code `k` from the empty stack is primitive recursive in `k`. -/
-theorem run_prim (ka : Bool) : Primrec fun k : ℕ => run ka (Denumerable.ofNat (List ℕ) k) [] :=
-  Primrec.list_foldl (Primrec.ofNat _) (Primrec.const []) ((stepS_prim ka).comp Primrec.snd).to₂
+theorem run_prim (ka : Bool) : Primrec fun k : ℕ => run ka (Denumerable.ofNat (List ℕ) k) [] := by
+  unfold run; fun_prop
 
 /-- `Checks ka` is a primitive recursive predicate. -/
 theorem checks_prim (ka : Bool) : PrimrecPred fun x : ℕ × ℕ × ℕ => Checks ka x.1 x.2.1 x.2.2 := by

@@ -32,7 +32,7 @@ own definitions with `@[fun_prop]`. -/
 
 attribute [fun_prop] Primrec PrimrecPred
 attribute [fun_prop] Primrec.id Primrec.const Primrec.comp PrimrecPred.comp PrimrecPred.not
-  PrimrecPred.or
+  PrimrecPred.or Primrec.ofNat
 
 section Prim
 
@@ -121,6 +121,19 @@ variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
     (hz : Primrec z) (hg : Primrec fun y : α × (β × γ) => g y.1 y.2.1 y.2.2) :
     Primrec fun x => (f x).foldr (g x) (z x) :=
   Primrec.list_foldr (h := fun a y => g a y.1 y.2) hf hz hg
+
+@[fun_prop] theorem prim_foldl {f : α → List β} {g : α → γ} {h : α → γ → β → γ} (hf : Primrec f)
+    (hg : Primrec g) (hh : Primrec fun y : α × (γ × β) => h y.1 y.2.1 y.2.2) :
+    Primrec fun x => (f x).foldl (h x) (g x) :=
+  Primrec.list_foldl (h := fun a y => h a y.1 y.2) hf hg hh
+
+@[fun_prop] theorem prim_iterate {f : α → ℕ} {g : α → β} {h : α → β → β} (hf : Primrec f)
+    (hg : Primrec g) (hh : Primrec fun y : α × β => h y.1 y.2) :
+    Primrec fun x => (h x)^[f x] (g x) :=
+  Primrec.nat_iterate hf hg hh
+
+@[fun_prop] theorem prim_boolToNat {f : α → Bool} (hf : Primrec f) :
+    Primrec fun x => (f x).toNat := (Primrec.dom_finite Bool.toNat).comp hf
 
 @[fun_prop] theorem prim_flatMap {f : α → List β} {g : α → β → List γ} (hf : Primrec f)
     (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).flatMap (g x) :=
