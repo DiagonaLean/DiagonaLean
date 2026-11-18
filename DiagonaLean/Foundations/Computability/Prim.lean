@@ -163,6 +163,27 @@ variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
 @[fun_prop] theorem prim_optionGetD {f : α → Option β} {g : α → β} (hf : Primrec f)
     (hg : Primrec g) : Primrec fun x => (f x).getD (g x) := Primrec.option_getD.comp hf hg
 
+@[fun_prop] theorem prim_sumElim {δ : Type*} [Primcodable δ] {o : α → β ⊕ δ} {f : α → β → γ}
+    {g : α → δ → γ} (ho : Primrec o) (hf : Primrec fun y : α × β => f y.1 y.2)
+    (hg : Primrec fun y : α × δ => g y.1 y.2) : Primrec fun x => (o x).elim (f x) (g x) :=
+  (Primrec.sumCasesOn ho hf hg).of_eq fun x => by cases o x <;> rfl
+
+@[fun_prop] theorem prim_finVal {n : ℕ} {f : α → Fin n} (hf : Primrec f) :
+    Primrec fun x => (f x).val := Primrec.fin_val.comp hf
+
+@[fun_prop] theorem prim_optionMap {f : α → Option β} {g : α → β → γ} (hf : Primrec f)
+    (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).map (g x) :=
+  Primrec.option_map hf hg
+
+@[fun_prop] theorem prim_sumInl {δ : Type*} [Primcodable δ] {f : α → β} (hf : Primrec f) :
+    Primrec fun x => (Sum.inl (f x) : β ⊕ δ) := Primrec.sumInl.comp hf
+
+@[fun_prop] theorem prim_sumInr {δ : Type*} [Primcodable δ] {f : α → δ} (hf : Primrec f) :
+    Primrec fun x => (Sum.inr (f x) : β ⊕ δ) := Primrec.sumInr.comp hf
+
+@[fun_prop] theorem prim_some {f : α → β} (hf : Primrec f) : Primrec fun x => some (f x) :=
+  Primrec.option_some.comp hf
+
 @[fun_prop] theorem prim_flatMap {f : α → List β} {g : α → β → List γ} (hf : Primrec f)
     (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).flatMap (g x) :=
   Primrec.list_flatMap hf hg.to₂

@@ -110,6 +110,7 @@ import DiagonaLean.KACommUndecidable.KleeneAlgebra.FreeKA
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.Inequality
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.Separation
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.ExprCode
+import DiagonaLean.KACommUndecidable.KleeneAlgebra.RExpPrimcodable
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.ProofSearch
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.Instance
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.InstanceCode
