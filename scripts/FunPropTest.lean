@@ -179,4 +179,63 @@ example : Primrec size := (fold_primrec (by fun_prop)).comp (Primrec.const ()) P
 example : Primrec₂ (fold (ar := binAr) fun (k : ℕ) b rs => if b then rs.foldr (· + ·) 0 else k) :=
   fold_primrec (by fun_prop)
 
+/-! ### Sanity check: `ℕ` and unary trees are primitive recursively isomorphic -/
+
+/-- Unary trees: shape `true` has one child, `false` none. -/
+def natAr (b : Bool) : ℕ := if b then 1 else 0
+instance : Fact (Primrec natAr) := ⟨by unfold natAr; fun_prop⟩
+
+/-- The leaf, `0`. -/
+def leafN : PTree Bool natAr := .node false Fin.elim0
+/-- A tree to a number. -/
+def toN : PTree Bool natAr → ℕ := fold (fun (_ : Unit) b rs => if b then rs.headI + 1 else 0) ()
+/-- A number to a tree. -/
+def ofN (n : ℕ) : PTree Bool natAr := (fun t => (mkOpt true [t]).getD leafN)^[n] leafN
+
+theorem step_eq (t : PTree Bool natAr) : (mkOpt true [t]).getD leafN = .node true fun _ => t := by
+  have h : [t].length = natAr true := rfl
+  rw [mkOpt, dite_eq_left_of_eq_true (eq_true h), Option.getD_some]
+  congr 1
+  funext i
+  have : i.val = 0 := by have := i.isLt; simp [natAr] at this; omega
+  simp [this]
+
+theorem toN_node (t : PTree Bool natAr) : toN (.node true fun _ => t) = toN t + 1 := by
+  rw [toN, fold]
+  simp [List.ofFn, natAr]
+  rfl
+
+/-- The round trip `ℕ → tree → ℕ` is the identity. -/
+theorem toN_ofN (n : ℕ) : toN (ofN n) = n := by
+  induction n with
+  | zero => rfl
+  | succ n ih => rw [ofN, Function.iterate_succ_apply', ← ofN, step_eq, toN_node, ih]
+
+/-- The round trip `tree → ℕ → tree` is the identity. -/
+theorem ofN_toN (t : PTree Bool natAr) : ofN (toN t) = t := by
+  induction t with
+  | node b cs ih =>
+    cases b with
+    | false =>
+      show ofN (toN (.node false cs)) = _
+      have hcs : cs = Fin.elim0 := funext fun i => (Fin.elim0 (i : Fin 0))
+      subst hcs
+      rfl
+    | true =>
+      have h0 : 0 < natAr true := by decide
+      have hcs : cs = fun _ => cs ⟨0, h0⟩ := funext fun i => by
+        congr 1; ext; have := i.isLt; simp [natAr] at this; omega
+      rw [hcs, toN_node, ofN, Function.iterate_succ_apply', ← ofN, ih ⟨0, h0⟩, step_eq]
+
+-- both directions are primitive recursive: the encodings agree up to a primitive recursive
+-- isomorphism
+example : Primrec toN := (fold_primrec (by fun_prop)).comp (Primrec.const ()) Primrec.id
+example : Primrec ofN := by unfold ofN; fun_prop
+
+/-! ### The paramorphism -/
+
+/-- The number of leaves, computed from the children themselves. -/
+example : Primrec₂ (para (ar := binAr) fun (_ : Unit) _ cs (_ : List ℕ) => cs.length) :=
+  para_primrec (by fun_prop)
+
 end PTree

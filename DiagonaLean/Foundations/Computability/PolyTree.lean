@@ -20,6 +20,13 @@ the encoding is canonical, `encode (decode n)` is `n + 1` when `n` is the code o
 otherwise, so the decoder is primitive recursive as soon as the set of codes is
 (`valid_primrec`), which is a course-of-values recursion.
 
+Building a node (`mkOpt`) and taking one apart (`shape`, `children`) are primitive recursive
+(`mkOpt_primrec`, `shape_primrec`, `children_primrec`). A fold with a primitive recursive step is
+primitive recursive (`fold_primrec`, Theorem B), and so is a paramorphism, whose step also sees the
+children (`para_primrec`). The fold is mirrored on codes (`codeFold`), which satisfies a
+course-of-values equation (`codeFold_eq`) and agrees with the fold on codes of trees
+(`codeFold_code`).
+
 `PTree` is its own inductive type rather than Mathlib's `WType`, which already has a different
 `Encodable` instance.
 -/
@@ -180,6 +187,38 @@ theorem isSome_decodeT (n : ℕ) : (decodeT (α := α) (ar := ar) n).isSome =
     cases ha : decode₂ α n.unpair.1 <;> cases hl' : decode₂ (List ℕ) n.unpair.2 <;>
       simp_all [Option.elim]
 
+/-- The node with shape `a` and children `l`, when `l` has `ar a` entries. -/
+def mkOpt (a : α) (l : List (PTree α ar)) : Option (PTree α ar) :=
+  if h : l.length = ar a then some (node a fun i => l[i.val]'(by have := i.isLt; omega)) else none
+
+/-- The shape of a node. -/
+def shape : PTree α ar → α
+  | node a _ => a
+
+/-- The children of a node, in order. -/
+def children : PTree α ar → List (PTree α ar)
+  | node _ cs => List.ofFn cs
+
+/-- `mkOpt` decodes the code it would have. -/
+theorem mkOpt_eq_decodeT (a : α) (l : List (PTree α ar)) :
+    mkOpt a l = decodeT (Nat.pair (encode a) (encode (l.map code))) := by
+  rw [mkOpt]
+  by_cases h : l.length = ar a
+  · rw [dite_eq_left_of_eq_true (eq_true h), ← decodeT_code, code]
+    congr 3
+    apply List.ext_getElem (by simp [h])
+    intro j hj₁ hj₂
+    simp
+  · rw [dite_eq_right_of_eq_false (eq_false h), decodeT, Nat.unpair_pair, encodek₂, encodek₂]
+    simp only
+    rw [dite_eq_right_of_eq_false (eq_false fun hl => h (by simpa using hl.1))]
+
+omit [Encodable α] in
+/-- Building a node from the list of its children. -/
+theorem mkOpt_ofFn (a : α) (cs : Fin (ar a) → PTree α ar) : mkOpt a (List.ofFn cs) = some (node a cs) := by
+  rw [mkOpt, dite_eq_left_of_eq_true (eq_true (List.length_ofFn))]
+  simp
+
 /-- Trees are `Encodable`, through `code` and `decodeT`. -/
 instance : Encodable (PTree α ar) where
   encode := code
@@ -228,6 +267,40 @@ instance primcodable [Fact (Primrec ar)] : Primcodable (PTree α ar) where
       fun_prop
     exact (Primrec.nat_iff.1 h).of_eq fun n => (encode_decodeT n).symm
 
+/-- **Building a node is primitive recursive.** -/
+theorem mkOpt_primrec [Fact (Primrec ar)] :
+    Primrec₂ (mkOpt (α := α) (ar := ar)) := by
+  have h : Primrec fun q : α × List (PTree α ar) =>
+      decode (α := PTree α ar) (Nat.pair (encode q.1) (encode (q.2.map encode))) := by fun_prop
+  exact h.of_eq fun q => (mkOpt_eq_decodeT q.1 q.2).symm
+
+/-- `mkOpt` applied to primitive recursive functions is primitive recursive. -/
+@[fun_prop] theorem prim_mkOpt [Fact (Primrec ar)] {β : Type} [Primcodable β] {f : β → α}
+    {g : β → List (PTree α ar)} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => mkOpt (f x) (g x) := mkOpt_primrec.comp hf hg
+
+/-- **The shape of a node is primitive recursive.** -/
+theorem shape_primrec [Fact (Primrec ar)] : Primrec (shape (α := α) (ar := ar)) := by
+  have h : Primrec fun t : PTree α ar => decode₂ α (encode t).unpair.1 := by fun_prop
+  refine (Primrec.option_get (h := fun t => ?_) h).of_eq fun t => ?_
+  · cases t; simp [encode, code]
+  · cases t; simp [encode, code, shape]
+
+/-- **The children of a node are primitive recursive.** -/
+theorem children_primrec [Fact (Primrec ar)] : Primrec (children (α := α) (ar := ar)) := by
+  have h : Primrec fun t : PTree α ar =>
+      ((decode₂ (List ℕ) (encode t).unpair.2).getD []).filterMap (decode (α := PTree α ar)) :=
+    Primrec.listFilterMap (by fun_prop) (Primrec.decode.comp Primrec.snd).to₂
+  refine h.of_eq fun t => ?_
+  cases t with
+  | node a cs =>
+    show ((decode₂ (List ℕ) (code (node a cs)).unpair.2).getD []).filterMap decodeT = _
+    simp only [code, Nat.unpair_pair, encodek₂, Option.getD_some, children]
+    have hc : (fun i => code (cs i)) = code ∘ cs := rfl
+    rw [hc, ← List.map_ofFn, List.filterMap_map]
+    have hd : (decodeT (α := α) (ar := ar) ∘ code) = some := funext decodeT_code
+    rw [hd, List.filterMap_some]
+
 end Prim
 
 section Fold
@@ -238,6 +311,10 @@ variable {P σ : Type}
 on its children, in order. -/
 def fold (step : P → α → List σ → σ) (p : P) : PTree α ar → σ
   | node a cs => step p a (List.ofFn fun i => fold step p (cs i))
+
+/-- The paramorphism: like `fold`, but the step also sees the children themselves. -/
+def para (step : P → α → List (PTree α ar) → List σ → σ) (p : P) : PTree α ar → σ
+  | node a cs => step p a (List.ofFn cs) (List.ofFn fun i => para step p (cs i))
 
 variable [Encodable α] [Inhabited σ]
 
@@ -339,6 +416,49 @@ theorem fold_primrec
     (fun p n => by rw [List.length_map, List.length_range, ← codeFold_eq])
   exact (hc.comp Primrec.fst (Primrec.encode.comp Primrec.snd)).of_eq fun q =>
     codeFold_code step q.1 q.2
+
+/-- The fold that computes each subtree together with the paramorphism on it. -/
+def paraPair (step : P → α → List (PTree α ar) → List σ → σ) (p : P) (a : α)
+    (rs : List (Option (PTree α ar) × σ)) : Option (PTree α ar) × σ :=
+  (mkOpt a (rs.filterMap Prod.fst), step p a (rs.filterMap Prod.fst) (rs.map Prod.snd))
+
+omit [Primcodable α] [Fact (Primrec ar)] [Primcodable P] [Primcodable σ] [Inhabited σ] in
+/-- `fold (paraPair step)` returns the tree and the paramorphism on it. -/
+theorem fold_paraPair (step : P → α → List (PTree α ar) → List σ → σ) (p : P) (t : PTree α ar) :
+    fold (paraPair step) p t = (some t, para step p t) := by
+  induction t with
+  | node a cs ih =>
+    rw [fold, para]
+    simp only [ih]
+    have h₁ : (List.ofFn fun i => ((some (cs i), para step p (cs i)) :
+        Option (PTree α ar) × σ)).filterMap Prod.fst = List.ofFn cs := by
+      rw [show (List.ofFn fun i => ((some (cs i), para step p (cs i)) : Option (PTree α ar) × σ)) =
+          (List.ofFn cs).map (fun t => ((some t, para step p t) : Option (PTree α ar) × σ)) by
+        rw [List.map_ofFn]; rfl, List.filterMap_map]
+      exact List.filterMap_some
+    have h₂ : (List.ofFn fun i => ((some (cs i), para step p (cs i)) :
+        Option (PTree α ar) × σ)).map Prod.snd = List.ofFn fun i => para step p (cs i) := by
+      rw [List.map_ofFn]; rfl
+    rw [paraPair, h₁, h₂, mkOpt_ofFn]
+
+/-- **Theorem B for the paramorphism.** A paramorphism with a primitive recursive step is
+primitive recursive, in the parameter and the tree. -/
+theorem para_primrec {step : P → α → List (PTree α ar) → List σ → σ}
+    (hstep : Primrec fun q : P × (α × (List (PTree α ar) × List σ)) =>
+      step q.1 q.2.1 q.2.2.1 q.2.2.2) :
+    Primrec₂ (para (ar := ar) step) := by
+  have hf : Primrec fun q : P × (α × List (Option (PTree α ar) × σ)) =>
+      q.2.2.filterMap Prod.fst :=
+    Primrec.listFilterMap (by fun_prop) (Primrec.fst.comp Primrec.snd).to₂
+  have hs : Primrec fun q : P × (α × List (Option (PTree α ar) × σ)) =>
+      paraPair step q.1 q.2.1 q.2.2 := by
+    unfold paraPair
+    refine Primrec.pair (mkOpt_primrec.comp (Primrec.fst.comp Primrec.snd) hf) ?_
+    have hm : Primrec fun q : P × (α × List (Option (PTree α ar) × σ)) =>
+        q.2.2.map Prod.snd := by fun_prop
+    exact hstep.comp (Primrec.fst.pair ((Primrec.fst.comp Primrec.snd).pair (hf.pair hm)))
+  exact (Primrec.snd.comp (fold_primrec hs)).of_eq fun q => by
+    simp only [fold_paraPair]
 
 end FoldPrim
 

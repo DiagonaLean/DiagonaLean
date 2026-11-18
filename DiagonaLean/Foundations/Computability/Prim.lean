@@ -32,7 +32,7 @@ own definitions with `@[fun_prop]`. -/
 
 attribute [fun_prop] Primrec PrimrecPred
 attribute [fun_prop] Primrec.id Primrec.const Primrec.comp PrimrecPred.comp PrimrecPred.not
-  PrimrecPred.or Primrec.ofNat Primrec.encode Primrec.decode₂
+  PrimrecPred.or Primrec.ofNat Primrec.encode Primrec.decode₂ Primrec.decode
 
 section Prim
 
@@ -159,6 +159,9 @@ variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
   induction f x with
   | nil => rfl
   | cons b l ih => simp [List.all_cons, ih]
+
+@[fun_prop] theorem prim_optionGetD {f : α → Option β} {g : α → β} (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => (f x).getD (g x) := Primrec.option_getD.comp hf hg
 
 @[fun_prop] theorem prim_flatMap {f : α → List β} {g : α → β → List γ} (hf : Primrec f)
     (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).flatMap (g x) :=
