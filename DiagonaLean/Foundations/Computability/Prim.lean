@@ -4,15 +4,17 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import Mathlib.Computability.PartrecBasis
+import Mathlib.Computability.Partrec
 import Mathlib.Tactic.FunProp
 
 @[expose] public section
 
 /-! # `fun_prop` for `Primrec` goals
 
-Registers `Primrec` and `PrimrecPred` with Mathlib's `fun_prop` tactic, so that `fun_prop` proves
-`Primrec` and `PrimrecPred` goals built from pairs, projections, arithmetic, list operations, folds
-and `if`. Later files tag the lemmas for their own definitions with `@[fun_prop]`, in
+Registers `Primrec`, `PrimrecPred` and `Computable` with Mathlib's `fun_prop` tactic, so that
+`fun_prop` proves such goals built from pairs, projections, arithmetic, list operations, folds and
+`if`. A `Primrec` goal is also a `Computable` goal, through the transition theorem
+`Primrec.to_comp`. Later files tag the lemmas for their own definitions with `@[fun_prop]`, in
 compositional form (`Primrec f → Primrec fun x => g (f x)`) or as `Primrec g`.
 
 A goal whose function contains codes built with `Nat.pair` from literals can time out, because
@@ -125,5 +127,103 @@ variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
   Primrec.list_flatMap hf hg.to₂
 
 end Prim
+
+/-! ### `fun_prop` for `Computable`
+
+The lambda theorems are Mathlib's `Computable.id`, `Computable.const`, `Computable.comp` and
+`Computable.pair`. Mathlib states most binary operations with `Computable₂`, which `fun_prop` does
+not see through, so they get compositional wrappers below. `Primrec.to_comp` is a transition
+theorem: a function that `fun_prop` proves `Primrec` is `Computable`.
+
+`fun_prop` decomposes an application before it tries a transition, so an operation whose arguments
+may be merely `Computable` needs a lemma at the `Computable` level. For `List.map`, `List.flatMap`
+and `List.foldr`, Mathlib has only `Primrec` versions; their `Computable`-level lemmas below take
+`Primrec` hypotheses, which `fun_prop` proves through the `Primrec` lemmas. -/
+
+attribute [fun_prop] Computable
+attribute [fun_prop] Computable.id Computable.const Computable.comp Computable.pair
+  Primrec.to_comp
+
+section Comp
+
+variable {α β γ σ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ] [Primcodable σ]
+
+@[fun_prop] theorem comp_fst {f : α → β × γ} (hf : Computable f) :
+    Computable fun x => (f x).1 := Computable.fst.comp hf
+
+@[fun_prop] theorem comp_snd {f : α → β × γ} (hf : Computable f) :
+    Computable fun x => (f x).2 := Computable.snd.comp hf
+
+@[fun_prop] theorem comp_natPair {f g : α → ℕ} (hf : Computable f) (hg : Computable g) :
+    Computable fun x => Nat.pair (f x) (g x) := Primrec₂.natPair.to_comp.comp hf hg
+
+@[fun_prop] theorem comp_unpair {f : α → ℕ} (hf : Computable f) :
+    Computable fun x => (f x).unpair := Computable.unpair.comp hf
+
+@[fun_prop] theorem comp_succ {f : α → ℕ} (hf : Computable f) :
+    Computable fun x => (f x).succ := Computable.succ.comp hf
+
+@[fun_prop] theorem comp_add {f g : α → ℕ} (hf : Computable f) (hg : Computable g) :
+    Computable fun x => f x + g x := Primrec.nat_add.to_comp.comp hf hg
+
+@[fun_prop] theorem comp_sub {f g : α → ℕ} (hf : Computable f) (hg : Computable g) :
+    Computable fun x => f x - g x := Primrec.nat_sub.to_comp.comp hf hg
+
+@[fun_prop] theorem comp_mul {f g : α → ℕ} (hf : Computable f) (hg : Computable g) :
+    Computable fun x => f x * g x := Primrec.nat_mul.to_comp.comp hf hg
+
+@[fun_prop] theorem comp_div {f g : α → ℕ} (hf : Computable f) (hg : Computable g) :
+    Computable fun x => f x / g x := Primrec.nat_div.to_comp.comp hf hg
+
+@[fun_prop] theorem comp_mod {f g : α → ℕ} (hf : Computable f) (hg : Computable g) :
+    Computable fun x => f x % g x := Primrec.nat_mod.to_comp.comp hf hg
+
+@[fun_prop] theorem comp_some {f : α → β} (hf : Computable f) :
+    Computable fun x => some (f x) := Computable.option_some.comp hf
+
+@[fun_prop] theorem comp_cons {f : α → β} {g : α → List β} (hf : Computable f)
+    (hg : Computable g) : Computable fun x => f x :: g x := Computable.list_cons.comp hf hg
+
+@[fun_prop] theorem comp_append {f g : α → List β} (hf : Computable f) (hg : Computable g) :
+    Computable fun x => f x ++ g x := Computable.list_append.comp hf hg
+
+/-- `List.append` written as a function rather than as `++`. -/
+@[fun_prop] theorem comp_append' {f g : α → List β} (hf : Computable f) (hg : Computable g) :
+    Computable fun x => (f x).append (g x) := Computable.list_append.comp hf hg
+
+@[fun_prop] theorem comp_length {f : α → List β} (hf : Computable f) :
+    Computable fun x => (f x).length := Computable.list_length.comp hf
+
+@[fun_prop] theorem comp_reverse {f : α → List β} (hf : Computable f) :
+    Computable fun x => (f x).reverse := Computable.list_reverse.comp hf
+
+@[fun_prop] theorem comp_cond {c : α → Bool} {f g : α → σ} (hc : Computable c)
+    (hf : Computable f) (hg : Computable g) :
+    Computable fun x => _root_.cond (c x) (f x) (g x) := Computable.cond hc hf hg
+
+@[fun_prop] theorem comp_ite {c : α → Prop} [DecidablePred c] {f g : α → σ} (hc : PrimrecPred c)
+    (hf : Computable f) (hg : Computable g) : Computable fun x => if c x then f x else g x :=
+  (Computable.cond hc.decide.to_comp hf hg).of_eq fun x => by by_cases h : c x <;> simp [h]
+
+@[fun_prop] theorem comp_getD {f : α → Option β} {g : α → β} (hf : Computable f)
+    (hg : Computable g) : Computable fun x => (f x).getD (g x) := Computable.option_getD hf hg
+
+/-- `List.map` at the `Computable` level, with `Primrec` hypotheses (see the section comment). -/
+@[fun_prop] theorem comp_map {f : α → List β} {g : α → β → γ} (hf : Primrec f)
+    (hg : Primrec fun y : α × β => g y.1 y.2) : Computable fun x => (f x).map (g x) :=
+  (prim_map hf hg).to_comp
+
+/-- `List.flatMap` at the `Computable` level, with `Primrec` hypotheses. -/
+@[fun_prop] theorem comp_flatMap {f : α → List β} {g : α → β → List γ} (hf : Primrec f)
+    (hg : Primrec fun y : α × β => g y.1 y.2) : Computable fun x => (f x).flatMap (g x) :=
+  (prim_flatMap hf hg).to_comp
+
+/-- `List.foldr` at the `Computable` level, with `Primrec` hypotheses. -/
+@[fun_prop] theorem comp_foldr {f : α → List β} {g : α → β → γ → γ} {z : α → γ}
+    (hf : Primrec f) (hz : Primrec z) (hg : Primrec fun y : α × (β × γ) => g y.1 y.2.1 y.2.2) :
+    Computable fun x => (f x).foldr (g x) (z x) :=
+  (prim_foldr hf hz hg).to_comp
+
+end Comp
 
 end DiagonaLean.Foundations.Computability

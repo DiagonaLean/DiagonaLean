@@ -16,6 +16,8 @@ jobs:
         run: lake env lean scripts/CheckReductions.lean
       - name: Check that the reduction checker rejects classical witnesses
         run: lake env lean scripts/CheckReductionsTest.lean
+      - name: Check that fun_prop proves Primrec and Computable goals
+        run: lake env lean scripts/FunPropTest.lean
       - name: Check that no metaprogram changes the environment
         run: python3 scripts/check_metaprograms.py
       - name: Check that the metaprogram check rejects an injected reduction
