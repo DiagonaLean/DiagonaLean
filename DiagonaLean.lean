@@ -85,11 +85,13 @@ import DiagonaLean.Foundations.Computability.OutputSearch
 import DiagonaLean.Foundations.CombinatoryLogic.Code
 import DiagonaLean.Foundations.CombinatoryLogic.ProofSearch
 import DiagonaLean.Foundations.CombinatoryLogic.Race
+import DiagonaLean.Foundations.CombinatoryLogic.Primcodable
 
 import DiagonaLean.Foundations.LambdaCalculus.Code
 import DiagonaLean.Foundations.LambdaCalculus.ProofSearch
 import DiagonaLean.Foundations.LambdaCalculus.Translation
 import DiagonaLean.Foundations.LambdaCalculus.Race
+import DiagonaLean.Foundations.LambdaCalculus.Primcodable
 
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.PreKleene
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.PreKleeneNotKleene

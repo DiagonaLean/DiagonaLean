@@ -205,12 +205,6 @@ theorem symDec_symC (x : ℕ ⊕ ℕ) : symDec (symC x) = x := by
 
 theorem symDec_primrec : Primrec symDec := by unfold symDec; fun_prop
 
-/-- The second component of a code with a positive tag is smaller than the code. -/
-theorem unpair_snd_lt {n : ℕ} (h : n.unpair.1 ≠ 0) : n.unpair.2 < n := by
-  have := lt_of_le_of_lt (Nat.right_le_pair 0 n.unpair.2)
-    (Nat.pair_lt_pair_left n.unpair.2 (Nat.pos_of_ne_zero h))
-  rwa [Nat.pair_unpair] at this
-
 /-- The child codes packed into an `rc` code. -/
 def rcKids (n : ℕ) : List ℕ :=
   if n.unpair.1 = 3 ∨ n.unpair.1 = 4 then [n.unpair.2.unpair.1, n.unpair.2.unpair.2]
@@ -223,10 +217,10 @@ theorem rcKids_lt (n : ℕ) : ∀ m ∈ rcKids n, m < n := by
   · have h : n.unpair.1 ≠ 0 := by omega
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hm
     rcases hm with rfl | rfl
-    · exact (Nat.unpair_left_le _).trans_lt (unpair_snd_lt h)
-    · exact (Nat.unpair_right_le _).trans_lt (unpair_snd_lt h)
+    · exact (Nat.unpair_left_le _).trans_lt (TaggedCode.unpair_snd_lt h)
+    · exact (Nat.unpair_right_le _).trans_lt (TaggedCode.unpair_snd_lt h)
   · simp only [List.mem_singleton] at hm
-    exact hm ▸ unpair_snd_lt (by omega)
+    exact hm ▸ TaggedCode.unpair_snd_lt (by omega)
   · simp at hm
 
 /-- One decoding step of `rc`: the node of code `n`, from its decoded children `ts`. -/

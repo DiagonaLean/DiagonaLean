@@ -26,6 +26,12 @@ primitive recursion (`primrec_iff`). The proof is a course-of-values recursion o
 
 namespace DiagonaLean.Foundations.Computability.TaggedCode
 
+/-- The payload of a code with a positive tag is smaller than the code. -/
+theorem unpair_snd_lt {n : ℕ} (h : n.unpair.1 ≠ 0) : n.unpair.2 < n := by
+  have := lt_of_le_of_lt (Nat.right_le_pair 0 n.unpair.2)
+    (Nat.pair_lt_pair_left n.unpair.2 (Nat.pos_of_ne_zero h))
+  rwa [Nat.pair_unpair] at this
+
 variable {T : Type} (kids : ℕ → List ℕ) (hk : ∀ n, ∀ m ∈ kids n, m < n)
   (step : ℕ → List T → Option T)
 
