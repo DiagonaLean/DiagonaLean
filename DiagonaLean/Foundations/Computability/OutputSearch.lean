@@ -3,8 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Claude Opus
 -/
 
-import DiagonaLean.Foundations.Computability.HaltSearch
+import DiagonaLean.Foundations.Computability.CodeSim
 import DiagonaLean.Halt.Helpers
+import DiagonaLean.Halt.Inseparable
 
 @[expose] public section
 
@@ -16,8 +17,10 @@ an input (`dataOf`), the table records what the machine writes on its halting st
 machine outputs `[b]` then `readOut` returns `1` for `true` and `0` for `false`
 (`mem_readOut`). A program computing `readOut` exists (`exists_isReader`).
 
-The code of a machine (`dataC`) does not record what the machine writes on its halting step, so
-the reader runs on `dataOf`, which uses the machine's transition table.
+The same holds on the data `dataC w` computed from a machine code `w`, which records every
+transition, halting ones included: if `M` outputs `[b]` on its own code, `readOut` returns `b` on
+`dataC (encodeBoolTM M)` (`selfOut_mem`). Unlike `dataOf`, `dataC` is primitive recursive in the
+code, so this form composes with primitive recursive maps on codes.
 -/
 
 namespace DiagonaLean.Foundations.Computability
@@ -102,5 +105,49 @@ theorem mem_eval_of_outputs {c : Code} (hc : IsReader c) {M : EncodableTM Bool} 
     (if b then 1 else 0) ∈ c.eval (Encodable.encode (dataOf (M, w))) := by
   rw [hc, Denumerable.ofNat_encode]
   exact mem_readOut h
+
+/-- A halted numeric configuration does not change. -/
+theorem sstep_halt (rows : List (ℕ × ℕ)) {c : SC} (h : c.1 = 0) : sstep rows c = c := by
+  simp [sstep, h]
+
+/-- After the machine halts, the numeric configuration stays the same. -/
+theorem iterate_sstep_of_le {d : List (ℕ × ℕ) × SC} {k₀ k : ℕ} (h₀ : Test d k₀) (hk : k₀ ≤ k) :
+    (sstep d.1)^[k] d.2 = (sstep d.1)^[k₀] d.2 := by
+  obtain ⟨j, rfl⟩ := Nat.exists_eq_add_of_le hk
+  clear hk
+  induction j with
+  | zero => rfl
+  | succ j ih =>
+    rw [← Nat.add_assoc, Function.iterate_succ_apply', ih, sstep_halt _ h₀]
+
+/-- If the machine has halted after `k` steps, `readOut` reads the head at step `k`. -/
+theorem mem_readOut_of_test {d : List (ℕ × ℕ) × SC} {k : ℕ} (hk : Test d k) :
+    outBit ((sstep d.1)^[k] d.2) ∈ readOut d := by
+  classical
+  have hex : ∃ k, Test d k := ⟨k, hk⟩
+  rw [iterate_sstep_of_le (Nat.find_spec hex) (Nat.find_min' hex hk)]
+  refine (Part.mem_map_iff _).2 ⟨_, Nat.mem_rfind.2 ⟨?_, fun {m} hm => ?_⟩, rfl⟩
+  · simpa using Nat.find_spec hex
+  · simpa using Nat.find_min hex hm
+
+attribute [local instance] EncodableTM.stateEncodable
+
+open DiagonaLean.Halt.Inseparable in
+/-- **`readOut` reads the output of a machine run on its own code**, from the data `dataC` of the
+code. -/
+theorem selfOut_mem {b : Bool} {M : EncodableTM Bool} (h : SelfOut b M) :
+    (if b then 1 else 0) ∈ readOut (dataC (encodeBoolTM M)) := by
+  obtain ⟨k, hk⟩ := (outputs_iff_dstep _ _).1 h
+  obtain ⟨h₀, ht⟩ := (cfgOf_eq_haltCfg_iff _ _).1 hk
+  have hrun : (sstep (dataC (encodeBoolTM M)).1)^[k] (dataC (encodeBoolTM M)).2 =
+      absD ((dstep M.toSingleTapeTM)^[k] (initData (encodeBoolTM M) : Data M.toSingleTapeTM)) := by
+    simp only [dataC_code]
+    rw [rowsC_eq_rowsE, iterate_absD]
+  have hh : ((dstep M.toSingleTapeTM)^[k] (initData (encodeBoolTM M) : Data M.toSingleTapeTM)).h =
+      some b := by simpa [BiTape.mk₁] using congrArg BiTape.head ht
+  have hm := mem_readOut_of_test (d := dataC (encodeBoolTM M)) (k := k)
+    (show (_ : SC).1 = 0 by rw [hrun]; exact h₀)
+  rw [hrun] at hm
+  cases b <;> simpa [outBit, absD, hc, hh] using hm
 
 end DiagonaLean.Foundations.Computability
