@@ -162,27 +162,50 @@ private def packType : List Expr → MetaM Expr
   | [t] => pure t
   | t :: ts => do mkAppM ``Prod #[t, ← packType ts]
 
+/-- The fixed leading arguments of the definition: its implicit and instance arguments (such as the
+`α` of `hashL {α}`), with its universe levels. They are the same in every equation and every
+recursive call, so equation lemmas are instantiated with them before anything else. -/
+private structure Fixed where
+  /-- The universe levels. -/
+  lvls : List Level
+  /-- The fixed arguments. -/
+  args : Array Expr
+
+/-- Equation lemma `e`, applied to the fixed arguments. -/
+private def Fixed.eqn (fx : Fixed) (e : Name) : Expr := mkAppN (mkConst e fx.lvls) fx.args
+
+/-- The type of `fx.eqn e`. -/
+private def Fixed.eqnType (fx : Fixed) (e : Name) : MetaM Expr := do
+  instantiateForall (← inferType (mkConst e fx.lvls)) fx.args
+
+/-- `t` is a recursive call of `fn` with the fixed arguments, the parameters `ps` and some last
+argument. -/
+private def isRecCall (fn : Name) (fx : Fixed) (ps : Array Expr) (t : Expr) : Bool :=
+  t.isAppOfArity fn (fx.args.size + ps.size + 1) &&
+    t.getAppArgs[:fx.args.size].toArray == fx.args &&
+    t.getAppArgs[fx.args.size:fx.args.size + ps.size].toArray == ps
+
 /-- Runs `k` on the parts of equation lemma `e` for a function with `n` parameters: its binders,
 parameters, pattern and right-hand side. These are only valid inside `k`. -/
-private def withEqn {β : Type} (e : Name) (n : ℕ)
+private def withEqn {β : Type} (fx : Fixed) (e : Name) (n : ℕ)
     (k : Array Expr → Array Expr → Expr → Expr → MetaM β) : MetaM β := do
-  forallTelescopeReducing (← inferType (mkConst e)) fun xs body => do
+  forallTelescopeReducing (← fx.eqnType e) fun xs body => do
     unless (← xs.allM fun x => return !(← isProp (← inferType x))) do
       throwError "primrec_rec: `{e}` has hypotheses (overlapping patterns are not supported)"
     let some (_, lhs, rhs) := body.eq? | throwError "primrec_rec: `{e}` is not an equation"
-    let args := lhs.getAppArgs
+    let args := lhs.getAppArgs[fx.args.size:].toArray
     unless args.size == n + 1 do throwError "primrec_rec: unexpected equation `{body}`"
     let params := args[:n].toArray
     unless params.all (·.isFVar) do throwError "primrec_rec: unsupported parameters in `{e}`"
     k xs params args[n]! rhs
 
 /-- `fun a ys => e (projs a) ys`: equation lemma `e`, restated over the packed parameter `a`. -/
-private def eqnOverPack (e : Name) (P : Expr) (n : ℕ) : MetaM Expr :=
+private def eqnOverPack (fx : Fixed) (e : Name) (P : Expr) (n : ℕ) : MetaM Expr :=
   withLocalDeclD `a P fun a => do
     let pa ← projs a n
-    let ty ← instantiateForall (← inferType (mkConst e)) pa
+    let ty ← instantiateForall (← fx.eqnType e) pa
     forallTelescopeReducing ty fun ys _ =>
-      mkLambdaFVars (#[a] ++ ys) (mkAppN (mkConst e) (pa ++ ys))
+      mkLambdaFVars (#[a] ++ ys) (mkAppN (fx.eqn e) (pa ++ ys))
 
 /-- Applies the lemma `lemName` to `goal`, with `assign` giving the values of named arguments;
 returns the arguments that remain open. -/
@@ -216,27 +239,36 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
     if tgt.isAppOfArity ``Primrec 5 then pure (false, tgt.appArg!)
     else if tgt.isAppOfArity ``Primrec₂ 7 then pure (true, tgt.appArg!)
     else throwError "primrec_rec: the goal is not `Primrec f` or `Primrec₂ f`"
-  -- the definition: `F` itself, or the head of `fun p x => f p.1 … x`
-  let fn ← match F with
-    | .const n _ => pure n
-    | _ => lambdaTelescope F fun _ body => do
-      let .const n _ := body.getAppFn
-        | throwError "primrec_rec: `{F}` is not a definition applied to its arguments"
-      pure n
+  -- the definition: the head of `F` (`f`, `@f α`, or `fun p x => @f α p.1 … x`)
+  let head ← lambdaTelescope F fun _ body => pure body
+  let .const fn lvls := head.getAppFn
+    | throwError "primrec_rec: `{F}` is not a definition applied to its arguments"
   let some eqns ← getEqnsFor? fn
     | throwError "primrec_rec: `{fn}` has no equation lemmas"
-  let fnE := mkConst fn
+  -- its leading implicit and instance arguments are fixed
+  let nf ← forallTelescopeReducing (← inferType (mkConst fn lvls)) fun xs _ => do
+    let mut i := 0
+    for x in xs do
+      if (← x.fvarId!.getBinderInfo).isExplicit then break
+      i := i + 1
+    pure i
+  unless head.getAppNumArgs ≥ nf do
+    throwError "primrec_rec: `{F}` does not fix the implicit arguments of `{fn}`"
+  let fx : Fixed := { lvls, args := head.getAppArgs[:nf].toArray }
+  if (fx.args.any fun a => a.hasLooseBVars) then
+    throwError "primrec_rec: the implicit arguments of `{fn}` depend on the parameters"
+  let fnE := mkAppN (mkConst fn lvls) fx.args
   -- the number of parameters, their types, and the type recursed on
   let (k, paramTys, recTy) ←
-    forallTelescopeReducing (← inferType (mkConst eqns[0]!)) fun _ body => do
+    forallTelescopeReducing (← fx.eqnType eqns[0]!) fun _ body => do
       let some (_, lhs, _) := body.eq? | throwError "primrec_rec: `{eqns[0]!}` is not an equation"
-      let args := lhs.getAppArgs
+      let args := lhs.getAppArgs[nf:].toArray
       let tys ← args[:args.size - 1].toArray.mapM fun x => inferType x
       pure (args.size - 1, tys.toList, ← whnfR (← inferType args.back!))
   if !two && k != 0 then
     throwError "primrec_rec: `{fn}` has parameters; state the goal as `Primrec₂ …`"
   if two && k == 0 then throwError "primrec_rec: `{fn}` has no parameter; state `Primrec {fn}`"
-  if two && k ≥ 2 && F.isConst then
+  if two && k ≥ 2 && !F.isLambda then
     throwError "primrec_rec: `{fn}` has {k} parameters; state the goal with them packed, as \
       `Primrec₂ fun (p : _ × _) x => {fn} p.1 p.2 x`"
   let P ← packType paramTys
@@ -254,7 +286,7 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
   -- `z`: the right-hand side of equation `i`, over the packed parameter
   let mkZ (i : ℕ) : MetaM Expr := withLocalDeclD `a P fun a => do
     let pa ← projs a k
-    withEqn eqns[i]! k fun _ ps _ rhs => do
+    withEqn fx eqns[i]! k fun _ ps _ rhs => do
       if (rhs.find? (·.isConstOf fn)).isSome then
         throwError "primrec_rec: the base case of `{fn}` is recursive"
       mkLambdaFVars #[a] (rhs.replaceFVars ps pa)
@@ -264,7 +296,7 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
     let z ← mkZ 0
     let s ← withLocalDeclD `a P fun a => do
       let pa ← projs a k
-      withEqn eqns[1]! k fun _ ps pat rhs => do
+      withEqn fx eqns[1]! k fun _ ps pat rhs => do
         unless pat.isAppOfArity ``List.cons 3 do
           throwError "primrec_rec: `{fn}` does not recurse on `[]` and `b :: l`"
         let (b, l) := (pat.appFn!.appArg!, pat.appArg!)
@@ -274,7 +306,7 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
         withLocalDeclD `r (← inferType rhs) fun r =>
           mkLambdaFVars #[a, b, l, r] ((abst.instantiate1 r).replaceFVars ps pa)
     let rest ← applyLemma goal₂ ``primrec₂_of_list_eqns [(`f, F₂), (`z, z), (`s, s),
-      (`h0, ← eqnOverPack eqns[0]! P k), (`hs, ← eqnOverPack eqns[1]! P k)]
+      (`h0, ← eqnOverPack fx eqns[0]! P k), (`hs, ← eqnOverPack fx eqns[1]! P k)]
     finish rest
     return
   unless recTy.isConstOf ``Nat do
@@ -287,22 +319,22 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
     -- the equation lemma of each constructor
     let mut byCtor : Std.HashMap Name Name := {}
     for e in eqns do
-      let c ← withEqn e k fun _ _ pat _ => do
+      let c ← withEqn fx e k fun _ _ pat _ => do
         let .const c _ := pat.getAppFn
           | throwError "primrec_rec: the equation `{e}` does not match a constructor"
         pure c
       byCtor := byCtor.insert c e
     -- a paramorphism: some right-hand side uses a subterm outside a recursive call
-    let para ← eqns.anyM fun e => withEqn e k fun _ ps pat rhs => do
+    let para ← eqns.anyM fun e => withEqn fx e k fun _ ps pat rhs => do
       let fields := pat.getAppArgs.filter (·.isFVar)
       let recFields ← fields.filterM fun x => do isDefEq (← inferType x) recTy
       let rhs' ← Meta.transform rhs (pre := fun t => do
-        if t.isAppOfArity fn (k + 1) && t.getAppArgs[:k].toArray == ps then
+        if isRecCall fn fx ps t then
           return .done (mkConst ``Unit.unit)
         return .continue)
       return recFields.any fun r => (rhs'.find? (· == r)).isSome
     -- for a paramorphism, prove the pair `(t, f p t)` primitive recursive instead
-    let σ₀ ← withEqn eqns[0]! k fun _ _ _ rhs => inferType rhs
+    let σ₀ ← withEqn fx eqns[0]! k fun _ _ _ rhs => inferType rhs
     let goal₃ ← if !para then pure goal₂ else do
       let F₃ ← withLocalDeclD `a P fun a => withLocalDeclD `t recTy fun t => do
         mkLambdaFVars #[a, t] (← mkAppM ``Prod.mk #[t, (mkApp2 F₂ a t).headBeta])
@@ -355,13 +387,13 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
       let dflt ← mkAppOptM ``Inhabited.default #[σ, none]
       let g ← withLocalDeclD `a P fun a => withLocalDeclD `rs listσ fun rs => do
         let pa ← projs a k
-        withEqn e k fun _ ps pat rhs => do
+        withEqn fx e k fun _ ps pat rhs => do
           let fields := pat.getAppArgs.filter (·.isFVar)
           let recFields ← fields.filterM fun x => do isDefEq (← inferType x) recTy
           let dataFields ← fields.filterM fun x => return !(recFields.contains x)
           let entry (j : ℕ) : MetaM Expr := mkAppM ``List.getD #[rs, mkNatLit j, dflt]
           let rhs' ← Meta.transform rhs (pre := fun t => do
-            if t.isAppOfArity fn (k + 1) && t.getAppArgs[:k].toArray == ps then
+            if isRecCall fn fx ps t then
               match recFields.idxOf? t.appArg! with
               | some j =>
                 return .done (← if para then mkAppM ``Prod.snd #[← entry j] else entry j)
@@ -390,19 +422,19 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
         unless (← getGoals).isEmpty do
           throwError "primrec_rec: could not prove the paired equation for `{e}`"
       else
-        unless ← isDefEq mv (← eqnOverPack e P k) do
+        unless ← isDefEq mv (← eqnOverPack fx e P k) do
           throwError "primrec_rec: the equation `{e}` does not have the expected form"
     goal₃.assign (mkAppN lem mvs)
     let open_ ← mvs.filterM fun mv => return !(← mv.mvarId!.isAssigned)
     finish (open_.map Expr.mvarId!)
     return
-  let pats ← eqns.mapM fun e => withEqn e k fun _ _ pat _ => do pure (← natPat pat).1
+  let pats ← eqns.mapM fun e => withEqn fx e k fun _ _ pat _ => do pure (← natPat pat).1
   -- the structural fast path: `f … 0` and `f … (x + 1)`, calling itself only on `x`
   let structS ← if eqns.size != 2 then pure none else
     match pats[0]!, pats[1]! with
     | .lit 0, .var 1 => withLocalDeclD `a P fun a => do
       let pa ← projs a k
-      withEqn eqns[1]! k fun _ ps pat rhs => do
+      withEqn fx eqns[1]! k fun _ ps pat rhs => do
         let (_, some x) ← natPat pat | pure none
         let abst ← kabstract rhs (mkAppN fnE (ps.push x))
         if (abst.find? (·.isConstOf fn)).isSome then return none
@@ -411,14 +443,14 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
     | _, _ => pure none
   if let some s := structS then
     let rest ← applyLemma goal₂ ``primrec₂_of_nat_eqns [(`f, F₂), (`z, ← mkZ 0), (`s, s),
-      (`h0, ← eqnOverPack eqns[0]! P k), (`hs, ← eqnOverPack eqns[1]! P k)]
+      (`h0, ← eqnOverPack fx eqns[0]! P k), (`hs, ← eqnOverPack fx eqns[1]! P k)]
     finish rest
     return
   -- course-of-values recursion: recursive calls become lookups in the table of earlier values
   let some i0 := pats.findIdx? fun | .lit 0 => true | _ => false
     | throwError "primrec_rec: `{fn}` has no equation for `0`"
   let z ← mkZ i0
-  let σ ← withEqn eqns[i0]! k fun _ _ _ rhs => inferType rhs
+  let σ ← withEqn fx eqns[i0]! k fun _ _ _ rhs => inferType rhs
   let listσ ← mkAppM ``List #[σ]
   let s ← withLocalDeclD `a P fun a => withLocalDeclD `n (mkConst ``Nat) fun n =>
       withLocalDeclD `L listσ fun L => do
@@ -426,9 +458,9 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
     let za := (mkApp z a).headBeta
     let m ← mkAppM ``HAdd.hAdd #[n, mkNatLit 1]
     -- the value given by equation `i` at `m`, recursive calls looked up in `L`
-    let value (i : ℕ) (xval : Expr) : MetaM Expr := withEqn eqns[i]! k fun _ ps pat rhs => do
+    let value (i : ℕ) (xval : Expr) : MetaM Expr := withEqn fx eqns[i]! k fun _ ps pat rhs => do
       let rhs' ← Meta.transform rhs (pre := fun e => do
-        if e.isAppOfArity fn (k + 1) && e.getAppArgs[:k].toArray == ps then
+        if isRecCall fn fx ps e then
           return .done (← mkAppM ``List.getD #[L, e.appArg!, za])
         return .continue)
       let rhs' := rhs'.replaceFVars ps pa

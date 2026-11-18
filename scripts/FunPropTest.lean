@@ -390,3 +390,24 @@ derive_primcodable P3
 example : Primrec fun x : P3 ℕ => x.a + x.b.length + (if x.c then 1 else 0) := by fun_prop
 
 end Derive
+
+/-! ### `primrec_rec` on polymorphic definitions -/
+
+section Poly
+
+def hashL' {α : Type} : List α → List (Option α)
+  | [] => []
+  | a :: x => none :: some a :: hashL' x
+example {α : Type} [Primcodable α] : Primrec (@hashL' α) := by primrec_rec
+
+def countIn {α : Type} [DecidableEq α] (a : α) : List α → ℕ
+  | [] => 0
+  | b :: l => (if b = a then 1 else 0) + countIn a l
+example {α : Type} [Primcodable α] [DecidableEq α] : Primrec₂ (@countIn α _) := by primrec_rec
+
+def repl {α : Type} (a : α) : ℕ → List α
+  | 0 => []
+  | n + 1 => a :: repl a n
+example {α : Type} [Primcodable α] : Primrec₂ (@repl α) := by primrec_rec
+
+end Poly
