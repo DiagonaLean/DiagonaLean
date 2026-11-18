@@ -97,7 +97,7 @@ variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
 /-- `List.getD` with a default that varies. -/
 @[fun_prop] theorem prim_getD' {f : α → List β} {g : α → ℕ} {d : α → β} (hf : Primrec f)
     (hg : Primrec g) (hd : Primrec d) : Primrec fun x => (f x).getD (g x) (d x) :=
-  (Primrec.option_getD.comp (Primrec.list_getElem?.comp hf hg) hd).of_eq fun x =>
+  (Primrec.option_getD.comp (Primrec.list_getElem?.comp hf hg) hd).of_eq fun _ =>
     (List.getD_eq_getElem?_getD ..).symm
 
 @[fun_prop] theorem prim_ite {c : α → Prop} [DecidablePred c] {f g : α → β} (hc : PrimrecPred c)
@@ -192,6 +192,64 @@ variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
 
 @[fun_prop] theorem prim_min {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => min (f x) (g x) := Primrec.nat_min.comp hf hg
+
+@[fun_prop] theorem prim_filterMap {f : α → List β} {g : α → β → Option γ} (hf : Primrec f)
+    (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).filterMap (g x) :=
+  Primrec.listFilterMap hf hg
+
+@[fun_prop] theorem prim_idxOf [DecidableEq β] {f : α → List β} {g : α → β} (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => (f x).idxOf (g x) := Primrec.list_idxOf.comp hg hf
+
+/-- `x ^ k` by iterated multiplication. -/
+theorem pow_eq_iterate (x k : ℕ) : x ^ k = (fun y => y * x)^[k] 1 := by
+  induction k with
+  | zero => rfl
+  | succ k ih => rw [Function.iterate_succ_apply', ← ih, pow_succ]
+
+@[fun_prop] theorem prim_pow {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => f x ^ g x := by
+  have h : Primrec fun q : ℕ × ℕ => (fun y => y * q.1)^[q.2] 1 := by fun_prop
+  exact (h.of_eq fun q => (pow_eq_iterate q.1 q.2).symm).comp (hf.pair hg)
+
+/-- One halving step of `Nat.log2`, counting the halvings. -/
+def log2Step (q : ℕ × ℕ) : ℕ × ℕ := if 2 ≤ q.1 then (q.1 / 2, q.2 + 1) else q
+
+theorem log2Step_iterate (k : ℕ) : ∀ x c, Nat.log2 x ≤ k → (log2Step^[k] (x, c)).2 = c + Nat.log2 x := by
+  induction k with
+  | zero => intro x c h; simp [Nat.le_zero.1 h]
+  | succ k ih =>
+    intro x c h
+    rw [Function.iterate_succ_apply]
+    by_cases hx : 2 ≤ x
+    · have hl : Nat.log2 x = Nat.log2 (x / 2) + 1 := by rw [Nat.log2_def]; simp [hx]
+      simp only [log2Step, hx, ite_true]
+      rw [ih (x / 2) (c + 1) (by omega), hl]; omega
+    · have hl : Nat.log2 x = 0 := by rw [Nat.log2_def]; simp [hx]
+      simp only [log2Step, hx, ite_false]
+      rw [ih x c (by omega)]
+
+@[fun_prop] theorem prim_log2 {f : α → ℕ} (hf : Primrec f) : Primrec fun x => Nat.log2 (f x) := by
+  have h : Primrec fun n : ℕ => (log2Step^[n] (n, 0)).2 := by unfold log2Step; fun_prop
+  exact (h.of_eq fun n => by rw [log2Step_iterate n n 0 (Nat.log2_le_self n), Nat.zero_add]).comp hf
+
+omit [Primcodable β] in
+/-- `dedup` as a fold: an element is kept when it is not already in what follows. -/
+theorem dedup_eq_foldr [DecidableEq β] (l : List β) :
+    l.dedup = l.foldr (fun a acc => if acc.idxOf a < acc.length then acc else a :: acc) [] := by
+  induction l with
+  | nil => rfl
+  | cons a l ih =>
+    rw [List.foldr_cons, ← ih]
+    by_cases ha : a ∈ l
+    · rw [List.dedup_cons_of_mem ha, ite_eq_left (List.idxOf_lt_length_iff.2 (List.mem_dedup.2 ha))]
+    · rw [List.dedup_cons_of_notMem ha,
+        ite_eq_right fun h => ha (List.mem_dedup.1 (List.idxOf_lt_length_iff.1 h))]
+
+@[fun_prop] theorem prim_dedup [DecidableEq β] {f : α → List β} (hf : Primrec f) :
+    Primrec fun x => (f x).dedup := by
+  have h : Primrec fun l : List β =>
+      l.foldr (fun a acc => if acc.idxOf a < acc.length then acc else a :: acc) [] := by fun_prop
+  exact (h.of_eq fun l => (dedup_eq_foldr l).symm).comp hf
 
 @[fun_prop] theorem prim_flatMap {f : α → List β} {g : α → β → List γ} (hf : Primrec f)
     (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).flatMap (g x) :=

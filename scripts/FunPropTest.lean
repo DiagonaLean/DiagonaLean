@@ -381,4 +381,12 @@ def countEq (k : ℕ) : Tree3 → ℕ
   | .node l r => (if l = r then 1 else 0) + countEq k l + countEq k r
 example : Primrec₂ countEq := by primrec_rec
 
+-- projections of a structure
+structure P3 (α : Type) where
+  a : ℕ
+  b : List α
+  c : Bool
+derive_primcodable P3
+example : Primrec fun x : P3 ℕ => x.a + x.b.length + (if x.c then 1 else 0) := by fun_prop
+
 end Derive

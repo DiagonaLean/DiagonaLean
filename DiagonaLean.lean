@@ -18,6 +18,7 @@ import DiagonaLean.PCP.AlphabetLift
 import DiagonaLean.PCP.Reductions.Halt_to_PCP
 import DiagonaLean.PCP.Reductions.MPCP_to_PCP
 import DiagonaLean.PCP.Undecidable
+import DiagonaLean.PCP.Primrec
 
 import DiagonaLean.AmbigCFG.Basic
 import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFG

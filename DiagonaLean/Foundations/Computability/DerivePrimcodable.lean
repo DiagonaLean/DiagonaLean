@@ -20,7 +20,8 @@ either `T` itself (applied to its parameters) or data of `Primcodable` types, ge
 * `T.toTree`, `T.ofTree`, the round trips `T.ofTree_toTree`, `T.toTree_ofTree` and `T.treeEquiv`;
 * `instance : Primcodable T`, through the tree (Theorem A);
 * `T.toTree_primrec`, `T.ofTree_primrec`, and for each constructor `c` with fields `T.c_primrec`
-  and the `fun_prop` lemma `T.prim_c`;
+  and the `fun_prop` lemma `T.prim_c`; for a structure, the `fun_prop` lemma `T.prim_f` of each
+  projection `f`;
 * `T.primrec_of_eqns`: structural recursion on `T` is primitive recursive, which `primrec_rec`
   uses (Theorem B).
 
@@ -124,7 +125,8 @@ def readCtors (T : Name) : CommandElabM (Array String × Array Ctor) := do
       return (names, cs)
 
 /-- The source text of the declarations for `T`. -/
-def generate (T : Name) (params : Array String) (cs : Array Ctor) : List String := Id.run do
+def generate (T : Name) (params : Array String) (cs : Array Ctor) (projNames : Array Name := #[]) :
+    List String := Id.run do
   let t := toString T
   let args := " ".intercalate params.toList
   -- the type, the shape type, and the binders for the parameters
@@ -134,6 +136,9 @@ def generate (T : Name) (params : Array String) (cs : Array Ctor) : List String 
   let instB := " ".intercalate (params.toList.map fun p => s!"[Primcodable {p}]")
   let explB := " ".intercalate (params.toList.map fun p => s!"({p} : Type)")
   let at_ (f : String) : String := if params.isEmpty then f else s!"(@{f} {args})"
+  -- a theorem with its parameters given by name, so that its instance arguments are still found
+  let named (f : String) : String := if params.isEmpty then f else
+    "(" ++ f ++ " " ++ " ".intercalate (params.toList.map fun p => s!"({p} := {p})") ++ ")"
   let n := cs.size
   let ar := s!"{t}.ar"
   let dataTys (c : Ctor) : List String := (c.fields.filter (!·.isRec)).toList.map (·.ty)
@@ -238,6 +243,25 @@ instance {t}.primcodable {implB} {instB} : Primcodable {tyStr} :=
     {" ".intercalate hyps} :
     Primrec fun x => {at_ (ctorName c)} {" ".intercalate (fs.map fun f => s!"({f} x)")} :=
   {t}.{shortName c}_primrec.comp {pairs}"]
+  -- projections of a structure: field `l` is a component of the root shape
+  if n == 1 && projNames.size == cs[0]!.fields.size && cs[0]!.fields.all (!·.isRec) then
+    let k := cs[0]!.fields.size
+    for (pn, l) in projNames.toList.zipIdx do
+      let fld := toString pn
+      let comp := Id.run do
+        let mut e := s!"(DiagonaLean.Foundations.Computability.PTree.shape_primrec.comp {named (t ++ ".toTree_primrec")})"
+        if k == 1 then return e
+        for _ in List.range l do
+          e := s!"(Primrec.snd.comp {e})"
+        if l + 1 < k then e := s!"(Primrec.fst.comp {e})"
+        return e
+      let shapeOf := "(DiagonaLean.Foundations.Computability.PTree.shape (" ++ t ++ ".toTree t))"
+      let sel := (projs shapeOf k)[l]!
+      out := out ++ [s!"/-- The projection `{fld}` is primitive recursive. -/
+@[fun_prop] theorem {t}.prim_{fld} {implB} {instB} \{β : Type} [Primcodable β] \{f : β → {tyStr}}
+    (hf : Primrec f) : Primrec fun x => (f x).{fld} := by
+  have h : Primrec fun t : {tyStr} => {sel} := {comp}
+  exact (h.of_eq fun t => by cases t; rfl).comp hf"]
   -- structural recursion
   let gArgs := cs.toList.map fun c =>
     s!"(g_{shortName c} : P → {" → ".intercalate (dataTys c ++ ["List σ → σ"])})"
@@ -326,7 +350,7 @@ theorem {t}.primrec_of_eqns {implB} {instB} \{P σ : Type} [Primcodable P] [Prim
     intro p x
     induction x with
 {"\n".intercalate indCases}
-  exact ((DiagonaLean.Foundations.Computability.PTree.fold_primrec hstep).comp Primrec.fst ({at_ (t ++ ".toTree_primrec")}.comp Primrec.snd)).of_eq
+  exact ((DiagonaLean.Foundations.Computability.PTree.fold_primrec hstep).comp Primrec.fst ({named (t ++ ".toTree_primrec")}.comp Primrec.snd)).of_eq
     fun q => (heq q.1 q.2).symm"]
   return out
 
@@ -343,7 +367,9 @@ elab (name := derivePrimcodable) "derive_primcodable " id:ident : command => do
   let T ← liftCoreM <| realizeGlobalConstNoOverloadWithInfo id
   let (params, cs) ← readCtors T
   let info := SourceInfo.fromRef id
-  for src in generate T params cs do
+  let env ← getEnv
+  let projNames := if isStructure env T then getStructureFields env T else #[]
+  for src in generate T params cs projNames do
     -- generic `simp` sets in generated proofs have unused entries by design
     let src := "set_option linter.unusedSimpArgs false in\n" ++ src
     let stx ← match Parser.runParserCategory (← getEnv) `command src with
