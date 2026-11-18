@@ -323,10 +323,40 @@ def seqSum : NSeq → ℕ | .nil => 0 | .cons a b r => a * b + seqSum r
 example : Primrec seqSum := by primrec_rec
 example : Primrec fun n : ℕ => NSeq.cons n (n + 1) .nil := by fun_prop
 
-inductive Box (α : Type) | mk (a : α)
-/-- error: derive_primcodable: `Box` has parameters or indices, which are not supported -/
+-- parameters of sort `Type`
+inductive Tr (α : Type) | leaf (a : α) | node (l r : Tr α)
+derive_primcodable Tr
+example : Primcodable (Tr (ℕ ⊕ Bool)) := inferInstance
+def trSum : Tr ℕ → ℕ
+  | .leaf a => a
+  | .node l r => trSum l + trSum r
+example : Primrec trSum := by primrec_rec
+example : Primrec fun n : ℕ => Tr.node (.leaf n) (.leaf (n + 1)) := by fun_prop
+
+inductive Two (α β' : Type) | a (x : α) | b (y : β') | both (l r : Two α β')
+derive_primcodable Two
+def twoCount : Two ℕ Bool → ℕ
+  | .a x => x
+  | .b y => if y then 1 else 0
+  | .both l r => twoCount l + twoCount r
+example : Primrec twoCount := by primrec_rec
+
+-- rejected
+universe u
+inductive PolyT (α : Type u) | mk (v : α)
+/-- error: derive_primcodable: `PolyT` is universe polymorphic; state its parameters as `Type` -/
 #guard_msgs in
-derive_primcodable Box
+derive_primcodable PolyT
+
+inductive Idx : ℕ → Type | z : Idx 0
+/-- error: derive_primcodable: `Idx` has indices, which are not supported -/
+#guard_msgs in
+derive_primcodable Idx
+
+inductive Clash (σ : Type) | mk (v : σ)
+/-- error: derive_primcodable: rename the parameter `σ` of `Clash`; the generated code uses that name -/
+#guard_msgs in
+derive_primcodable Clash
 
 /-! ### Paramorphisms: right-hand sides that use the subterms themselves -/
 

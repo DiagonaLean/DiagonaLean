@@ -9,8 +9,10 @@ import DiagonaLean.Foundations.Computability.PolyTree
 
 /-! # `derive_primcodable`: inductive types as trees
 
-`derive_primcodable T`, for an inductive type `T` without parameters or indices whose constructor
-fields are either `T` itself or data of `Primcodable` types, generates what
+`derive_primcodable T`, for an inductive type `T` whose parameters are of sort `Type` (and which
+has no indices and is not universe polymorphic, mutual or nested), whose constructor fields are
+either `T` itself (applied to its parameters) or data of `Primcodable` types, generates (with
+`[Primcodable α]` for each parameter `α` where needed) what
 `CombinatoryLogic/Primcodable.lean` writes by hand for SKI terms:
 
 * `T.Shape`, the nested sum over the constructors of the tuples of their data fields, and `T.ar`,
@@ -82,31 +84,56 @@ def dataPat (vs : List String) : String :=
   | [v] => v
   | vs => "⟨" ++ ", ".intercalate vs ++ "⟩"
 
-/-- Reads the constructors of `T`. -/
-def readCtors (T : Name) : CommandElabM (Array Ctor) := do
+/-- Names the generated code uses for its own variables, which a parameter must not take. -/
+def reserved : List String :=
+  ["P", "σ", "β", "p", "q", "t", "f", "s", "d", "x", "y", "z", "a", "j", "rs", "cs", "hj", "ih"]
+
+/-- Reads the parameters (their names) and the constructors of `T`. -/
+def readCtors (T : Name) : CommandElabM (Array String × Array Ctor) := do
   let env ← getEnv
   let some (.inductInfo ind) := env.find? T | throwError "derive_primcodable: `{T}` is not an inductive type"
-  unless ind.numParams == 0 && ind.numIndices == 0 do
-    throwError "derive_primcodable: `{T}` has parameters or indices, which are not supported"
+  unless ind.numIndices == 0 do
+    throwError "derive_primcodable: `{T}` has indices, which are not supported"
+  unless ind.levelParams.isEmpty do
+    throwError "derive_primcodable: `{T}` is universe polymorphic; state its parameters as `Type`"
   unless ind.all.length == 1 && !ind.isNested do
     throwError "derive_primcodable: `{T}` is mutual or nested, which is not supported"
   liftTermElabM do
-    ind.ctors.toArray.mapM fun c => do
-      let info ← getConstInfoCtor c
-      forallTelescopeReducing info.type fun xs _ => do
-        let fields ← xs.mapM fun x => do
-          let ty ← inferType x
-          if ty.isConstOf T then return { isRec := true, ty := toString T }
-          if (ty.find? (·.isConstOf T)).isSome then
-            throwError "derive_primcodable: the field type `{ty}` of `{c}` mentions `{T}`; only \
-              fields of type `{T}` itself are supported"
-          let s ← withOptions (fun o => o.setBool `pp.fullNames true) (ppExpr ty)
-          return { isRec := false, ty := toString s }
-        return { name := c, fields }
+    forallBoundedTelescope ind.type ind.numParams fun ps _ => do
+      let names ← ps.mapM fun x => do
+        unless (← inferType x) == mkSort levelOne do
+          throwError "derive_primcodable: the parameter `{x}` of `{T}` is not a `Type`"
+        let n := toString (← x.fvarId!.getUserName)
+        if reserved.contains n then
+          throwError "derive_primcodable: rename the parameter `{n}` of `{T}`; the generated \
+            code uses that name"
+        pure n
+      let self := mkAppN (mkConst T) ps
+      let cs ← ind.ctors.toArray.mapM fun c => do
+        let info ← getConstInfoCtor c
+        forallTelescopeReducing (← instantiateForall info.type ps) fun xs _ => do
+          let fields ← xs.mapM fun x => do
+            let ty ← inferType x
+            if ty == self then return { isRec := true, ty := "" }
+            if (ty.find? (·.isConstOf T)).isSome then
+              throwError "derive_primcodable: the field type `{ty}` of `{c}` mentions `{T}`; only \
+                fields of type `{self}` itself are supported"
+            let s ← withOptions (fun o => o.setBool `pp.fullNames true) (ppExpr ty)
+            return { isRec := false, ty := toString s }
+          return { name := c, fields }
+      return (names, cs)
 
 /-- The source text of the declarations for `T`. -/
-def generate (T : Name) (cs : Array Ctor) : List String := Id.run do
+def generate (T : Name) (params : Array String) (cs : Array Ctor) : List String := Id.run do
   let t := toString T
+  let args := " ".intercalate params.toList
+  -- the type, the shape type, and the binders for the parameters
+  let tyStr := if params.isEmpty then t else s!"({t} {args})"
+  let shTy := if params.isEmpty then s!"{t}.Shape" else s!"({t}.Shape {args})"
+  let implB := " ".intercalate (params.toList.map fun p => "{" ++ p ++ " : Type}")
+  let instB := " ".intercalate (params.toList.map fun p => s!"[Primcodable {p}]")
+  let explB := " ".intercalate (params.toList.map fun p => s!"({p} : Type)")
+  let at_ (f : String) : String := if params.isEmpty then f else s!"(@{f} {args})"
   let n := cs.size
   let ar := s!"{t}.ar"
   let dataTys (c : Ctor) : List String := (c.fields.filter (!·.isRec)).toList.map (·.ty)
@@ -123,19 +150,19 @@ def generate (T : Name) (cs : Array Ctor) : List String := Id.run do
   let mut out : List String := []
   -- shapes and arities
   out := out ++ [s!"/-- The shapes of `{t}`: one summand per constructor, holding its data. -/
-abbrev {t}.Shape := {shape}"]
+abbrev {t}.Shape {explB} := {shape}"]
   let arCases := (List.range n).map fun i =>
     s!"  | {inj n i "_"} => {m cs[i]!}"
   out := out ++ [s!"/-- The number of recursive fields of each shape. -/
-def {ar} : {t}.Shape → ℕ\n" ++ "\n".intercalate arCases]
+def {ar} {implB} : {shTy} → ℕ\n" ++ "\n".intercalate arCases]
   let elimForm : String := Id.run do
     let mut e := s!"fun _ => {m cs[n-1]!}"
     for i in (List.range (n - 1)).reverse do
       e := s!"fun s => s.elim (fun _ => {m cs[i]!}) ({e})"
     return if n == 1 then s!"fun _ => {m cs[0]!}" else e
   let sPat := "rcases s with " ++ " | ".intercalate ((List.range n).map fun _ => "_")
-  out := out ++ [s!"instance : Fact (Primrec {ar}) := ⟨by
-  have h : Primrec (({elimForm}) : {t}.Shape → ℕ) := by fun_prop
+  out := out ++ [s!"instance {implB} {instB} : Fact (Primrec ({ar} : {shTy} → ℕ)) := ⟨by
+  have h : Primrec (({elimForm}) : {shTy} → ℕ) := by fun_prop
   exact h.of_eq fun s => by {sPat} <;> rfl⟩"]
   -- the tree of a term, and back
   let toCases := cs.toList.zipIdx.map fun (c, i) =>
@@ -148,17 +175,17 @@ def {ar} : {t}.Shape → ℕ\n" ++ "\n".intercalate arCases]
         return e
     s!"  | .{shortName c} {" ".intercalate (fieldVars c)} => .node ({inj n i (tuple (dataVars c))}) ({kids})"
   out := out ++ [s!"/-- A term as a tree. -/
-def {t}.toTree : {t} → DiagonaLean.Foundations.Computability.PTree {t}.Shape {ar}\n" ++ "\n".intercalate toCases]
+def {t}.toTree {implB} : {tyStr} → DiagonaLean.Foundations.Computability.PTree {shTy} {ar}\n" ++ "\n".intercalate toCases]
   let ofCases := cs.toList.zipIdx.map fun (c, i) =>
     let args := (List.range c.fields.size).map fun l =>
       if c.fields[l]!.isRec then
         let j := ((List.range l).filter fun l' => c.fields[l']!.isRec).length
         s!"({t}.ofTree (cs ⟨{j}, by simp [{ar}]⟩))"
       else s!"x{l}"
-    s!"  | .node ({inj n i (tuple (dataVars c))}) cs => {ctorName c} {" ".intercalate args}"
+    s!"  | .node ({inj n i (tuple (dataVars c))}) cs => {at_ (ctorName c)} {" ".intercalate args}"
   out := out ++ [s!"/-- A tree as a term. -/
-def {t}.ofTree : DiagonaLean.Foundations.Computability.PTree {t}.Shape {ar} → {t}\n" ++ "\n".intercalate ofCases]
-  out := out ++ [s!"theorem {t}.ofTree_toTree (x : {t}) : {t}.ofTree ({t}.toTree x) = x := by
+def {t}.ofTree {implB} : DiagonaLean.Foundations.Computability.PTree {shTy} {ar} → {tyStr}\n" ++ "\n".intercalate ofCases]
+  out := out ++ [s!"theorem {t}.ofTree_toTree {implB} (x : {tyStr}) : {t}.ofTree ({t}.toTree x) = x := by
   induction x <;> simp_all [{t}.toTree, {t}.ofTree]"]
   let rcPat := " | ".intercalate (cs.toList.map fun c => dataPat (dataVars c))
   let caseScripts := cs.toList.map fun c =>
@@ -168,31 +195,32 @@ def {t}.ofTree : DiagonaLean.Foundations.Computability.PTree {t}.Shape {ar} → 
       pre ++ s!"\n      rcases j with {alts}\n" ++
         String.join (List.replicate (m c) "      · simp [ih]\n") ++
         s!"      · first | omega | (revert hj; simp [{ar}]) | (revert hj; simp only [{ar}]; omega)"
-  out := out ++ [s!"theorem {t}.toTree_ofTree (t : DiagonaLean.Foundations.Computability.PTree {t}.Shape {ar}) : {t}.toTree ({t}.ofTree t) = t := by
+  out := out ++ [s!"theorem {t}.toTree_ofTree {implB} (t : DiagonaLean.Foundations.Computability.PTree {shTy} {ar}) : {t}.toTree ({t}.ofTree t) = t := by
   induction t with
   | node a cs ih =>
     rcases a with {rcPat}\n" ++ "\n".intercalate caseScripts]
   out := out ++ [s!"/-- `{t}` and its trees. -/
-def {t}.treeEquiv : {t} ≃ DiagonaLean.Foundations.Computability.PTree {t}.Shape {ar} :=
+def {t}.treeEquiv {implB} : {tyStr} ≃ DiagonaLean.Foundations.Computability.PTree {shTy} {ar} :=
   ⟨{t}.toTree, {t}.ofTree, {t}.ofTree_toTree, {t}.toTree_ofTree⟩",
     s!"/-- `{t}` is `Primcodable`, through its trees. -/
-instance {t}.primcodable : Primcodable {t} := Primcodable.ofEquiv _ {t}.treeEquiv",
-    s!"@[fun_prop] theorem {t}.toTree_primrec : Primrec {t}.toTree :=
-  Primrec.of_equiv (e := {t}.treeEquiv)",
-    s!"@[fun_prop] theorem {t}.ofTree_primrec : Primrec {t}.ofTree :=
-  Primrec.of_equiv_symm (e := {t}.treeEquiv)"]
+instance {t}.primcodable {implB} {instB} : Primcodable {tyStr} :=
+  Primcodable.ofEquiv _ {at_ (t ++ ".treeEquiv")}",
+    s!"@[fun_prop] theorem {t}.toTree_primrec {implB} {instB} : Primrec {at_ (t ++ ".toTree")} :=
+  Primrec.of_equiv (e := {at_ (t ++ ".treeEquiv")})",
+    s!"@[fun_prop] theorem {t}.ofTree_primrec {implB} {instB} : Primrec {at_ (t ++ ".ofTree")} :=
+  Primrec.of_equiv_symm (e := {at_ (t ++ ".treeEquiv")})"]
   -- constructors
   for (c, i) in cs.toList.zipIdx do
     let k := c.fields.size
     if k == 0 then continue
-    let tys := c.fields.toList.map fun f => f.ty
+    let tys := c.fields.toList.map fun f => if f.isRec then tyStr else f.ty
     let qTy := joinR "×" "Unit" tys
     let qp := projs "q" k
     let dataQ := ((List.range k).filter fun l => !c.fields[l]!.isRec).map fun l => qp[l]!
     let recQ := ((List.range k).filter fun l => c.fields[l]!.isRec).map fun l => s!"{t}.toTree {qp[l]!}"
-    let built := s!"(DiagonaLean.Foundations.Computability.PTree.mkOpt ({inj n i (tuple dataQ)}) [{", ".intercalate recQ}]).map {t}.ofTree"
-    out := out ++ [s!"theorem {t}.{shortName c}_primrec :
-    Primrec fun q : {qTy} => {ctorName c} {" ".intercalate qp} := by
+    let built := s!"(DiagonaLean.Foundations.Computability.PTree.mkOpt (({inj n i (tuple dataQ)}) : {shTy}) [{", ".intercalate recQ}]).map {t}.ofTree"
+    out := out ++ [s!"theorem {t}.{shortName c}_primrec {implB} {instB} :
+    Primrec fun q : {qTy} => {at_ (ctorName c)} {" ".intercalate qp} := by
   have hs : ∀ q : {qTy}, ({built}).isSome := fun q => by
     rw [DiagonaLean.Foundations.Computability.PTree.mkOpt, dite_eq_left_of_eq_true (eq_true (by rfl))]; rfl
   have h : Primrec fun q : {qTy} => {built} := by fun_prop
@@ -206,16 +234,16 @@ instance {t}.primcodable : Primcodable {t} := Primcodable.ofEquiv _ {t}.treeEqui
       for l in (List.range (k - 1)).reverse do
         e := s!"(h{l}.pair {e})"
       return e
-    out := out ++ [s!"@[fun_prop] theorem {t}.prim_{shortName c} \{β : Type} [Primcodable β] {" ".intercalate fArgs}
+    out := out ++ [s!"@[fun_prop] theorem {t}.prim_{shortName c} {implB} {instB} \{β : Type} [Primcodable β] {" ".intercalate fArgs}
     {" ".intercalate hyps} :
-    Primrec fun x => {ctorName c} {" ".intercalate (fs.map fun f => s!"({f} x)")} :=
+    Primrec fun x => {at_ (ctorName c)} {" ".intercalate (fs.map fun f => s!"({f} x)")} :=
   {t}.{shortName c}_primrec.comp {pairs}"]
   -- structural recursion
   let gArgs := cs.toList.map fun c =>
     s!"(g_{shortName c} : P → {" → ".intercalate (dataTys c ++ ["List σ → σ"])})"
   let hEqs := cs.toList.map fun c =>
     let fv := fieldVars c
-    let lhs := s!"f p ({ctorName c} {" ".intercalate fv})"
+    let lhs := s!"f p ({at_ (ctorName c)} {" ".intercalate fv})"
     let rs := "[" ++ ", ".intercalate ((recVars c).map fun r => s!"f p {r}") ++ "]"
     let binders := if fv.isEmpty then "∀ p" else s!"∀ p {" ".intercalate fv}"
     s!"(h_{shortName c} : {binders}, {lhs} = g_{shortName c} p {" ".intercalate (dataVars c)} {rs})"
@@ -226,7 +254,7 @@ instance {t}.primcodable : Primcodable {t} := Primcodable.ofEquiv _ {t}.treeEqui
     let qp := projs "q.2" (k + 1)
     s!"(hg_{shortName c} : Primrec fun q : {qTy} => g_{shortName c} q.1 {" ".intercalate qp})"
   -- the hypotheses about each branch of `step`, in the form `fun_prop` meets them
-  let Q := s!"P × ({t}.Shape × List σ)"
+  let Q := s!"P × ({shTy} × List σ)"
   let rests : List String := (List.range n).map fun i => joinR "⊕" "Empty" ((cs.toList.drop i).map D)
   let ctxs : List String := Id.run do
     let mut acc := [Q]
@@ -285,20 +313,20 @@ instance {t}.primcodable : Primcodable {t} := Primcodable.ofEquiv _ {t}.treeEqui
       rw [{rwl}]
       try simp [{t}.toTree, DiagonaLean.Foundations.Computability.PTree.fold, List.ofFn, {ar}, Fin.foldr_succ, Fin.foldr_zero]"
   out := out ++ [s!"/-- **Structural recursion on `{t}` is primitive recursive.** -/
-theorem {t}.primrec_of_eqns \{P σ : Type} [Primcodable P] [Primcodable σ] [Inhabited σ]
-    \{f : P → {t} → σ} {" ".intercalate gArgs}
+theorem {t}.primrec_of_eqns {implB} {instB} \{P σ : Type} [Primcodable P] [Primcodable σ] [Inhabited σ]
+    \{f : P → {tyStr} → σ} {" ".intercalate gArgs}
     {"\n    ".intercalate hEqs}
     {"\n    ".intercalate hPrims} : Primrec₂ f := by
 {"\n".intercalate branchHyps}
   have hstep : Primrec fun q : {Q} =>
-      (fun (p : P) (s : {t}.Shape) (rs : List σ) => {stepBody}) q.1 q.2.1 q.2.2 := by
+      (fun (p : P) (s : {shTy}) (rs : List σ) => {stepBody}) q.1 q.2.1 q.2.2 := by
     {hstepProof}
   have heq : ∀ p x, f p x =
-      DiagonaLean.Foundations.Computability.PTree.fold (fun (p : P) (s : {t}.Shape) (rs : List σ) => {stepBody}) p ({t}.toTree x) := by
+      DiagonaLean.Foundations.Computability.PTree.fold (fun (p : P) (s : {shTy}) (rs : List σ) => {stepBody}) p ({t}.toTree x) := by
     intro p x
     induction x with
 {"\n".intercalate indCases}
-  exact ((DiagonaLean.Foundations.Computability.PTree.fold_primrec hstep).comp Primrec.fst ({t}.toTree_primrec.comp Primrec.snd)).of_eq
+  exact ((DiagonaLean.Foundations.Computability.PTree.fold_primrec hstep).comp Primrec.fst ({at_ (t ++ ".toTree_primrec")}.comp Primrec.snd)).of_eq
     fun q => (heq q.1 q.2).symm"]
   return out
 
@@ -313,9 +341,9 @@ partial def withInfo (info : SourceInfo) : Syntax → Syntax
 /-- `derive_primcodable T` makes `T` `Primcodable` through its trees; see the module docstring. -/
 elab (name := derivePrimcodable) "derive_primcodable " id:ident : command => do
   let T ← liftCoreM <| realizeGlobalConstNoOverloadWithInfo id
-  let cs ← readCtors T
+  let (params, cs) ← readCtors T
   let info := SourceInfo.fromRef id
-  for src in generate T cs do
+  for src in generate T params cs do
     -- generic `simp` sets in generated proofs have unused entries by design
     let src := "set_option linter.unusedSimpArgs false in\n" ++ src
     let stx ← match Parser.runParserCategory (← getEnv) `command src with
