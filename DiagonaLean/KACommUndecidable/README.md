@@ -4,7 +4,22 @@ Authors: Prathamesh TVH, Claude Opus
 ```
 # `KACommUndecidable`: Kleene Algebra with Commutativity Conditions is Undecidable
 
-A formalisation of A. Azevedo de Amorim, C. Zhang and M. Gaboardi, *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979, `AmorimZhangGaboardi2024` in `bibliography.bib`). How much of the paper is formalised, with the caveats and open work, is in [`STATUS.md`](STATUS.md).
+A formalisation of
+
+> Arthur Azevedo de Amorim, Cheng Zhang and Marco Gaboardi. *Kleene algebra with commutativity conditions is undecidable.* arXiv:2411.15979 [math.LO], 2024. <https://arxiv.org/abs/2411.15979>
+
+```bibtex
+@misc{AmorimZhangGaboardi2024,
+  author        = {Azevedo de Amorim, Arthur and Zhang, Cheng and Gaboardi, Marco},
+  title         = {Kleene algebra with commutativity conditions is undecidable},
+  year          = {2024},
+  eprint        = {2411.15979},
+  archiveprefix = {arXiv},
+  primaryclass  = {math.LO}
+}
+```
+
+The entry is `AmorimZhangGaboardi2024` in the repository's `bibliography.bib`, and docstrings cite it by that key. Paper numbering below refers to arXiv version 1. How much of the paper is formalised, with the caveats and open work, is in [`STATUS.md`](STATUS.md).
 
 ## Problem Statement
 An instance is a pair of expressions `e₁ e₂ : RExp (α ⊕ α)` over the doubled alphabet, in which every left letter `.inl a` commutes with every right letter `.inr b` (`DComm`). The paper asks four questions about such a pair, from the most syntactic to the most semantic:
@@ -26,11 +41,79 @@ Each problem keeps its own namespace, so its results read as `TermEq.Reduction.u
 
 The interpreter the race program relies on is in `Foundations/Computability/`.
 
-## Results
-* **`T Σ̈` and `K Σ̈`.** `undecidableTermEq` and `undecidableKATermEq` (over `ℕ`) and their `Bool` versions (over `{0, 1}`) are `Undecidable`, given finite constants that are only known to exist: the interpreter's table `B` and the race program `C`. They are arguments, since a compiled definition cannot extract them from an existence proof. Without them, the results are stated at the level of machines: `not_machineDecidable_termEq_nat`, `not_machineDecidable_termEq_bool` and the `kaTermEq` versions say that no Turing machine decides these problems.
-* **`L Σ̈`.** Language equality and language inclusion are co-r.e., so the reductions land in the complement: `undecidableNotLangEq`, `undecidableNotLangEqBool` and `undecidableNotModelLe` take no arguments.
-* **Any theory in between.** The machine-level results on the instances `eqRed M` rest on computable inseparability (`Halt/Inseparable.lean`): `kaRed` sends machines that output `1` on their own code to inequalities provable in pre-Kleene algebra, and machines that output `0` to inequalities false in the language model. So no machine decides any relation between pre-Kleene algebra provability and the language model on the instances `eqRed M` (`not_machineDecidable_selfEq`). On all instances, `KleeneAlgebra/Between.lean` proves the paper's general Theorem 18 with no hypothesis, using the interpreter's instances instead of `kaRed`: no machine decides any predicate between provability in pre-Kleene algebra and the language model, for inequalities (`not_machineDecidable_between`) and equations (`not_machineDecidable_eq_between`), and no machine decides equality on any `X` through which the language map factors (`not_machineDecidable_eqVia`; `not_machineDecidable_eqOn` given a machine computing `l'`). So no machine decides equality or inclusion of languages either (`not_machineDecidable_langEq_nat`, `not_machineDecidable_modelLe_nat`).
-* **Encodings.** "No machine decides" is relative to an encoding of the input as bits. The proofs use the binary digits of a Gödel numbering (`encNat`, `encBool`), and each statement has an `_of_conv` version for any encoding a machine can compute from that one. Some such condition is needed: an injective encoding that records the answer in its first bit makes any predicate decidable.
+## Main Results
+
+### Context
+A Kleene algebra is an idempotent semiring with a star operation $x^*$ satisfying Kozen's unfolding and induction axioms. The equational theory of Kleene algebra is decidable: by Kozen's completeness theorem, $\mathsf{KA} \vdash e = f$ holds exactly when $e$ and $f$ denote the same regular language. Verification applications often need extra hypotheses. The simplest are commutativity conditions $pq = qp$ between primitive letters, which model, for instance, independent program actions. Whether the equational theory stays decidable with such conditions was a long-standing open question, and the paper answers it negatively. The paper's proof works for a whole range of theories at once: it shows that every theory between a weak, induction-free fragment and the intended language model is undecidable.
+
+### Setting
+Let $\Sigma$ be an alphabet and $\ddot\Sigma = \{a_l, a_r : a \in \Sigma\}$ its *doubled* alphabet, which has a left and a right copy of each letter. The commutativity conditions are
+
+$$H_\Sigma = \{\, a_l\, b_r = b_r\, a_l \;:\; a, b \in \Sigma \,\},$$
+
+so every left letter commutes with every right letter. $\mathrm{Exp}(\ddot\Sigma)$ is the set of regular expressions over $\ddot\Sigma$, built from $0$, $1$, letters, $+$, $\cdot$ and ${}^*$.
+
+* **Pre-Kleene algebra** $\mathsf{PKA}$ consists of the idempotent semiring axioms and left unfolding $x^* = 1 + x x^*$, with **no induction axioms**. Its free model with the conditions is $T\ddot\Sigma = \mathrm{Exp}(\ddot\Sigma)/(\mathsf{PKA} + H_\Sigma)$.
+* **Kleene algebra** $\mathsf{KA}$ is $\mathsf{PKA}$ together with Kozen's induction axioms $xy \le y \Rightarrow x^* y \le y$ and $yx \le y \Rightarrow y x^* \le y$, where $x \le y$ means $x + y = y$. Its free model with the conditions is $K\ddot\Sigma$.
+* **The language model.** $\mathcal{L} : \mathrm{Exp}(\ddot\Sigma) \to \mathcal{P}(\Sigma^* \times \Sigma^*)$ is the homomorphism with $\mathcal{L}(a_l) = \{(a, \varepsilon)\}$ and $\mathcal{L}(a_r) = \{(\varepsilon, a)\}$, where products are taken componentwise. The set $\mathcal{L}(e)$ is the relation that a two-tape automaton accepts, and $L\ddot\Sigma$ is its image. The conditions $H_\Sigma$ hold in it, so $\mathsf{PKA} + H_\Sigma \vdash e = f$ implies $\mathsf{KA} + H_\Sigma \vdash e = f$, which in turn implies $\mathcal L(e) = \mathcal L(f)$.
+
+**Decidability** is meant literally. A set $S \subseteq \mathrm{Exp}(\ddot\Sigma)^2$ is *decidable* if some Turing machine over $\{0, 1\}$, given the binary digits of the Gödel number $\ulcorner e, f \urcorner$, halts with output $1$ if $(e, f) \in S$ and $0$ otherwise. The encoding is injective. Every result below also holds for any encoding that a Turing machine computes from this one.
+
+### Theorems
+
+> **Theorem 1** (main theorem of the paper). For $\Sigma = \{0, 1\}$, the set
+> $$\{\,(e, f) \;:\; \mathsf{KA} + H_\Sigma \vdash e = f\,\}$$
+> is undecidable. The same holds for $\Sigma = \mathbb N$.
+
+This is the claim of the paper's title: Kleene algebra with a fixed finite set of commutativity conditions on primitive letters has an undecidable equational theory.
+*Lean:* `not_machineDecidable_kaTermEq_bool`, `not_machineDecidable_kaTermEq_nat`.
+
+> **Theorem 2** (without induction). For $\Sigma = \{0, 1\}$ and for $\Sigma = \mathbb N$, the set
+> $$\{\,(e, f) \;:\; \mathsf{PKA} + H_\Sigma \vdash e = f\,\}$$
+> is undecidable.
+
+So undecidability does not come from the induction axioms. The abstract states it as "our results hold even for weaker theories".
+*Lean:* `not_machineDecidable_termEq_bool`, `not_machineDecidable_termEq_nat`.
+
+> **Theorem 3** (paper's Theorem 18, for every theory in between). Let $\Sigma = \{0, 1\}$ or $\Sigma = \mathbb N$, and let $S \subseteq \mathrm{Exp}(\ddot\Sigma)^2$ satisfy
+> $$\mathsf{PKA} + H_\Sigma \vdash e \le f \;\Longrightarrow\; (e, f) \in S \;\Longrightarrow\; \mathcal L(e) \subseteq \mathcal L(f).$$
+> Then $S$ is undecidable. The same holds with equations in place of inequalities: if $\mathsf{PKA} + H_\Sigma \vdash e = f \Rightarrow (e, f) \in S \Rightarrow \mathcal L(e) = \mathcal L(f)$, then $S$ is undecidable.
+
+Theorems 1 and 2 are instances of this. The proof reduces from the computably inseparable pair "machine $M$ outputs $1$ on its own code" and "machine $M$ outputs $0$ on its own code". The first is sent to inequalities provable in $\mathsf{PKA} + H_\Sigma$, and the second to inequalities false in $\mathcal L$.
+For $\Sigma = \{0, 1\}$, the instances are translated from $\mathbb N$ by writing the letter $n$ as the word $1^n0$. This substitution preserves provability and reflects language inclusion.
+*Lean:* `not_machineDecidable_between`, `not_machineDecidable_eq_between` and their `_bool` versions.
+
+> **Corollary 4.** For $\Sigma = \{0, 1\}$ and for $\Sigma = \mathbb N$:
+> 1. equality $\mathcal L(e) = \mathcal L(f)$ and inclusion $\mathcal L(e) \subseteq \mathcal L(f)$ in the language model are undecidable;
+> 2. for every theory $\mathsf T \supseteq \mathsf{PKA}$ for which $\mathcal L$ is sound under $H_\Sigma$, the set $\{(e, f) : \mathsf T + H_\Sigma \vdash e = f\}$ is undecidable.
+
+*Lean:* `not_machineDecidable_langEq_bool`, `not_machineDecidable_modelLe_bool` and their `_nat` versions; part 2 is Theorem 3 with $S$ the theory.
+
+> **Theorem 5** (Theorem 18 on a model). Let $\Sigma = \mathbb N$. Suppose the language map factors through a set $X$ as
+> $$T\ddot\Sigma \xrightarrow{\ \varphi\ } X \xrightarrow{\ g\ } L\ddot\Sigma, \qquad g \circ \varphi = \mathcal L.$$
+> Then $\{(e, f) : \varphi[e] = \varphi[f]\}$ is undecidable.
+
+This is the paper's form of Theorem 18. Taking $X = T\ddot\Sigma$, $K\ddot\Sigma$ or $L\ddot\Sigma$ gives Theorems 2, 1 and Corollary 4 again. If moreover a Turing machine computes $\varphi$ on codes, equality on $X$ itself is undecidable.
+*Lean:* `not_machineDecidable_eqVia`; `not_machineDecidable_eqOn_of_computes` for equality on $X$.
+
+> **Theorem 6** (many-one reductions). Let $\mathrm{HALT}$ be the halting problem for Turing machines over $\{0, 1\}$. Then $\mathrm{HALT} \le_m$ each of
+> $$\{(e, f) : \mathsf{KA} + H_\Sigma \vdash e = f\}, \qquad \{(e, f) : \mathsf{PKA} + H_\Sigma \vdash e = f\}, \qquad \{(e, f) : \mathcal L(e) \ne \mathcal L(f)\}$$
+> for $\Sigma = \{0, 1\}$ and for $\Sigma = \mathbb N$. Also $\mathrm{HALT} \le_m \{(e, f) : \mathcal L(e) \not\subseteq \mathcal L(f)\}$ for $\Sigma = \mathbb N$. Each reduction is given as an explicit program.
+
+For the provability problems, the reduction depends on two finite constants that are known to exist only classically: a table for a fixed program interpreter and a "race" program, from the paper's Theorem 19. They are therefore parameters of the reduction. Theorems 1 and 2 do not need them.
+*Lean:* `undecidableKATermEq`, `undecidableTermEq`, `undecidableNotLangEq`, their `Bool` versions, `undecidableNotModelLe`.
+
+> **Proposition 7** (the axioms are the paper's). Let $\mathsf{KA}'$ be Kleene algebra in Mathlib's formulation: $\mathsf{PKA}$ plus right unfolding $x^* x \le x^*$ and both induction axioms. Then for all $e, f$,
+> $$\mathsf{KA}' + H_\Sigma \vdash e = f \iff \mathsf{KA} + H_\Sigma \vdash e = f.$$
+
+This holds because right unfolding is derivable from left induction: $x^* x \le x^* x^* \le x^*$. So Theorem 1 is about the paper's theory exactly.
+*Lean:* `kaEquiv_iff_paperKAEquiv`.
+
+> **Proposition 8** (a correction). The paper's Theorem 6 says that every $e \in T X$ with finite language is the sum of the words in $\mathcal L(e)$. It is false: $\mathcal L(1^*) = \{\varepsilon\}$, but $1^* \ne 1$ in $T X$, for every alphabet $X$ and every set of commutativity conditions. The same term refutes Corollary 7 (injectivity of $\mathcal L$ on terms with finite language) and Theorem 9. All three hold for *guarded* terms, where no starred subterm accepts the empty word. The formalisation uses only these repaired forms.
+
+*Lean:* `not_forall_finite_lang_eq_sum`, `not_lang_injective_on_finite`; repaired as `eq_sum_of_guarded_of_finite_lang`, `eq_of_guarded_of_lang_eq`.
+
+Theorems 1–5 and Propositions 7–8 are proved exactly as stated, with no extra hypotheses. Theorem 6 takes the two constants described above as parameters. All proofs use only Lean's standard axioms.
 
 ## Where the paper's results are
 Files under `KleeneAlgebra/` unless stated otherwise.
@@ -52,3 +135,46 @@ Files under `KleeneAlgebra/` unless stated otherwise.
 | Lemma 27, the expansion lemma | `Expansion.lean` |
 | Definition 28, Lemmas 29–31: bounded-output terms | `BoundedOutput.lean` |
 | Definition 32, Lemmas 33 and 34: single-step representability | `SingleStep.lean` |
+
+## Auditing the Definitions
+A machine-checked theorem means what its statement means, and the statement is only as good as the definitions it uses. To trust Theorem 1, you need to read the definitions below, not the proofs. Lean checks the proofs.
+
+**1. Read the statement.** In a file that imports `DiagonaLean.KACommUndecidable.Undecidable`, run
+
+```lean
+open DiagonaLean
+#check @KATermEq.Reduction.not_machineDecidable_kaTermEq_bool
+-- ¬ MachineDecidable encBool fun i => KAEquiv DComm i.1 i.2   (namespaces omitted)
+```
+
+`#check @…` shows every binder. The headline theorems have none, so they are unconditional. The project leaves `autoImplicit` on, so a misspelt name in a statement silently becomes a universally quantified variable. `#check @…` exposes such a variable.
+
+**2. Read the definitions the statement uses.** Each is short. Check it against the paper or textbook notion.
+
+| Definition | File | What to check |
+|---|---|---|
+| `RExp` | `KleeneAlgebra/Free.lean` | Six constructors: `0`, `1`, letters, `+`, `·`, `∗`. |
+| `Equiv C` | `KleeneAlgebra/Free.lean` | Least congruence with the semiring laws, `x + x = x`, `x∗ = 1 + x x∗`, and `x y = y x` for `C x y`. No other axiom. This is the paper's pre-Kleene algebra (Section 2). |
+| `KAEquiv C`, `PaperKAEquiv C` | `KleeneAlgebra/FreeKA.lean` | `Equiv C` plus Kozen's star axioms. `PaperKAEquiv` transcribes the paper's list, and Proposition 7 makes the two the same. |
+| `DComm` | `KleeneAlgebra/Doubled.lean` | Holds exactly for `(a_l, b_r)` and `(b_r, a_l)`: the conditions `H`. |
+| `TD`, `FreePreKA`, `mk` | `KleeneAlgebra/Doubled.lean`, `Free.lean` | `T Σ̈` as the quotient of `RExp` by `Equiv DComm`. |
+| `pl`, `gen`, `lift` | `KleeneAlgebra/Doubled.lean`, `Free.lean` | The language model: `a_l ↦ {(a, ε)}`, `b_r ↦ {(ε, b)}`, extended as a homomorphism into Mathlib's `SetSemiring`. |
+| `EqInstance`, `Inst`, `InstB` | `KleeneAlgebra/Inequality.lean` | An instance is a pair of expressions over `α ⊕ α`. |
+| `encNat`, `encBool`, `rc`, `bitsPair`, `bitsOf`, `toNat` | `KleeneAlgebra/Race.lean`, `ExprCode.lean`, `BinarySubst.lean`, `Foundations/Computability/Interpreter.lean` | Input encodings. Their injectivity is proved, so only "is this a reasonable encoding" needs judging. |
+| `MachineDecidable`, `TMDeciderFor` | `Synthetic/Definitions.lean` | Some `SingleTapeTM Bool` outputs `[true]` on every yes-instance and `[false]` on every no-instance. |
+| `SingleTapeTM`, `SingleTapeTM.Outputs` | Cslib, `Cslib/Computability/Machines/Turing/SingleTape/Deterministic.lean` (revision pinned in `lake-manifest.json`) | A standard deterministic single-tape machine with finite state and alphabet. "Outputs" means it halts with exactly that list on the tape. |
+
+For Theorems 3–6, also read `Provable`, `ModelLe` (`KleeneAlgebra/Inequality.lean`), `LangFactor`, `EqVia` (`KleeneAlgebra/Separation.lean`), the four `DecisionProblem`s (`Basic.lean`), and `Undecidable`, `ManyOneReduces` and `HaltProblem` (`Synthetic/Undecidability.lean`, `Synthetic/Definitions.lean`, `Halt/Basic.lean`). Use `#print X` to see a definition as Lean elaborated it.
+
+**3. Check the axioms.**
+
+```lean
+#print axioms KATermEq.Reduction.not_machineDecidable_kaTermEq_bool
+-- depends on axioms: [propext, Classical.choice, Quot.sound]
+```
+
+The result must list only these three, Lean's standard axioms. Any `sorryAx`, any `Lean.ofReduceBool` (from `native_decide`) or any user-declared axiom means the proof is incomplete or trusts the compiler. Do the same for each result you rely on.
+
+**4. Check the reductions are programs.** Lean is classical, so a value of `Undecidable p` (`HALT ≤ₘ p`) means something only if its function is computable. Otherwise it could just case on whether a machine halts. CI checks every reduction in the library with `#check_reductions` (`scripts/CheckReductions.lean`; rules in [`CONTRIBUTING.md`](../../CONTRIBUTING.md#reductions)). `scripts/check_metaprograms.py` rejects metaprograms that could bypass that check. This only concerns Theorem 6. Theorems 1–5 quantify over Turing machines directly, so they need no such check.
+
+**5. Build from a clean checkout.** Run `lake exe cache get && lake build` and confirm there are no errors and no `sorry` warnings. The commands in steps 1 and 3 can be run with `lake env lean <file>.lean`.
