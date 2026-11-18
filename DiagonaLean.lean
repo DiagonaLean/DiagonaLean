@@ -31,6 +31,7 @@ import DiagonaLean.EmpCFG.Undecidable
 import DiagonaLean.MatMort.Basic
 import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
 import DiagonaLean.MatMort.Undecidable
+import DiagonaLean.MatMort.Primrec
 
 import DiagonaLean.KACommUndecidable.Basic
 import DiagonaLean.KACommUndecidable.Reductions.Halt_to_TermEq
@@ -70,6 +71,7 @@ import DiagonaLean.Foundations.Computability.Prim
 import DiagonaLean.Foundations.Computability.PrimrecRec
 import DiagonaLean.Foundations.Computability.PolyTree
 import DiagonaLean.Foundations.Computability.TaggedCode
+import DiagonaLean.Foundations.Computability.FinsetPrim
 import DiagonaLean.Foundations.Computability.DerivePrimcodable
 import DiagonaLean.Foundations.Computability.ListConfig
 import DiagonaLean.Foundations.Computability.TM0ToCslib

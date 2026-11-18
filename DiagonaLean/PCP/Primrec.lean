@@ -78,6 +78,11 @@ theorem liftInstance_primrec (b0 b1 : γ₂) :
   simp only [natToBits_eq]
   fun_prop
 
+/-- The function of the reduction `PCPAlphabetLift` is primitive recursive. -/
+theorem pcpAlphabetLift_primrec {b0 b1 : γ₂} (hne : b0 ≠ b1) :
+    Primrec (PCPAlphabetLift (γ₁ := γ₁) b0 b1 hne).f :=
+  liftInstance_primrec b0 b1
+
 end AlphabetLift
 
 end DiagonaLean.PCP
