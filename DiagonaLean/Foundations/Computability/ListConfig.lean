@@ -42,6 +42,7 @@ variable {M}
 /-- `d` is not halted. -/
 def Data.Running (d : Data M) : Prop := d.state.isSome
 
+/-- Whether a configuration is running is decidable. -/
 instance : DecidablePred (Data.Running (M := M)) :=
   fun d => inferInstanceAs (Decidable (d.state.isSome = true))
 
@@ -67,8 +68,10 @@ def dstep : Data M → Data M
 def stk (a : List (Option Sym)) : StackTape Sym := a.foldr StackTape.cons StackTape.nil
 
 omit [Inhabited Sym] [Fintype Sym] in
+/-- The empty cell list decodes to the empty `StackTape`. -/
 @[simp] theorem stk_nil : stk ([] : List (Option Sym)) = StackTape.nil := rfl
 omit [Inhabited Sym] [Fintype Sym] in
+/-- A cell followed by a cell list decodes to that cell consed onto the decoded list. -/
 @[simp] theorem stk_cons (o : Option Sym) (a : List (Option Sym)) :
     stk (o :: a) = StackTape.cons o (stk a) := rfl
 
@@ -76,8 +79,10 @@ omit [Inhabited Sym] [Fintype Sym] in
 def cfgOf (d : Data M) : M.Cfg := ⟨d.state, ⟨d.h, stk d.l, stk d.r⟩⟩
 
 omit [Inhabited Sym] [Fintype Sym] in
+/-- The head of the empty `StackTape` is blank. -/
 theorem nil_head : (StackTape.nil : StackTape Sym).head = none := rfl
 omit [Inhabited Sym] [Fintype Sym] in
+/-- The tail of the empty `StackTape` is empty. -/
 theorem nil_tail : (StackTape.nil : StackTape Sym).tail = StackTape.nil := rfl
 
 /-- **Simulation.** `dstep` implements `SingleTapeTM.step`. -/
@@ -88,21 +93,25 @@ theorem step_cfgOf (d : Data M) (hd : d.Running) : M.step (cfgOf d) = some (cfgO
     rcases htr : M.tr q h with ⟨⟨wr, _ | _ | _⟩, q'⟩
     · simp [htr, BiTape.optionMove, BiTape.write]
     · cases l <;>
-        simp [htr, BiTape.optionMove, BiTape.write, BiTape.move, BiTape.moveLeft, nil_head, nil_tail]
+        simp [htr, BiTape.optionMove, BiTape.write, BiTape.move, BiTape.moveLeft, nil_head,
+          nil_tail]
     · cases r <;>
         simp [htr, BiTape.optionMove, BiTape.write, BiTape.move, BiTape.moveRight, nil_head,
           nil_tail]
 
+/-- On a halted configuration, `SingleTapeTM.step` returns `none`. -/
 theorem step_cfgOf_halted (d : Data M) (hd : ¬ d.Running) : M.step (cfgOf d) = none := by
   obtain ⟨_ | q, l, h, r⟩ := d
   · rfl
   · exact absurd rfl hd
 
+/-- `dstep` fixes a halted configuration. -/
 theorem dstep_halted (d : Data M) (hd : ¬ d.Running) : dstep M d = d := by
   obtain ⟨_ | q, l, h, r⟩ := d
   · rfl
   · exact absurd rfl hd
 
+/-- Every iterate of `dstep` fixes a halted configuration. -/
 theorem iterate_halted (d : Data M) (hd : ¬ d.Running) (n : ℕ) : (dstep M)^[n] d = d := by
   induction n with
   | zero => rfl
@@ -135,11 +144,14 @@ def initData (input : List Sym) : Data M :=
   | a :: t => ⟨some M.q₀, [], some a, t.map some⟩
 
 omit [Inhabited Sym] [Fintype Sym] in
+/-- The cells `some a` for the letters `a` of `t` decode to `StackTape.mapSome t`. -/
 theorem stk_map_some (t : List Sym) : stk (t.map some) = StackTape.mapSome t := by
   induction t with
   | nil => rfl
   | cons a t ih => rw [List.map_cons, stk_cons, ih]; rfl
 
+/-- The Cslib configuration of the list-level initial configuration on `input` is
+`M.initCfg input`. -/
 theorem cfgOf_initData (input : List Sym) : cfgOf (initData input : Data M) = M.initCfg input := by
   cases input with
   | nil => rfl

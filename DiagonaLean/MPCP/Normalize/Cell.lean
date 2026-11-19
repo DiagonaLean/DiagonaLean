@@ -6,15 +6,17 @@ Authors: Aristotle (Harmonic)
 import Cslib.Foundations.Data.BiTape
 import Mathlib.Tactic
 
+@[expose] public section
+
 /-! # Cell-wise view of a `BiTape`
 
-A `BiTape` is a bi-infinite tape.  For reasoning about Turing machine simulations it is
-much more convenient to view it as a function `ℤ → Option Symbol`, sending an offset
-relative to the head to the symbol stored there.  This file sets up that view and the
-lemmas describing how it interacts with `write`, `move` and `mk₁`.
+A `BiTape` is a bi-infinite tape. For reasoning about Turing machine simulations it is easier
+to view it as a function `ℤ → Option Symbol`, sending an offset relative to the head to the
+symbol stored there. `cellAt t d` is the symbol at offset `d`, defined through `stCell`, the
+entries of a `StackTape`. The lemmas `cellAt_write`, `cellAt_moveRight`, `cellAt_moveLeft` and
+`cellAt_mk₁` describe how `cellAt` interacts with `write`, the moves and `mk₁`.
 -/
 
-@[expose] public section
 namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing
@@ -24,34 +26,41 @@ variable {S : Type*}
 /-- The `n`-th entry of a `StackTape` (blank if beyond the stored prefix). -/
 def stCell (l : StackTape S) (n : ℕ) : Option S := (l.toList[n]?).getD none
 
+/-- Every entry of the empty stack tape is blank. -/
 @[simp]
-lemma stCell_nil (n : ℕ) : stCell (StackTape.nil : StackTape S) n = none := by
+theorem stCell_nil (n : ℕ) : stCell (StackTape.nil : StackTape S) n = none := by
   simp [stCell]
 
-lemma stCell_zero (l : StackTape S) : stCell l 0 = l.head := by
+/-- Entry `0` of a stack tape is its head. -/
+theorem stCell_zero (l : StackTape S) : stCell l 0 = l.head := by
   unfold stCell StackTape.head
   cases l.toList with
   | nil => simp
   | cons a t => simp
 
-lemma stCell_succ (l : StackTape S) (n : ℕ) : stCell l (n + 1) = stCell l.tail n := by
+/-- Entry `n + 1` of a stack tape is entry `n` of its tail. -/
+theorem stCell_succ (l : StackTape S) (n : ℕ) : stCell l (n + 1) = stCell l.tail n := by
   obtain ⟨L, hL⟩ := l
   cases L with
   | nil => simp [stCell, StackTape.tail]
   | cons a t => simp [stCell, StackTape.tail]
 
-lemma stCell_cons_zero (o : Option S) (l : StackTape S) : stCell (StackTape.cons o l) 0 = o := by
+/-- Entry `0` of `StackTape.cons o l` is `o`. -/
+theorem stCell_cons_zero (o : Option S) (l : StackTape S) : stCell (StackTape.cons o l) 0 = o := by
   rw [stCell_zero, StackTape.head_cons]
 
-lemma stCell_cons_succ (o : Option S) (l : StackTape S) (n : ℕ) :
+/-- Entry `n + 1` of `StackTape.cons o l` is entry `n` of `l`. -/
+theorem stCell_cons_succ (o : Option S) (l : StackTape S) (n : ℕ) :
     stCell (StackTape.cons o l) (n + 1) = stCell l n := by
   rw [stCell_succ, StackTape.tail_cons]
 
-lemma stCell_eq_none_of_toList_nil {l : StackTape S} (h : l.toList = []) (n : ℕ) :
+/-- If a stack tape stores no symbols, every entry is blank. -/
+theorem stCell_eq_none_of_toList_nil {l : StackTape S} (h : l.toList = []) (n : ℕ) :
     stCell l n = none := by
   simp [stCell, h]
 
-lemma stCell_mapSome (l : List S) (n : ℕ) : stCell (StackTape.mapSome l) n = l[n]? := by
+/-- Entry `n` of `StackTape.mapSome l` is `l[n]?`. -/
+theorem stCell_mapSome (l : List S) (n : ℕ) : stCell (StackTape.mapSome l) n = l[n]? := by
   simp only [stCell, StackTape.mapSome, List.getElem?_map]
   cases l[n]? <;> simp
 
@@ -61,24 +70,29 @@ def cellAt (t : BiTape S) (d : ℤ) : Option S :=
   else if 0 < d then stCell t.right (d - 1).toNat
   else stCell t.left (-d - 1).toNat
 
+/-- The cell at offset `0` is the head. -/
 @[simp]
-lemma cellAt_zero (t : BiTape S) : cellAt t 0 = t.head := by simp [cellAt]
+theorem cellAt_zero (t : BiTape S) : cellAt t 0 = t.head := by simp [cellAt]
 
-lemma cellAt_pos (t : BiTape S) {d : ℤ} (h : 0 < d) :
+/-- For a positive offset `d`, the cell at `d` is entry `d - 1` of the right part. -/
+theorem cellAt_pos (t : BiTape S) {d : ℤ} (h : 0 < d) :
     cellAt t d = stCell t.right (d - 1).toNat := by
   rw [cellAt, ite_eq_right (by omega), ite_eq_left h]
 
-lemma cellAt_neg (t : BiTape S) {d : ℤ} (h : d < 0) :
+/-- For a negative offset `d`, the cell at `d` is entry `-d - 1` of the left part. -/
+theorem cellAt_neg (t : BiTape S) {d : ℤ} (h : d < 0) :
     cellAt t d = stCell t.left (-d - 1).toNat := by
   rw [cellAt, ite_eq_right (by omega), ite_eq_right (by omega)]
 
+/-- Writing `a` sets the cell at offset `0` to `a` and leaves every other cell unchanged. -/
 @[simp]
-lemma cellAt_write (t : BiTape S) (a : Option S) (d : ℤ) :
+theorem cellAt_write (t : BiTape S) (a : Option S) (d : ℤ) :
     cellAt (t.write a) d = if d = 0 then a else cellAt t d := by
   unfold cellAt BiTape.write
   split <;> simp_all
 
-lemma cellAt_moveRight (t : BiTape S) (d : ℤ) : cellAt t.moveRight d = cellAt t (d + 1) := by
+/-- After a move right, the cell at offset `d` is the old cell at offset `d + 1`. -/
+theorem cellAt_moveRight (t : BiTape S) (d : ℤ) : cellAt t.moveRight d = cellAt t (d + 1) := by
   rcases lt_trichotomy d 0 with h | h | h
   · rcases eq_or_lt_of_le (by omega : d + 1 ≤ 0) with h1 | h1
     · have hd : d = -1 := by omega
@@ -100,7 +114,8 @@ lemma cellAt_moveRight (t : BiTape S) (d : ℤ) : cellAt t.moveRight d = cellAt 
     have : (d + 1 - 1).toNat = (d - 1).toNat + 1 := by omega
     rw [this, stCell_succ]
 
-lemma cellAt_moveLeft (t : BiTape S) (d : ℤ) : cellAt t.moveLeft d = cellAt t (d - 1) := by
+/-- After a move left, the cell at offset `d` is the old cell at offset `d - 1`. -/
+theorem cellAt_moveLeft (t : BiTape S) (d : ℤ) : cellAt t.moveLeft d = cellAt t (d - 1) := by
   rcases lt_trichotomy d 0 with h | h | h
   · rw [cellAt_neg _ h, cellAt_neg _ (by omega)]
     simp only [BiTape.moveLeft]
@@ -122,17 +137,24 @@ lemma cellAt_moveLeft (t : BiTape S) (d : ℤ) : cellAt t.moveLeft d = cellAt t 
       have : (d - 1).toNat = (d - 1 - 1).toNat + 1 := by omega
       rw [this, stCell_cons_succ]
 
+/-- Not moving leaves every cell unchanged. -/
 @[simp]
-lemma cellAt_optionMove_none (t : BiTape S) (d : ℤ) :
+theorem cellAt_optionMove_none (t : BiTape S) (d : ℤ) :
     cellAt (t.optionMove none) d = cellAt t d := rfl
 
-lemma cellAt_optionMove_left (t : BiTape S) (d : ℤ) :
+/-- After `optionMove` to the left, the cell at offset `d` is the old cell at offset
+`d - 1`. -/
+theorem cellAt_optionMove_left (t : BiTape S) (d : ℤ) :
     cellAt (t.optionMove (some Turing.Dir.left)) d = cellAt t (d - 1) := cellAt_moveLeft t d
 
-lemma cellAt_optionMove_right (t : BiTape S) (d : ℤ) :
+/-- After `optionMove` to the right, the cell at offset `d` is the old cell at offset
+`d + 1`. -/
+theorem cellAt_optionMove_right (t : BiTape S) (d : ℤ) :
     cellAt (t.optionMove (some Turing.Dir.right)) d = cellAt t (d + 1) := cellAt_moveRight t d
 
-lemma cellAt_mk₁ (l : List S) (d : ℤ) :
+/-- The tape `BiTape.mk₁ l` holds `l[d]?` at each offset `d ≥ 0` and a blank at each negative
+offset. -/
+theorem cellAt_mk₁ (l : List S) (d : ℤ) :
     cellAt (BiTape.mk₁ l) d = if 0 ≤ d then l[d.toNat]? else none := by
   cases l with
   | nil =>
@@ -153,12 +175,12 @@ lemma cellAt_mk₁ (l : List S) (d : ℤ) :
       simp
 
 /-- If the left part of the tape is empty, every cell to the left of the head is blank. -/
-lemma cellAt_eq_none_of_left_nil {t : BiTape S} (h : t.left.toList = []) {d : ℤ} (hd : d < 0) :
+theorem cellAt_eq_none_of_left_nil {t : BiTape S} (h : t.left.toList = []) {d : ℤ} (hd : d < 0) :
     cellAt t d = none := by
   rw [cellAt_neg _ hd, stCell_eq_none_of_toList_nil h]
 
-/-- Contrapositive: a non-blank cell to the left of the head witnesses a non-empty left part. -/
-lemma left_toList_ne_nil {t : BiTape S} {d : ℤ} (hd : d < 0) (h : cellAt t d ≠ none) :
+/-- If a cell to the left of the head is not blank, the left part of the tape is not empty. -/
+theorem left_toList_ne_nil {t : BiTape S} {d : ℤ} (hd : d < 0) (h : cellAt t d ≠ none) :
     t.left.toList ≠ [] := fun hnil => h (cellAt_eq_none_of_left_nil hnil hd)
 
 end DiagonaLean.MPCP.Normalize

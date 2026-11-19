@@ -7,14 +7,18 @@ import DiagonaLean.Halt.Basic
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
 
+@[expose] public section
+
 /-! # Core undecidability definitions
+
+`Undecidable p` is a many-one reduction from `HaltProblem` to `p`, kept as data. Undecidability
+propagates along many-one reductions (`undecidabilityFromReducibility`).
 
 ## References
 
 * [Y. Forster, D. Larchey-Wendling, A. Dudenhefner, et al.,
     *A Coq Library of Undecidable Problems*][ForsterEtAl2020]
 -/
-
 
 namespace DiagonaLean.Synthetic.Notation
 open DiagonaLean.Halt DiagonaLean.Halt.Encoding Cslib.Turing DiagonaLean.Synthetic.Definitions
@@ -38,10 +42,10 @@ abbrev Undecidable (p : X → Prop) : Type _ := HaltProblem ⪯ₘ p
 to `q` is the composition of the two functions. -/
 def undecidabilityFromReducibility {p : X → Prop} {q : Y → Prop}
     (hp : Undecidable p) (hpq : p ⪯ₘ q) : Undecidable q :=
-  ReductionChain.ReducesTransitive hp hpq
+  ReductionChain.reducesTrans hp hpq
 
-/-- Tactic to prove undecidability by reduction from another undecidable problem.
-Translates `undec from H` to `apply undecidabilityFromReducibility H`. -/
+/-- `undec from H` reduces a goal `Undecidable q` to a reduction `p ⪯ₘ q`, given
+`H : Undecidable p`; it applies `undecidabilityFromReducibility H`. -/
 macro "undec" "from" H:term : tactic =>
   `(tactic| apply undecidabilityFromReducibility $H)
 

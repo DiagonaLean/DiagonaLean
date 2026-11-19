@@ -20,13 +20,10 @@ reduction lands in the complement of equality over `{0, 1}`.
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.LangEqBool.Reduction
 
-open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA Nat.Partrec
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
+open DiagonaLean.KAComm.KleeneAlgebra DiagonaLean.Halt DiagonaLean.Halt.Encoding
+  DiagonaLean.Synthetic.Definitions
 
 /-- The equality of `haltEqRed p`, with each letter `n` replaced by the word `1ⁿ0`. -/
 def haltEqRedB (p : EncodableTM Bool × List Bool) : InstB := sbI (haltEqRed p)

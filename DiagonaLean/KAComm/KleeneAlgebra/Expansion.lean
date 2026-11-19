@@ -3,8 +3,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.KAComm.KleeneAlgebra.Automata
 import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
+import DiagonaLean.KAComm.KleeneAlgebra.Automata
 
 @[expose] public section
 
@@ -19,8 +19,6 @@ A state `e` of a finite-state automaton `S` can be unfolded `k` times:
 
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Lemma 27
 -/
-
-open scoped Computability
 
 namespace DiagonaLean.KAComm.KleeneAlgebra
 

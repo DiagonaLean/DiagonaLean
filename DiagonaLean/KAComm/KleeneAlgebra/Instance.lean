@@ -16,14 +16,16 @@ It differs from `eqRed` in three ways: the input is `[]` (the machine ignores it
 renamed by the explicit `letC`, and the sums over all letters follow the explicit order `letters`.
 These sums are provably equal to those of `rhsS`, so the separation facts carry over. If `NM K l`
 outputs `[true]` the two sides are equal in `T Σ̈`, and if it outputs `[false]` they are equal
-neither in `K Σ̈` nor in `T Σ̈`.
--/
+neither in `K Σ̈` nor in `T Σ̈`
 
-open scoped Computability
+## References
+
+* [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18
+-/
 
 namespace DiagonaLean.KAComm.KleeneAlgebra
 
-open Cslib.Turing Enc RExp FreePreKA TD DiagonaLean.Foundations.Computability
+open Enc RExp FreePreKA TD DiagonaLean.Foundations.Computability
 
 section letC
 
@@ -189,7 +191,8 @@ theorem rInst_pos (h : (NM K l).Outputs [] [true]) :
   exact (provable_iff_equiv _).1 this
 
 /-- A machine with output `0` makes `redA K l ≤ redB K l` false in the model. -/
-theorem not_modelLe (h : (NM K l).Outputs [] [false]) : ¬ ModelLe (redA K l, redB K l) := fun hle => by
+theorem not_modelLe (h : (NM K l).Outputs [] [false]) :
+    ¬ ModelLe (redA K l, redB K l) := fun hle => by
   have h₁ := pl_le_of_map letC_injective hle
   rw [mk_rhsN] at h₁
   exact not_pl_le_of_outputs h (by decide) h₁

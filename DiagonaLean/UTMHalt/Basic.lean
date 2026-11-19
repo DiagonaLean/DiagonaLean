@@ -5,17 +5,20 @@ Authors: Aristotle (Harmonic), Akhilesh Balaji
 
 import DiagonaLean.UTMHalt.UniversalTuringMachine.Basic
 
-/-! # The Universal Turing Machine Halting Problem: Basic Definitions
+@[expose] public section
 
-The central notions used in the proof that the UTM halting problem is undecidable.
+/-! # The UTM halting problem
+
+The central notions used in the proof that the UTM halting problem is undecidable: a machine
+deciding the halting problem of a fixed machine (`IsHaltDeciderFor`), halting of a (weakly)
+universal machine on an encoded instance (`WeakUTMHalts`, `UTMHalts`), and the decision problems
+`WeakUTMHaltProblem` and `UTMHaltProblem`.
 
 ## References
 
 * [J. E. Hopcroft, R. Motwani, J. D. Ullman,
   *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
-
-@[expose] public section
 
 namespace DiagonaLean.UTMHalt
 
@@ -27,11 +30,12 @@ open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding
 def IsHaltDeciderFor (U D : SingleTapeTM Bool) : Prop :=
   ∀ x : List Bool, (Halts U x → D.Outputs x [true]) ∧ (¬ Halts U x → D.Outputs x [false])
 
-/-- The `Halts` predicate for Weak UTMs. -/
+/-- `WeakUTMHalts U hU M w` holds when the weakly universal machine `U` halts on
+`instanceEncoding M w`. -/
 def WeakUTMHalts (U : SingleTapeTM Bool) (_hU : IsWeaklyUniversal U) (M : EncodableTM Bool)
   (w : List Bool) := Halts U (instanceEncoding M w)
 
-/-- The `Halts` predicate for UTMs. -/
+/-- `UTMHalts U hU M w` holds when the universal machine `U` halts on `instanceEncoding M w`. -/
 def UTMHalts (U : SingleTapeTM Bool) (_hU : IsUniversal U) (M : EncodableTM Bool)
   (w : List Bool) := Halts U (instanceEncoding M w)
 

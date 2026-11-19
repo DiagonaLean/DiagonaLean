@@ -19,13 +19,9 @@ the reduction lands in its complement.
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.LangEq.Reduction
 
-open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
+open DiagonaLean.KAComm.KleeneAlgebra DiagonaLean.Halt DiagonaLean.Synthetic.Definitions
 
 /-- `haltEqRed` reduces `HaltProblem` to the failure of language equality over `ℕ`. -/
 theorem halt_reducesto_not_langEq_spec :

@@ -11,8 +11,8 @@ import DiagonaLean.MPCP.Basic
 /-! # Halt ⪯ₘ MPCP
 
 Reduction from the halting problem to MPCP following the Hopcroft–Ullman construction. Solutions to
-`DecisionProblem (startTile tm w) (haltTiles tm)` encode halting computation histories of `tm` on `w`.
-The main result is `halt_iff_mpcp`, subject to `NoBlankWrites` and `NoLeftBoundary`.
+`DecisionProblem (startTile tm w) (haltTiles tm)` encode halting computation histories of `tm` on
+`w`. The main result is `halt_iff_mpcp`, subject to `NoBlankWrites` and `NoLeftBoundary`.
 
 ## References
 
@@ -55,18 +55,18 @@ def liftTape (tm : SingleTapeTM Symbol) (l : List (Option Symbol)) :
 
 /-- `liftTape` of the empty list is empty. -/
 @[simp]
-lemma liftTape_nil (tm : SingleTapeTM Symbol) :
+theorem liftTape_nil (tm : SingleTapeTM Symbol) :
     liftTape tm ([] : List (Option Symbol)) = [] := rfl
 
 /-- `liftTape` of a cons list prepends the lifted head symbol. -/
 @[simp]
-lemma liftTape_cons (tm : SingleTapeTM Symbol) (a : Option Symbol)
+theorem liftTape_cons (tm : SingleTapeTM Symbol) (a : Option Symbol)
     (l : List (Option Symbol)) :
     liftTape tm (a :: l) = ↟ₜa :: liftTape tm l := rfl
 
 /-- `liftTape` distributes over list concatenation. -/
 @[simp]
-lemma liftTape_append (tm : SingleTapeTM Symbol) (l1 l2 : List (Option Symbol)) :
+theorem liftTape_append (tm : SingleTapeTM Symbol) (l1 l2 : List (Option Symbol)) :
     liftTape tm (l1 ++ l2) = liftTape tm l1 ++ liftTape tm l2 := by
   simp [liftTape, List.map_append]
 
@@ -85,8 +85,6 @@ def encodeHaltedCfg (tm : SingleTapeTM Symbol) (t : BiTape Symbol) :
     List (Alpha tm.State Symbol) :=
   liftTape tm t.left.toList.reverse ++ h⊥ :: liftTape tm (t.head :: t.right.toList)
 
-/- TODO: see if these encodings can be replaced by those from Halt.Encoding -/
-
 /-- Encode an arbitrary configuration. -/
 def encodeCfg (tm : SingleTapeTM Symbol) : tm.Cfg → List (Alpha tm.State Symbol)
   | ⟨some q, t⟩ => encodeRunningCfg tm q t
@@ -104,13 +102,13 @@ def initBlock (tm : SingleTapeTM Symbol) (w : List Symbol) :
 
 /-- `encodeCfg` unfolds to `encodeRunningCfg` on running configurations. -/
 @[simp]
-lemma encodeCfg_running (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem encodeCfg_running (tm : SingleTapeTM Symbol) (q : tm.State)
     (t : BiTape Symbol) :
     encodeCfg tm { state := some q, BiTape := t } = encodeRunningCfg tm q t := rfl
 
 /-- `encodeCfg` unfolds to `encodeHaltedCfg` on halted configurations. -/
 @[simp]
-lemma encodeCfg_halted (tm : SingleTapeTM Symbol) (t : BiTape Symbol) :
+theorem encodeCfg_halted (tm : SingleTapeTM Symbol) (t : BiTape Symbol) :
     encodeCfg tm { state := none, BiTape := t } = encodeHaltedCfg tm t := rfl
 
 /-- The start tile: `top = [#]`, `bot = # :: encodeCfg(initCfg) ++ [#]`. Forces every MPCP solution
@@ -201,46 +199,48 @@ def finalTile (tm : SingleTapeTM Symbol) : Tile (Alpha tm.State Symbol) where
 
 /-- The top word of `copyTile tm a` is `[↟ₜa]`. -/
 @[simp]
-lemma copyTile_top (tm : SingleTapeTM Symbol) (a : Option Symbol) :
+theorem copyTile_top (tm : SingleTapeTM Symbol) (a : Option Symbol) :
   (copyTile tm a).top = [↟ₜa] := rfl
 
 /-- The bottom word of `copyTile tm a` is `[↟ₜa]`. -/
 @[simp]
-lemma copyTile_bot (tm : SingleTapeTM Symbol) (a : Option Symbol) :
+theorem copyTile_bot (tm : SingleTapeTM Symbol) (a : Option Symbol) :
   (copyTile tm a).bot = [↟ₜa] := rfl
 
 /-- The top word of `sepTile tm` is `[#]`. -/
 @[simp]
-lemma sepTile_top (tm : SingleTapeTM Symbol) : (sepTile tm).top = [#] := rfl
+theorem sepTile_top (tm : SingleTapeTM Symbol) : (sepTile tm).top = [#] := rfl
 
 /-- The bottom word of `sepTile tm` is `[#]`. -/
 @[simp]
-lemma sepTile_bot (tm : SingleTapeTM Symbol) : (sepTile tm).bot = [#] := rfl
+theorem sepTile_bot (tm : SingleTapeTM Symbol) : (sepTile tm).bot = [#] := rfl
 
 /-- `stateMarker tm (some q')` equals `↟ₛq'`. -/
 @[simp]
-lemma stateMarker_some (tm : SingleTapeTM Symbol) (q' : tm.State) :
+theorem stateMarker_some (tm : SingleTapeTM Symbol) (q' : tm.State) :
   stateMarker tm (some q') = ↟ₛq' := rfl
 
 /-- `stateMarker tm none` equals `h⊥`. -/
 @[simp]
-lemma stateMarker_none (tm : SingleTapeTM Symbol) :
+theorem stateMarker_none (tm : SingleTapeTM Symbol) :
   stateMarker tm (none : Option tm.State) = h⊥ := rfl
 
 /-- The top word of `finalTile tm` is `[h⊥, #, #]`. -/
 @[simp]
-lemma finalTile_top (tm : SingleTapeTM Symbol) :
+theorem finalTile_top (tm : SingleTapeTM Symbol) :
   (finalTile tm).top = [h⊥, #, #] := rfl
 
 /-- The bottom word of `finalTile tm` is `[#]`. -/
 @[simp]
-lemma finalTile_bot (tm : SingleTapeTM Symbol) :
+theorem finalTile_bot (tm : SingleTapeTM Symbol) :
   (finalTile tm).bot = [#] := rfl
 
-/-- All copy tiles, one per tape symbol (including blank). -/
+/-- `enumerate α` lists every element of `α`. -/
 def enumerate (α : Type) [Fintype α] [Encodable α] : List α :=
-  (List.range ((Finset.univ.image (Encodable.encode (α := α))).sup id + 1)).filterMap Encodable.decode
+  (List.range ((Finset.univ.image (Encodable.encode (α := α))).sup id + 1)).filterMap
+    Encodable.decode
 
+/-- Every element of `α` belongs to `enumerate α`. -/
 @[simp]
 theorem mem_enumerate {α : Type} [Fintype α] [Encodable α] (a : α) : a ∈ enumerate α := by
   apply List.mem_filterMap.mpr
@@ -299,14 +299,8 @@ def haltTiles (tm : EncodableTM Symbol) [Encodable Symbol] :
   absorbTiles tm.toSingleTapeTM ++
   [finalTile tm.toSingleTapeTM]
 
-/-- The reduction `Halt ⪯ₘ MPCP` as a function: maps `(tm, w)` to the MPCP instance
-  `(startTile tm w, haltTiles tm)`. -/
-def haltToMpcp (tm : EncodableTM Symbol) (w : List Symbol) [Encodable Symbol] :
-    Tile (Alpha tm.State Symbol) × Stack (Alpha tm.State Symbol) :=
-  (startTile tm.toSingleTapeTM w, haltTiles tm)
-
 /-- The copy tile for `a` belongs to `haltTiles tm`. -/
-lemma copyTile_mem_haltTiles (tm : EncodableTM Symbol) (a : Option Symbol) [Encodable Symbol] :
+theorem copyTile_mem_haltTiles (tm : EncodableTM Symbol) (a : Option Symbol) [Encodable Symbol] :
     copyTile tm.toSingleTapeTM a ∈ haltTiles tm := by
   refine List.mem_append_left _ ?_; refine List.mem_append_left _ ?_
   refine List.mem_append_left _ ?_; refine List.mem_append_left _ ?_
@@ -315,20 +309,21 @@ lemma copyTile_mem_haltTiles (tm : EncodableTM Symbol) (a : Option Symbol) [Enco
 
 
 /-- The separator tile belongs to `haltTiles tm`. -/
-lemma sepTile_mem_haltTiles (tm : EncodableTM Symbol) [Encodable Symbol] :
+theorem sepTile_mem_haltTiles (tm : EncodableTM Symbol) [Encodable Symbol] :
     sepTile tm.toSingleTapeTM ∈ haltTiles tm := by
   refine List.mem_append_left _ ?_; refine List.mem_append_left _ ?_
   refine List.mem_append_left _ ?_
   exact List.mem_append_right _ (List.mem_singleton.mpr rfl)
 
 /-- The final tile belongs to `haltTiles tm`. -/
-lemma finalTile_mem_haltTiles (tm : EncodableTM Symbol) [Encodable Symbol] :
+theorem finalTile_mem_haltTiles (tm : EncodableTM Symbol) [Encodable Symbol] :
     finalTile tm.toSingleTapeTM ∈ haltTiles tm := by
   refine List.mem_append_right _ ?_
   exact List.mem_singleton.mpr rfl
 
 /-- The left absorb tile for `a` belongs to `haltTiles tm`. -/
-lemma absorbLeftTile_mem_haltTiles (tm : EncodableTM Symbol) (a : Option Symbol) [Encodable Symbol] :
+theorem absorbLeftTile_mem_haltTiles (tm : EncodableTM Symbol) (a : Option Symbol)
+    [Encodable Symbol] :
     absorbLeftTile tm.toSingleTapeTM a ∈ haltTiles tm := by
   refine List.mem_append_left _ ?_; refine List.mem_append_right _ ?_
   refine List.mem_flatMap.mpr ?_
@@ -336,7 +331,8 @@ lemma absorbLeftTile_mem_haltTiles (tm : EncodableTM Symbol) (a : Option Symbol)
   simp[absorbLeftTile, absorbTilesFor]
 
 /-- The right absorb tile for `a` belongs to `haltTiles tm`. -/
-lemma absorbRightTile_mem_haltTiles (tm : EncodableTM Symbol) (a : Option Symbol) [Encodable Symbol] :
+theorem absorbRightTile_mem_haltTiles (tm : EncodableTM Symbol) (a : Option Symbol)
+    [Encodable Symbol] :
     absorbRightTile tm.toSingleTapeTM a ∈ haltTiles tm := by
   refine List.mem_append_left _ ?_; refine List.mem_append_right _ ?_
   refine List.mem_flatMap.mpr ?_
@@ -344,7 +340,7 @@ lemma absorbRightTile_mem_haltTiles (tm : EncodableTM Symbol) (a : Option Symbol
   simp[absorbRightTile, absorbTilesFor]
 
 /-- Every tile produced by `transitionTilesFor tm q a` belongs to `transitionTiles tm`. -/
-lemma transitionTilesFor_subset_transitionTiles (tm : EncodableTM Symbol)
+theorem transitionTilesFor_subset_transitionTiles (tm : EncodableTM Symbol)
     (q : tm.State) (a : Option Symbol) (t : Tile (Alpha tm.State Symbol)) [Encodable Symbol]
     (ht : t ∈ transitionTilesFor tm.toSingleTapeTM q a) :
     t ∈ transitionTiles tm := by
@@ -353,7 +349,7 @@ lemma transitionTilesFor_subset_transitionTiles (tm : EncodableTM Symbol)
       use q, a
 
 /-- Every transition tile belongs to `haltTiles tm`. -/
-lemma transitionTile_mem_haltTiles (tm : EncodableTM Symbol) (q : tm.State)
+theorem transitionTile_mem_haltTiles (tm : EncodableTM Symbol) (q : tm.State)
     (a : Option Symbol) (t : Tile (Alpha tm.State Symbol)) [Encodable Symbol]
     (ht : t ∈ transitionTilesFor tm.toSingleTapeTM q a) :
     t ∈ haltTiles tm := by
@@ -363,7 +359,7 @@ lemma transitionTile_mem_haltTiles (tm : EncodableTM Symbol) (q : tm.State)
 
 /-- `τ1` of a sequence of copy tiles equals the lifted tape list. -/
 @[simp]
-lemma τ1_map_copyTile (tm : SingleTapeTM Symbol) (syms : List (Option Symbol)) :
+theorem τ1_map_copyTile (tm : SingleTapeTM Symbol) (syms : List (Option Symbol)) :
     τ1 (syms.map (copyTile tm)) = liftTape tm syms := by
   induction syms with
   | nil => rfl
@@ -371,14 +367,14 @@ lemma τ1_map_copyTile (tm : SingleTapeTM Symbol) (syms : List (Option Symbol)) 
 
 /-- `τ2` of a sequence of copy tiles equals the lifted tape list. -/
 @[simp]
-lemma τ2_map_copyTile (tm : SingleTapeTM Symbol) (syms : List (Option Symbol)) :
+theorem τ2_map_copyTile (tm : SingleTapeTM Symbol) (syms : List (Option Symbol)) :
     τ2 (syms.map (copyTile tm)) = liftTape tm syms := by
   induction syms with
   | nil => rfl
   | cons a syms ih => simp [τ2_cons, ih, liftTape]
 
 /-- Every tile in a sequence of copy tiles belongs to `haltTiles tm`. -/
-lemma map_copyTile_subset_haltTiles (tm : EncodableTM Symbol)
+theorem map_copyTile_subset_haltTiles (tm : EncodableTM Symbol)
     (syms : List (Option Symbol)) (t : Tile (Alpha tm.State Symbol)) [Encodable Symbol]
     (ht : t ∈ syms.map (copyTile tm.toSingleTapeTM)) :
     t ∈ haltTiles tm := by
@@ -387,18 +383,18 @@ lemma map_copyTile_subset_haltTiles (tm : EncodableTM Symbol)
 
 /-- The top word of `startTile tm w` is `[#]`. -/
 @[simp]
-lemma startTile_top (tm : SingleTapeTM Symbol) (w : List Symbol) :
+theorem startTile_top (tm : SingleTapeTM Symbol) (w : List Symbol) :
   (startTile tm w).top = [#] := rfl
 
 /-- The bottom word of `startTile tm w` is `# :: encodeCfg(initCfg) ++ [#]`. -/
 @[simp]
-lemma startTile_bot (tm : SingleTapeTM Symbol) (w : List Symbol) :
+theorem startTile_bot (tm : SingleTapeTM Symbol) (w : List Symbol) :
   (startTile tm w).bot =
     # :: encodeCfg tm (SingleTapeTM.initCfg tm w) ++ [#] := rfl
 
 /-- `block tm cfg` unfolds to `# :: encodeCfg tm cfg ++ [#]`. -/
 @[simp]
-lemma block_eq (tm : SingleTapeTM Symbol) (cfg : tm.Cfg) :
+theorem block_eq (tm : SingleTapeTM Symbol) (cfg : tm.Cfg) :
   block tm cfg = # :: encodeCfg tm cfg ++ [#] := rfl
 
 /-- Tile sequence simulating a single no-move TM step. -/
@@ -412,18 +408,18 @@ def stepTilesNoMove (tm : SingleTapeTM Symbol) (q : tm.State)
 
 /-- The top word of `noMoveTile tm q a qNew w` is `[↟ₛq, ↟ₜa]`. -/
 @[simp]
-lemma noMoveTile_top (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem noMoveTile_top (tm : SingleTapeTM Symbol) (q : tm.State)
   (a : Option Symbol) (qNew : Option tm.State) (w : Option Symbol) :
   (noMoveTile tm q a qNew w).top = [↟ₛq, ↟ₜa] := rfl
 
 /-- The bottom word of `noMoveTile tm q a qNew w` is `[stateMarker tm qNew, ↟ₜw]`. -/
 @[simp]
-lemma noMoveTile_bot (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem noMoveTile_bot (tm : SingleTapeTM Symbol) (q : tm.State)
   (a : Option Symbol) (qNew : Option tm.State) (w : Option Symbol) :
   (noMoveTile tm q a qNew w).bot = [stateMarker tm qNew, ↟ₜw] := rfl
 
 /-- `τ1` of `stepTilesNoMove` reproduces the current configuration block. -/
-lemma τ1_stepTilesNoMove (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem τ1_stepTilesNoMove (tm : SingleTapeTM Symbol) (q : tm.State)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol) :
     τ1 (stepTilesNoMove tm q qNew t w) = encodeRunningCfg tm q t ++ [#] := by
   simp only [stepTilesNoMove, τ1_append, τ1_cons, τ1_nil,
@@ -432,7 +428,7 @@ lemma τ1_stepTilesNoMove (tm : SingleTapeTM Symbol) (q : tm.State)
   simp [List.append_assoc]
 
 /-- `τ2` of `stepTilesNoMove` produces the next configuration block. -/
-lemma τ2_stepTilesNoMove (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem τ2_stepTilesNoMove (tm : SingleTapeTM Symbol) (q : tm.State)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol) :
     τ2 (stepTilesNoMove tm q qNew t w) =
       liftTape tm t.left.toList.reverse ++
@@ -445,7 +441,7 @@ lemma τ2_stepTilesNoMove (tm : SingleTapeTM Symbol) (q : tm.State)
   simp [List.append_assoc]
 
 /-- Every tile in `stepTilesNoMove` belongs to `haltTiles tm`. -/
-lemma stepTilesNoMove_subset_haltTiles (tm : EncodableTM Symbol)
+theorem stepTilesNoMove_subset_haltTiles (tm : EncodableTM Symbol)
     (q : tm.toSingleTapeTM.State) (a : Option Symbol) (qNew : Option tm.toSingleTapeTM.State)
     (t : BiTape Symbol) (w : Option Symbol)
     (htr : tm.toSingleTapeTM.tr q a = (⟨w, none⟩, qNew))
@@ -474,18 +470,18 @@ def stepTilesRightInterior (tm : SingleTapeTM Symbol) (q : tm.State)
 
 /-- The top word of `rightMoveTile tm q a qNew w` is `[↟ₛq, ↟ₜa]`. -/
 @[simp]
-lemma rightMoveTile_top (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem rightMoveTile_top (tm : SingleTapeTM Symbol) (q : tm.State)
   (a : Option Symbol) (qNew : Option tm.State) (w : Option Symbol) :
   (rightMoveTile tm q a qNew w).top = [↟ₛq, ↟ₜa] := rfl
 
 /-- The bottom word of `rightMoveTile tm q a qNew w` is `[↟ₜw, stateMarker tm qNew]`. -/
 @[simp]
-lemma rightMoveTile_bot (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem rightMoveTile_bot (tm : SingleTapeTM Symbol) (q : tm.State)
   (a : Option Symbol) (qNew : Option tm.State) (w : Option Symbol) :
   (rightMoveTile tm q a qNew w).bot = [↟ₜw, stateMarker tm qNew] := rfl
 
 /-- `τ1` of `stepTilesRightInterior` reproduces the current configuration block. -/
-lemma τ1_stepTilesRightInterior (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem τ1_stepTilesRightInterior (tm : SingleTapeTM Symbol) (q : tm.State)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol) :
     τ1 (stepTilesRightInterior tm q qNew t w) = encodeRunningCfg tm q t ++ [#] := by
   simp only [stepTilesRightInterior, τ1_append, τ1_cons, τ1_nil,
@@ -493,8 +489,9 @@ lemma τ1_stepTilesRightInterior (tm : SingleTapeTM Symbol) (q : tm.State)
              List.append_nil, encodeRunningCfg, liftTape_cons]
   simp [List.append_assoc]
 
-/-- `τ2` of `stepTilesRightInterior` in explicit list form. -/
-lemma τ2_stepTilesRightInterior (tm : SingleTapeTM Symbol) (q : tm.State)
+/-- `τ2` of `stepTilesRightInterior` is the lifted left tape, then `↟ₜw` and the new state
+marker, then the lifted right tape and `#`. -/
+theorem τ2_stepTilesRightInterior (tm : SingleTapeTM Symbol) (q : tm.State)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol) :
     τ2 (stepTilesRightInterior tm q qNew t w) =
       liftTape tm t.left.toList.reverse ++
@@ -505,7 +502,7 @@ lemma τ2_stepTilesRightInterior (tm : SingleTapeTM Symbol) (q : tm.State)
              τ2_map_copyTile, rightMoveTile_bot, sepTile_bot, List.append_nil]
 
 /-- Every tile in `stepTilesRightInterior` belongs to `haltTiles tm`. -/
-lemma stepTilesRightInterior_subset_haltTiles (tm : EncodableTM Symbol)
+theorem stepTilesRightInterior_subset_haltTiles (tm : EncodableTM Symbol)
     (q : tm.toSingleTapeTM.State) (a : Option Symbol) (qNew : Option tm.toSingleTapeTM.State)
     (t : BiTape Symbol) (w : Option Symbol)
     (htr : tm.toSingleTapeTM.tr q a = (⟨w, some Turing.Dir.right⟩, qNew))
@@ -525,7 +522,7 @@ lemma stepTilesRightInterior_subset_haltTiles (tm : EncodableTM Symbol)
 
 omit [Inhabited Symbol] [Fintype Symbol] in
 /-- In the non-degenerate case, `StackTape.cons` does not strip blanks. -/
-lemma cons_toList_of_nondeg (w : Option Symbol) (xs : StackTape Symbol)
+theorem cons_toList_of_nondeg (w : Option Symbol) (xs : StackTape Symbol)
     (h : w ≠ none ∨ xs.toList ≠ []) :
     (StackTape.cons w xs).toList = w :: xs.toList := by
   obtain ⟨tl, hLast⟩ := xs
@@ -537,21 +534,23 @@ lemma cons_toList_of_nondeg (w : Option Symbol) (xs : StackTape Symbol)
 
 omit [Inhabited Symbol] [Fintype Symbol] in
 /-- For a non-empty `StackTape`, `head :: tail.toList = toList`. -/
-lemma head_cons_tail_toList (xs : StackTape Symbol) (h : xs.toList ≠ []) :
+theorem head_cons_tail_toList (xs : StackTape Symbol) (h : xs.toList ≠ []) :
     xs.head :: xs.tail.toList = xs.toList := by
   obtain ⟨tl, hLast⟩ := xs
   cases tl with | nil => exact absurd rfl h | cons a rest => rfl
 
-/-- Lifted form of `head_cons_tail_toList`. -/
-lemma liftTape_head_cons_tail_toList (tm : SingleTapeTM Symbol)
+/-- For a non-empty `StackTape`, the lifted head followed by the lifted tail is the lifted
+`toList`. -/
+theorem liftTape_head_cons_tail_toList (tm : SingleTapeTM Symbol)
     (xs : StackTape Symbol) (h : xs.toList ≠ []) :
     ↟ₜxs.head :: liftTape tm xs.tail.toList = liftTape tm xs.toList := by
   rw [show (↟ₜxs.head : Alpha tm.State Symbol) :: liftTape tm xs.tail.toList
        = liftTape tm (xs.head :: xs.tail.toList) from rfl,
       head_cons_tail_toList _ h]
 
-/-- The encoding of the configuration after a non-degenerate interior right-move step. -/
-lemma encodeCfg_after_right_move_eq (tm : SingleTapeTM Symbol)
+/-- After a non-degenerate interior right-move step, the encoding of the configuration is the
+lifted left tape, then `↟ₜw` and the new state marker, then the lifted right tape. -/
+theorem encodeCfg_after_right_move_eq (tm : SingleTapeTM Symbol)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol)
     (h_nondeg : w ≠ none ∨ t.left.toList ≠ [])
     (h_right_ne : t.right.toList ≠ []) :
@@ -578,7 +577,7 @@ lemma encodeCfg_after_right_move_eq (tm : SingleTapeTM Symbol)
     rw [liftTape_head_cons_tail_toList _ _ h_right_ne]; simp [List.append_assoc]
 
 /-- In the non-degenerate interior right-move case, `τ2 = encodeCfg(post-step) ++ [#]`. -/
-lemma τ2_stepTilesRightInterior_eq_encodeCfg (tm : SingleTapeTM Symbol)
+theorem τ2_stepTilesRightInterior_eq_encodeCfg (tm : SingleTapeTM Symbol)
     (q : tm.State) (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol)
     (h_nondeg : w ≠ none ∨ t.left.toList ≠ []) (h_right_ne : t.right.toList ≠ []) :
     τ2 (stepTilesRightInterior tm q qNew t w) =
@@ -588,13 +587,13 @@ lemma τ2_stepTilesRightInterior_eq_encodeCfg (tm : SingleTapeTM Symbol)
 
 omit [Inhabited Symbol] [Fintype Symbol] in
 /-- The `head` of a `StackTape` whose `toList` is empty is `none`. -/
-lemma head_of_toList_eq_nil (xs : StackTape Symbol) (h : xs.toList = []) :
+theorem head_of_toList_eq_nil (xs : StackTape Symbol) (h : xs.toList = []) :
     xs.head = none := by
   obtain ⟨tl, hLast⟩ := xs; simp only at h; subst h; rfl
 
 omit [Inhabited Symbol] [Fintype Symbol] in
 /-- The `tail` of an empty `StackTape` is also empty. -/
-lemma tail_toList_of_toList_eq_nil (xs : StackTape Symbol) (h : xs.toList = []) :
+theorem tail_toList_of_toList_eq_nil (xs : StackTape Symbol) (h : xs.toList = []) :
     xs.tail.toList = [] := by
   obtain ⟨tl, hLast⟩ := xs; simp only at h; subst h; rfl
 
@@ -607,20 +606,20 @@ def stepTilesRightBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
 
 /-- The top word of `rightMoveBoundaryTile tm q a qNew w` is `[↟ₛq, ↟ₜa, #]`. -/
 @[simp]
-lemma rightMoveBoundaryTile_top (tm : SingleTapeTM Symbol)
+theorem rightMoveBoundaryTile_top (tm : SingleTapeTM Symbol)
   (q : tm.State) (a : Option Symbol) (qNew : Option tm.State) (w : Option Symbol) :
   (rightMoveBoundaryTile tm q a qNew w).top = [↟ₛq, ↟ₜa, #] := rfl
 
 /-- The bottom word of `rightMoveBoundaryTile tm q a qNew w` is
   `[↟ₜw, stateMarker tm qNew, ↟ₜnone, #]`. -/
 @[simp]
-lemma rightMoveBoundaryTile_bot (tm : SingleTapeTM Symbol)
+theorem rightMoveBoundaryTile_bot (tm : SingleTapeTM Symbol)
   (q : tm.State) (a : Option Symbol) (qNew : Option tm.State) (w : Option Symbol) :
   (rightMoveBoundaryTile tm q a qNew w).bot =
     [↟ₜw, stateMarker tm qNew, ↟ₜ(none : Option Symbol), #] := rfl
 
 /-- `τ1` of `stepTilesRightBoundary` reproduces the current configuration block. -/
-lemma τ1_stepTilesRightBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem τ1_stepTilesRightBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol)
     (h_right_empty : t.right.toList = []) :
     τ1 (stepTilesRightBoundary tm q qNew t w) = encodeRunningCfg tm q t ++ [#] := by
@@ -630,8 +629,9 @@ lemma τ1_stepTilesRightBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
              liftTape_cons, liftTape_nil]
   simp [List.append_assoc]
 
-/-- `τ2` of `stepTilesRightBoundary` in explicit list form. -/
-lemma τ2_stepTilesRightBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
+/-- `τ2` of `stepTilesRightBoundary` is the lifted left tape, then `↟ₜw`, the new state marker,
+a blank and `#`. -/
+theorem τ2_stepTilesRightBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol) :
     τ2 (stepTilesRightBoundary tm q qNew t w) =
       liftTape tm t.left.toList.reverse ++
@@ -640,7 +640,7 @@ lemma τ2_stepTilesRightBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
              τ2_map_copyTile, rightMoveBoundaryTile_bot, List.append_nil]
 
 /-- Every tile in `stepTilesRightBoundary` belongs to `haltTiles tm`. -/
-lemma stepTilesRightBoundary_subset_haltTiles (tm : EncodableTM Symbol)
+theorem stepTilesRightBoundary_subset_haltTiles (tm : EncodableTM Symbol)
     (q : tm.toSingleTapeTM.State) (a : Option Symbol) (qNew : Option tm.toSingleTapeTM.State)
     (t : BiTape Symbol) (w : Option Symbol)
     (htr : tm.toSingleTapeTM.tr q a = (⟨w, some Turing.Dir.right⟩, qNew))
@@ -656,8 +656,9 @@ lemma stepTilesRightBoundary_subset_haltTiles (tm : EncodableTM Symbol)
     simp only [transitionTilesFor]; rw [htr]; subst hhead
     exact List.mem_cons_of_mem _ List.mem_cons_self
 
-/-- The encoding of the configuration after a non-degenerate right-boundary move. -/
-lemma encodeCfg_after_right_move_boundary_eq (tm : SingleTapeTM Symbol)
+/-- After a non-degenerate right-boundary move, the encoding of the configuration is the lifted
+left tape, then `↟ₜw`, the new state marker and a blank. -/
+theorem encodeCfg_after_right_move_boundary_eq (tm : SingleTapeTM Symbol)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol)
     (h_nondeg : w ≠ none ∨ t.left.toList ≠ [])
     (h_right_empty : t.right.toList = []) :
@@ -685,7 +686,7 @@ lemma encodeCfg_after_right_move_boundary_eq (tm : SingleTapeTM Symbol)
     simp [List.append_assoc]
 
 /-- In the non-degenerate right-boundary case, `τ2 = encodeCfg(post-step) ++ [#]`. -/
-lemma τ2_stepTilesRightBoundary_eq_encodeCfg (tm : SingleTapeTM Symbol)
+theorem τ2_stepTilesRightBoundary_eq_encodeCfg (tm : SingleTapeTM Symbol)
     (q : tm.State) (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol)
     (h_nondeg : w ≠ none ∨ t.left.toList ≠ []) (h_right_empty : t.right.toList = []) :
     τ2 (stepTilesRightBoundary tm q qNew t w) =
@@ -695,7 +696,7 @@ lemma τ2_stepTilesRightBoundary_eq_encodeCfg (tm : SingleTapeTM Symbol)
   simp [List.append_assoc]
 
 /-- `leftMoveTile` for symbol `b` belongs to `transitionTilesFor q a` for left moves. -/
-lemma leftMoveTile_mem_transitionTilesFor (tm : SingleTapeTM Symbol)
+theorem leftMoveTile_mem_transitionTilesFor (tm : SingleTapeTM Symbol)
     (q : tm.State) (a : Option Symbol) (w : Option Symbol)
     (qNew : Option tm.State) (b : Option Symbol)
     (htr : tm.tr q a = (⟨w, some Turing.Dir.left⟩, qNew)) [Encodable Symbol] :
@@ -715,18 +716,18 @@ def stepTilesLeftInterior (tm : SingleTapeTM Symbol) (q : tm.State)
 
 /-- The top word of `leftMoveTile tm q a qNew w b` is `[↟ₜb, ↟ₛq, ↟ₜa]`. -/
 @[simp]
-lemma leftMoveTile_top (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem leftMoveTile_top (tm : SingleTapeTM Symbol) (q : tm.State)
   (a : Option Symbol) (qNew : Option tm.State) (w b : Option Symbol) :
   (leftMoveTile tm q a qNew w b).top = [↟ₜb, ↟ₛq, ↟ₜa] := rfl
 
 /-- The bottom word of `leftMoveTile tm q a qNew w b` is `[stateMarker tm qNew, ↟ₜb, ↟ₜw]`. -/
 @[simp]
-lemma leftMoveTile_bot (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem leftMoveTile_bot (tm : SingleTapeTM Symbol) (q : tm.State)
   (a : Option Symbol) (qNew : Option tm.State) (w b : Option Symbol) :
   (leftMoveTile tm q a qNew w b).bot = [stateMarker tm qNew, ↟ₜb, ↟ₜw] := rfl
 
 /-- `τ1` of `stepTilesLeftInterior` reproduces the current configuration block. -/
-lemma τ1_stepTilesLeftInterior (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem τ1_stepTilesLeftInterior (tm : SingleTapeTM Symbol) (q : tm.State)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol)
     (h_left_ne : t.left.toList ≠ []) :
     τ1 (stepTilesLeftInterior tm q qNew t w) = encodeRunningCfg tm q t ++ [#] := by
@@ -739,8 +740,9 @@ lemma τ1_stepTilesLeftInterior (tm : SingleTapeTM Symbol) (q : tm.State)
   rw [h_split, liftTape_append, liftTape_cons, liftTape_nil]
   simp [List.append_assoc]
 
-/-- `τ2` of `stepTilesLeftInterior` in explicit list form. -/
-lemma τ2_stepTilesLeftInterior (tm : SingleTapeTM Symbol) (q : tm.State)
+/-- `τ2` of `stepTilesLeftInterior` is the lifted tail of the left tape, then the new state
+marker, the lifted left head and `↟ₜw`, then the lifted right tape and `#`. -/
+theorem τ2_stepTilesLeftInterior (tm : SingleTapeTM Symbol) (q : tm.State)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol) :
     τ2 (stepTilesLeftInterior tm q qNew t w) =
       liftTape tm t.left.tail.toList.reverse ++
@@ -751,7 +753,7 @@ lemma τ2_stepTilesLeftInterior (tm : SingleTapeTM Symbol) (q : tm.State)
              τ2_map_copyTile, leftMoveTile_bot, sepTile_bot, List.append_nil]
 
 /-- Every tile in `stepTilesLeftInterior` belongs to `haltTiles tm`. -/
-lemma stepTilesLeftInterior_subset_haltTiles (tm : EncodableTM Symbol)
+theorem stepTilesLeftInterior_subset_haltTiles (tm : EncodableTM Symbol)
     (q : tm.toSingleTapeTM.State) (a : Option Symbol) (qNew : Option tm.toSingleTapeTM.State)
     (t : BiTape Symbol) (w : Option Symbol)
     (htr : tm.toSingleTapeTM.tr q a = (⟨w, some Turing.Dir.left⟩, qNew))
@@ -769,8 +771,10 @@ lemma stepTilesLeftInterior_subset_haltTiles (tm : EncodableTM Symbol)
   · exact map_copyTile_subset_haltTiles tm _ tile hr
   · exact sepTile_mem_haltTiles tm
 
-/-- The encoding of the configuration after a non-degenerate interior left-move step. -/
-lemma encodeCfg_after_left_move_eq (tm : SingleTapeTM Symbol)
+/-- After a non-degenerate interior left-move step, the encoding of the configuration is the
+lifted tail of the left tape, then the new state marker, the lifted left head and `↟ₜw`, then the
+lifted right tape. -/
+theorem encodeCfg_after_left_move_eq (tm : SingleTapeTM Symbol)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol)
     (h_nondeg : w ≠ none ∨ t.right.toList ≠ []) :
     encodeCfg tm ⟨qNew, (t.write w).moveLeft⟩ =
@@ -797,7 +801,7 @@ lemma encodeCfg_after_left_move_eq (tm : SingleTapeTM Symbol)
     simp [List.append_assoc]
 
 /-- In the non-degenerate interior left-move case, `τ2 = encodeCfg(post-step) ++ [#]`. -/
-lemma τ2_stepTilesLeftInterior_eq_encodeCfg (tm : SingleTapeTM Symbol)
+theorem τ2_stepTilesLeftInterior_eq_encodeCfg (tm : SingleTapeTM Symbol)
     (q : tm.State) (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol)
     (h_nondeg : w ≠ none ∨ t.right.toList ≠ []) :
     τ2 (stepTilesLeftInterior tm q qNew t w) =
@@ -815,20 +819,20 @@ def stepTilesLeftBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
 
 /-- The top word of `leftMoveBoundaryTile tm q a qNew w` is `[↟ₛq, ↟ₜa]`. -/
 @[simp]
-lemma leftMoveBoundaryTile_top (tm : SingleTapeTM Symbol)
+theorem leftMoveBoundaryTile_top (tm : SingleTapeTM Symbol)
   (q : tm.State) (a : Option Symbol) (qNew : Option tm.State) (w : Option Symbol) :
   (leftMoveBoundaryTile tm q a qNew w).top = [↟ₛq, ↟ₜa] := rfl
 
 /-- The bottom word of `leftMoveBoundaryTile tm q a qNew w` is
   `[stateMarker tm qNew, ↟ₜnone, ↟ₜw]`. -/
 @[simp]
-lemma leftMoveBoundaryTile_bot (tm : SingleTapeTM Symbol)
+theorem leftMoveBoundaryTile_bot (tm : SingleTapeTM Symbol)
   (q : tm.State) (a : Option Symbol) (qNew : Option tm.State) (w : Option Symbol) :
   (leftMoveBoundaryTile tm q a qNew w).bot =
     [stateMarker tm qNew, ↟ₜ(none : Option Symbol), ↟ₜw] := rfl
 
 /-- `τ1` of `stepTilesLeftBoundary` reproduces the current configuration block. -/
-lemma τ1_stepTilesLeftBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem τ1_stepTilesLeftBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol)
     (h_left_empty : t.left.toList = []) :
     τ1 (stepTilesLeftBoundary tm q qNew t w) = encodeRunningCfg tm q t ++ [#] := by
@@ -838,8 +842,9 @@ lemma τ1_stepTilesLeftBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
              liftTape_cons, liftTape_nil, List.reverse_nil]
   simp
 
-/-- `τ2` of `stepTilesLeftBoundary` in explicit list form. -/
-lemma τ2_stepTilesLeftBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
+/-- `τ2` of `stepTilesLeftBoundary` is the new state marker, a blank and `↟ₜw`, then the lifted
+right tape and `#`. -/
+theorem τ2_stepTilesLeftBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol) :
     τ2 (stepTilesLeftBoundary tm q qNew t w) =
       [stateMarker tm qNew, ↟ₜ(none : Option Symbol), ↟ₜw] ++
@@ -848,8 +853,9 @@ lemma τ2_stepTilesLeftBoundary (tm : SingleTapeTM Symbol) (q : tm.State)
   simp only [stepTilesLeftBoundary, τ2_append, τ2_cons, τ2_nil,
              τ2_map_copyTile, leftMoveBoundaryTile_bot, sepTile_bot, List.append_nil]
 
-/-- The encoding of the configuration after a non-degenerate left-boundary move. -/
-lemma encodeCfg_after_left_move_boundary_eq (tm : SingleTapeTM Symbol)
+/-- After a non-degenerate left-boundary move, the encoding of the configuration is the new state
+marker, a blank and `↟ₜw`, then the lifted right tape. -/
+theorem encodeCfg_after_left_move_boundary_eq (tm : SingleTapeTM Symbol)
     (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol)
     (h_nondeg : w ≠ none ∨ t.right.toList ≠ [])
     (h_left_empty : t.left.toList = []) :
@@ -875,7 +881,7 @@ lemma encodeCfg_after_left_move_boundary_eq (tm : SingleTapeTM Symbol)
                stateMarker_some, List.nil_append, List.cons_append]
 
 /-- In the non-degenerate left-boundary case, `τ2 = encodeCfg(post-step) ++ [#]`. -/
-lemma τ2_stepTilesLeftBoundary_eq_encodeCfg (tm : SingleTapeTM Symbol)
+theorem τ2_stepTilesLeftBoundary_eq_encodeCfg (tm : SingleTapeTM Symbol)
     (q : tm.State) (qNew : Option tm.State) (t : BiTape Symbol) (w : Option Symbol)
     (h_nondeg : w ≠ none ∨ t.right.toList ≠ []) (h_left_empty : t.left.toList = []) :
     τ2 (stepTilesLeftBoundary tm q qNew t w) =
@@ -889,29 +895,29 @@ def encodeHaltList (tm : SingleTapeTM Symbol)
   liftTape tm left.reverse ++ [h⊥] ++ liftTape tm right
 
 /-- `encodeHaltedCfg tm t` equals `encodeHaltList tm t.left.toList (t.head :: t.right.toList)`. -/
-lemma encodeHaltedCfg_eq_encodeHaltList (tm : SingleTapeTM Symbol) (t : BiTape Symbol) :
+theorem encodeHaltedCfg_eq_encodeHaltList (tm : SingleTapeTM Symbol) (t : BiTape Symbol) :
     encodeHaltedCfg tm t =
       encodeHaltList tm t.left.toList (t.head :: t.right.toList) := by
   simp [encodeHaltedCfg, encodeHaltList, List.append_assoc]
 
 /-- The top word of `absorbLeftTile tm a` is `[↟ₜa, h⊥]`. -/
 @[simp]
-lemma absorbLeftTile_top (tm : SingleTapeTM Symbol) (a : Option Symbol) :
+theorem absorbLeftTile_top (tm : SingleTapeTM Symbol) (a : Option Symbol) :
   (absorbLeftTile tm a).top = [↟ₜa, h⊥] := rfl
 
 /-- The bottom word of `absorbLeftTile tm a` is `[h⊥]`. -/
 @[simp]
-lemma absorbLeftTile_bot (tm : SingleTapeTM Symbol) (a : Option Symbol) :
+theorem absorbLeftTile_bot (tm : SingleTapeTM Symbol) (a : Option Symbol) :
   (absorbLeftTile tm a).bot = [h⊥] := rfl
 
 /-- The top word of `absorbRightTile tm a` is `[h⊥, ↟ₜa]`. -/
 @[simp]
-lemma absorbRightTile_top (tm : SingleTapeTM Symbol) (a : Option Symbol) :
+theorem absorbRightTile_top (tm : SingleTapeTM Symbol) (a : Option Symbol) :
   (absorbRightTile tm a).top = [h⊥, ↟ₜa] := rfl
 
 /-- The bottom word of `absorbRightTile tm a` is `[h⊥]`. -/
 @[simp]
-lemma absorbRightTile_bot (tm : SingleTapeTM Symbol) (a : Option Symbol) :
+theorem absorbRightTile_bot (tm : SingleTapeTM Symbol) (a : Option Symbol) :
   (absorbRightTile tm a).bot = [h⊥] := rfl
 
 /-- Tile sequence for one absorb-left iteration: removes the innermost left symbol `l` from
@@ -935,7 +941,7 @@ def stepTilesAbsorbRight (tm : SingleTapeTM Symbol)
   [sepTile tm]
 
 /-- `τ1` of `stepTilesAbsorbLeft` reproduces `encodeHaltList (l :: rest) right ++ [#]`. -/
-lemma τ1_stepTilesAbsorbLeft (tm : SingleTapeTM Symbol)
+theorem τ1_stepTilesAbsorbLeft (tm : SingleTapeTM Symbol)
     (l : Option Symbol) (rest right : List (Option Symbol)) :
     τ1 (stepTilesAbsorbLeft tm l rest right) =
       encodeHaltList tm (l :: rest) right ++ [#] := by
@@ -946,7 +952,7 @@ lemma τ1_stepTilesAbsorbLeft (tm : SingleTapeTM Symbol)
   simp [List.append_assoc]
 
 /-- `τ2` of `stepTilesAbsorbLeft` produces `encodeHaltList rest right ++ [#]`. -/
-lemma τ2_stepTilesAbsorbLeft (tm : SingleTapeTM Symbol)
+theorem τ2_stepTilesAbsorbLeft (tm : SingleTapeTM Symbol)
     (l : Option Symbol) (rest right : List (Option Symbol)) :
     τ2 (stepTilesAbsorbLeft tm l rest right) =
       encodeHaltList tm rest right ++ [#] := by
@@ -955,7 +961,7 @@ lemma τ2_stepTilesAbsorbLeft (tm : SingleTapeTM Symbol)
              List.append_nil, encodeHaltList]
 
 /-- `τ1` of `stepTilesAbsorbRight` reproduces `encodeHaltList left (r :: rest) ++ [#]`. -/
-lemma τ1_stepTilesAbsorbRight (tm : SingleTapeTM Symbol)
+theorem τ1_stepTilesAbsorbRight (tm : SingleTapeTM Symbol)
     (left : List (Option Symbol)) (r : Option Symbol) (rest : List (Option Symbol)) :
     τ1 (stepTilesAbsorbRight tm left r rest) =
       encodeHaltList tm left (r :: rest) ++ [#] := by
@@ -965,7 +971,7 @@ lemma τ1_stepTilesAbsorbRight (tm : SingleTapeTM Symbol)
   simp [List.append_assoc]
 
 /-- `τ2` of `stepTilesAbsorbRight` produces `encodeHaltList left rest ++ [#]`. -/
-lemma τ2_stepTilesAbsorbRight (tm : SingleTapeTM Symbol)
+theorem τ2_stepTilesAbsorbRight (tm : SingleTapeTM Symbol)
     (left : List (Option Symbol)) (r : Option Symbol) (rest : List (Option Symbol)) :
     τ2 (stepTilesAbsorbRight tm left r rest) =
       encodeHaltList tm left rest ++ [#] := by
@@ -974,7 +980,7 @@ lemma τ2_stepTilesAbsorbRight (tm : SingleTapeTM Symbol)
              List.append_nil, encodeHaltList]
 
 /-- Every tile in `stepTilesAbsorbLeft` belongs to `haltTiles tm`. -/
-lemma stepTilesAbsorbLeft_subset_haltTiles (tm : EncodableTM Symbol)
+theorem stepTilesAbsorbLeft_subset_haltTiles (tm : EncodableTM Symbol)
     (l : Option Symbol) (rest right : List (Option Symbol))
     (tile : Tile (Alpha tm.toSingleTapeTM.State Symbol))
     (htile : tile ∈ stepTilesAbsorbLeft tm.toSingleTapeTM l rest right) [Encodable Symbol]:
@@ -988,7 +994,7 @@ lemma stepTilesAbsorbLeft_subset_haltTiles (tm : EncodableTM Symbol)
   · exact sepTile_mem_haltTiles tm
 
 /-- Every tile in `stepTilesAbsorbRight` belongs to `haltTiles tm`. -/
-lemma stepTilesAbsorbRight_subset_haltTiles (tm : EncodableTM Symbol)
+theorem stepTilesAbsorbRight_subset_haltTiles (tm : EncodableTM Symbol)
     (left : List (Option Symbol)) (r : Option Symbol) (rest : List (Option Symbol))
     (tile : Tile (Alpha tm.toSingleTapeTM.State Symbol))
     (htile : tile ∈ stepTilesAbsorbRight tm.toSingleTapeTM left r rest) [Encodable Symbol] :
@@ -1011,8 +1017,9 @@ def absorbAndFinish (tm : SingleTapeTM Symbol) :
   | l :: rest, right    => stepTilesAbsorbLeft tm l rest right ++
                               absorbAndFinish tm rest right
 
-/-- The matching invariant for `absorbAndFinish`: `τ1 = encodeHaltList left right ++ [#] ++ τ2`. -/
-lemma absorbAndFinish_matching (tm : SingleTapeTM Symbol)
+/-- `absorbAndFinish` satisfies the matching invariant
+`τ1 = encodeHaltList left right ++ [#] ++ τ2`. -/
+theorem absorbAndFinish_matching (tm : SingleTapeTM Symbol)
     (left right : List (Option Symbol)) :
     τ1 (absorbAndFinish tm left right) =
       encodeHaltList tm left right ++ [#] ++
@@ -1029,7 +1036,7 @@ lemma absorbAndFinish_matching (tm : SingleTapeTM Symbol)
                List.append_assoc]
 
 /-- Every tile in `absorbAndFinish` belongs to `haltTiles tm`. -/
-lemma absorbAndFinish_subset_haltTiles (tm : EncodableTM Symbol)
+theorem absorbAndFinish_subset_haltTiles (tm : EncodableTM Symbol)
     (left right : List (Option Symbol))
     (tile : Tile (Alpha tm.toSingleTapeTM.State Symbol))
     (htile : tile ∈ absorbAndFinish tm.toSingleTapeTM left right) [Encodable Symbol]:
@@ -1049,7 +1056,8 @@ lemma absorbAndFinish_subset_haltTiles (tm : EncodableTM Symbol)
     · exact stepTilesAbsorbLeft_subset_haltTiles tm l rest right tile hL
     · exact ih hR
 
-/-- `tm.toSingleTapeTM` is blank-write free: the transition function never writes the blank symbol. -/
+/-- `tm.toSingleTapeTM` is blank-write free: the transition function never writes the blank
+symbol. -/
 def NoBlankWrites (tm : SingleTapeTM Symbol) : Prop :=
   ∀ q : tm.State, ∀ a : Option Symbol, ((tm.tr q a).1).symbol ≠ none
 
@@ -1070,7 +1078,7 @@ def stepResult (tm : SingleTapeTM Symbol) (q : tm.State) (t : BiTape Symbol) :
 
 /-- A running configuration steps to `stepResult`. -/
 @[simp]
-lemma tm_step_running (tm : SingleTapeTM Symbol) (q : tm.State) (t : BiTape Symbol) :
+theorem tm_step_running (tm : SingleTapeTM Symbol) (q : tm.State) (t : BiTape Symbol) :
     some (stepResult tm q t) = tm.step ⟨some q, t⟩ := by
   simp only [SingleTapeTM.step, stepResult]
 
@@ -1096,7 +1104,7 @@ def stepTiles (tm : SingleTapeTM Symbol) (q : tm.State) (t : BiTape Symbol) :
     (tm.tr q t.head).1.movement (tm.tr q t.head).2
 
 /-- `τ1` of `stepTilesAux` reproduces the current configuration block. -/
-lemma τ1_stepTilesAux (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem τ1_stepTilesAux (tm : SingleTapeTM Symbol) (q : tm.State)
     (t : BiTape Symbol) (w : Option Symbol) (mov : Option Turing.Dir)
     (qNew : Option tm.State) :
     τ1 (stepTilesAux tm q t w mov qNew) = encodeRunningCfg tm q t ++ [#] := by
@@ -1116,7 +1124,7 @@ lemma τ1_stepTilesAux (tm : SingleTapeTM Symbol) (q : tm.State)
         rw [h_left]; exact List.cons_ne_nil _ _
 
 /-- Every tile in `stepTilesAux` belongs to `haltTiles tm`, given no left-boundary. -/
-lemma stepTilesAux_subset_haltTiles (tm : EncodableTM Symbol) (q : tm.toSingleTapeTM.State)
+theorem stepTilesAux_subset_haltTiles (tm : EncodableTM Symbol) (q : tm.toSingleTapeTM.State)
     (a : Option Symbol) (t : BiTape Symbol) (w : Option Symbol)
     (mov : Option Turing.Dir) (qNew : Option tm.toSingleTapeTM.State)
     (htr : tm.toSingleTapeTM.tr q a = (⟨w, mov⟩, qNew)) (hhead : t.head = a)
@@ -1144,7 +1152,7 @@ lemma stepTilesAux_subset_haltTiles (tm : EncodableTM Symbol) (q : tm.toSingleTa
         exact stepTilesLeftInterior_subset_haltTiles tm q a qNew t w htr hhead tile htile
 
 /-- `τ2` of `stepTilesAux` equals `encodeCfg(post-step) ++ [#]`, given `w ≠ none`. -/
-lemma τ2_stepTilesAux (tm : SingleTapeTM Symbol) (q : tm.State)
+theorem τ2_stepTilesAux (tm : SingleTapeTM Symbol) (q : tm.State)
     (t : BiTape Symbol) (w : Option Symbol) (mov : Option Turing.Dir)
     (qNew : Option tm.State) (h_w_ne : w ≠ none) :
     τ2 (stepTilesAux tm q t w mov qNew) =
@@ -1176,34 +1184,40 @@ lemma τ2_stepTilesAux (tm : SingleTapeTM Symbol) (q : tm.State)
       | cons _ _ => exact τ2_stepTilesLeftInterior_eq_encodeCfg tm q qNew t w (Or.inl h_w_ne)
 
 /-- `τ1` of `stepTiles` reproduces the current configuration block. -/
-lemma τ1_stepTiles (tm : SingleTapeTM Symbol) (q : tm.State) (t : BiTape Symbol) :
+theorem τ1_stepTiles (tm : SingleTapeTM Symbol) (q : tm.State) (t : BiTape Symbol) :
     τ1 (stepTiles tm q t) = encodeRunningCfg tm q t ++ [#] := by
   unfold stepTiles; exact τ1_stepTilesAux tm q t _ _ _
 
 /-- Every tile in `stepTiles` belongs to `haltTiles tm`, given no left-boundary. -/
-lemma stepTiles_subset_haltTiles (tm : EncodableTM Symbol) (q : tm.toSingleTapeTM.State)
+theorem stepTiles_subset_haltTiles (tm : EncodableTM Symbol) (q : tm.toSingleTapeTM.State)
     (t : BiTape Symbol)
-    (h_no_lb : (tm.toSingleTapeTM.tr q t.head).1.movement = some Turing.Dir.left → t.left.toList ≠ [])
-    (tile : Tile (Alpha tm.toSingleTapeTM.State Symbol))  [Encodable Symbol] (htile : tile ∈ stepTiles tm.toSingleTapeTM q t) :
+    (h_no_lb : (tm.toSingleTapeTM.tr q t.head).1.movement = some Turing.Dir.left →
+      t.left.toList ≠ [])
+    (tile : Tile (Alpha tm.toSingleTapeTM.State Symbol)) [Encodable Symbol]
+    (htile : tile ∈ stepTiles tm.toSingleTapeTM q t) :
     tile ∈ haltTiles tm := by
   unfold stepTiles at htile
   have htr : tm.toSingleTapeTM.tr q t.head =
-      (⟨(tm.toSingleTapeTM.tr q t.head).1.symbol, (tm.toSingleTapeTM.tr q t.head).1.movement⟩, (tm.toSingleTapeTM.tr q t.head).2) := by
+      (⟨(tm.toSingleTapeTM.tr q t.head).1.symbol, (tm.toSingleTapeTM.tr q t.head).1.movement⟩,
+        (tm.toSingleTapeTM.tr q t.head).2) := by
     rcases tm.toSingleTapeTM.tr q t.head with ⟨⟨_, _⟩, _⟩; rfl
   exact stepTilesAux_subset_haltTiles tm q t.head t _ _ _ htr rfl h_no_lb tile htile
 
 /-- `τ2` of `stepTiles` equals `encodeCfg(post-step) ++ [#]`, given `NoBlankWrites`. -/
-lemma τ2_stepTiles (tm : SingleTapeTM Symbol) (h_nbw : NoBlankWrites tm)
+theorem τ2_stepTiles (tm : SingleTapeTM Symbol) (h_nbw : NoBlankWrites tm)
     (q : tm.State) (t : BiTape Symbol) :
     τ2 (stepTiles tm q t) = encodeCfg tm (stepResult tm q t) ++ [#] := by
   unfold stepTiles stepResult
   exact τ2_stepTilesAux tm q t _ _ _ (h_nbw q t.head)
 
-/-- Constructs a tile stack from a halting trace. -/
-lemma forward_aux (tm : EncodableTM Symbol) (h_nbw : NoBlankWrites tm.toSingleTapeTM)
-    (w : List Symbol) (h_nlb : NoLeftBoundary tm.toSingleTapeTM w) (target_tape : BiTape Symbol) [Encodable Symbol]:
+/-- If `cfg` is reachable from the initial configuration and halts in `n` steps, then some stack
+`A` drawn from `haltTiles tm` satisfies `τ1 A = encodeCfg cfg ++ [#] ++ τ2 A`. -/
+theorem forward_aux (tm : EncodableTM Symbol) (h_nbw : NoBlankWrites tm.toSingleTapeTM)
+    (w : List Symbol) (h_nlb : NoLeftBoundary tm.toSingleTapeTM w) (target_tape : BiTape Symbol)
+    [Encodable Symbol]:
     ∀ (cfg : tm.toSingleTapeTM.Cfg) (n : ℕ),
-      Relation.ReflTransGen tm.toSingleTapeTM.TransitionRelation (SingleTapeTM.initCfg tm.toSingleTapeTM w) cfg →
+      Relation.ReflTransGen tm.toSingleTapeTM.TransitionRelation
+        (SingleTapeTM.initCfg tm.toSingleTapeTM w) cfg →
       Relation.RelatesInSteps tm.toSingleTapeTM.TransitionRelation cfg ⟨none, target_tape⟩ n →
       ∃ A : Stack (Alpha tm.toSingleTapeTM.State Symbol),
         (∀ tile ∈ A, tile ∈ haltTiles tm) ∧
@@ -1216,7 +1230,8 @@ lemma forward_aux (tm : EncodableTM Symbol) (h_nbw : NoBlankWrites tm.toSingleTa
               (target_tape.head :: target_tape.right.toList), ?_, ?_⟩
     · intro tile htile; exact absorbAndFinish_subset_haltTiles tm _ _ tile htile
     · rw [show encodeCfg tm.toSingleTapeTM (⟨none, target_tape⟩ : tm.toSingleTapeTM.Cfg) =
-            encodeHaltedCfg tm.toSingleTapeTM target_tape from rfl, encodeHaltedCfg_eq_encodeHaltList]
+            encodeHaltedCfg tm.toSingleTapeTM target_tape from rfl,
+          encodeHaltedCfg_eq_encodeHaltList]
       exact absorbAndFinish_matching tm.toSingleTapeTM _ _
   | succ n ih =>
     obtain ⟨cfg', h_step, h_rest⟩ := h_chain.succ'
@@ -1230,7 +1245,8 @@ lemma forward_aux (tm : EncodableTM Symbol) (h_nbw : NoBlankWrites tm.toSingleTa
         rw [hcfg] at h_step
         unfold SingleTapeTM.TransitionRelation at h_step
         rw [← tm_step_running] at h_step
-        have h_cfg' : cfg' = stepResult tm.toSingleTapeTM q tape := (Option.some.inj h_step).symm; subst h_cfg'
+        have h_cfg' : cfg' = stepResult tm.toSingleTapeTM q tape :=
+          (Option.some.inj h_step).symm; subst h_cfg'
         have h_no_lb : (tm.toSingleTapeTM.tr q tape.head).1.movement = some Turing.Dir.left →
             tape.left.toList ≠ [] := by
           intro h_mov h_empty
@@ -1265,23 +1281,30 @@ theorem mHasSolution_if_halt (tm : EncodableTM Symbol)
   · intro tile htile; exact List.mem_cons_of_mem _ (hA_mem tile htile)
   · show (startTile tm.toSingleTapeTM w).top ++ τ1 A = (startTile tm.toSingleTapeTM w).bot ++ τ2 A
     rw [startTile_top, startTile_bot, hA_match]
-    show [#] ++ (encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w) ++ [#] ++ τ2 A) =
-         (# :: encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w) ++ [#]) ++ τ2 A
+    show [#] ++
+        (encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w) ++ [#] ++ τ2 A) =
+      (# :: encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w) ++ [#]) ++
+        τ2 A
     simp [List.append_assoc]
 
 /-- Every tile in `haltTiles tm` is one of: copy, separator, no-move transition, right-move
   transition (interior or boundary), left-move transition, left or right absorb tile, or the final
   tile. Also exposes the TM-transition equation for each transition tile. -/
-private lemma mem_haltTiles_top (tm : EncodableTM Symbol)
+private theorem mem_haltTiles_top (tm : EncodableTM Symbol)
     (t : Tile (Alpha tm.toSingleTapeTM.State Symbol)) [Encodable Symbol] (ht : t ∈ haltTiles tm) :
     (∃ a : Option Symbol, t = copyTile tm.toSingleTapeTM a) ∨
     t = sepTile tm.toSingleTapeTM ∨
-    (∃ (q : tm.toSingleTapeTM.State) (a : Option Symbol) (qNew : Option tm.toSingleTapeTM.State) (w : Option Symbol),
-        tm.toSingleTapeTM.tr q a = (⟨w, none⟩, qNew) ∧ t = noMoveTile tm.toSingleTapeTM q a qNew w) ∨
-    (∃ (q : tm.toSingleTapeTM.State) (a : Option Symbol) (qNew : Option tm.toSingleTapeTM.State) (w : Option Symbol),
+    (∃ (q : tm.toSingleTapeTM.State) (a : Option Symbol) (qNew : Option tm.toSingleTapeTM.State)
+        (w : Option Symbol),
+        tm.toSingleTapeTM.tr q a = (⟨w, none⟩, qNew) ∧
+          t = noMoveTile tm.toSingleTapeTM q a qNew w) ∨
+    (∃ (q : tm.toSingleTapeTM.State) (a : Option Symbol) (qNew : Option tm.toSingleTapeTM.State)
+        (w : Option Symbol),
         tm.toSingleTapeTM.tr q a = (⟨w, some Turing.Dir.right⟩, qNew) ∧
-          (t = rightMoveTile tm.toSingleTapeTM q a qNew w ∨ t = rightMoveBoundaryTile tm.toSingleTapeTM q a qNew w)) ∨
-    (∃ (q : tm.toSingleTapeTM.State) (a : Option Symbol) (qNew : Option tm.toSingleTapeTM.State) (w : Option Symbol),
+          (t = rightMoveTile tm.toSingleTapeTM q a qNew w ∨
+            t = rightMoveBoundaryTile tm.toSingleTapeTM q a qNew w)) ∨
+    (∃ (q : tm.toSingleTapeTM.State) (a : Option Symbol) (qNew : Option tm.toSingleTapeTM.State)
+        (w : Option Symbol),
         tm.toSingleTapeTM.tr q a = (⟨w, some Turing.Dir.left⟩, qNew) ∧
           ∃ b : Option Symbol, t = leftMoveTile tm.toSingleTapeTM q a qNew w b) ∨
     (∃ a : Option Symbol, t = absorbLeftTile tm.toSingleTapeTM a) ∨
@@ -1318,15 +1341,17 @@ private lemma mem_haltTiles_top (tm : EncodableTM Symbol)
     · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inl ⟨a, rfl⟩))))))
   · exact Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr (Or.inr rfl))))))
 
-/-- The `liftTape tm.toSingleTapeTM L` prefix of `τ1 A` forces `A` to begin with copy tiles for `L`, provided the
-  following character is not `h⊥` and not `↟ₛq`. -/
-private lemma copy_prefix_forced (tm : EncodableTM Symbol) :
-    ∀ (L : List (Option Symbol)) (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) [Encodable Symbol]
+/-- The `liftTape tm.toSingleTapeTM L` prefix of `τ1 A` forces `A` to begin with copy tiles for
+  `L`, provided the following character is not `h⊥` and not `↟ₛq`. -/
+private theorem copy_prefix_forced (tm : EncodableTM Symbol) :
+    ∀ (L : List (Option Symbol)) (A : Stack (Alpha tm.toSingleTapeTM.State Symbol))
+      [Encodable Symbol]
       (tail : List (Alpha tm.toSingleTapeTM.State Symbol)),
       (∀ t ∈ A, t ∈ haltTiles tm) →
       τ1 A = liftTape tm.toSingleTapeTM L ++ tail →
       (∀ x : List (Alpha tm.toSingleTapeTM.State Symbol), tail ≠ h⊥ :: x) →
-      (∀ (q : tm.toSingleTapeTM.State) (x : List (Alpha tm.toSingleTapeTM.State Symbol)), tail ≠ ↟ₛq :: x) →
+      (∀ (q : tm.toSingleTapeTM.State) (x : List (Alpha tm.toSingleTapeTM.State Symbol)),
+        tail ≠ ↟ₛq :: x) →
       ∃ A' : Stack (Alpha tm.toSingleTapeTM.State Symbol),
           A = L.map (copyTile tm.toSingleTapeTM) ++ A' ∧
           (∀ t ∈ A', t ∈ haltTiles tm) ∧
@@ -1342,7 +1367,6 @@ private lemma copy_prefix_forced (tm : EncodableTM Symbol) :
     intro A tail h_eq h_not_halt h_not_state hx q
     cases A with
     | nil => simp [τ1, liftTape] at h_not_state
-    ---simp[liftTape_cons] at h_eq
     | cons t A_rest =>
       have h_t_mem : t ∈ haltTiles tm := by
        simp at h_not_halt
@@ -1385,9 +1409,9 @@ private lemma copy_prefix_forced (tm : EncodableTM Symbol) :
       · simp at h_not_state
       · simp at h_not_state
 
-/-- When `τ1 A` begins `liftTape tm.toSingleTapeTM L ++ ↟ₛq :: ↟ₜa :: rest` and the transition is not a left-move,
-  the copy prefix extends all the way to `↟ₛq`. -/
-private lemma copy_prefix_forced_state_lead (tm : EncodableTM Symbol) [Encodable Symbol]
+/-- When `τ1 A` begins `liftTape tm.toSingleTapeTM L ++ ↟ₛq :: ↟ₜa :: rest` and the transition is
+  not a left-move, the copy prefix extends all the way to `↟ₛq`. -/
+private theorem copy_prefix_forced_state_lead (tm : EncodableTM Symbol) [Encodable Symbol]
     (q : tm.toSingleTapeTM.State) (a : Option Symbol)
     (h_not_left : ∀ (qNew : Option tm.toSingleTapeTM.State) (w : Option Symbol) ,
         tm.toSingleTapeTM.tr q a ≠ (⟨w, some Turing.Dir.left⟩, qNew)) :
@@ -1450,13 +1474,16 @@ private lemma copy_prefix_forced_state_lead (tm : EncodableTM Symbol) [Encodable
 
 /-- When `τ1 A` begins with `↟ₛq :: ↟ₜa :: rest`, the head tile of `A` is a transition tile for
   `(q, a)`. -/
-private lemma transition_forced (tm : EncodableTM Symbol)
-    (q : tm.toSingleTapeTM.State) (a : Option Symbol) (rest : List (Alpha tm.toSingleTapeTM.State Symbol)) [Encodable Symbol]
+private theorem transition_forced (tm : EncodableTM Symbol)
+    (q : tm.toSingleTapeTM.State) (a : Option Symbol)
+    (rest : List (Alpha tm.toSingleTapeTM.State Symbol)) [Encodable Symbol]
     (A : Stack (Alpha tm.toSingleTapeTM.State Symbol))
     (h_mem : ∀ t ∈ A, t ∈ haltTiles tm)
     (h_eq : τ1 A = ↟ₛq :: ↟ₜa :: rest) :
-    ∃ (tile : Tile (Alpha tm.toSingleTapeTM.State Symbol)) (A' : Stack (Alpha tm.toSingleTapeTM.State Symbol)),
-      A = tile :: A' ∧ tile ∈ transitionTilesFor tm.toSingleTapeTM q a ∧ (∀ s ∈ A', s ∈ haltTiles tm) := by
+    ∃ (tile : Tile (Alpha tm.toSingleTapeTM.State Symbol))
+        (A' : Stack (Alpha tm.toSingleTapeTM.State Symbol)),
+      A = tile :: A' ∧ tile ∈ transitionTilesFor tm.toSingleTapeTM q a ∧
+        (∀ s ∈ A', s ∈ haltTiles tm) := by
   cases A with
   | nil => simp at h_eq
   | cons t A_rest =>
@@ -1495,7 +1522,7 @@ private lemma transition_forced (tm : EncodableTM Symbol)
       injection h_eq with h_h _; cases h_h
 
 /-- When `τ1 A` begins with `#`, the head tile of `A` is `sepTile tm.toSingleTapeTM`. -/
-private lemma sep_forced (tm : EncodableTM Symbol)
+private theorem sep_forced (tm : EncodableTM Symbol)
     (rest : List (Alpha tm.toSingleTapeTM.State Symbol))
     (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) [Encodable Symbol]
     (h_mem : ∀ s ∈ A, s ∈ haltTiles tm)
@@ -1543,8 +1570,9 @@ private lemma sep_forced (tm : EncodableTM Symbol)
 
 /-- If `τ1 A` begins `↟ₛq :: # :: rest`, no tile of `haltTiles` can be the head of `A`. Used to
   discharge the alternative `rightMoveTile` path in the right-boundary step lemma. -/
-private lemma no_tile_for_state_sharp (tm : EncodableTM Symbol) (q : tm.toSingleTapeTM.State)
-    (rest : List (Alpha tm.toSingleTapeTM.State Symbol)) (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) [Encodable Symbol]
+private theorem no_tile_for_state_sharp (tm : EncodableTM Symbol) (q : tm.toSingleTapeTM.State)
+    (rest : List (Alpha tm.toSingleTapeTM.State Symbol))
+    (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) [Encodable Symbol]
     (h_mem : ∀ s ∈ A, s ∈ haltTiles tm) (h_eq : τ1 A = ↟ₛq :: # :: rest) : False := by
   cases A with
   | nil => simp at h_eq
@@ -1556,10 +1584,11 @@ private lemma no_tile_for_state_sharp (tm : EncodableTM Symbol) (q : tm.toSingle
       | ⟨_, _, _, _, _, _, rfl⟩ | ⟨_, rfl⟩ | ⟨_, rfl⟩ | rfl
     all_goals simp at h_eq
 
-/-- Given `A ⊆ haltTiles tm` and the no-move matching invariant, peel the canonical no-move step
-  block and advance to the post-step invariant. -/
-private lemma starts_with_stepTilesNoMove (tm : EncodableTM Symbol)
-    (q : tm.toSingleTapeTM.State) (t : BiTape Symbol) (qNew : Option tm.toSingleTapeTM.State) (w : Option Symbol) [Encodable Symbol]
+/-- If `A ⊆ haltTiles tm` satisfies the matching invariant before a no-move step, then `A` begins
+  with the no-move step block and the rest satisfies the invariant after the step. -/
+private theorem starts_with_stepTilesNoMove (tm : EncodableTM Symbol)
+    (q : tm.toSingleTapeTM.State) (t : BiTape Symbol) (qNew : Option tm.toSingleTapeTM.State)
+    (w : Option Symbol) [Encodable Symbol]
     (htr : tm.toSingleTapeTM.tr q t.head = (⟨w, none⟩, qNew))
     (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) (h_mem : ∀ s ∈ A, s ∈ haltTiles tm)
     (h_eq : τ1 A = encodeRunningCfg tm.toSingleTapeTM q t ++ [#] ++ τ2 A) :
@@ -1577,7 +1606,8 @@ private lemma starts_with_stepTilesNoMove (tm : EncodableTM Symbol)
     copy_prefix_forced_state_lead tm q t.head h_not_left t.left.toList.reverse A
       (liftTape tm.toSingleTapeTM t.right.toList ++ [#] ++ τ2 A) h_mem h_eq'
   obtain ⟨tile, A2, hA1_decomp, h_tile_in, hA2_mem⟩ :=
-    transition_forced tm q t.head (liftTape tm.toSingleTapeTM t.right.toList ++ [#] ++ τ2 A) A1 hA_mem hA_τ1
+    transition_forced tm q t.head (liftTape tm.toSingleTapeTM t.right.toList ++ [#] ++ τ2 A) A1
+      hA_mem hA_τ1
   have h_tile_eq : tile = noMoveTile tm.toSingleTapeTM q t.head qNew w := by
     simp only [transitionTilesFor] at h_tile_in; rw [htr] at h_tile_in
     exact List.mem_singleton.mp h_tile_in
@@ -1602,10 +1632,12 @@ private lemma starts_with_stepTilesNoMove (tm : EncodableTM Symbol)
     | some q' => simp [encodeCfg_running, encodeRunningCfg, BiTape.write,
                        stateMarker_some, liftTape_cons, List.append_assoc]
 
-/-- Given `A ⊆ haltTiles tm` and the right-interior matching invariant, peel the canonical
-  right-interior step block and advance to the post-step invariant. -/
-private lemma starts_with_stepTilesRightInterior (tm : EncodableTM Symbol)
-    (q : tm.toSingleTapeTM.State) (t : BiTape Symbol) (qNew : Option tm.toSingleTapeTM.State) (w : Option Symbol) [Encodable Symbol]
+/-- If `A ⊆ haltTiles tm` satisfies the matching invariant before an interior right-move step,
+  then `A` begins with the right-interior step block and the rest satisfies the invariant after
+  the step. -/
+private theorem starts_with_stepTilesRightInterior (tm : EncodableTM Symbol)
+    (q : tm.toSingleTapeTM.State) (t : BiTape Symbol) (qNew : Option tm.toSingleTapeTM.State)
+    (w : Option Symbol) [Encodable Symbol]
     (htr : tm.toSingleTapeTM.tr q t.head = (⟨w, some Turing.Dir.right⟩, qNew))
     (h_right_ne : t.right.toList ≠ []) (h_nondeg : w ≠ none ∨ t.left.toList ≠ [])
     (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) (h_mem : ∀ s ∈ A, s ∈ haltTiles tm)
@@ -1625,7 +1657,8 @@ private lemma starts_with_stepTilesRightInterior (tm : EncodableTM Symbol)
     copy_prefix_forced_state_lead tm q t.head h_not_left t.left.toList.reverse A
       (liftTape tm.toSingleTapeTM t.right.toList ++ [#] ++ τ2 A) h_mem h_eq'
   obtain ⟨tile, A2, hA1_decomp, h_tile_in, hA2_mem⟩ :=
-    transition_forced tm q t.head (liftTape tm.toSingleTapeTM t.right.toList ++ [#] ++ τ2 A) A1 hA_mem hA_τ1
+    transition_forced tm q t.head (liftTape tm.toSingleTapeTM t.right.toList ++ [#] ++ τ2 A) A1
+      hA_mem hA_τ1
   simp only [transitionTilesFor] at h_tile_in; rw [htr] at h_tile_in
   simp only [List.mem_cons, List.not_mem_nil, or_false] at h_tile_in
   rcases h_tile_in with rfl | rfl
@@ -1642,7 +1675,8 @@ private lemma starts_with_stepTilesRightInterior (tm : EncodableTM Symbol)
     · rw [hA, hA1_decomp, hA2, hA3_decomp]
       simp only [stepTilesRightInterior, List.append_assoc, List.cons_append, List.nil_append]
     · rw [hA4_τ1, hA_τ2, hA1_decomp, τ2_cons, rightMoveTile_bot, hA3_τ2, hA3_decomp,
-          τ2_cons, sepTile_bot, encodeCfg_after_right_move_eq tm.toSingleTapeTM qNew t w h_nondeg h_right_ne]
+          τ2_cons, sepTile_bot,
+          encodeCfg_after_right_move_eq tm.toSingleTapeTM qNew t w h_nondeg h_right_ne]
       simp [List.append_assoc]
   · exfalso
     have key := hA_τ1; rw [hA1_decomp, τ1_cons, rightMoveBoundaryTile_top] at key
@@ -1651,13 +1685,16 @@ private lemma starts_with_stepTilesRightInterior (tm : EncodableTM Symbol)
     | cons c cs =>
       rw [h_rt] at key
       simp only [liftTape_cons, List.cons_append, List.nil_append] at key
-      injection key with _ key; injection key with _ key; injection key with h_third _; cases h_third
+      injection key with _ key; injection key with _ key; injection key with h_third _
+      cases h_third
 
-/-- Given `A ⊆ haltTiles tm` and the right-boundary matching invariant (with `qNew = some _`), peel
-  the canonical right-boundary step block. The alternative `rightMoveTile` decomposition is ruled
-  out by `no_tile_for_state_sharp`. -/
-private lemma starts_with_stepTilesRightBoundary (tm : EncodableTM Symbol)
-    (q : tm.toSingleTapeTM.State) (t : BiTape Symbol) (qNew_q : tm.toSingleTapeTM.State) (w : Option Symbol) [Encodable Symbol]
+/-- If `A ⊆ haltTiles tm` satisfies the matching invariant before a right-boundary step to a
+  running state, then `A` begins with the right-boundary step block and the rest satisfies the
+  invariant after the step. The alternative `rightMoveTile` decomposition is ruled out by
+  `no_tile_for_state_sharp`. -/
+private theorem starts_with_stepTilesRightBoundary (tm : EncodableTM Symbol)
+    (q : tm.toSingleTapeTM.State) (t : BiTape Symbol) (qNew_q : tm.toSingleTapeTM.State)
+    (w : Option Symbol) [Encodable Symbol]
     (htr : tm.toSingleTapeTM.tr q t.head = (⟨w, some Turing.Dir.right⟩, some qNew_q))
     (h_right_empty : t.right.toList = []) (h_nondeg : w ≠ none ∨ t.left.toList ≠ [])
     (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) (h_mem : ∀ s ∈ A, s ∈ haltTiles tm)
@@ -1665,7 +1702,8 @@ private lemma starts_with_stepTilesRightBoundary (tm : EncodableTM Symbol)
     ∃ A' : Stack (Alpha tm.toSingleTapeTM.State Symbol),
         A = stepTilesRightBoundary tm.toSingleTapeTM q (some qNew_q) t w ++ A' ∧
         (∀ s ∈ A', s ∈ haltTiles tm) ∧
-        τ1 A' = encodeCfg tm.toSingleTapeTM ⟨some qNew_q, (t.write w).moveRight⟩ ++ [#] ++ τ2 A' := by
+        τ1 A' =
+          encodeCfg tm.toSingleTapeTM ⟨some qNew_q, (t.write w).moveRight⟩ ++ [#] ++ τ2 A' := by
   have h_not_left : ∀ (qN : Option tm.toSingleTapeTM.State) (w' : Option Symbol),
       tm.toSingleTapeTM.tr q t.head ≠ (⟨w', some Turing.Dir.left⟩, qN) := by
     intro qN w' h; rw [htr] at h; injection h with h1 _
@@ -1725,13 +1763,16 @@ private lemma starts_with_stepTilesRightBoundary (tm : EncodableTM Symbol)
     · rw [hA, hA1_decomp]
       simp only [stepTilesRightBoundary, List.append_assoc, List.cons_append, List.nil_append]
     · rw [hA2_τ1, hA_τ2, hA1_decomp, τ2_cons, rightMoveBoundaryTile_bot, stateMarker_some,
-          encodeCfg_after_right_move_boundary_eq tm.toSingleTapeTM (some qNew_q) t w h_nondeg h_right_empty]
+          encodeCfg_after_right_move_boundary_eq tm.toSingleTapeTM (some qNew_q) t w h_nondeg
+            h_right_empty]
       simp [List.append_assoc]
 
-/-- Given `A ⊆ haltTiles tm` and the left-interior matching invariant, peel the canonical
-  left-interior step block and advance to the post-step invariant. -/
-private lemma starts_with_stepTilesLeftInterior (tm : EncodableTM Symbol)
-    (q : tm.toSingleTapeTM.State) (t : BiTape Symbol) (qNew : Option tm.toSingleTapeTM.State) (w : Option Symbol) [Encodable Symbol]
+/-- If `A ⊆ haltTiles tm` satisfies the matching invariant before an interior left-move step,
+  then `A` begins with the left-interior step block and the rest satisfies the invariant after
+  the step. -/
+private theorem starts_with_stepTilesLeftInterior (tm : EncodableTM Symbol)
+    (q : tm.toSingleTapeTM.State) (t : BiTape Symbol) (qNew : Option tm.toSingleTapeTM.State)
+    (w : Option Symbol) [Encodable Symbol]
     (htr : tm.toSingleTapeTM.tr q t.head = (⟨w, some Turing.Dir.left⟩, qNew))
     (h_left_ne : t.left.toList ≠ []) (h_nondeg : w ≠ none ∨ t.right.toList ≠ [])
     (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) (h_mem : ∀ s ∈ A, s ∈ haltTiles tm)
@@ -1745,11 +1786,13 @@ private lemma starts_with_stepTilesLeftInterior (tm : EncodableTM Symbol)
   have h_eq' : τ1 A = liftTape tm.toSingleTapeTM t.left.tail.toList.reverse ++
       ↟ₜt.left.head :: ↟ₛq :: ↟ₜt.head ::
       (liftTape tm.toSingleTapeTM t.right.toList ++ [#] ++ τ2 A) := by
-    rw [h_eq, encodeRunningCfg, h_split, liftTape_append, liftTape_cons, liftTape_nil, liftTape_cons]
+    rw [h_eq, encodeRunningCfg, h_split, liftTape_append, liftTape_cons, liftTape_nil,
+      liftTape_cons]
     simp [List.append_assoc]
   obtain ⟨A1, hA, hA_mem, hA_τ1, hA_τ2⟩ :=
     copy_prefix_forced tm t.left.tail.toList.reverse A
-      (↟ₜt.left.head :: ↟ₛq :: ↟ₜt.head :: (liftTape tm.toSingleTapeTM t.right.toList ++ [#] ++ τ2 A))
+      (↟ₜt.left.head :: ↟ₛq :: ↟ₜt.head ::
+        (liftTape tm.toSingleTapeTM t.right.toList ++ [#] ++ τ2 A))
       h_mem h_eq'
       (by intro x h; injection h with h1 _; cases h1)
       (by intro q' x h; injection h with h1 _; cases h1)
@@ -1766,8 +1809,8 @@ private lemma starts_with_stepTilesLeftInterior (tm : EncodableTM Symbol)
     · simp only [copyTile_top, List.cons_append, List.nil_append] at hA_τ1
       injection hA_τ1 with h_head h_tail; injection h_head with h_a; subst h_a
       obtain ⟨tile', _, hA1_rest_decomp, h_tile_in, _⟩ :=
-        transition_forced tm q t.head (liftTape tm.toSingleTapeTM t.right.toList ++ [#] ++ τ2 A) A1_rest
-          h_a1_rest_mem (by simpa using h_tail)
+        transition_forced tm q t.head (liftTape tm.toSingleTapeTM t.right.toList ++ [#] ++ τ2 A)
+          A1_rest h_a1_rest_mem (by simpa using h_tail)
       simp only [transitionTilesFor] at h_tile_in; rw [htr] at h_tile_in
       simp only [List.mem_map] at h_tile_in; obtain ⟨_, _, rfl⟩ := h_tile_in
       have key := h_tail; rw [hA1_rest_decomp, τ1_cons, leftMoveTile_top] at key
@@ -1807,7 +1850,8 @@ private lemma starts_with_stepTilesLeftInterior (tm : EncodableTM Symbol)
     · simp only [finalTile_top, List.cons_append, List.nil_append] at hA_τ1
       injection hA_τ1 with h _; cases h
 
-/-- The queue encoding: concatenate `encodeCfg tm.toSingleTapeTM c ++ [#]` for each `c` in the list. -/
+/-- The queue encoding: concatenate `encodeCfg tm.toSingleTapeTM c ++ [#]` for each `c` in the
+list. -/
 private def queueEncoding (tm : SingleTapeTM Symbol) :
     List tm.Cfg → List (Alpha tm.State Symbol)
   | []        => []
@@ -1815,17 +1859,17 @@ private def queueEncoding (tm : SingleTapeTM Symbol) :
 
 /-- `queueEncoding tm []` is empty. -/
 @[simp]
-private lemma queueEncoding_nil (tm : SingleTapeTM Symbol) :
+private theorem queueEncoding_nil (tm : SingleTapeTM Symbol) :
   queueEncoding tm [] = [] := rfl
 
 /-- `queueEncoding tm (c :: rest)` prepends `encodeCfg tm c ++ [#]`. -/
 @[simp]
-private lemma queueEncoding_cons (tm : SingleTapeTM Symbol)
+private theorem queueEncoding_cons (tm : SingleTapeTM Symbol)
   (c : tm.Cfg) (rest : List tm.Cfg) :
   queueEncoding tm (c :: rest) = encodeCfg tm c ++ [#] ++ queueEncoding tm rest := rfl
 
 /-- `queueEncoding` distributes over snoc with one element. -/
-private lemma queueEncoding_append_single (tm : SingleTapeTM Symbol)
+private theorem queueEncoding_append_single (tm : SingleTapeTM Symbol)
     (cfgs : List tm.Cfg) (c : tm.Cfg) :
     queueEncoding tm (cfgs ++ [c]) = queueEncoding tm cfgs ++ encodeCfg tm c ++ [#] := by
   induction cfgs with
@@ -1833,7 +1877,7 @@ private lemma queueEncoding_append_single (tm : SingleTapeTM Symbol)
   | cons _ _ ih => simp [queueEncoding, ih, List.append_assoc]
 
 /-- `queueEncoding` distributes over snoc with two elements. -/
-private lemma queueEncoding_append_pair (tm : SingleTapeTM Symbol)
+private theorem queueEncoding_append_pair (tm : SingleTapeTM Symbol)
     (cfgs : List tm.Cfg) (c1 c2 : tm.Cfg) :
     queueEncoding tm (cfgs ++ [c1, c2]) =
       queueEncoding tm cfgs ++ encodeCfg tm c1 ++ [#] ++ encodeCfg tm c2 ++ [#] := by
@@ -1841,10 +1885,10 @@ private lemma queueEncoding_append_pair (tm : SingleTapeTM Symbol)
   | nil => simp [queueEncoding]
   | cons _ _ ih => simp [queueEncoding, ih, List.append_assoc]
 
-/-- Weak variant of `copy_prefix_forced`. Identical to the strong version except `A`'s tiles may be
-  drawn from `startTile :: haltTiles tm`; the `startTile.top = [#]` case is ruled out by character
-  mismatch with `liftTape tm (a :: L)`'s leading `↟ₜa`. -/
-private lemma copy_prefix_forced_weak (tm : EncodableTM Symbol)
+/-- `copy_prefix_forced` holds for stacks drawn from `startTile :: haltTiles tm`: the
+  `startTile.top = [#]` case is ruled out by character mismatch with the leading `↟ₜa` of
+  `liftTape tm (a :: L)`. -/
+private theorem copy_prefix_forced_weak (tm : EncodableTM Symbol)
     (w_in : List Symbol) :
     ∀ (L : List (Option Symbol)) (A : Stack (Alpha tm.toSingleTapeTM.State Symbol))
       (tail : List (Alpha tm.toSingleTapeTM.State Symbol)) [Encodable Symbol],
@@ -1922,8 +1966,8 @@ private lemma copy_prefix_forced_weak (tm : EncodableTM Symbol)
         · simp at h_eq
         · simp at h_eq
 
-/-- Weak variant of `copy_prefix_forced_state_lead`. -/
-private lemma copy_prefix_forced_state_lead_weak (tm : EncodableTM Symbol)
+/-- `copy_prefix_forced_state_lead` holds for stacks drawn from `startTile :: haltTiles tm`. -/
+private theorem copy_prefix_forced_state_lead_weak (tm : EncodableTM Symbol)
     (w_in : List Symbol) (q : tm.toSingleTapeTM.State) (a : Option Symbol) [Encodable Symbol]
     (h_not_left : ∀ (qNew : Option tm.toSingleTapeTM.State) (w : Option Symbol),
         tm.toSingleTapeTM.tr q a ≠ (⟨w, some Turing.Dir.left⟩, qNew)) :
@@ -1945,7 +1989,8 @@ private lemma copy_prefix_forced_state_lead_weak (tm : EncodableTM Symbol)
     cases A with
     | nil => simp [liftTape_cons] at h_eq
     | cons t A_rest =>
-      have h_t_in : t ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm := h_mem t (List.mem_cons_self ..)
+      have h_t_in : t ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm :=
+        h_mem t (List.mem_cons_self ..)
       have h_rest_in : ∀ s ∈ A_rest, s ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm :=
         fun s hs => h_mem s (List.mem_cons_of_mem t hs)
       rw [τ1_cons, liftTape_cons, List.cons_append] at h_eq
@@ -1987,19 +2032,22 @@ private lemma copy_prefix_forced_state_lead_weak (tm : EncodableTM Symbol)
         · simp at h_eq
         · simp at h_eq
 
-/-- Weak variant of `transition_forced`. -/
-private lemma transition_forced_weak (tm : EncodableTM Symbol) (w_in : List Symbol)
-    (q : tm.toSingleTapeTM.State) (a : Option Symbol) (rest : List (Alpha tm.toSingleTapeTM.State Symbol))
+/-- `transition_forced` holds for stacks drawn from `startTile :: haltTiles tm`. -/
+private theorem transition_forced_weak (tm : EncodableTM Symbol) (w_in : List Symbol)
+    (q : tm.toSingleTapeTM.State) (a : Option Symbol)
+    (rest : List (Alpha tm.toSingleTapeTM.State Symbol))
     (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) [Encodable Symbol]
     (h_mem : ∀ t ∈ A, t ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm)
     (h_eq : τ1 A = ↟ₛq :: ↟ₜa :: rest) :
-    ∃ (tile : Tile (Alpha tm.toSingleTapeTM.State Symbol)) (A' : Stack (Alpha tm.toSingleTapeTM.State Symbol)),
+    ∃ (tile : Tile (Alpha tm.toSingleTapeTM.State Symbol))
+        (A' : Stack (Alpha tm.toSingleTapeTM.State Symbol)),
       A = tile :: A' ∧ tile ∈ transitionTilesFor tm.toSingleTapeTM q a ∧
       (∀ s ∈ A', s ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm) := by
   cases A with
   | nil => simp at h_eq
   | cons t A_rest =>
-    have h_t_in : t ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm := h_mem t (List.mem_cons_self ..)
+    have h_t_in : t ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm :=
+      h_mem t (List.mem_cons_self ..)
     have h_rest_in : ∀ s ∈ A_rest, s ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm :=
       fun s hs => h_mem s (List.mem_cons_of_mem t hs)
     refine ⟨t, A_rest, rfl, ?_, h_rest_in⟩
@@ -2036,9 +2084,10 @@ private lemma transition_forced_weak (tm : EncodableTM Symbol) (w_in : List Symb
       · simp only [finalTile_top, List.cons_append, List.nil_append] at h_eq
         injection h_eq with h_h _; cases h_h
 
-/-- Weak variant of `sep_forced`: returns a disjunction distinguishing `sepTile` (contributing `[#]`
-  to `τ2`) from `startTile` (contributing the full init encoding). -/
-private lemma sep_forced_weak (tm : EncodableTM Symbol) (w_in : List Symbol)
+/-- For stacks drawn from `startTile :: haltTiles tm` with `τ1 A` beginning with `#`, the head
+  tile is either `sepTile` (contributing `[#]` to `τ2`) or `startTile` (contributing the full
+  initial encoding). -/
+private theorem sep_forced_weak (tm : EncodableTM Symbol) (w_in : List Symbol)
     (rest : List (Alpha tm.toSingleTapeTM.State Symbol))
     (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) [Encodable Symbol]
     (h_mem : ∀ s ∈ A, s ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm)
@@ -2047,7 +2096,8 @@ private lemma sep_forced_weak (tm : EncodableTM Symbol) (w_in : List Symbol)
       ((A = sepTile tm.toSingleTapeTM :: A' ∧
         τ2 A = # :: τ2 A') ∨
        (A = startTile tm.toSingleTapeTM w_in :: A' ∧
-        τ2 A = # :: encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w_in) ++ [#] ++ τ2 A')) ∧
+        τ2 A = # :: encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w_in) ++
+          [#] ++ τ2 A')) ∧
       τ1 A' = rest ∧
       (∀ s ∈ A', s ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm) := by
   cases A with
@@ -2095,16 +2145,18 @@ private lemma sep_forced_weak (tm : EncodableTM Symbol) (w_in : List Symbol)
 
 /-- `τ1 A` never contains `↟ₛq :: # :: …` as a sublist, for any `A ⊆ startTile :: haltTiles tm`.
   Used to discharge the alternative `rightMoveTile` path in the boundary step lemma. -/
-private lemma τ1_no_state_marker_then_sharp
+private theorem τ1_no_state_marker_then_sharp
     (tm : EncodableTM Symbol) (w_in : List Symbol) (q : tm.toSingleTapeTM.State) [Encodable Symbol]:
-    ∀ (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) (l1 l2 : List (Alpha tm.toSingleTapeTM.State Symbol)),
+    ∀ (A : Stack (Alpha tm.toSingleTapeTM.State Symbol))
+        (l1 l2 : List (Alpha tm.toSingleTapeTM.State Symbol)),
       (∀ s ∈ A, s ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm) →
       τ1 A = l1 ++ ↟ₛq :: # :: l2 → False := by
   intro A; induction A with
   | nil => intro l1 l2 _ h; rw [τ1_nil] at h; cases l1 <;> simp at h
   | cons t A_rest ih =>
     intro l1 l2 h_mem h_eq
-    have h_t_in : t ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm := h_mem t (List.mem_cons_self ..)
+    have h_t_in : t ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm :=
+      h_mem t (List.mem_cons_self ..)
     have h_rest_in : ∀ s ∈ A_rest, s ∈ startTile tm.toSingleTapeTM w_in :: haltTiles tm :=
       fun s hs => h_mem s (List.mem_cons_of_mem t hs)
     rw [τ1_cons] at h_eq
@@ -2204,10 +2256,10 @@ private lemma τ1_no_state_marker_then_sharp
               injection h2 with _ h3; injection h3 with _ h_tail
               exact ih l1''' l2 h_rest_in h_tail
 
-/-- Extras-aware no-move step lemma: given `A ⊆ startTile :: haltTiles tm` and the queue-extended
-  matching invariant, returns a shorter residual whose invariant has the queue augmented by
-  `stepResult` (or `stepResult` and `initCfg` if `startTile` appeared). -/
-private lemma starts_with_stepTilesNoMove_weak_ext (tm : EncodableTM Symbol)
+/-- If `A ⊆ startTile :: haltTiles tm` satisfies the queue-extended matching invariant before a
+  no-move step, then a shorter stack satisfies the invariant with the queue extended by the
+  configuration after the step (and by `initCfg` if `startTile` appeared). -/
+private theorem starts_with_stepTilesNoMove_weak_ext (tm : EncodableTM Symbol)
     (w_in : List Symbol)
     (q : tm.toSingleTapeTM.State) (t : BiTape Symbol)
     (qNew : Option tm.toSingleTapeTM.State) (w : Option Symbol) [Encodable Symbol]
@@ -2293,9 +2345,11 @@ private lemma starts_with_stepTilesNoMove_weak_ext (tm : EncodableTM Symbol)
         simp [encodeCfg_running, encodeRunningCfg, BiTape.write,
               stateMarker_some, liftTape_cons, List.append_assoc]
 
-/-- Extras-aware right-boundary step lemma. The alternative `rightMoveTile` path is discharged by
-  `τ1_no_state_marker_then_sharp`. -/
-private lemma starts_with_stepTilesRightBoundary_weak_ext (tm : EncodableTM Symbol)
+/-- If `A ⊆ startTile :: haltTiles tm` satisfies the queue-extended matching invariant before a
+  right-boundary step to a running state, then a shorter stack satisfies the invariant with the
+  queue extended by the configuration after the step. The alternative `rightMoveTile` path is
+  discharged by `τ1_no_state_marker_then_sharp`. -/
+private theorem starts_with_stepTilesRightBoundary_weak_ext (tm : EncodableTM Symbol)
     (w_in : List Symbol)
     (q : tm.toSingleTapeTM.State) (t : BiTape Symbol)
     (qNew_q : tm.toSingleTapeTM.State) (w : Option Symbol)
@@ -2379,9 +2433,9 @@ private lemma starts_with_stepTilesRightBoundary_weak_ext (tm : EncodableTM Symb
             h_nondeg h_right_empty]
       simp [List.append_assoc]
 
-/-- Main backward strong-induction lemma for `A ⊆ haltTiles tm`. Produces a halting trace from a
-  stack satisfying the matching invariant. -/
-private lemma backward_aux (tm : EncodableTM Symbol)
+/-- If `A ⊆ haltTiles tm` satisfies the matching invariant for a reachable configuration `cfg`,
+  then `cfg` reaches a halting configuration. The proof is by strong induction on `A.length`. -/
+private theorem backward_aux (tm : EncodableTM Symbol)
     (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w_in : List Symbol)
     (h_nlb : NoLeftBoundary tm.toSingleTapeTM w_in) [Encodable Symbol] :
     ∀ (n : ℕ) (A : Stack (Alpha tm.toSingleTapeTM.State Symbol)) (cfg : tm.toSingleTapeTM.Cfg),
@@ -2422,7 +2476,8 @@ private lemma backward_aux (tm : EncodableTM Symbol)
         have h_w_ne : w' ≠ none := by
           have := h_nbw q tape.head; rw [h_tr] at this; exact this
         have h_reach' : Relation.ReflTransGen tm.toSingleTapeTM.TransitionRelation
-            (SingleTapeTM.initCfg tm.toSingleTapeTM w_in) (stepResult tm.toSingleTapeTM q tape) := by
+            (SingleTapeTM.initCfg tm.toSingleTapeTM w_in)
+            (stepResult tm.toSingleTapeTM q tape) := by
           refine hReach.tail ?_
           show tm.toSingleTapeTM.step cfg = some (stepResult tm.toSingleTapeTM q tape)
           rw [hcfg]; exact tm_step_running tm.toSingleTapeTM q tape
@@ -2441,7 +2496,8 @@ private lemma backward_aux (tm : EncodableTM Symbol)
           have h_stepRes : stepResult tm.toSingleTapeTM q tape = ⟨qNew, tape.write w'⟩ := by
             simp [stepResult, h_tr, BiTape.optionMove]
           have hA'_match' :
-              τ1 A' = encodeCfg tm.toSingleTapeTM (stepResult tm.toSingleTapeTM q tape) ++ [#] ++ τ2 A' := by
+              τ1 A' = encodeCfg tm.toSingleTapeTM (stepResult tm.toSingleTapeTM q tape) ++
+                [#] ++ τ2 A' := by
             rw [h_stepRes]; exact hA'_match
           obtain ⟨tape_h, h_h⟩ :=
             ih A' (stepResult tm.toSingleTapeTM q tape) hA'_len h_reach' hA'_mem hA'_match'
@@ -2468,14 +2524,17 @@ private lemma backward_aux (tm : EncodableTM Symbol)
                       (stepTilesRightBoundary tm.toSingleTapeTM q (some qNew_q) tape w').length +
                         A'.length := by rw [hA']; simp
                   have h_step_pos :
-                      0 < (stepTilesRightBoundary tm.toSingleTapeTM q (some qNew_q) tape w').length := by
+                      0 < (stepTilesRightBoundary tm.toSingleTapeTM q (some qNew_q) tape
+                        w').length := by
                     simp [stepTilesRightBoundary]
                   omega
                 have h_stepRes :
-                    stepResult tm.toSingleTapeTM q tape = ⟨some qNew_q, (tape.write w').moveRight⟩ := by
+                    stepResult tm.toSingleTapeTM q tape =
+                      ⟨some qNew_q, (tape.write w').moveRight⟩ := by
                   simp [stepResult, h_tr, BiTape.optionMove, BiTape.move]
                 have hA'_match' :
-                    τ1 A' = encodeCfg tm.toSingleTapeTM (stepResult tm.toSingleTapeTM q tape) ++ [#] ++ τ2 A' := by
+                    τ1 A' = encodeCfg tm.toSingleTapeTM (stepResult tm.toSingleTapeTM q tape) ++
+                      [#] ++ τ2 A' := by
                   rw [h_stepRes]; exact hA'_match
                 obtain ⟨tape_h, h_h⟩ :=
                   ih A' (stepResult tm.toSingleTapeTM q tape) hA'_len h_reach' hA'_mem hA'_match'
@@ -2488,7 +2547,8 @@ private lemma backward_aux (tm : EncodableTM Symbol)
                   h_right_ne (Or.inl h_w_ne) A hMem hMatch'
               have hA'_len : A'.length ≤ n := by
                 have h_split : A.length =
-                    (stepTilesRightInterior tm.toSingleTapeTM q qNew tape w').length + A'.length := by
+                    (stepTilesRightInterior tm.toSingleTapeTM q qNew tape w').length +
+                      A'.length := by
                   rw [hA']; simp
                 have h_step_pos :
                     0 < (stepTilesRightInterior tm.toSingleTapeTM q qNew tape w').length := by
@@ -2498,7 +2558,8 @@ private lemma backward_aux (tm : EncodableTM Symbol)
                   stepResult tm.toSingleTapeTM q tape = ⟨qNew, (tape.write w').moveRight⟩ := by
                 simp [stepResult, h_tr, BiTape.optionMove, BiTape.move]
               have hA'_match' :
-                  τ1 A' = encodeCfg tm.toSingleTapeTM (stepResult tm.toSingleTapeTM q tape) ++ [#] ++ τ2 A' := by
+                  τ1 A' = encodeCfg tm.toSingleTapeTM (stepResult tm.toSingleTapeTM q tape) ++
+                    [#] ++ τ2 A' := by
                 rw [h_stepRes]; exact hA'_match
               obtain ⟨tape_h, h_h⟩ :=
                 ih A' (stepResult tm.toSingleTapeTM q tape) hA'_len h_reach' hA'_mem hA'_match'
@@ -2518,7 +2579,8 @@ private lemma backward_aux (tm : EncodableTM Symbol)
                   h_left_ne (Or.inl h_w_ne) A hMem hMatch'
               have hA'_len : A'.length ≤ n := by
                 have h_split : A.length =
-                    (stepTilesLeftInterior tm.toSingleTapeTM q qNew tape w').length + A'.length := by
+                    (stepTilesLeftInterior tm.toSingleTapeTM q qNew tape w').length +
+                      A'.length := by
                   rw [hA']; simp
                 have h_step_pos :
                     0 < (stepTilesLeftInterior tm.toSingleTapeTM q qNew tape w').length := by
@@ -2528,7 +2590,8 @@ private lemma backward_aux (tm : EncodableTM Symbol)
                   stepResult tm.toSingleTapeTM q tape = ⟨qNew, (tape.write w').moveLeft⟩ := by
                 simp [stepResult, h_tr, BiTape.optionMove, BiTape.move]
               have hA'_match' :
-                  τ1 A' = encodeCfg tm.toSingleTapeTM (stepResult tm.toSingleTapeTM q tape) ++ [#] ++ τ2 A' := by
+                  τ1 A' = encodeCfg tm.toSingleTapeTM (stepResult tm.toSingleTapeTM q tape) ++
+                    [#] ++ τ2 A' := by
                 rw [h_stepRes]; exact hA'_match
               obtain ⟨tape_h, h_h⟩ :=
                 ih A' (stepResult tm.toSingleTapeTM q tape) hA'_len h_reach' hA'_mem hA'_match'
@@ -2538,7 +2601,7 @@ private lemma backward_aux (tm : EncodableTM Symbol)
   an interior right-moving transition (i.e., the right tape is not empty), there exists a strictly
   shorter valid stack whose top projection encodes the configuration after the transition (and
   optionally the initial configuration) appended to the configuration queue. -/
-private lemma starts_with_stepTilesRightInterior_weak_ext (tm : EncodableTM Symbol)
+private theorem starts_with_stepTilesRightInterior_weak_ext (tm : EncodableTM Symbol)
     (w_in : List Symbol)
     (q : tm.toSingleTapeTM.State) (t : BiTape Symbol)
     (qNew : Option tm.toSingleTapeTM.State) (w : Option Symbol)
@@ -2633,7 +2696,7 @@ private lemma starts_with_stepTilesRightInterior_weak_ext (tm : EncodableTM Symb
   an interior left-moving transition (i.e., the left tape is not empty), there exists a strictly
   shorter valid stack whose top projection encodes the configuration after the transition (and
   optionally the initial configuration) appended to the configuration queue. -/
-private lemma starts_with_stepTilesLeftInterior_weak_ext (tm : EncodableTM Symbol)
+private theorem starts_with_stepTilesLeftInterior_weak_ext (tm : EncodableTM Symbol)
     (w_in : List Symbol)
     (q : tm.toSingleTapeTM.State) (t : BiTape Symbol)
     (qNew : Option tm.toSingleTapeTM.State) (w : Option Symbol)
@@ -2773,9 +2836,9 @@ private lemma starts_with_stepTilesLeftInterior_weak_ext (tm : EncodableTM Symbo
       · simp only [finalTile_top, List.cons_append, List.nil_append] at hA_τ1
         injection hA_τ1 with h _; cases h
 
-/-- Queue-based backward induction for `A ⊆ startTile :: haltTiles tm`. Threads a chain-tracked cfg
-  queue through the matching invariant. -/
-private lemma backward_aux_weak (tm : EncodableTM Symbol)
+/-- If `A ⊆ startTile :: haltTiles tm` satisfies the matching invariant for a non-empty queue of
+  configurations reachable from the initial one, then the machine halts on `w_in`. -/
+private theorem backward_aux_weak (tm : EncodableTM Symbol)
     (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w_in : List Symbol)
     (h_nlb : NoLeftBoundary tm.toSingleTapeTM w_in) [Encodable Symbol]:
     ∀ (n : ℕ) (A : Stack (Alpha tm.toSingleTapeTM.State Symbol))
@@ -2831,7 +2894,8 @@ private lemma backward_aux_weak (tm : EncodableTM Symbol)
           have hMatch'' : τ1 A = encodeRunningCfg tm.toSingleTapeTM q tape ++ [#] ++
                             queueEncoding tm.toSingleTapeTM rest_cfgs ++ τ2 A := by
             rw [hcfg] at hMatch'; exact hMatch'
-          have h_step_cfg : tm.toSingleTapeTM.step cfg = some (stepResult tm.toSingleTapeTM q tape) := by
+          have h_step_cfg :
+              tm.toSingleTapeTM.step cfg = some (stepResult tm.toSingleTapeTM q tape) := by
             rw [hcfg]; exact tm_step_running tm.toSingleTapeTM q tape
           have new_chain_step : Relation.ReflTransGen tm.toSingleTapeTM.TransitionRelation
               (SingleTapeTM.initCfg tm.toSingleTapeTM w_in) (stepResult tm.toSingleTapeTM q tape) :=
@@ -2984,19 +3048,24 @@ private lemma backward_aux_weak (tm : EncodableTM Symbol)
                     have := congrArg List.length h_empty
                     simp [List.length_append] at this
 
-/-- From an MPCP solution, we may recover `Halts tm.toSingleTapeTM w`. -/
+/-- If the MPCP instance has a solution, then `tm.toSingleTapeTM` halts on `w`. -/
 theorem halt_if_mHasSolution (tm : EncodableTM Symbol)
-    (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Symbol) (h_nlb : NoLeftBoundary tm.toSingleTapeTM w) [Encodable Symbol]
+    (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Symbol)
+    (h_nlb : NoLeftBoundary tm.toSingleTapeTM w) [Encodable Symbol]
     (h : MPCP.DecisionProblem (startTile tm.toSingleTapeTM w) (haltTiles tm)) :
     Halts tm.toSingleTapeTM w := by
   obtain ⟨A, h_mem, h_match⟩ := h
   have h_match_cfg :
-      τ1 A = encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w) ++ [#] ++ τ2 A := by
+      τ1 A =
+        encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w) ++ [#] ++ τ2 A := by
     have h_step : # :: τ1 A =
-        # :: (encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w) ++ [#] ++ τ2 A) := by
-      have h_lhs : (startTile tm.toSingleTapeTM w).top ++ τ1 A = # :: τ1 A := by simp [startTile_top]
+        # :: (encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w) ++ [#] ++
+          τ2 A) := by
+      have h_lhs : (startTile tm.toSingleTapeTM w).top ++ τ1 A = # :: τ1 A := by
+        simp [startTile_top]
       have h_rhs : (startTile tm.toSingleTapeTM w).bot ++ τ2 A =
-          # :: (encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w) ++ [#] ++ τ2 A) := by
+          # :: (encodeCfg tm.toSingleTapeTM (SingleTapeTM.initCfg tm.toSingleTapeTM w) ++ [#] ++
+            τ2 A) := by
         simp [startTile_bot, List.append_assoc]
       rw [h_lhs, h_rhs] at h_match; exact h_match
     exact (List.cons.injEq _ _ _ _ |>.mp h_step).2
@@ -3006,19 +3075,22 @@ theorem halt_if_mHasSolution (tm : EncodableTM Symbol)
         (le_refl _) Relation.ReflTransGen.refl h_strong h_match_cfg
     exact ⟨tape, h_trace⟩
   · have h_match_queue :
-        τ1 A = queueEncoding tm.toSingleTapeTM [SingleTapeTM.initCfg tm.toSingleTapeTM w] ++ τ2 A := by
+        τ1 A =
+          queueEncoding tm.toSingleTapeTM [SingleTapeTM.initCfg tm.toSingleTapeTM w] ++ τ2 A := by
       rw [h_match_cfg]; simp [queueEncoding, List.append_assoc]
     exact backward_aux_weak tm h_nbw w h_nlb A.length A
       [SingleTapeTM.initCfg tm.toSingleTapeTM w]
       (fun c hc => by rw [List.mem_singleton] at hc; subst hc; exact Relation.ReflTransGen.refl)
       (le_refl _) (List.cons_ne_nil _ _) h_mem h_match_queue
 
-/-- Halt reduces many-one to MPCP: `tm.toSingleTapeTM` halts on `w` iff the reduced MPCP instance has a solution,
-subject to `NoBlankWrites tm.toSingleTapeTM` and `NoLeftBoundary tm.toSingleTapeTM w`. -/
-
+/-- Under `NoBlankWrites tm.toSingleTapeTM` and `NoLeftBoundary tm.toSingleTapeTM w`,
+`tm.toSingleTapeTM` halts on `w` iff the MPCP instance `(startTile tm w, haltTiles tm)` has a
+solution. -/
 theorem halt_iff_mpcp (tm : EncodableTM Symbol)
-    (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Symbol) (h_nlb : NoLeftBoundary tm.toSingleTapeTM w) [Encodable Symbol]:
-    Halts tm.toSingleTapeTM w ↔ MPCP.DecisionProblem (startTile tm.toSingleTapeTM w) (haltTiles tm) :=
+    (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Symbol)
+    (h_nlb : NoLeftBoundary tm.toSingleTapeTM w) [Encodable Symbol]:
+    Halts tm.toSingleTapeTM w ↔
+      MPCP.DecisionProblem (startTile tm.toSingleTapeTM w) (haltTiles tm) :=
     by
     apply Iff.intro
     · intro h

@@ -214,7 +214,8 @@ theorem pcode_ruleS (q : M.State) (h : Option Bool) :
   · have e1 : pcode ((ruleS M q h).map phi) =
         pp (psum ((enumL (Option Bool)).map fun x =>
             pcode ((ctxS M [.cell x, .head (some q) h] [.head q' x, .cell wr]).map phi)))
-          (pcode ((ctxLS M [.lend, .head (some q) h] [.lend, .head q' none, .cell wr]).map phi)) := by
+          (pcode
+            ((ctxLS M [.lend, .head (some q) h] [.lend, .head q' none, .cell wr]).map phi)) := by
       simp only [ruleS, htr, RExp.map, map_sumL, List.map_map]
       rw [pcode_plus, pcode_sumL, List.map_map]
       rfl
@@ -224,7 +225,8 @@ theorem pcode_ruleS (q : M.State) (h : Option Bool) :
   · have e1 : pcode ((ruleS M q h).map phi) =
         pp (psum ((enumL (Option Bool)).map fun x =>
             pcode ((ctxS M [.head (some q) h, .cell x] [.cell wr, .head q' x]).map phi)))
-          (pcode ((ctxRS M [.head (some q) h, .rend] [.cell wr, .head q' none, .rend]).map phi)) := by
+          (pcode
+            ((ctxRS M [.head (some q) h, .rend] [.cell wr, .head q' none, .rend]).map phi)) := by
       simp only [ruleS, htr, RExp.map, map_sumL, List.map_map]
       rw [pcode_plus, pcode_sumL, List.map_map]
       rfl

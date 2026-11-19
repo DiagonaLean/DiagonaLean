@@ -19,13 +19,9 @@ renamed to their codes. `M` halts on `w` iff this inequality fails in the langua
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18, Section 3
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.ModelLe.Reduction
 
-open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
+open DiagonaLean.KAComm.KleeneAlgebra DiagonaLean.Halt DiagonaLean.Synthetic.Definitions
 
 /-- `haltRed` reduces `HaltProblem` to the failure of inclusion in the language model. -/
 theorem halt_reducesto_not_modelLe_spec :

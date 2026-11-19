@@ -5,18 +5,24 @@ Authors: Akhilesh Balaji, Aristotle (Harmonic), Prathamesh Turaga
 
 import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
 
+@[expose] public section
+
 /-! # Undecidability of matrix mortality
 
-Mortality of finite sets of `3 × 3` integer matrices is undecidable (`matmortUndecidable`).
+Mortality of finite sets of `3 × 3` integer matrices is `Undecidable` (`undecidableMatMort`).
+
+## References
+
+* [M. S. Paterson, *Unsolvability in 3 × 3 Matrices*][Paterson1970]
 -/
 
 namespace DiagonaLean.MatMort.Reduction
 
 open DiagonaLean.PCP DiagonaLean.MatMort DiagonaLean.Synthetic.Notation
 
-/-- Matrix mortality of `3 × 3` integer matrices is undecidable: reduced from PCP over the
-alphabet `S23 = {2, 3}` through `pcpReducesMatMort`. -/
-def matmortUndecidable : Undecidable (fun Ws => DecisionProblem Ws) := by
+/-- **Matrix mortality of `3 × 3` integer matrices is `Undecidable`.** It is reduced from PCP
+over the alphabet `S23 = {2, 3}` through `pcpReducesMatMort`. -/
+def undecidableMatMort : Undecidable (fun Ws => DecisionProblem Ws) := by
   reduce_from_pcp over_letters (0 : S23) (1 : S23) via pcpReducesMatMort
 
 end DiagonaLean.MatMort.Reduction

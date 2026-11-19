@@ -4,7 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 ```
 # Status of the formalisation
 
-How much of *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979) is formalised, and what is still open. Assessed on 2026-11-16, updated 2026-11-18; update it when a gap below is closed.
+How much of *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979) is formalised, and what is still open. Assessed on 2026-11-16, updated 2026-11-19; update it when a gap below is closed.
 
 The paper's main result, from its abstract: *"the equational theory of Kleene algebra with commutativity conditions on primitives (or atomic terms) is undecidable … our results hold even for weaker theories that do not support the induction axioms of Kleene algebra."*
 
@@ -28,12 +28,12 @@ theorem not_machineDecidable_kaTermEqBool : ¬ MachineDecidable encBool KATermEq
 
 * **The problem:** two expressions over `{0, 1}` doubled into four letters, under the hypotheses that every left letter commutes with every right letter (`DComm`): a fixed, finite set of commutativity conditions on primitives.
 * **"Decides":** no `SingleTapeTM Bool` outputs `[true]` on the binary encoding of the pair exactly when the equation is provable.
-* **The encoding** `encBool` (and `encNat` over `ℕ`) is injective (`encNat_injective`), so the statement cannot hold for a trivial reason. It is a reference encoding, not part of the result: `not_machineDecidable_kaTermEqBool_of_conv` and the other `_of_conv` statements give the same result for any encoding that a machine computes from it.
+* **The encoding** `encBool` (and `encNat` over `ℕ`) is injective (`encBool_injective`, `encNat_injective`), so the statement cannot hold for a trivial reason. It is a reference encoding, not part of the result: `not_machineDecidable_kaTermEqBool_of_conv` and the other `_of_conv` statements give the same result for any encoding that a machine computes from it.
 * **Axioms:** only `propext`, `Classical.choice` and `Quot.sound`; no `sorry` and no `native_decide`.
 
 ## Caveats
 
-1. **The `Undecidable` forms take arguments.** `undecidableTermEq B C hB hC` and `undecidableKATermEq B C hB hC` need the interpreter's constants `B` and the race program `C`, which are only known to exist, so a compiled definition cannot obtain them itself. The statements without them are the machine-level theorems above.
+1. **The `Undecidable` forms take arguments.** `undecidableTermEq B C hB hC`, `undecidableKATermEq B C hB hC` and their `Bool` versions `undecidableTermEqBool B C hB hC` and `undecidableKATermEqBool B C hB hC` need the interpreter's constants `B` and the race program `C`, which are only known to exist, so a compiled definition cannot obtain them itself. Outside `KAComm/`, `undecidableSKIConv C hu hC` and `undecidableBetaConv C hu hC` take a race program `C` and a proof `hu` that the program code `u` is universal, for the same reason. The statements without them are the machine-level theorems above.
 
 ## Resolved
 

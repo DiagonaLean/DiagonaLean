@@ -5,14 +5,17 @@ Authors: Aristotle (Harmonic)
 
 import DiagonaLean.MPCP.Normalize.Machine
 
+@[expose] public section
+
 /-! # The simulation invariant
 
 `InvAt t i t' p` says that the tape `t'` of the normalised machine, whose head sits at
 absolute position `p`, encodes the tape `t` of the simulated machine, whose head sits at
-absolute index `i`.
+absolute index `i`. The lemmas `InvAt.moveRight`, `InvAt.moveLeft`, `InvAt.tm_moveRight`,
+`InvAt.tm_moveLeft`, `InvAt.write` and `InvAt.write_preserve` say how the invariant changes when
+either machine moves its head or writes.
 -/
 
-@[expose] public section
 namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing SingleTapeTM
@@ -31,7 +34,7 @@ structure InvAt (t : BiTape Bool) (i : ℤ) (t' : BiTape Sym2) (p : ℤ) : Prop 
 variable {t : BiTape Bool} {i p : ℤ} {t' : BiTape Sym2}
 
 /-- Every position `≥ 1` of the normalised tape is a data cell. -/
-lemma fold_surjective {n : ℤ} (hn : 1 ≤ n) : ∃ j : ℤ, fold j = n := by
+theorem fold_surjective {n : ℤ} (hn : 1 ≤ n) : ∃ j : ℤ, fold j = n := by
   rcases Int.even_or_odd n with ⟨k, hk⟩ | ⟨k, hk⟩
   · refine ⟨-k, ?_⟩
     have hkneg : -k < 0 := by omega
@@ -41,38 +44,39 @@ lemma fold_surjective {n : ℤ} (hn : 1 ≤ n) : ∃ j : ℤ, fold j = n := by
     rw [fold_of_nonneg this]; omega
 
 /-- The head of the normalised machine never reads the marker except at position `0`. -/
-lemma InvAt.head_ne_Mk (h : InvAt t i t' p) (hp : 1 ≤ p) : cellAt t' 0 ≠ some Mk := by
+theorem InvAt.head_ne_Mk (h : InvAt t i t' p) (hp : 1 ≤ p) : cellAt t' 0 ≠ some Mk := by
   obtain ⟨j, hj⟩ := fold_surjective hp
   have := h.noMk j
   rwa [hj, sub_self] at this
 
 /-- At position `0` the head of the normalised machine reads the marker. -/
-lemma InvAt.head_eq_Mk (h : InvAt t i t' 0) : cellAt t' 0 = some Mk := by
+theorem InvAt.head_eq_Mk (h : InvAt t i t' 0) : cellAt t' 0 = some Mk := by
   simpa using h.marker
 
 /-- The symbol read by the normalised machine decodes to the symbol read by the simulated
 machine. -/
-lemma InvAt.head_decode (h : InvAt t i t' (fold i)) : decSym (cellAt t' 0) = t.head := by
+theorem InvAt.head_decode (h : InvAt t i t' (fold i)) : decSym (cellAt t' 0) = t.head := by
   have := h.data i
   simpa using this
 
-/-- Moving the head of the simulated machine right. -/
-lemma InvAt.tm_moveRight (h : InvAt t i t' p) : InvAt t.moveRight (i + 1) t' p where
+/-- If `t'` encodes `t`, it also encodes `t.moveRight` with head index `i + 1`. -/
+theorem InvAt.tm_moveRight (h : InvAt t i t' p) : InvAt t.moveRight (i + 1) t' p where
   data j := by rw [h.data j, cellAt_moveRight]; ring_nf
   noMk j := h.noMk j
   marker := h.marker
   left := h.left
 
-/-- Moving the head of the simulated machine left. -/
-lemma InvAt.tm_moveLeft (h : InvAt t i t' p) : InvAt t.moveLeft (i - 1) t' p where
+/-- If `t'` encodes `t`, it also encodes `t.moveLeft` with head index `i - 1`. -/
+theorem InvAt.tm_moveLeft (h : InvAt t i t' p) : InvAt t.moveLeft (i - 1) t' p where
   data j := by rw [h.data j, cellAt_moveLeft]; ring_nf
   noMk j := h.noMk j
   marker := h.marker
   left := h.left
 
-/-- Moving the head of the normalised machine right. -/
-lemma InvAt.moveRight (h : InvAt t i t' p) : InvAt t i t'.moveRight (p + 1) where
-  data j := by rw [cellAt_moveRight]; rw [show fold j - (p + 1) + 1 = fold j - p by ring]; exact h.data j
+/-- If `t'` with head at `p` encodes `t`, then `t'.moveRight` with head at `p + 1` encodes `t`. -/
+theorem InvAt.moveRight (h : InvAt t i t' p) : InvAt t i t'.moveRight (p + 1) where
+  data j := by
+    rw [cellAt_moveRight]; rw [show fold j - (p + 1) + 1 = fold j - p by ring]; exact h.data j
   noMk j := by
     rw [cellAt_moveRight, show fold j - (p + 1) + 1 = fold j - p by ring]; exact h.noMk j
   marker := by
@@ -80,8 +84,8 @@ lemma InvAt.moveRight (h : InvAt t i t' p) : InvAt t i t'.moveRight (p + 1) wher
   left n hn := by
     rw [cellAt_moveRight, show n - (p + 1) + 1 = n - p by ring]; exact h.left n hn
 
-/-- Moving the head of the normalised machine left. -/
-lemma InvAt.moveLeft (h : InvAt t i t' p) : InvAt t i t'.moveLeft (p - 1) where
+/-- If `t'` with head at `p` encodes `t`, then `t'.moveLeft` with head at `p - 1` encodes `t`. -/
+theorem InvAt.moveLeft (h : InvAt t i t' p) : InvAt t i t'.moveLeft (p - 1) where
   data j := by
     rw [cellAt_moveLeft, show fold j - (p - 1) - 1 = fold j - p by ring]; exact h.data j
   noMk j := by
@@ -91,14 +95,16 @@ lemma InvAt.moveLeft (h : InvAt t i t' p) : InvAt t i t'.moveLeft (p - 1) where
   left n hn := by
     rw [cellAt_moveLeft, show n - (p - 1) - 1 = n - p by ring]; exact h.left n hn
 
-/-- Writing the encoding of a symbol on the current data cell, in both machines. -/
-lemma InvAt.write (h : InvAt t i t' (fold i)) (c : Option Bool) :
+/-- Writing `c` on the current cell of `t` and `encSym c` on the current cell of `t'` keeps
+the invariant. -/
+theorem InvAt.write (h : InvAt t i t' (fold i)) (c : Option Bool) :
     InvAt (t.write c) i (t'.write (encSym c)) (fold i) where
   data j := by
     rw [cellAt_write, cellAt_write]
     by_cases hj : j = i
     · subst hj; simp
-    · rw [ite_eq_right (by simpa [sub_eq_zero, fold_eq_iff] using hj), ite_eq_right (by simpa [sub_eq_zero] using hj)]
+    · rw [ite_eq_right (by simpa [sub_eq_zero, fold_eq_iff] using hj),
+        ite_eq_right (by simpa [sub_eq_zero] using hj)]
       exact h.data j
   noMk j := by
     rw [cellAt_write]
@@ -113,8 +119,9 @@ lemma InvAt.write (h : InvAt t i t' (fold i)) (c : Option Bool) :
     rw [cellAt_write, ite_eq_right (by have := fold_pos i; omega)]
     exact h.left n hn
 
-/-- Rewriting the current cell with its own contents (turning a blank into `Bl`). -/
-lemma InvAt.write_preserve (h : InvAt t i t' p) (hp : 0 ≤ p) :
+/-- Rewriting the current cell of `t'` with `preserve` of its contents (which turns a blank
+into `Bl`) keeps the invariant. -/
+theorem InvAt.write_preserve (h : InvAt t i t' p) (hp : 0 ≤ p) :
     InvAt t i (t'.write (preserve t'.head)) p where
   data j := by
     rw [cellAt_write]
@@ -143,7 +150,7 @@ lemma InvAt.write_preserve (h : InvAt t i t' p) (hp : 0 ≤ p) :
     rw [cellAt_write, ite_eq_right (by omega)]
     exact h.left n hn
 
-/-- Writing the marker back when standing on it. -/
-lemma write_head_self (t' : BiTape Sym2) : t'.write t'.head = t' := rfl
+/-- Writing the head symbol back leaves a tape unchanged. -/
+theorem write_head_self (t' : BiTape Sym2) : t'.write t'.head = t' := rfl
 
 end DiagonaLean.MPCP.Normalize

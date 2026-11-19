@@ -15,7 +15,7 @@ Tiles and the extended alphabet `Ext α` are `Primcodable` (`derive_primcodable`
 MPCP instances (lists and pairs of tiles). With these encodings:
 
 * the reduction from MPCP to PCP is primitive recursive (`mpcpToPcp_primrec`);
-* the change of alphabet behind `pcpUndecidable` is primitive recursive (`liftInstance_primrec`).
+* the change of alphabet behind `undecidablePCP` is primitive recursive (`liftInstance_primrec`).
 
 This is a statement about the functions themselves, stronger than `#check_reductions`, which only
 checks that they compile.
@@ -59,9 +59,9 @@ theorem liftInstance_primrec (b0 b1 : γ₂) :
   unfold liftInstance liftTile liftWord symbolWord symbolBits widthFor symbolsUsed bitTo
   fun_prop
 
-/-- The function of the reduction `PCPAlphabetLift` is primitive recursive. -/
+/-- The function of the reduction `pcpAlphabetLift` is primitive recursive. -/
 theorem pcpAlphabetLift_primrec {b0 b1 : γ₂} (hne : b0 ≠ b1) :
-    Primrec (PCPAlphabetLift (γ₁ := γ₁) b0 b1 hne).f :=
+    Primrec (pcpAlphabetLift (γ₁ := γ₁) b0 b1 hne).f :=
   liftInstance_primrec b0 b1
 
 end AlphabetLift

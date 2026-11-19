@@ -22,14 +22,10 @@ case of Theorem 18 where the predicate is inclusion of languages itself
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.ModelLe.Reduction
 
-open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA Nat.Partrec
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
-  DiagonaLean.Halt.Undecidable
+open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing DiagonaLean.Synthetic.Definitions
+  DiagonaLean.Synthetic.Notation DiagonaLean.Halt.Undecidable
 
 /-- **The failure of inclusion of languages over `ℕ` is `Undecidable`.** -/
 def undecidableNotModelLe : Undecidable (Complement ModelLeProblem) :=

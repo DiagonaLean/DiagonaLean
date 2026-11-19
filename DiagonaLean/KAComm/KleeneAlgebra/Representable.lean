@@ -3,9 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.KAComm.KleeneAlgebra.Doubled
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Data.Set.Finite.Basic
+import DiagonaLean.KAComm.KleeneAlgebra.Doubled
 
 @[expose] public section
 
@@ -189,8 +189,9 @@ theorem le_below_add_iter {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ) (�
 
 /-- **Theorem 22.** If `Nextⁿ_e(Λ) = ∅`, then `Λ_r e∗ ≤ Σ∗ Next^{<n}_e(Λ)_r + Σ∗ Σ^≠ ρ`, with
 `ρ = ρ' e∗` for any residue `ρ'` of `e`. -/
-theorem le_below_of_iter_eq_empty {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ) (Λ : Finset (FreeMonoid A)),
-    ↑Λ ⊆ L → h.iter n Λ = ∅ → rtS Λ * e∗ ≤ sig∗ * rtS (h.below n Λ) + err (ρ' * e∗) := by
+theorem le_below_of_iter_eq_empty {ρ' : TD A} (hρ' : h.ResidBy ρ') :
+    ∀ (n : ℕ) (Λ : Finset (FreeMonoid A)),
+      ↑Λ ⊆ L → h.iter n Λ = ∅ → rtS Λ * e∗ ≤ sig∗ * rtS (h.below n Λ) + err (ρ' * e∗) := by
   intro n Λ hΛ hn
   have := h.le_below_add_iter hρ' n Λ hΛ
   rwa [hn, rtS_empty, mul_zero, zero_mul, add_zero] at this

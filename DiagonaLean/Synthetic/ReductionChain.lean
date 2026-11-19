@@ -6,15 +6,20 @@ Authors: Akhilesh Balaji
 import DiagonaLean.Halt.Basic
 import DiagonaLean.Synthetic.Definitions
 
-/-! # Pre-Order Properties of Many-One Reductions
+@[expose] public section
+
+/-! # Preorder properties of many-one reductions
+
+Many-one reducibility is reflexive (`reducesRefl`) and transitive (`reducesTrans`), and
+a reduction from `P` to `Q` is also a reduction from the complement of `P` to the complement of
+`Q` (`reducesCompl`). Each reduction is a `def` built from a spec theorem
+(`reduces_reflexive_spec`, `reduces_transitive_spec`, `reduces_complement_spec`).
 
 ## References
 
 * [Y. Forster, D. Larchey-Wendling, A. Dudenhefner, et al.,
     *A Coq Library of Undecidable Problems*][ForsterEtAl2020]
 -/
-
-@[expose] public section
 
 namespace DiagonaLean.Synthetic.ReductionChain
 open DiagonaLean.Halt Cslib.Turing DiagonaLean.Synthetic.Definitions
@@ -27,45 +32,34 @@ theorem reduces_reflexive_spec (P : X → Prop) : P ⪯ₘ[id] P :=
 
 /-- Many-one reducibility is reflexive. `⪯ₘ` is data (see `ManyOneReduces`), so building one is
 a `def`, not a `theorem`. -/
-def ReducesReflexive (P : X → Prop) : P ⪯ₘ P :=
+def reducesRefl (P : X → Prop) : P ⪯ₘ P :=
   ⟨id, reduces_reflexive_spec P⟩
 
-/-- `hQR.f ∘ hPQ.f` -- the composition of the two witness functions -- witnesses that
-many-one reducibility is transitive. -/
+/-- The composition `hQR.f ∘ hPQ.f` of the two witness functions witnesses that many-one
+reducibility is transitive. -/
 theorem reduces_transitive_spec {P : X → Prop} {Q : Y → Prop} {R : Z → Prop}
     (hPQ : P ⪯ₘ Q) (hQR : Q ⪯ₘ R) : P ⪯ₘ[hQR.f ∘ hPQ.f] R :=
   fun x => (hPQ.hf x).trans (hQR.hf (hPQ.f x))
 
 /-- Many-one reducibility is transitive: compose the two witness functions. -/
-def ReducesTransitive {P : X → Prop} {Q : Y → Prop} {R : Z → Prop}
+def reducesTrans {P : X → Prop} {Q : Y → Prop} {R : Z → Prop}
     (hPQ : P ⪯ₘ Q) (hQR : Q ⪯ₘ R) : P ⪯ₘ R :=
   ⟨hQR.f ∘ hPQ.f, reduces_transitive_spec hPQ hQR⟩
 
-/-- `h.f` -- the same witness function -- also witnesses that the complement of `P` reduces to
+/-- The witness function `h.f` of `P ⪯ₘ Q` also witnesses that the complement of `P` reduces to
 the complement of `Q`. -/
 theorem reduces_complement_spec {P : X → Prop} {Q : Y → Prop}
     (h : P ⪯ₘ Q) : Complement P ⪯ₘ[h.f] Complement Q :=
   fun x => not_congr (h.hf x)
 
 /-- If `P` reduces to `Q`, then the complement of `P` reduces to the complement of `Q`. -/
-def ReducesComplement {P : X → Prop} {Q : Y → Prop}
+def reducesCompl {P : X → Prop} {Q : Y → Prop}
     (h : P ⪯ₘ Q) : Complement P ⪯ₘ Complement Q :=
   ⟨h.f, reduces_complement_spec h⟩
 
-/-- If `p` many-one reduces to `q` and `q` is synthetically decidable, then `p` is also synthetically decidable. -/
-theorem dec_red {p : X → Prop} {q : Y → Prop}
-    (hred : p ⪯ₘ q) (hdec : SDecidable q) : SDecidable p := by
-  obtain ⟨f, hf⟩ := hred
-  obtain ⟨d, hd⟩ := hdec
-  exact ⟨d ∘ f, fun x => (hf x).trans (hd (f x))⟩
-
-/-- Alias for `ReducesComplement`. If `p` reduces to `q`, then the complement of `p` reduces to the complement of `q`. -/
-def RedComp {p : X → Prop} {q : Y → Prop}
-    (h : p ⪯ₘ q) : Complement p ⪯ₘ Complement q :=
-  ReducesComplement h
-
-/-- Close a reduction goal by chaining through a list of known reductions. -/
+/-- `reduce_chain H` proves a reduction by applying transitivity with `H` and closing with
+reflexivity, as often as needed. -/
 macro "reduce_chain" H:term : tactic =>
-  `(tactic| repeat (first | exact ReducesReflexive _ | apply ReducesTransitive $H))
+  `(tactic| repeat (first | exact reducesRefl _ | apply reducesTrans $H))
 
 end DiagonaLean.Synthetic.ReductionChain

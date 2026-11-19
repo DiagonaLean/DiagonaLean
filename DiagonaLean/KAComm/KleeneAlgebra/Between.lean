@@ -41,13 +41,11 @@ through the substitution `sbB` that writes the letter `n` as the word `1ⁿ0`.
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.KleeneAlgebra
 
-open Cslib.Turing SingleTapeTM Enc RExp FreePreKA TD Nat.Partrec
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Halt.Undecidable DiagonaLean.Halt.Inseparable DiagonaLean.Synthetic.Definitions
+open Cslib.Turing RExp FreePreKA TD Nat.Partrec DiagonaLean.Foundations.Computability
+  DiagonaLean.Halt.Encoding DiagonaLean.Halt.Undecidable DiagonaLean.Halt.Inseparable
+  DiagonaLean.Synthetic.Definitions
 
 variable {X : Type*}
 

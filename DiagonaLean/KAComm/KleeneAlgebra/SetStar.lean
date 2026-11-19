@@ -3,8 +3,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.KAComm.KleeneAlgebra.PreKleene
 import Mathlib.Data.Set.Semiring
+import DiagonaLean.KAComm.KleeneAlgebra.PreKleene
 
 @[expose] public section
 

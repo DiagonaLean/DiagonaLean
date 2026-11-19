@@ -3,9 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
+import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import DiagonaLean.KAComm.KleeneAlgebra.PreKleeneNotKleene
 import DiagonaLean.KAComm.KleeneAlgebra.Free
-import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 
 @[expose] public section
 

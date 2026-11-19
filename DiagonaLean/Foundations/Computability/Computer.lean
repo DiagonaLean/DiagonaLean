@@ -38,9 +38,11 @@ def numOf (l : List Bool) : ℕ := l.foldl (fun acc b => 2 * acc + b.toNat) 1
 /-- The inverse of `numOf`. -/
 def listOf (n : ℕ) : List Bool := (bitsOf n).reverse.tail
 
+/-- Appending a bit `b` doubles `numOf` and adds `b`. -/
 theorem numOf_snoc (l : List Bool) (b : Bool) : numOf (l ++ [b]) = 2 * numOf l + b.toNat := by
   simp [numOf, List.foldl_append]
 
+/-- `numOf l` is positive. -/
 theorem numOf_pos (l : List Bool) : 0 < numOf l := by
   induction l using List.reverseRecOn with
   | nil => decide
@@ -48,6 +50,7 @@ theorem numOf_pos (l : List Bool) : 0 < numOf l := by
     rw [numOf_snoc]
     omega
 
+/-- `trNat (numOf l)` is the reverse of `l`, as `bitG` digits, followed by `bit1`. -/
 theorem trNat_numOf (l : List Bool) : trNat (numOf l) = l.reverse.map bitG ++ [.bit1] := by
   induction l using List.reverseRecOn with
   | nil =>
@@ -61,31 +64,38 @@ theorem trNat_numOf (l : List Bool) : trNat (numOf l) = l.reverse.map bitG ++ [.
     rw [h1, h2, ih]
     cases b <;> simp
 
+/-- `bitG` is injective. -/
 theorem bitG_injective : Function.Injective bitG := by
   intro a b h
   cases a <;> cases b <;> simp_all [bitG]
 
+/-- `bitsOf (numOf l)` is the reverse of `l` followed by `true`. -/
 theorem bitsOf_numOf (l : List Bool) : bitsOf (numOf l) = l.reverse ++ [true] := by
   apply List.map_injective_iff.2 bitG_injective
   rw [bitsOf_map, trNat_numOf]
   simp [bitG]
 
+/-- `listOf` is a left inverse of `numOf`. -/
 theorem listOf_numOf (l : List Bool) : listOf (numOf l) = l := by
   simp [listOf, bitsOf_numOf]
 
+/-- `numOf` is primitive recursive. -/
 theorem numOf_prim : Primrec numOf := by
   unfold numOf; fun_prop
 
+/-- `listOf` is primitive recursive. -/
 theorem listOf_prim : Primrec listOf :=
   prim_tail (prim_reverse bitsOf_prim)
 
 /-! ### The machine -/
 
+/-- Flattening the blocks `(b, [])` for the bits `b` of `l` gives `l`. -/
 theorem flat_singletons (l : List Bool) : flat (l.map fun b => (b, ([] : List Bool))) = l := by
   induction l with
   | nil => rfl
   | cons b l ih => simpa [flat] using ih
 
+/-- Taking the first component of each pair `(b, g b)` for the bits `b` of `l` gives `l`. -/
 theorem flatMap_fst {β : Type} (g : Bool → β) (l : List Bool) :
     (l.map fun b => (b, g b)).flatMap (fun x => [x.1]) = l := by
   induction l with
@@ -171,7 +181,8 @@ theorem exists_computer (f : List Bool → List Bool) (hf : Computable f) :
   rw [hgl]
   exact Part.mem_some _
 
-/-- A reduction computed through a computable function on codes. -/
+/-- If a computable function `F` on bit strings takes `enc₁ x` to `enc₂ (f x)` for every `x`, then
+some Cslib machine computes the reduction `f` with respect to `enc₁` and `enc₂`. -/
 theorem exists_computes {X Y : Type*} {enc₁ : X → List Bool} {enc₂ : Y → List Bool} {f : X → Y}
     (F : List Bool → List Bool) (hF : Computable F) (h : ∀ x, F (enc₁ x) = enc₂ (f x)) :
     ∃ R : SingleTapeTM Bool, ComputesReduction R enc₁ enc₂ f := by

@@ -2,18 +2,20 @@
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude Sonnet 4.6, Akhilesh Balaji
 ```
-# `UTMHalt`: The Universal Turing Machine Halting Problem Reductions
+# `UTMHalt.Reductions`: Universal Turing Machine Halting Problem Reductions
 1. [`Halt ⪯ₘ UTMHalt`](#halt-ₘ-utmhalt)
 
 ## `Halt ⪯ₘ UTMHalt`
-The reduction is immediate from the definition of universality: `(hU M w).left` gives the equivalence directly.
+The reduction follows from the definition of universality. For a weakly universal machine `U` (`IsWeaklyUniversal U`), `halt_iff_weakutmhalt` uses `hU M w` to show that `M` halts on `w` exactly when `WeakUTMHalts U hU M w`. For a universal machine `U` (`IsUniversal U`), `halt_iff_utmhalt` uses `(hU M w).left` to show that `M` halts on `w` exactly when `UTMHalts U hU M w`.
 
-### Non-existence of a Halt Decider (`not_exists_haltDeciderFor_of_isWeaklyUniversal`, in `Undecidable.lean`)
-If `D` decided `WeakUTMHalt U`, then `isHaltDecider_of_isHaltDeciderFor` would promote `D` to a general halt decider: on input `(M, w)`, simulate `D` on `pair (encodeBoolTM M) w`, using universality to transfer the result back to `Halts M w`. This contradicts `halt_undecidable`.
+If a machine `D` satisfies `IsHaltDeciderFor U D` for a weakly universal `U`, then `isHaltDecider_of_isHaltDeciderFor` shows that `D` is a general halt decider: on input `encodePair (encodeBoolTM M) w`, the universality of `U` transfers the answer of `D` to `Halts M w`.
 
-### Supporting Results
-| Lemma | Statement |
+### Supporting results
+| Theorem | Statement |
 |---|---|
 | `IsWeaklyUniversalWrt.exists_halts` | `U` halts on at least one input (witnessed by `haltTM`) |
 | `IsWeaklyUniversalWrt.exists_not_halts` | `U` diverges on at least one input (witnessed by `loopTM`) |
-| `isHaltDecider_of_isHaltDeciderFor` | a decider for `UTMHalt U` is a decider for `HaltProblem` |
+| `isHaltDecider_of_isHaltDeciderFor` | a machine with `IsHaltDeciderFor U D` is a decider for `HaltProblem` |
+
+### Undecidability
+`Undecidable.lean` collects `not_exists_haltDeciderFor_of_isWeaklyUniversal`: for a weakly universal machine `U`, no machine `D` satisfies `IsHaltDeciderFor U D`. Its proof applies `isHaltDecider_of_isHaltDeciderFor` and contradicts `halt_undecidable`. No universal machine is constructed, so this is a statement about machines, not a many-one reduction to `UTMHaltProblem`.

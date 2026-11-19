@@ -1,17 +1,28 @@
+/-
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Akhilesh Balaji
+-/
+
 import Mathlib.Logic.Relation
 import DiagonaLean.Halt.Basic
 
-/-! # Helpers for Deterministic Transition Relations
+@[expose] public section
 
-Auxiliary lemmas about `Relation.ReflTransGen` used in the halting problem proof.
+/-! # Helpers for deterministic transition relations
+
+Auxiliary results about `Relation.ReflTransGen` used in the halting problem proof: paths of a
+deterministic relation are comparable (`reflTransGen_diamond`), a single-tape Turing machine has
+at most one output (`outputs_unique`), and the machines `loopTM` and `haltTM` halt on no input
+and on every input (`not_halts_loopTM`, `halts_haltTM`).
 -/
+
 open Cslib.Turing SingleTapeTM
 
 namespace DiagonaLean.Halt.Helpers
 
 /-- For a deterministic relation, any two paths from a common source are comparable:
 one is a prefix of the other. -/
-lemma reflTransGen_diamond {α : Type*} {r : α → α → Prop}
+theorem reflTransGen_diamond {α : Type*} {r : α → α → Prop}
     (h_det : ∀ {a b c : α}, r a b → r a c → b = c) {a b c : α}
     (hab : Relation.ReflTransGen r a b)
     (hac : Relation.ReflTransGen r a c) :
@@ -27,13 +38,13 @@ lemma reflTransGen_diamond {α : Type*} {r : α → α → Prop}
 variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
 
 /-- A halted configuration has no successor configuration. -/
-lemma not_transitionRelation_of_halted {tm : SingleTapeTM Symbol}
+theorem not_transitionRelation_of_halted {tm : SingleTapeTM Symbol}
     {t : BiTape Symbol} {c : tm.Cfg} :
     ¬ tm.TransitionRelation (⟨none, t⟩ : tm.Cfg) c := by
   simp [SingleTapeTM.TransitionRelation]
 
 /-- Nothing but a halted configuration itself is reachable from a halted configuration. -/
-lemma eq_of_reflTransGen_halted {tm : SingleTapeTM Symbol}
+theorem eq_of_reflTransGen_halted {tm : SingleTapeTM Symbol}
     {t : BiTape Symbol} {c : tm.Cfg}
     (h : Relation.ReflTransGen tm.TransitionRelation ⟨none, t⟩ c) :
     c = ⟨none, t⟩ := by
@@ -42,13 +53,13 @@ lemma eq_of_reflTransGen_halted {tm : SingleTapeTM Symbol}
   · exact absurd hstep not_transitionRelation_of_halted
 
 /-- The transition relation of a single-tape TM is deterministic. -/
-lemma transitionRelation_deterministic {tm : SingleTapeTM Symbol} {a b c : tm.Cfg}
+theorem transitionRelation_deterministic {tm : SingleTapeTM Symbol} {a b c : tm.Cfg}
     (hab : tm.TransitionRelation a b) (hac : tm.TransitionRelation a c) : b = c := by
   grind
 omit [Inhabited Symbol] [Fintype Symbol] in
 
 /-- `BiTape.mk₁` is injective: distinct lists give distinct initial tapes. -/
-lemma mk₁_injective : Function.Injective (BiTape.mk₁ : List Symbol → BiTape Symbol) := by
+theorem mk₁_injective : Function.Injective (BiTape.mk₁ : List Symbol → BiTape Symbol) := by
   intro l₁ l₂ h
   cases l₁ with
   | nil => cases l₂ with
@@ -83,7 +94,7 @@ theorem halt_tape_unique {tm : SingleTapeTM Symbol} {w : List Symbol}
   · exact congrArg SingleTapeTM.Cfg.BiTape (eq_of_reflTransGen_halted h)
 
 /-- If a machine outputs something on `w`, then it halts on `w`. -/
-lemma halts_of_outputs {tm : SingleTapeTM Symbol} {w v : List Symbol}
+theorem halts_of_outputs {tm : SingleTapeTM Symbol} {w v : List Symbol}
     (h : tm.Outputs w v) : Halts tm w :=
   ⟨BiTape.mk₁ v, h⟩
 
@@ -93,14 +104,18 @@ def loopTM : SingleTapeTM Bool where
   State := Unit
   q₀ := ()
   tr _ _ := (⟨none, none⟩, some ())
+
+/-- The states of `loopTM` have decidable equality. -/
 instance : DecidableEq loopTM.State := fun _ _ => isTrue rfl
+
+/-- The states of `loopTM` are encodable. -/
 instance : Encodable loopTM.State where
   encode _ := 0
   decode _ := some ()
   encodek _ := rfl
 
 /-- Every configuration reachable in `loopTM` is still in its (unique) state. -/
-private lemma loopTM_state_persists {c d : loopTM.Cfg}
+private theorem loopTM_state_persists {c d : loopTM.Cfg}
     (hc : c.state = some ())
     (h : Relation.ReflTransGen loopTM.TransitionRelation c d) :
     d.state = some () := by
@@ -123,7 +138,11 @@ def haltTM : SingleTapeTM Bool where
   State := Unit
   q₀ := ()
   tr _ x := (⟨x, none⟩, none)
+
+/-- The states of `haltTM` have decidable equality. -/
 instance : DecidableEq haltTM.State := fun _ _ => isTrue rfl
+
+/-- The states of `haltTM` are encodable. -/
 instance : Encodable haltTM.State where
   encode _ := 0
   decode _ := some ()

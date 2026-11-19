@@ -21,14 +21,10 @@ decides it under the encoding `encBool` of a pair of expressions as the binary d
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorems 18 and 19
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.TermEqBool.Reduction
 
-open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA Nat.Partrec
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
-  DiagonaLean.Halt.Undecidable
+open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing Nat.Partrec DiagonaLean.Foundations.Computability
+  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation DiagonaLean.Halt.Undecidable
 
 /-- **Provable equality in pre-Kleene algebra with commutativity over `{0, 1}` is `Undecidable`**,
 given the interpreter constants `B` (`exists_base`) and the race program `C` (`exists_raceProgB`).

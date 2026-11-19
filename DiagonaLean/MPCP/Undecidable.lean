@@ -5,12 +5,21 @@ Authors: Aalok Thakkar, Claude Opus
 
 import DiagonaLean.PCP.Reductions.Halt_to_PCP
 
+@[expose] public section
+
 /-! # Undecidability of MPCP
 
-MPCP is undecidable over the fixed alphabet `Alpha ℕ Sym2` (`mpcpUndecidable`). `halt_iff_mpcp`
+MPCP is undecidable over the fixed alphabet `Alpha ℕ Sym2` (`undecidableMPCP`). `halt_iff_mpcp`
 assumes `NoBlankWrites` and `NoLeftBoundary`, so `haltToMpcpNorm` first normalizes the machine and
 its input with `MPCP.Normalize`, then renames states to their codes. The composition lives
 here because `MPCP.Normalize` imports `Halt_to_MPCP`.
+
+## References
+
+* [J. E. Hopcroft, R. Motwani, J. D. Ullman,
+  *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
+* [Y. Forster, E. Heiter, G. Smolka,
+  *Verification of PCP-Related Computational Reductions in Coq*][ForsterHeiterSmolka2018]
 -/
 
 namespace DiagonaLean.MPCP.Reduction
@@ -19,7 +28,7 @@ open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding Diagon
   DiagonaLean.PCP.Reduction DiagonaLean.Synthetic.Notation
 
 /-- Renaming symbols injectively preserves and reflects MPCP solvability. -/
-theorem decisionProblem_map_iff {α β : Type} (g : α → β) (hg : Function.Injective g)
+theorem mpcp_map_iff {α β : Type} (g : α → β) (hg : Function.Injective g)
     (c : Tile α) (P : Stack α) :
     MPCP.DecisionProblem c P ↔ MPCP.DecisionProblem (Tile.map g c) (P.map (Tile.map g)) := by
   constructor
@@ -35,10 +44,10 @@ theorem decisionProblem_map_iff {α β : Type} (g : α → β) (hg : Function.In
     simp only [Tile.map, τ1_map, τ2_map, ← List.map_append] at heq
     exact List.map_injective_iff.2 hg heq
 
-/-- The reduction function witnessing `HaltProblem ⪯ₘ MPCP`: normalizes the machine and input to
-satisfy `NoBlankWrites` and `NoLeftBoundary`, builds the MPCP instance of `halt_iff_mpcp`, and
-renames states by `tm.stateEncodable` composed with the `Encodable` instance for the normalizer's
-control states. -/
+/-- **The reduction.** The function witnessing `HaltProblem ⪯ₘ MPCP`: it normalizes the machine
+and input to satisfy `NoBlankWrites` and `NoLeftBoundary`, builds the MPCP instance of
+`halt_iff_mpcp`, and renames states by `tm.stateEncodable` composed with the `Encodable` instance
+for the normalizer's control states. -/
 def haltToMpcpNorm (p : EncodableTM Bool × List Bool) :
     Tile (Alpha ℕ MPCP.Normalize.Sym2) × Stack (Alpha ℕ MPCP.Normalize.Sym2) :=
   letI := p.1.stateEncodable
@@ -65,7 +74,7 @@ theorem halt_reducesto_mpcp_spec :
     halt_iff_mpcp normTMEnc (MPCP.Normalize.normTM_noBlankWrites tm.toSingleTapeTM)
       (MPCP.Normalize.encInput w)
       (MPCP.Normalize.normTM_noLeftBoundary tm.toSingleTapeTM w)]
-  exact decisionProblem_map_iff _ (Alpha.map_injective Encodable.encode_injective) _ _
+  exact mpcp_map_iff _ (Alpha.map_injective Encodable.encode_injective) _ _
 
 /-- The halting problem many-one reduces to MPCP over the fixed alphabet `Alpha ℕ Sym2`, through
 `haltToMpcpNorm`. -/
@@ -74,8 +83,8 @@ def haltReducesMPCP :
       Stack (Alpha ℕ MPCP.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 :=
   ⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩
 
-/-- MPCP is undecidable over the fixed alphabet `Alpha ℕ Sym2`. -/
-def mpcpUndecidable :
+/-- **MPCP is `Undecidable` over the fixed alphabet `Alpha ℕ Sym2`.** -/
+def undecidableMPCP :
     Undecidable fun x : Tile (Alpha ℕ MPCP.Normalize.Sym2) ×
       Stack (Alpha ℕ MPCP.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 :=
   haltReducesMPCP

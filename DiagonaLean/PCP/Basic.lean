@@ -5,19 +5,22 @@ Authors: Aalok Thakkar
 
 import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
 
+@[expose] public section
+
 /-! # Post Correspondence Problem
 
 Central notions/types and the solvability predicate for the Post Correspondence Problem.
+A `Tile` pairs a top word with a bottom word, a `Stack` is a list of tiles, and
+`DecisionProblem P` holds when some non-empty stack drawn from `P` has equal top and bottom
+concatenations (`τ1`, `τ2`).
 
 ## References
 
 * [J. E. Hopcroft, R. Motwani, J. D. Ullman,
   *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 * [Y. Forster, E. Heiter, G. Smolka,
-  *Verification of PCP-Related Computational Reductions in Coq*][ForsterHSmolka2019]
+  *Verification of PCP-Related Computational Reductions in Coq*][ForsterHeiterSmolka2018]
 -/
-
-@[expose] public section
 
 namespace DiagonaLean.PCP
 

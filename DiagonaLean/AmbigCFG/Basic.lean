@@ -9,11 +9,9 @@ import Mathlib.Computability.ContextFreeGrammar
 
 /-! # Ambiguity of CFGs
 
-Central notions/types and predicates for the CFG ambiguity decision problem.
-
-Formalizes parse trees (`ParseTree`) and derivation forests (`Forest`) for context-free grammars.
-Defines the terminal `yield` of a parse tree and `DecisionProblem`, the property of a grammar
-being ambiguous (having multiple distinct parse trees for the same string).
+Parse trees (`ParseTree`) and forests (`Forest`) for a context-free grammar from Mathlib, the
+terminal `yield` of a parse tree, and `DecisionProblem` (alias `AmbigCFGProblem`), the property
+of a grammar of being ambiguous: some word has two distinct parse trees from the start symbol.
 
 This is one of the standard problems shown undecidable by reduction from PCP
 (see [HopcroftMotwaniUllman2006] Theorem 9.20).
@@ -24,9 +22,11 @@ This is one of the standard problems shown undecidable by reduction from PCP
   *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
 
-namespace ContextFreeGrammar
+namespace DiagonaLean.AmbigCFG
 
-universe u variable {T : Type u}
+universe u
+
+variable {T : Type u}
 
 mutual
   /-- A parse tree for the grammar `G` rooted at the nonterminal `n`. -/
@@ -45,11 +45,11 @@ end
 
 mutual
   /-- The terminal word read sequentially off the leaves of the parse tree. -/
-  def ParseTree.yield {G : ContextFreeGrammar T} {n : G.NT} : G.ParseTree n → List T
+  def ParseTree.yield {G : ContextFreeGrammar T} {n : G.NT} : ParseTree G n → List T
     | .node _ _ children => children.yield
 
   /-- The sequentially concatenated yield of a forest of subtrees. -/
-  def Forest.yield {G : ContextFreeGrammar T} {ss : List (Symbol T G.NT)} : G.Forest ss → List T
+  def Forest.yield {G : ContextFreeGrammar T} {ss : List (Symbol T G.NT)} : Forest G ss → List T
     | .nil           => []
     | .consT t rest  => t :: rest.yield
     | .consN tr rest => tr.yield ++ rest.yield
@@ -58,13 +58,9 @@ end
 /-- A grammar is ambiguous if a terminal word has at least two distinct parse trees generated from
   the start symbol. -/
 def DecisionProblem (G : ContextFreeGrammar T) : Prop :=
-  ∃ (t1 t2 : G.ParseTree G.initial), t1 ≠ t2 ∧ t1.yield = t2.yield
-
-end ContextFreeGrammar
-
-namespace DiagonaLean.AmbigCFG
+  ∃ (t1 t2 : ParseTree G G.initial), t1 ≠ t2 ∧ t1.yield = t2.yield
 
 /-- The decision problem of whether a given context-free grammar is ambiguous. -/
-abbrev DecisionProblem : ContextFreeGrammar T → Prop := ContextFreeGrammar.DecisionProblem
+abbrev AmbigCFGProblem : ContextFreeGrammar T → Prop := DecisionProblem
 
 end DiagonaLean.AmbigCFG

@@ -133,7 +133,8 @@ theorem le_iff_halting : ∃ ρ : TD (Letter Sym M.State), ∀ (d₀ : Data M) (
   refine ⟨ρ, fun d₀ n hrun hhalt t => ?_⟩
   have hsound : pl (R (wdF d₀) * (RM M)∗) ≤ pl (sig∗ * (crun M + R t) + err ρ) →
       wdF ((dstep M)^[n] d₀) = t := fun h =>
-    wdF_eq_of_pl_le d₀ n hrun hhalt t (h.trans (by rw [pl_add, pl_add]; exact add_le_add le_rfl (pl_err_le ρ)))
+    wdF_eq_of_pl_le d₀ n hrun hhalt t
+      (h.trans (by rw [pl_add, pl_add]; exact add_le_add le_rfl (pl_err_le ρ)))
   have hcomp : wdF ((dstep M)^[n] d₀) = t →
       R (wdF d₀) * (RM M)∗ ≤ sig∗ * (crun M + R t) + err ρ := by
     rintro rfl; exact hρ d₀ n hrun hhalt

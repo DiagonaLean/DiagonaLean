@@ -31,13 +31,11 @@ through `T Σ̈`, `K Σ̈` and `L Σ̈`.
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.KleeneAlgebra
 
-open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Halt.Undecidable DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
-  DiagonaLean.Halt.Inseparable DiagonaLean.Foundations.Computability RExp TD FreePreKA
+open Cslib.Turing DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Halt.Undecidable
+  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation DiagonaLean.Halt.Inseparable RExp
+  TD FreePreKA
 
 variable {X : Type*}
 
@@ -124,17 +122,19 @@ theorem eqVia_eqRed_neg (F : LangFactor X) {M : EncodableTM Bool} (h : SelfOut f
   refine kaRed_neg h (add_eq_right_iff_le.1 ?_)
   rwa [eqRed, mk_plus, pl_add] at hl
 
-/-- **Theorem 18, machine form.** If `l'` is computable, in the sense that some machine computes
-`η`, then no machine decides equality on `X`. The paper assumes the computability of `η`.
-`not_machineDecidable_eqOn` (`Between.lean`) assumes instead that a machine computes `l'` on the
-codes of expressions. -/
-theorem not_machineDecidable_eqOn_of_computes (F : LangFactor X) {enc : X × X → List Bool} {R : SingleTapeTM Bool}
+/-- **Theorem 18, machine form.** If some machine computes `η`, then no machine decides equality
+on `X`. The paper's hypothesis is that `l'` is computable; in the paper this makes `η` computable,
+since `η` applies `l'` to `eqRed`. `not_machineDecidable_eqOn` (`Between.lean`) takes the paper's
+hypothesis directly: a machine computes `l'` on the codes of expressions. -/
+theorem not_machineDecidable_eqOn_of_computes (F : LangFactor X) {enc : X × X → List Bool}
+    {R : SingleTapeTM Bool}
     (hR : ComputesReduction R encodeBoolTM enc (eta F)) : ¬ MachineDecidable enc (EqOn X) :=
   not_machineDecidable_of_separation (f := eta F) (fun _ h => eqVia_eqRed_pos F h)
     (fun _ h => eqVia_eqRed_neg F h) hR
 
-/-- Machine form on pairs of expressions, which is the natural input for `T Σ̈` and `K Σ̈`, whose
-elements are equivalence classes. The one hypothesis is that a machine computes `eqRed`. -/
+/-- If some machine computes `eqRed`, then no machine decides `EqVia F` on pairs of expressions.
+Pairs of expressions are the natural input for `T Σ̈` and `K Σ̈`, whose elements are equivalence
+classes. -/
 theorem not_machineDecidable_eqVia_of_computes (F : LangFactor X) {enc : Inst → List Bool}
     {R : SingleTapeTM Bool} (hR : ComputesReduction R encodeBoolTM enc eqRed) :
     ¬ MachineDecidable enc (EqVia F) :=
@@ -168,14 +168,15 @@ theorem eqVia_iff_langEq (F : LangFactor X) (hF : ∀ a b : TD ℕ, pl a = pl b 
 def haltEqRed (p : EncodableTM Bool × List Bool) : Inst :=
   (plus (haltRed p).1 (haltRed p).2, (haltRed p).2)
 
-/-- `HaltProblem` many-one reduces to the failure of equality on `X`, for any `X` whose equality
-agrees with language equality. -/
+/-- **The reduction.** `HaltProblem` many-one reduces to the failure of equality on `X`, for any
+`X` whose equality agrees with language equality. -/
 def haltReducesNotEqVia (F : LangFactor X)
     (hF : ∀ a b : TD ℕ, pl a = pl b → F.l' a = F.l' b) : HaltProblem ⪯ₘ Complement (EqVia F) :=
   ⟨haltEqRed, fun p => (halt_iff_not_modelLe p).trans
     (not_congr ((modelLe_iff_langEq _).trans (eqVia_iff_langEq F hF (haltEqRed p)).symm))⟩
 
-/-- **`Undecidable` for the failure of equality on `X`.** -/
+/-- **The failure of equality on `X` is `Undecidable`.** This holds for any `X` whose equality
+agrees with language equality. -/
 def undecidableNotEqVia (F : LangFactor X)
     (hF : ∀ a b : TD ℕ, pl a = pl b → F.l' a = F.l' b) : Undecidable (Complement (EqVia F)) :=
   haltReducesNotEqVia F hF

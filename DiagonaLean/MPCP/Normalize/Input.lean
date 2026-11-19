@@ -5,22 +5,25 @@ Authors: Aristotle (Harmonic)
 
 import DiagonaLean.MPCP.Normalize.Invariant
 
+@[expose] public section
+
 /-! # The encoded input
 
-The initial tape of the normalised machine encodes the initial tape of the simulated
-machine.
+The initial tape of the normalised machine on `encInput w` encodes the initial tape of the
+simulated machine on `w` (`invAt_init`). `cellAt_encInput_nonneg` and `cellAt_encInput_neg`
+compute the cells of that tape at the positions `fold j`.
 -/
 
-@[expose] public section
 namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing SingleTapeTM
 
-/-- The interleaving of the input with blanks, used by `encInput`. -/
-lemma encInput_eq (w : List Bool) :
+/-- `encInput w` is the marker followed by each letter `b` of `w` as `(b, true)`, then `Bl`. -/
+theorem encInput_eq (w : List Bool) :
     encInput w = Mk :: w.flatMap (fun b => [(b, true), Bl]) := rfl
 
-lemma encPairs_even (w : List Bool) (k : ℕ) :
+/-- Position `2 * k` of the interleaved input holds letter `k` of `w`, paired with `true`. -/
+theorem encPairs_even (w : List Bool) (k : ℕ) :
     (w.flatMap (fun b => [(b, true), Bl]))[2 * k]? = (w[k]?).map (fun b => (b, true)) := by
   induction w generalizing k with
   | nil => simp
@@ -32,7 +35,9 @@ lemma encPairs_even (w : List Bool) (k : ℕ) :
       simp only [List.flatMap_cons, List.cons_append, h2, List.getElem?_cons_succ]
       simpa using ih k
 
-lemma encPairs_odd (w : List Bool) (k : ℕ) :
+/-- Position `2 * k + 1` of the interleaved input holds `Bl` if `w` has a letter `k`, and is
+empty otherwise. -/
+theorem encPairs_odd (w : List Bool) (k : ℕ) :
     (w.flatMap (fun b => [(b, true), Bl]))[2 * k + 1]? = (w[k]?).map (fun _ => Bl) := by
   induction w generalizing k with
   | nil => simp
@@ -44,7 +49,9 @@ lemma encPairs_odd (w : List Bool) (k : ℕ) :
       simp only [List.flatMap_cons, List.cons_append, h2, List.getElem?_cons_succ]
       simpa using ih k
 
-lemma cellAt_encInput_nonneg (w : List Bool) {j : ℤ} (hj : 0 ≤ j) :
+/-- For `j ≥ 0`, cell `fold j` of the initial tape holds letter `j` of `w`, paired with
+`true`, and is blank if there is no such letter. -/
+theorem cellAt_encInput_nonneg (w : List Bool) {j : ℤ} (hj : 0 ≤ j) :
     cellAt (BiTape.mk₁ (encInput w)) (fold j) = (w[j.toNat]?).map (fun b => (b, true)) := by
   rw [cellAt_mk₁, ite_eq_left (by have := fold_pos j; omega)]
   have hfold : (fold j).toNat = 2 * j.toNat + 1 := by
@@ -53,7 +60,9 @@ lemma cellAt_encInput_nonneg (w : List Bool) {j : ℤ} (hj : 0 ≤ j) :
   simp only [List.getElem?_cons_succ]
   exact encPairs_even w j.toNat
 
-lemma cellAt_encInput_neg (w : List Bool) {j : ℤ} (hj : j < 0) :
+/-- For `j < 0`, cell `fold j` of the initial tape holds `Bl` if `w` has a letter `-j - 1`,
+and is blank otherwise. -/
+theorem cellAt_encInput_neg (w : List Bool) {j : ℤ} (hj : j < 0) :
     cellAt (BiTape.mk₁ (encInput w)) (fold j) = (w[(-j).toNat - 1]?).map (fun _ => Bl) := by
   rw [cellAt_mk₁, ite_eq_left (by have := fold_pos j; omega)]
   have hm : 1 ≤ (-j).toNat := by omega

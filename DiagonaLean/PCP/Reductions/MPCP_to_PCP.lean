@@ -6,6 +6,8 @@ Authors: Aalok Thakkar
 import DiagonaLean.MPCP.Basic
 import DiagonaLean.PCP.Basic
 
+@[expose] public section
+
 /-! # MPCP ⪯ₘ PCP
 
 Many-one reduction from the Modified Post Correspondence Problem to PCP,
@@ -14,7 +16,7 @@ Forster, Heiter, and Smolka [ForsterHeiterSmolka2018].
 
 The alphabet `α` is extended with two fresh markers `⋕` and `₹`.
 The interleaving functions `hashL` (hash before) and `hashR` (hash after)
-satisfy the key duality `hashL x ++ [⋕] = ⋕ :: hashR x`, which is what
+satisfy the duality `hashL x ++ [⋕] = ⋕ :: hashR x`, which is what
 allows the end tile to close a solution. The three tile roles are:
 `tileStart` (forces every solution to begin with it), `tileReg` (encodes
 an MPCP card), and `tileEnd` (closes the match).
@@ -26,8 +28,6 @@ an MPCP card), and `tileEnd` (closes the match).
 * [Y. Forster, E. Heiter, G. Smolka,
   *Verification of PCP-Related Computational Reductions in Coq*][ForsterHeiterSmolka2018]
 -/
-
-@[expose] public section
 
 namespace DiagonaLean.PCP.Reduction
 
@@ -95,7 +95,7 @@ theorem hashR_append (x y : List α) :
   | nil => simp
   | cons a x ih => simp [ih]
 
-/-- Key duality: `hashL x ++ [⋕] = ⋕ :: hashR x`.
+/-- `hashL x ++ [⋕] = ⋕ :: hashR x`.
 This allows the end tile to close a solution by converting a `hashL` suffix
 into a `hashR` prefix. -/
 theorem hashL_snoc_eq (x : List α) :
@@ -258,7 +258,7 @@ theorem τ2_ne_hash_head (c : Tile α) (R : Stack α) (B : Stack (Ext α))
         (by cases d; simp_all)
 
 /-- Any non-empty matching PCP solution drawn from `mpcpToPcp c R` must begin
-with the start tile. This is the key invariant for the backward direction. -/
+with the start tile. The backward direction rests on this invariant. -/
 theorem match_start (c : Tile α) (R : Stack α)
     (d : Tile (Ext α)) (B : Stack (Ext α))
     (hmem : ∀ t ∈ d :: B, t ∈ mpcpToPcp c R)

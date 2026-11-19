@@ -3,11 +3,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.KAComm.KleeneAlgebra.Doubled
 import Mathlib.Algebra.BigOperators.Ring.Finset
 import Mathlib.Data.Finset.Powerset
 import Mathlib.Data.Finset.NAry
 import Mathlib.Tactic.Abel
+import DiagonaLean.KAComm.KleeneAlgebra.Doubled
 
 @[expose] public section
 

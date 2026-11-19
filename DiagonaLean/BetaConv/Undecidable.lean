@@ -10,8 +10,9 @@ import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
 /-! # Undecidability of β-conversion
 
 β-conversion of λ-terms is `Undecidable` (`undecidableBetaConv`), given the reduction's constants:
-an SKI term for a universal code (`Nat.Partrec.Code.toSKI`) and the race program from the recursion
-theorem. They are only known to exist, so they are arguments. No Turing machine decides it under the
+a universal code `u` and the race program `C` for its SKI term `u.toSKI`, from the recursion
+theorem. They are only known to exist, so `C` and the proofs `hu : IsUniversal u` and
+`hC : RaceProg u.toSKI C` are arguments, and `u` is implicit. No Turing machine decides it under the
 encoding of a pair of terms as the binary digits of the pair of their codes
 (`not_machineDecidable_betaConv`); the encoding is injective (`encBeta_injective`) and follows
 `encNat` in `KAComm/KleeneAlgebra/Race.lean`. It separates the computably inseparable

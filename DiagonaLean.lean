@@ -6,10 +6,21 @@ import DiagonaLean.Halt.Undecidable
 import DiagonaLean.Halt.Inseparable
 
 import DiagonaLean.UTMHalt.Basic
+import DiagonaLean.UTMHalt.UniversalTuringMachine.Basic
+import DiagonaLean.UTMHalt.UniversalTuringMachine.Translation
 import DiagonaLean.UTMHalt.Reductions.Halt_to_UTMHalt
 import DiagonaLean.UTMHalt.Undecidable
 
 import DiagonaLean.MPCP.Basic
+import DiagonaLean.MPCP.Normalize.Normalize
+import DiagonaLean.MPCP.Normalize.Cell
+import DiagonaLean.MPCP.Normalize.Halting
+import DiagonaLean.MPCP.Normalize.Input
+import DiagonaLean.MPCP.Normalize.Invariant
+import DiagonaLean.MPCP.Normalize.Machine
+import DiagonaLean.MPCP.Normalize.Properties
+import DiagonaLean.MPCP.Normalize.Sim
+import DiagonaLean.MPCP.Normalize.Steps
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.MPCP.Undecidable
 
@@ -57,19 +68,6 @@ import DiagonaLean.KAComm.ModelLe.Undecidable
 import DiagonaLean.KAComm.ModelLeBool.Basic
 import DiagonaLean.KAComm.ModelLeBool.Reductions.Halt_to_ModelLeBool
 import DiagonaLean.KAComm.ModelLeBool.Undecidable
-
-import DiagonaLean.UTMHalt.UniversalTuringMachine.Basic
-import DiagonaLean.UTMHalt.UniversalTuringMachine.Translation
-
-import DiagonaLean.MPCP.Normalize.Normalize
-import DiagonaLean.MPCP.Normalize.Cell
-import DiagonaLean.MPCP.Normalize.Halting
-import DiagonaLean.MPCP.Normalize.Input
-import DiagonaLean.MPCP.Normalize.Invariant
-import DiagonaLean.MPCP.Normalize.Machine
-import DiagonaLean.MPCP.Normalize.Properties
-import DiagonaLean.MPCP.Normalize.Sim
-import DiagonaLean.MPCP.Normalize.Steps
 
 import DiagonaLean.SKIConv.Basic
 import DiagonaLean.SKIConv.Reductions.Halt_to_SKIConv

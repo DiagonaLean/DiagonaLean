@@ -5,11 +5,20 @@ Authors: Aalok Thakkar, Prathamesh Turaga
 
 import DiagonaLean.PCP.Reductions.Halt_to_PCP
 
+@[expose] public section
+
 /-! # Undecidability of PCP
 
-PCP is undecidable over the fixed alphabet `Ext (Alpha ℕ Bool)` (`pcpUndecidable'`), and over
-any alphabet with two distinct letters (`pcpUndecidable`), by transporting the first result along
-`AlphabetLift.PCPAlphabetLift`.
+PCP is undecidable over the fixed alphabet `Ext (Alpha ℕ Bool)` (`undecidablePCP'`), and over
+any alphabet with two distinct letters (`undecidablePCP`), by transporting the first result along
+`AlphabetLift.pcpAlphabetLift`.
+
+## References
+
+* [J. E. Hopcroft, R. Motwani, J. D. Ullman,
+  *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
+* [Y. Forster, E. Heiter, G. Smolka,
+  *Verification of PCP-Related Computational Reductions in Coq*][ForsterHeiterSmolka2018]
 -/
 
 namespace DiagonaLean.PCP.Reduction
@@ -17,16 +26,17 @@ namespace DiagonaLean.PCP.Reduction
 open Cslib.Turing SingleTapeTM DiagonaLean.MPCP.Reduction DiagonaLean.Halt
   DiagonaLean.Halt.Encoding DiagonaLean.PCP.AlphabetLift DiagonaLean.Synthetic.Notation
 
-/-- PCP is undecidable over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/
-def pcpUndecidable' :
+/-- **PCP is `Undecidable` over the fixed alphabet `Ext (Alpha ℕ Bool)`.** -/
+def undecidablePCP' :
     Undecidable (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
-  haltReducesToPCP
+  haltReducesPCP
 
-/-- PCP is undecidable over any alphabet `α` with two distinct letters `b0`, `b1`. Obtained by
-transporting `pcpUndecidable'` along `AlphabetLift.PCPAlphabetLift`. The letters are arguments
-rather than taken from `Nontrivial α`, since a definition cannot extract data from a proof. -/
-def pcpUndecidable {α : Type} (b0 b1 : α) (hne : b0 ≠ b1) :
+/-- **PCP is `Undecidable` over any alphabet `α` with two distinct letters `b0`, `b1`.**
+Obtained by transporting `undecidablePCP'` along `AlphabetLift.pcpAlphabetLift`. The letters are
+arguments rather than taken from `Nontrivial α`, since a definition cannot extract data from a
+proof. -/
+def undecidablePCP {α : Type} (b0 b1 : α) (hne : b0 ≠ b1) :
     Undecidable (@DecisionProblem α) :=
-  undecidabilityFromReducibility pcpUndecidable' (AlphabetLift.PCPAlphabetLift b0 b1 hne)
+  undecidabilityFromReducibility undecidablePCP' (AlphabetLift.pcpAlphabetLift b0 b1 hne)
 
 end DiagonaLean.PCP.Reduction

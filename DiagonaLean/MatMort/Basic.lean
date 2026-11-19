@@ -7,7 +7,8 @@ import Mathlib.Data.Matrix.Basic
 
 /-! # The Matrix Mortality Problem
 
-Central notions/types and the solvability predicate for the Post Correspondence Problem.
+The matrix mortality predicate `DecisionProblem` on finite sets of `3 × 3` integer matrices, and
+its alias `MatMortProblem`.
 
 ## References
 
@@ -19,7 +20,7 @@ Central notions/types and the solvability predicate for the Post Correspondence 
 namespace DiagonaLean.MatMort
 open Matrix
 
-/-- A set of matrices has a mortality solution if there exists a finite sequence 
+/-- A set of matrices has a mortality solution if there exists a finite sequence
   (list) of matrices drawn from the set such that their product is the zero matrix. -/
 def DecisionProblem (Ms : Finset (Matrix (Fin 3) (Fin 3) ℤ)) : Prop :=
   ∃ Ms' : List (Matrix (Fin 3) (Fin 3) ℤ), (∀ M ∈ Ms', M ∈ Ms) ∧ Ms'.prod = 0

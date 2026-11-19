@@ -55,7 +55,7 @@ so every left letter commutes with every right letter. $\mathrm{Exp}(\ddot\Sigma
 * **Kleene algebra** $\mathsf{KA}$ is $\mathsf{PKA}$ together with Kozen's induction axioms $xy \le y \Rightarrow x^* y \le y$ and $yx \le y \Rightarrow y x^* \le y$, where $x \le y$ means $x + y = y$. Its free model with the conditions is $K\ddot\Sigma$.
 * **The language model.** $\mathcal{L} : \mathrm{Exp}(\ddot\Sigma) \to \mathcal{P}(\Sigma^* \times \Sigma^*)$ is the homomorphism with $\mathcal{L}(a_l) = \{(a, \varepsilon)\}$ and $\mathcal{L}(a_r) = \{(\varepsilon, a)\}$, where products are taken componentwise. The set $\mathcal{L}(e)$ is the relation that a two-tape automaton accepts, and $L\ddot\Sigma$ is its image. The conditions $H_\Sigma$ hold in it, so $\mathsf{PKA} + H_\Sigma \vdash e = f$ implies $\mathsf{KA} + H_\Sigma \vdash e = f$, which in turn implies $\mathcal L(e) = \mathcal L(f)$.
 
-**Decidability** is meant literally. A set $S \subseteq \mathrm{Exp}(\ddot\Sigma)^2$ is *decidable* if some Turing machine over $\{0, 1\}$, given the binary digits of the Gödel number $\ulcorner e, f \urcorner$, halts with output $1$ if $(e, f) \in S$ and $0$ otherwise. The encoding is injective. Every result below also holds for any encoding that a Turing machine computes from this one.
+**Decidability** refers to Turing machines. A set $S \subseteq \mathrm{Exp}(\ddot\Sigma)^2$ is *decidable* if some Turing machine over $\{0, 1\}$, given the binary digits of the Gödel number $\ulcorner e, f \urcorner$, halts with output $1$ if $(e, f) \in S$ and $0$ otherwise. The encoding is injective. Every result below also holds for any encoding that a Turing machine computes from this one.
 
 ### Theorems
 
@@ -77,8 +77,7 @@ So undecidability does not come from the induction axioms. The abstract states i
 > $$\mathsf{PKA} + H_\Sigma \vdash e \le f \;\Longrightarrow\; (e, f) \in S \;\Longrightarrow\; \mathcal L(e) \subseteq \mathcal L(f).$$
 > Then $S$ is undecidable. The same holds with equations in place of inequalities: if $\mathsf{PKA} + H_\Sigma \vdash e = f \Rightarrow (e, f) \in S \Rightarrow \mathcal L(e) = \mathcal L(f)$, then $S$ is undecidable.
 
-Theorems 1 and 2 are instances of this. The proof reduces from the computably inseparable pair "machine $M$ outputs $1$ on its own code" and "machine $M$ outputs $0$ on its own code". The first is sent to inequalities provable in $\mathsf{PKA} + H_\Sigma$, and the second to inequalities false in $\mathcal L$.
-For $\Sigma = \{0, 1\}$, the instances are translated from $\mathbb N$ by writing the letter $n$ as the word $1^n0$. This substitution preserves provability and reflects language inclusion.
+Theorems 1 and 2 are instances of this. The proof reduces from the computably inseparable pair "machine $M$ outputs $1$ on its own code" and "machine $M$ outputs $0$ on its own code". The first is sent to inequalities provable in $\mathsf{PKA} + H_\Sigma$, and the second to inequalities false in $\mathcal L$. For $\Sigma = \{0, 1\}$, the instances are translated from $\mathbb N$ by writing the letter $n$ as the word $1^n0$. This substitution preserves provability and reflects language inclusion.
 *Lean:* `not_machineDecidable_between`, `not_machineDecidable_eq_between` and their `_bool` versions.
 
 > **Corollary 4.** For $\Sigma = \{0, 1\}$ and for $\Sigma = \mathbb N$:
@@ -91,8 +90,8 @@ For $\Sigma = \{0, 1\}$, the instances are translated from $\mathbb N$ by writin
 > $$T\ddot\Sigma \xrightarrow{\ \varphi\ } X \xrightarrow{\ g\ } L\ddot\Sigma, \qquad g \circ \varphi = \mathcal L.$$
 > Then $\{(e, f) : \varphi[e] = \varphi[f]\}$ is undecidable.
 
-This is the paper's form of Theorem 18. Taking $X = T\ddot\Sigma$, $K\ddot\Sigma$ or $L\ddot\Sigma$ gives Theorems 2, 1 and Corollary 4 again. If moreover a Turing machine computes $\varphi$ on codes, equality on $X$ itself is undecidable.
-*Lean:* `not_machineDecidable_eqVia`; `not_machineDecidable_eqOn_of_computes` for equality on $X$.
+This is the paper's form of Theorem 18. Taking $X = T\ddot\Sigma$, $K\ddot\Sigma$ or $L\ddot\Sigma$ gives Theorems 2, 1 and Corollary 4 again. Equality on $X$ itself is undecidable if moreover a Turing machine computes $\varphi$ on the codes of expressions (`not_machineDecidable_eqOn`, in `Between.lean`), or if a Turing machine computes the paper's map $\eta$, which is the paper's hypothesis (`not_machineDecidable_eqOn_of_computes`, in `Separation.lean`).
+*Lean:* `not_machineDecidable_eqVia`; `not_machineDecidable_eqOn` and `not_machineDecidable_eqOn_of_computes` for equality on $X$.
 
 > **Theorem 6** (many-one reductions). Let $\mathrm{HALT}$ be the halting problem for Turing machines over $\{0, 1\}$. Then $\mathrm{HALT} \le_m$ each of
 > $$\{(e, f) : \mathsf{KA} + H_\Sigma \vdash e = f\}, \qquad \{(e, f) : \mathsf{PKA} + H_\Sigma \vdash e = f\}, \qquad \{(e, f) : \mathcal L(e) \ne \mathcal L(f)\}$$
@@ -173,6 +172,6 @@ For Theorems 3–6, also read `Provable`, `ModelLe` (`KleeneAlgebra/Inequality.l
 
 The result must list only these three, Lean's standard axioms. Any `sorryAx`, any `Lean.ofReduceBool` (from `native_decide`) or any user-declared axiom means the proof is incomplete or trusts the compiler. Do the same for each result you rely on.
 
-**4. Check the reductions are programs.** Lean is classical, so a value of `Undecidable p` (`HALT ≤ₘ p`) means something only if its function is computable. Otherwise it could just case on whether a machine halts. CI checks every reduction in the library with `#check_reductions` (`scripts/CheckReductions.lean`; rules in [`CONTRIBUTING.md`](../../CONTRIBUTING.md#reductions)). `scripts/check_metaprograms.py` rejects metaprograms that could bypass that check. This only concerns Theorem 6. Theorems 1–5 quantify over Turing machines directly, so they need no such check.
+**4. Check the reductions are programs.** Lean is classical, so a value of `Undecidable p` (`HaltProblem ⪯ₘ p`) means something only if its function is computable. Otherwise it could case on whether a machine halts. CI checks every reduction in the library with `#check_reductions` (`scripts/CheckReductions.lean`; rules in [`CONTRIBUTING.md`](../../CONTRIBUTING.md#reductions)). `scripts/CheckMetaprograms.lean` rejects metaprograms that could bypass that check. This only concerns Theorem 6. Theorems 1–5 quantify over Turing machines directly, so they need no such check.
 
-**5. Build from a clean checkout.** Run `lake exe cache get && lake build` and confirm there are no errors and no `sorry` warnings. The commands in steps 1 and 3 can be run with `lake env lean <file>.lean`.
+**5. Build from a fresh checkout.** Run `lake exe cache get && lake build` and confirm there are no errors and no `sorry` warnings. The commands in steps 1 and 3 can be run with `lake env lean <file>.lean`.

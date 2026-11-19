@@ -17,7 +17,7 @@ Matrices are `Primcodable`, and a matrix literal `!![…]` with primitive recurs
 primitive recursive (`MatrixPrim.lean`). The entries of the reduction's matrices are integers
 computed from base-10 words by integer arithmetic, which is primitive recursive (`IntPrim.lean`),
 so `fun_prop` proves the matrix of a pair of words primitive recursive directly
-(`prim_stringPairToW`). The image `MatImage K` is
+(`prim_stringPairToW`). The image `matImage K` is
 `toFinset` of an explicit list (`matImage_eq`), and finite sets are `Primcodable`
 (`Finset.primcodable`), so the reduction is primitive recursive (`matImage_primrec`).
 -/
@@ -39,23 +39,23 @@ variable {α : Type} [Primcodable α]
 
 /-- The matrix of a pair of words is primitive recursive in the words. -/
 @[fun_prop] theorem prim_stringPairToW {f g : α → List S123} (hf : Primrec f) (hg : Primrec g) :
-    Primrec fun x => StringPairToW (f x) (g x) := by
-  unfold StringPairToW W'; fun_prop
+    Primrec fun x => stringPairToW (f x) (g x) := by
+  unfold stringPairToW W'; fun_prop
 
 end Prim
 
-/-- `MatImage K` is `toFinset` of an explicit list. -/
-theorem matImage_eq (K : Stack S23) : MatImage K =
-    ([S, T] ++ K.map (fun tile => StringPairToW (liftS23 tile.top) (liftS23 tile.bot)) ++
-      K.map (fun tile => StringPairToW (liftS23 tile.top) (one₁₂₃ :: liftS23 tile.bot))).toFinset := by
+/-- `matImage K` is `toFinset` of an explicit list. -/
+theorem matImage_eq (K : Stack S23) : matImage K =
+    ([S, T] ++ K.map (fun tile => stringPairToW (liftS23 tile.top) (liftS23 tile.bot)) ++
+      K.map (fun tile => stringPairToW (liftS23 tile.top) (one₁₂₃ :: liftS23 tile.bot))).toFinset := by
   ext M
-  simp [MatImage]
+  simp [matImage, tileMats, markedW, markedBot, Prod.exists, Bool.exists_bool, and_or_left, exists_or]
 
 /-- **The reduction from PCP to matrix mortality is primitive recursive.** -/
-theorem matImage_primrec : Primrec MatImage := by
+theorem matImage_primrec : Primrec matImage := by
   have h : Primrec fun K : Stack S23 =>
-      ([S, T] ++ K.map (fun tile => StringPairToW (liftS23 tile.top) (liftS23 tile.bot)) ++
-        K.map (fun tile => StringPairToW (liftS23 tile.top) (one₁₂₃ :: liftS23 tile.bot))).toFinset := by
+      ([S, T] ++ K.map (fun tile => stringPairToW (liftS23 tile.top) (liftS23 tile.bot)) ++
+        K.map (fun tile => stringPairToW (liftS23 tile.top) (one₁₂₃ :: liftS23 tile.bot))).toFinset := by
     unfold liftS23
     fun_prop
   exact h.of_eq fun K => (matImage_eq K).symm

@@ -16,7 +16,12 @@ according to `tr q h` (adding a blank cell when the head moves past a tape end) 
 of the word through the context `⊢ C∗ ⋯ C∗ ⊣`, where `C` copies one cell. The transition term
 `R_M` is the sum of all rules (Definition 13). Its language relates each running configuration
 word to its successor (Lemma 14), and it is a representable relation on configuration words
-(Lemma 35).
+(Lemma 35)
+
+## References
+
+* [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024],
+  Definition 13, Lemmas 14 and 35
 -/
 open scoped Computability
 

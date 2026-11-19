@@ -20,13 +20,10 @@ provably equal in pre-Kleene algebra with commutativity over `{0, 1}` (`halt_iff
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorems 18 and 19
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.TermEqBool.Reduction
 
-open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA Nat.Partrec
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
+open DiagonaLean.KAComm.KleeneAlgebra Nat.Partrec DiagonaLean.Foundations.Computability
+  DiagonaLean.Halt
 
 /-- `reductionB B C` reduces `HaltProblem` to provable equality in pre-Kleene algebra over
 `{0, 1}`. -/

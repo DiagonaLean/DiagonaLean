@@ -5,20 +5,23 @@ Authors: Aristotle (Harmonic)
 
 import DiagonaLean.MPCP.Normalize.Halting
 
+@[expose] public section
+
 /-! # The normalised machine is normalised
 
-`normTM tm` never writes a blank, and on the encoded input it never moves left at the left
-end of its tape.
+`normTM tm` never writes a blank (`normTM_noBlankWrites`), and on the encoded input it never
+moves left at the left end of its tape (`normTM_noLeftBoundary`).
 -/
 
-@[expose] public section
 namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing SingleTapeTM DiagonaLean.MPCP.Reduction
 
 variable (tm : SingleTapeTM Bool)
 
-lemma simStep_symbol (q : tm.State) (b : Bool) (a : Option Sym2) :
+/-- The symbol written by `simStep tm q b a` is the encoding of the symbol that `tm` writes
+on `decSym a`. -/
+theorem simStep_symbol (q : tm.State) (b : Bool) (a : Option Sym2) :
     (simStep tm q b a).1.symbol = encSym (tm.tr q (decSym a)).1.symbol := by
   rcases htr : tm.tr q (decSym a) with ⟨⟨wr, mv⟩, q''⟩
   match q'' with
