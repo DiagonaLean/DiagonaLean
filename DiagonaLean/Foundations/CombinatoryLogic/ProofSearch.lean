@@ -18,7 +18,7 @@ terms. Conversely, every conversion has a program (`exists_prog`).
 
 `Checks` is the primitive recursive test that a code is a program proving a given conversion,
 and convertibility is `∃ k, Checks ..` (`conv_iff_checks`). The design follows
-`KACommUndecidable/KleeneAlgebra/ProofSearch.lean`.
+`KAComm/KleeneAlgebra/ProofSearch.lean`.
 -/
 
 namespace DiagonaLean.Foundations.CombinatoryLogic

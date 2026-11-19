@@ -45,7 +45,7 @@ One logical change per commit; if you find yourself writing "and" in the message
 
 # Layout
 
-Each problem has a folder under `DiagonaLean/`: `Basic.lean` states it, `Reductions/` holds the reductions to it, and `Undecidable.lean` the results (`Halt`, where every reduction starts, has no `Reductions/`). Code that only one problem uses lives in that problem's folder, as `MPCP/Normalize/` and `KACommUndecidable/KleeneAlgebra/` do. `Foundations/` holds general results and may depend, even through other imports, only on `Foundations`, `Synthetic` and `Halt`; `scripts/check_layering.py` checks this in CI.
+Each problem has a folder under `DiagonaLean/`: `Basic.lean` states it, `Reductions/` holds the reductions to it, and `Undecidable.lean` the results (`Halt`, where every reduction starts, has no `Reductions/`). `Reductions/` holds only files `Y_to_X.lean` and a README. Problems that come from one larger result share a folder with one subfolder per problem, as in `KAComm/`, and their namespaces follow the path (`DiagonaLean.KAComm.TermEq`). Code that only one problem uses lives in that problem's folder, as `MPCP/Normalize/` and `KAComm/KleeneAlgebra/` do. `Foundations/` holds general results and may depend, even through other imports, only on `Foundations`, `Synthetic` and `Halt`; `scripts/check_layering.py` checks this in CI.
 
 # Reductions
 

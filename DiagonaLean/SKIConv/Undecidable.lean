@@ -14,7 +14,7 @@ constants: an SKI term for a universal code (`Nat.Partrec.Code.toSKI`) and the r
 recursion theorem. They are only known to exist, so they are arguments. No Turing machine decides it
 under the encoding of a pair of terms as the binary digits of the pair of their codes
 (`not_machineDecidable_skiConv`); the encoding is injective (`encSKI_injective`) and follows
-`encNat` in `KACommUndecidable/KleeneAlgebra/Race.lean`. It separates the computably inseparable
+`encNat` in `KAComm/KleeneAlgebra/Race.lean`. It separates the computably inseparable
 pair `SelfOut true`, `SelfOut false`, so no machine decides it on the instances `sepRed U c M` given
 the code of `M` (`not_machineDecidable_skiConv_sepRed`).
 
