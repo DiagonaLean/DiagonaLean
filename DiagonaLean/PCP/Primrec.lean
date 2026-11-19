@@ -30,23 +30,11 @@ open DiagonaLean.Foundations.Computability
 
 namespace Reduction
 
-variable {α : Type}
+variable {α : Type} [Primcodable α]
 
-theorem hashL_eq (x : List α) : hashL x = x.flatMap fun a => [⋕, ↟a] := by
-  induction x <;> simp_all [hashL]
+@[fun_prop] theorem hashL_primrec : Primrec (hashL (α := α)) := by primrec_rec
 
-theorem hashR_eq (x : List α) : hashR x = x.flatMap fun a => [↟a, ⋕] := by
-  induction x <;> simp_all [hashR]
-
-variable [Primcodable α]
-
-@[fun_prop] theorem prim_hashL {β : Type} [Primcodable β] {f : β → List α} (hf : Primrec f) :
-    Primrec fun x => hashL (f x) := by
-  simp only [hashL_eq]; fun_prop
-
-@[fun_prop] theorem prim_hashR {β : Type} [Primcodable β] {f : β → List α} (hf : Primrec f) :
-    Primrec fun x => hashR (f x) := by
-  simp only [hashR_eq]; fun_prop
+@[fun_prop] theorem hashR_primrec : Primrec (hashR (α := α)) := by primrec_rec
 
 /-- **The reduction from MPCP to PCP is primitive recursive.** -/
 theorem mpcpToPcp_primrec : Primrec₂ (mpcpToPcp (α := α)) := by
@@ -58,16 +46,10 @@ end Reduction
 
 namespace AlphabetLift
 
-theorem natToBits_eq (len n : ℕ) :
-    natToBits len n = (List.range len).map fun i => decide (n / 2 ^ i % 2 = 1) := by
-  induction len generalizing n with
-  | zero => rfl
-  | succ len ih =>
-    rw [natToBits, ih, List.range_succ_eq_map, List.map_cons, List.map_map]
-    congr 1
-    · simp
-    · refine List.map_congr_left fun i _ => ?_
-      simp [Function.comp, Nat.div_div_eq_div_mul, pow_succ, Nat.mul_comm]
+theorem natToBits_primrec : Primrec₂ natToBits := by primrec_rec
+
+@[fun_prop] theorem prim_natToBits {β : Type} [Primcodable β] {f g : β → ℕ} (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => natToBits (f x) (g x) := natToBits_primrec.comp hf hg
 
 variable {γ₁ γ₂ : Type} [DecidableEq γ₁] [Primcodable γ₁] [Primcodable γ₂]
 
@@ -75,7 +57,6 @@ variable {γ₁ γ₂ : Type} [DecidableEq γ₁] [Primcodable γ₁] [Primcodab
 theorem liftInstance_primrec (b0 b1 : γ₂) :
     Primrec (liftInstance (γ₁ := γ₁) b0 b1) := by
   unfold liftInstance liftTile liftWord symbolWord symbolBits widthFor symbolsUsed bitTo
-  simp only [natToBits_eq]
   fun_prop
 
 /-- The function of the reduction `PCPAlphabetLift` is primitive recursive. -/

@@ -411,3 +411,48 @@ def repl {α : Type} (a : α) : ℕ → List α
 example {α : Type} [Primcodable α] : Primrec₂ (@repl α) := by primrec_rec
 
 end Poly
+
+/-! ### `primrec_rec`: recursion on the first argument while the other one changes -/
+
+section Changing
+
+def toBits : ℕ → ℕ → List Bool
+  | 0, _ => []
+  | k + 1, n => decide (n % 2 = 1) :: toBits k (n / 2)
+example : Primrec₂ toBits := by primrec_rec
+
+def revDigits : ℕ → ℕ → ℕ
+  | 0, acc => acc
+  | k + 1, acc => revDigits k (acc * 10 + k % 10)
+example : Primrec₂ revDigits := by primrec_rec
+
+def stepAcc : ℕ → List ℕ → List ℕ
+  | 0, l => l
+  | k + 1, l => k :: stepAcc k (l.map (· + k))
+example : Primrec₂ stepAcc := by primrec_rec
+
+end Changing
+
+/-! ### Integers, matrices, and further list and `ℕ` operations -/
+
+example : Primrec fun p : ℤ × ℤ => p.1 * p.2 - 3 * p.1 ^ 2 + (p.2).natAbs := by fun_prop
+example : PrimrecPred fun p : ℤ × ℤ => p.1 < p.2 ∧ p.2 ≤ 7 := by fun_prop
+example : Primrec fun z : ℤ => (z.toNat, ((z.natAbs : ℕ) : ℤ)) := by fun_prop
+
+example : Primrec fun p : ℤ × ℤ => (!![p.1, 0; p.2, p.1 * p.2] : Matrix (Fin 2) (Fin 2) ℤ) := by
+  fun_prop
+example : Primrec fun n : ℕ => (Matrix.of fun (i j : Fin 3) => n * i + j) := by fun_prop
+example : Primrec fun n : ℕ => List.ofFn fun i : Fin 4 => n + i := by fun_prop
+
+example : Primrec fun n : ℕ => (List.range n).zip (List.range (n+1)) := by fun_prop
+example : Primrec fun n : ℕ => (List.range n).zipWith (· + ·) (List.range n) := by fun_prop
+example : Primrec fun n : ℕ => (List.range n).erase 3 := by fun_prop
+example : Primrec fun n : ℕ => (List.range n).max? := by fun_prop
+example : Primrec fun n : ℕ => (List.range n).min? := by fun_prop
+example : Primrec fun n : ℕ => Nat.gcd n 6 + Nat.lcm n 6 := by fun_prop
+example : Primrec fun n : ℕ => Nat.log 2 n + Nat.sqrt n := by fun_prop
+example : Primrec fun n : ℕ => (List.range n).getLast? := by fun_prop
+example : Primrec fun n : ℕ => (List.range n).insert 3 := by fun_prop
+example : Primrec fun n : ℕ => (List.range n).zipIdx := by fun_prop
+example : Primrec fun n : ℕ => (List.range n) ×ˢ (List.range n) := by fun_prop
+example : Primrec fun n : ℕ => (List.range n).foldl max 0 := by fun_prop

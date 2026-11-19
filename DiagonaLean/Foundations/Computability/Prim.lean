@@ -6,6 +6,7 @@ Authors: Prathamesh TVH, Claude Opus
 import Mathlib.Computability.PartrecBasis
 import Mathlib.Computability.Partrec
 import Mathlib.Tactic.FunProp
+import Mathlib.Data.Nat.Log
 
 @[expose] public section
 
@@ -411,6 +412,143 @@ theorem replicate_eq_iterate (n : ℕ) (b : β) : List.replicate n b = (b :: ·)
     (pred_eq Primrec.snd (hg.comp Primrec.fst))).of_eq fun x => by simp
 
 end Prim
+
+/-! #### Zips, `erase`, `min?`/`max?`, `insert`, products, `gcd`, `lcm`, `log` and `sqrt`
+
+Each is rewritten into operations already covered (`zipWith` into a `filterMap` over indices,
+`erase` into `take`/`drop` at `idxOf`, `gcd` and `log` into `Nat.findGreatest`), and the rewrite
+is proved once. -/
+
+section Gaps
+
+variable {α β γ δ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ] [Primcodable δ]
+
+omit [Primcodable β] [Primcodable γ] [Primcodable δ] in
+theorem zipWith_eq_filterMap (g : β → γ → δ) (l₁ : List β) (l₂ : List γ) :
+    List.zipWith g l₁ l₂ = (List.range (min l₁.length l₂.length)).filterMap
+      fun i => l₁[i]?.bind fun a => l₂[i]?.map (g a) := by
+  induction l₁ generalizing l₂ with
+  | nil => simp
+  | cons a l₁ ih =>
+    cases l₂ with
+    | nil => simp
+    | cons b l₂ =>
+      rw [List.zipWith_cons_cons, ih, List.length_cons, List.length_cons, Nat.succ_min_succ,
+        List.range_succ_eq_map, List.filterMap_cons, List.filterMap_map]
+      simp
+
+@[fun_prop] theorem prim_zipWith {f : α → List β} {g : α → List γ} {h : α → β → γ → δ}
+    (hf : Primrec f) (hg : Primrec g) (hh : Primrec fun y : α × (β × γ) => h y.1 y.2.1 y.2.2) :
+    Primrec fun x => List.zipWith (h x) (f x) (g x) := by
+  simp only [zipWith_eq_filterMap]
+  fun_prop
+
+@[fun_prop] theorem prim_zip {f : α → List β} {g : α → List γ} (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => (f x).zip (g x) :=
+  prim_zipWith (h := fun _ => Prod.mk) hf hg (by fun_prop)
+
+@[fun_prop] theorem prim_zipIdx {f : α → List β} {g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => (f x).zipIdx (g x) := by
+  simp only [List.zipIdx_eq_zip_range', List.range'_eq_map_range]
+  fun_prop
+
+omit [Primcodable β] in
+theorem erase_eq_take_drop [DecidableEq β] (l : List β) (a : β) :
+    l.erase a = l.take (l.idxOf a) ++ l.drop (l.idxOf a + 1) := by
+  induction l with
+  | nil => simp
+  | cons b l ih =>
+    by_cases h : b = a
+    · simp [h]
+    · simp [h, ih]
+
+@[fun_prop] theorem prim_erase [DecidableEq β] {f : α → List β} {g : α → β} (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => (f x).erase (g x) := by
+  simp only [erase_eq_take_drop]
+  fun_prop
+
+@[fun_prop] theorem prim_getLast? {f : α → List β} (hf : Primrec f) :
+    Primrec fun x => (f x).getLast? := by
+  simp only [List.getLast?_eq_head?_reverse]
+  fun_prop
+
+theorem min?_eq (l : List ℕ) : l.min? = l.head?.map fun a => l.tail.foldl (fun b c => min b c) a := by
+  cases l <;> rfl
+
+theorem max?_eq (l : List ℕ) : l.max? = l.head?.map fun a => l.tail.foldl (fun b c => max b c) a := by
+  cases l <;> rfl
+
+@[fun_prop] theorem prim_min? {f : α → List ℕ} (hf : Primrec f) : Primrec fun x => (f x).min? := by
+  simp only [min?_eq]
+  fun_prop
+
+@[fun_prop] theorem prim_max? {f : α → List ℕ} (hf : Primrec f) : Primrec fun x => (f x).max? := by
+  simp only [max?_eq]
+  fun_prop
+
+@[fun_prop] theorem prim_insert [DecidableEq β] {f : α → List β} {g : α → β} (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => (f x).insert (g x) := by
+  have : Primrec fun x => if g x ∈ f x then f x else g x :: f x := by fun_prop
+  exact this.of_eq fun x => (List.insert_eq_ite _ _).symm
+
+@[fun_prop] theorem prim_product {f : α → List β} {g : α → List γ} (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => (f x) ×ˢ (g x) := by
+  have : Primrec fun x => (f x).flatMap fun a => (g x).map (Prod.mk a) := by fun_prop
+  exact this.of_eq fun x => rfl
+
+@[fun_prop] theorem prim_sqrt {f : α → ℕ} (hf : Primrec f) : Primrec fun x => (f x).sqrt :=
+  Primrec.nat_sqrt.comp hf
+
+@[fun_prop] theorem prim_findGreatest {f : α → ℕ} {p : α → ℕ → Prop} [DecidableRel p]
+    (hf : Primrec f) (hp : PrimrecPred fun y : α × ℕ => p y.1 y.2) :
+    Primrec fun x => Nat.findGreatest (p x) (f x) :=
+  Primrec.nat_findGreatest hf hp
+
+theorem gcd_eq_findGreatest (m n : ℕ) :
+    Nat.gcd m n = Nat.findGreatest (fun d => m % d = 0 ∧ n % d = 0) (m + n) := by
+  symm
+  rw [Nat.findGreatest_eq_iff]
+  refine ⟨?_, fun _ => ⟨Nat.mod_eq_zero_of_dvd (Nat.gcd_dvd_left m n),
+    Nat.mod_eq_zero_of_dvd (Nat.gcd_dvd_right m n)⟩, fun k hk _ ⟨hm, hn⟩ => ?_⟩
+  · rcases Nat.eq_zero_or_pos m with rfl | hm
+    · simp
+    · exact (Nat.gcd_le_left n hm).trans (Nat.le_add_right m n)
+  · have hd := Nat.dvd_gcd (Nat.dvd_of_mod_eq_zero hm) (Nat.dvd_of_mod_eq_zero hn)
+    rcases Nat.eq_zero_or_pos (Nat.gcd m n) with h0 | hpos
+    · rw [Nat.gcd_eq_zero_iff] at h0
+      omega
+    · exact absurd (Nat.le_of_dvd hpos hd) (by omega)
+
+@[fun_prop] theorem prim_gcd {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => Nat.gcd (f x) (g x) := by
+  simp only [gcd_eq_findGreatest]
+  fun_prop
+
+@[fun_prop] theorem prim_lcm {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => Nat.lcm (f x) (g x) := by
+  unfold Nat.lcm
+  fun_prop
+
+theorem log_eq_findGreatest (b n : ℕ) :
+    Nat.log b n = if 1 < b then Nat.findGreatest (fun k => b ^ k ≤ n) n else 0 := by
+  split
+  · rename_i hb
+    symm
+    rw [Nat.findGreatest_eq_iff]
+    rcases Nat.eq_zero_or_pos n with rfl | hn
+    · refine ⟨by simp, fun h => by simp at h, fun k _ _ h => ?_⟩
+      exact absurd h (by have := Nat.pow_pos (n := k) (by omega : 0 < b); omega)
+    · refine ⟨Nat.log_le_self b n, fun _ => Nat.pow_log_le_self b (by omega),
+        fun k hk _ h => ?_⟩
+      exact absurd ((Nat.le_log_iff_pow_le hb (by omega)).2 h) (by omega)
+  · exact Nat.log_eq_zero_iff.2 (Or.inr (by omega))
+
+@[fun_prop] theorem prim_log {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => Nat.log (f x) (g x) := by
+  simp only [log_eq_findGreatest]
+  fun_prop
+
+end Gaps
 
 /-! ### `fun_prop` for `Computable`
 
