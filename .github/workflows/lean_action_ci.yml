@@ -26,6 +26,8 @@ jobs:
           for word in run_cmd addDecl modifyEnv declMapExt debug.; do
             grep -qF "\`$word\`" <<< "$out" || { echo "not reported: $word"; exit 1; }
           done
+      - name: Test the metaprogram check on small inputs
+        run: lake env lean scripts/CheckMetaprogramsTest.lean
       - name: Check that Foundations depends on no problem folder
         run: lake env lean --run scripts/CheckLayering.lean
       - name: Check that the layering check rejects a hidden dependency
