@@ -68,12 +68,16 @@ variable {M}
 /-- The numeric configuration of `d`. -/
 def absD (d : Data M.toSingleTapeTM) : SC := (qc d.state, d.l.map hc, hc d.h, d.r.map hc)
 
+/-- Every state of `M` is in `SingleTapeTM.statesList M`. -/
 theorem mem_statesList (q : M.State) : q ∈ SingleTapeTM.statesList M := by
   let := M.stateFintype
   simp only [SingleTapeTM.statesList, List.mem_filterMap, List.mem_range]
-  exact ⟨Encodable.encode q, Nat.lt_succ_of_le (Finset.le_sup (f := (Encodable.encode : M.State → ℕ))
-    (Finset.mem_univ q)), Encodable.encodek q⟩
+  exact ⟨Encodable.encode q,
+    Nat.lt_succ_of_le (Finset.le_sup (f := (Encodable.encode : M.State → ℕ))
+      (Finset.mem_univ q)), Encodable.encodek q⟩
 
+/-- If `(key, val)` is in `rows` and every entry with key `key` has value `val`, then
+`lookup rows key = val`. -/
 theorem lookup_eq {rows : List (ℕ × ℕ)} {key val : ℕ} (hm : (key, val) ∈ rows)
     (hu : ∀ kv ∈ rows, kv.1 = key → kv.2 = val) : lookup rows key = val := by
   induction rows with
@@ -88,6 +92,7 @@ theorem lookup_eq {rows : List (ℕ × ℕ)} {key val : ℕ} (hm : (key, val) �
         exact absurd rfl h
       · exact ih hm fun kv hkv => hu kv (List.mem_cons_of_mem _ hkv)
 
+/-- Looking up a state and symbol in `rowsE M` gives the row of the transition of `M` on them. -/
 theorem lookup_rowsE (q : M.State) (h : Option Bool) :
     lookup (rowsE M) (Nat.pair (Encodable.encode q) (hc h)) = rowT M (M.tr q h) := by
   refine lookup_eq ?_ ?_
@@ -101,6 +106,7 @@ theorem lookup_rowsE (q : M.State) (h : Option Bool) :
     obtain rfl := hc_injective h₂
     rfl
 
+/-- `sstep` on the numeric form of `d` is the numeric form of `dstep d`. -/
 theorem sstep_absD (d : Data M.toSingleTapeTM) :
     sstep (rowsE M) (absD d) = absD (dstep M.toSingleTapeTM d) := by
   obtain ⟨_ | q, l, h, r⟩ := d
@@ -116,12 +122,15 @@ theorem sstep_absD (d : Data M.toSingleTapeTM) :
     · cases l <;> simp [rowT, mvc, dstep, htr, hc] <;> cases q' <;> rfl
     · cases r <;> simp [rowT, mvc, dstep, htr, hc] <;> cases q' <;> rfl
 
+/-- `k` iterates of `sstep` on the numeric form of `d` give the numeric form of `k` iterates of
+`dstep` on `d`. -/
 theorem iterate_absD (d : Data M.toSingleTapeTM) (k : ℕ) :
     (sstep (rowsE M))^[k] (absD d) = absD ((dstep M.toSingleTapeTM)^[k] d) := by
   induction k with
   | zero => rfl
   | succ k ih => rw [Function.iterate_succ_apply', Function.iterate_succ_apply', ih, sstep_absD]
 
+/-- The configuration of `d` reaches the configuration of every iterate of `dstep` on `d`. -/
 theorem reaches_iterate (d : Data M.toSingleTapeTM) (k : ℕ) :
     Relation.ReflTransGen M.toSingleTapeTM.TransitionRelation (cfgOf d)
       (cfgOf ((dstep M.toSingleTapeTM)^[k] d)) := by
@@ -155,13 +164,15 @@ theorem halt_iff_test (p : EncodableTM Bool × List Bool) :
     have hk' : ((sstep (rowsE M))^[k] (absD (initData w))).1 = 0 := hk
     rw [iterate_absD] at hk'
     have hs : ((dstep M.toSingleTapeTM)^[k] (initData w : Data M.toSingleTapeTM)).state = none := by
-      rcases hx : ((dstep M.toSingleTapeTM)^[k] (initData w : Data M.toSingleTapeTM)).state with _ | q
+      rcases hx : ((dstep M.toSingleTapeTM)^[k] (initData w : Data M.toSingleTapeTM)).state
+        with _ | q
       · rfl
       · simp [absD, hx, qc] at hk'
     have hr := reaches_iterate (initData w : Data M.toSingleTapeTM) k
     rw [cfgOf_initData] at hr
     have he : cfgOf ((dstep M.toSingleTapeTM)^[k] (initData w : Data M.toSingleTapeTM)) =
-        ⟨none, (cfgOf ((dstep M.toSingleTapeTM)^[k] (initData w : Data M.toSingleTapeTM))).BiTape⟩ := by
+        ⟨none,
+          (cfgOf ((dstep M.toSingleTapeTM)^[k] (initData w : Data M.toSingleTapeTM))).BiTape⟩ := by
       simp only [cfgOf, hs]
     rw [he] at hr
     exact ⟨_, hr⟩
@@ -174,6 +185,7 @@ section Prim
 
 variable {α : Type*} [Primcodable α]
 
+/-- `lookup` is primitive recursive. -/
 theorem lookup_prim : Primrec fun y : List (ℕ × ℕ) × ℕ => lookup y.1 y.2 := by
   unfold lookup
   have h : Primrec₂ fun (x : List (ℕ × ℕ) × ℕ) (y : (ℕ × ℕ) × ℕ) =>
@@ -182,6 +194,7 @@ theorem lookup_prim : Primrec fun y : List (ℕ × ℕ) × ℕ => lookup y.1 y.2
     prim
   exact Primrec.list_foldr Primrec.fst (Primrec.const 0) h
 
+/-- `lookup` of primitive recursive functions is primitive recursive. -/
 theorem prim_lookup {f : α → List (ℕ × ℕ)} {g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => lookup (f x) (g x) := lookup_prim.comp (hf.pair hg)
 
@@ -190,6 +203,7 @@ end Prim
 macro_rules
   | `(tactic| prim_step) => `(tactic| with_reducible apply prim_lookup)
 
+/-- `sstep` is primitive recursive. -/
 theorem sstep_prim : Primrec fun y : List (ℕ × ℕ) × SC => sstep y.1 y.2 := by
   unfold sstep
   prim

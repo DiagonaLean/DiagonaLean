@@ -3,8 +3,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.Foundations.Computability.ListConfig
 import Mathlib.Tactic.DeriveFintype
+import DiagonaLean.Foundations.Computability.ListConfig
 
 @[expose] public section
 
@@ -55,6 +55,7 @@ inductive QS (s a M : ℕ) where
 /-- Clamp a number into `Fin (n + 1)`. -/
 def cl (n x : ℕ) : Fin (n + 1) := Fin.ofNat (n + 1) x
 
+/-- If `x ≤ n`, then `cl n x` has value `x`. -/
 theorem cl_val {n x : ℕ} (h : x ≤ n) : (cl n x).val = x := by
   simp [cl, Fin.ofNat, Nat.mod_eq_of_lt (Nat.lt_succ_of_le h)]
 
@@ -105,26 +106,31 @@ def queueTM : SingleTapeTM Bool where
 def tq (L C : List (Option Bool)) : BiTape Bool :=
   ⟨C.headD none, stk L, stk C.tail⟩
 
+/-- The head of `stk X` is the first cell of `X`, or blank. -/
 theorem stk_head (X : List (Option Bool)) : (stk X).head = X.headD none := by
   cases X with
   | nil => rfl
   | cons x X => exact StackTape.head_cons _ _
 
+/-- The tail of `stk X` decodes the tail of `X`. -/
 theorem stk_tail (X : List (Option Bool)) : (stk X).tail = stk X.tail := by
   cases X with
   | nil => rfl
   | cons x X => exact StackTape.tail_cons _ _
 
+/-- Writing `x` and moving right takes `tq L C` to `tq (x :: L) C.tail`. -/
 theorem tq_right (L C : List (Option Bool)) (x : Option Bool) :
     ((tq L C).write x).optionMove (some .right) = tq (x :: L) C.tail := by
   simp only [tq, BiTape.write, BiTape.optionMove, BiTape.move, BiTape.moveRight, stk_head, stk_tail,
     stk_cons]
 
+/-- Writing `x` and moving left takes `tq L C` to `tq L.tail (L.headD none :: x :: C.tail)`. -/
 theorem tq_left (L C : List (Option Bool)) (x : Option Bool) :
     ((tq L C).write x).optionMove (some .left) = tq L.tail (L.headD none :: x :: C.tail) := by
   simp only [tq, BiTape.write, BiTape.optionMove, BiTape.move, BiTape.moveLeft, stk_head, stk_tail,
     stk_cons, List.headD_cons, List.tail_cons]
 
+/-- Writing `x` and staying takes `tq L C` to `tq L (x :: C.tail)`. -/
 theorem tq_stay (L C : List (Option Bool)) (x : Option Bool) :
     ((tq L C).write x).optionMove none = tq L (x :: C.tail) := rfl
 
@@ -133,6 +139,8 @@ abbrev sm (X : List Bool) : List (Option Bool) := X.map some
 
 variable {s a M w P}
 
+/-- If the machine in state `q` reading the head of `t` writes and moves by `stmt` to `q'`, then
+it steps from `⟨some q, t⟩` to the configuration that results. -/
 theorem q_step {q : QS s a M} {t : BiTape Bool} {stmt : SingleTapeTM.Stmt Bool}
     {q' : Option (QS s a M)} (h : qtr s a M w P q t.head = (stmt, q'))
     {c' : (queueTM s a M w P).Cfg}
@@ -146,14 +154,17 @@ theorem q_step {q : QS s a M} {t : BiTape Bool} {stmt : SingleTapeTM.Stmt Bool}
   rw [h]
 
 /-- Reachability in the machine. -/
-abbrev QR (s a M : ℕ) (w : Bool → List Bool) (P : List Bool) (x y : (queueTM s a M w P).Cfg) : Prop :=
+abbrev QR (s a M : ℕ) (w : Bool → List Bool) (P : List Bool)
+    (x y : (queueTM s a M w P).Cfg) : Prop :=
   Relation.ReflTransGen (queueTM s a M w P).TransitionRelation x y
 
 /-- A running configuration. -/
-abbrev qcf (s a M : ℕ) (w : Bool → List Bool) (P : List Bool) (q : QS s a M) (L C : List (Option Bool)) :
+abbrev qcf (s a M : ℕ) (w : Bool → List Bool) (P : List Bool) (q : QS s a M)
+    (L C : List (Option Bool)) :
     (queueTM s a M w P).Cfg :=
   (⟨some q, tq L C⟩ : (queueTM s a M w P).Cfg)
 
+/-- A transition that writes `x` and moves right takes `tq L C` to `tq (x :: L) C.tail`. -/
 theorem st_right {q : QS s a M} {q' : Option (QS s a M)} {L C : List (Option Bool)}
     {x : Option Bool} (h : qtr s a M w P q (C.headD none) = (⟨x, some .right⟩, q')) :
     (queueTM s a M w P).TransitionRelation (qcf s a M w P q L C)
@@ -162,6 +173,8 @@ theorem st_right {q : QS s a M} {q' : Option (QS s a M)} {L C : List (Option Boo
   show _ = (⟨q', ((tq L C).write x).optionMove (some .right)⟩ : (queueTM s a M w P).Cfg)
   rw [tq_right]
 
+/-- A transition that writes `x` and moves left takes `tq L C` to
+`tq L.tail (L.headD none :: x :: C.tail)`. -/
 theorem st_left {q : QS s a M} {q' : Option (QS s a M)} {L C : List (Option Bool)}
     {x : Option Bool} (h : qtr s a M w P q (C.headD none) = (⟨x, some .left⟩, q')) :
     (queueTM s a M w P).TransitionRelation (qcf s a M w P q L C)
@@ -170,6 +183,7 @@ theorem st_left {q : QS s a M} {q' : Option (QS s a M)} {L C : List (Option Bool
   show _ = (⟨q', ((tq L C).write x).optionMove (some .left)⟩ : (queueTM s a M w P).Cfg)
   rw [tq_left]
 
+/-- A transition that writes `x` and stays takes `tq L C` to `tq L (x :: C.tail)`. -/
 theorem st_stay {q : QS s a M} {q' : Option (QS s a M)} {L C : List (Option Bool)}
     {x : Option Bool} (h : qtr s a M w P q (C.headD none) = (⟨x, none⟩, q')) :
     (queueTM s a M w P).TransitionRelation (qcf s a M w P q L C)
@@ -179,6 +193,7 @@ theorem st_stay {q : QS s a M} {q' : Option (QS s a M)} {L C : List (Option Bool
 
 /-! ### Walking -/
 
+/-- A state that moves right over every bit, keeping it, walks over the bits `X` to its right. -/
 theorem walk_right {q : QS s a M}
     (h : ∀ x, qtr s a M w P q (some x) = (⟨some x, some .right⟩, some q))
     (X : List Bool) (L C : List (Option Bool)) :
@@ -191,6 +206,8 @@ theorem walk_right {q : QS s a M}
     rw [e]
     exact ih (some x :: L)
 
+/-- A state that moves left over every bit, keeping it, walks left over the bits up to the first
+blank and stops on it. -/
 theorem walk_left {q : QS s a M}
     (h : ∀ x, qtr s a M w P q (some x) = (⟨some x, some .left⟩, some q))
     (X : List Bool) (y : Bool) (L C : List (Option Bool)) :
@@ -207,6 +224,8 @@ theorem walk_left {q : QS s a M}
 
 /-! ### Writing a word -/
 
+/-- In state `wr src c`, having written the prefix `A` of the word for `src`, the machine writes
+the rest `D` of the word. -/
 theorem wr_run {src : Src} {c : Fin (s + 1)} (hM : (srcW w P src).length ≤ M) (D A : List Bool)
     (hAD : A ++ D = srcW w P src) (L C : List (Option Bool)) (hC : C.tail = []) :
     ∃ C', C'.tail = [] ∧ QR s a M w P (qcf s a M w P (.wr src c (cl M A.length)) L C)
@@ -240,16 +259,18 @@ theorem wr_run {src : Src} {c : Fin (s + 1)} (hM : (srcW w P src).length ≤ M) 
     rw [e]
     exact hr
 
-/-- After writing, walk back to the gap. -/
+/-- After writing, the machine walks back to the gap. -/
 theorem back_to_gap {src : Src} {c : Fin (s + 1)} (hM : (srcW w P src).length ≤ M)
     (OW : List Bool) (L C : List (Option Bool)) (hC : C.tail = []) :
-    QR s a M w P (qcf s a M w P (.wr src c (cl M (srcW w P src).length)) (sm OW.reverse ++ none :: L) C)
+    QR s a M w P
+      (qcf s a M w P (.wr src c (cl M (srcW w P src).length)) (sm OW.reverse ++ none :: L) C)
       (qcf s a M w P (.backOut c) L (none :: sm OW ++ [none])) := by
   have hv : (cl M (srcW w P src).length).val = (srcW w P src).length := cl_val hM
   have hq : qtr s a M w P (.wr src c (cl M (srcW w P src).length)) (C.headD none) =
       (⟨none, some .left⟩, some (.backOut c)) := by
     simp [qtr, hv]
-  have hs := st_left (s := s) (a := a) (M := M) (w := w) (P := P) (L := sm OW.reverse ++ none :: L) hq
+  have hs := st_left (s := s) (a := a) (M := M) (w := w) (P := P)
+    (L := sm OW.reverse ++ none :: L) hq
   rw [hC] at hs
   refine .head hs ?_
   rcases hrev : OW.reverse with _ | ⟨z, Z⟩
@@ -264,6 +285,7 @@ theorem back_to_gap {src : Src} {c : Fin (s + 1)} (hM : (srcW w P src).length �
 
 /-! ### Reading a block -/
 
+/-- In state `rest`, the machine erases the remaining cells `r` of a block. -/
 theorem rest_run {src : Src} {c : Fin (s + 1)} (r : List Bool) (i : ℕ) (hi : i + r.length = a)
     (L C : List (Option Bool)) :
     QR s a M w P (qcf s a M w P (.rest src c (cl a i)) L (sm r ++ C))
@@ -284,11 +306,13 @@ theorem rest_run {src : Src} {c : Fin (s + 1)} (r : List Bool) (i : ℕ) (hi : i
     rw [e]
     exact ih (i + 1) (by simp at hi; omega) (none :: L)
 
+/-- A trailing blank does not change `stk`. -/
 theorem stk_append_none (X : List (Option Bool)) : stk (X ++ [none]) = stk X := by
   induction X with
   | nil => rfl
   | cons x X ih => simp only [List.cons_append, stk_cons, ih]
 
+/-- A list of blanks decodes to the empty `StackTape`. -/
 theorem stk_nones {L : List (Option Bool)} (h : ∀ x ∈ L, x = none) : stk L = StackTape.nil := by
   induction L with
   | nil => rfl
@@ -297,11 +321,13 @@ theorem stk_nones {L : List (Option Bool)} (h : ∀ x ∈ L, x = none) : stk L =
     rw [stk_cons, ih fun y hy => h y (List.mem_cons_of_mem _ hy)]
     rfl
 
-/-- One round of the queue. -/
+/-- One round of the queue erases the first block `b :: r` of the input, appends `w b` to the
+output if `c = 0` and nothing otherwise, and lowers the counter `c` by one. -/
 theorem round {c : ℕ} (hs : c ≤ s) {O' : List Bool} (b : Bool) (r I' : List Bool)
     (hr : r.length + 1 = a) (hM : ∀ src, (srcW w P src).length ≤ M) (L₀ : List (Option Bool)) :
     QR s a M w P
-      (qcf s a M w P (.backOut (cl s c)) (sm ((b :: r) ++ I').reverse ++ none :: L₀) (none :: sm O' ++ [none]))
+      (qcf s a M w P (.backOut (cl s c)) (sm ((b :: r) ++ I').reverse ++ none :: L₀)
+        (none :: sm O' ++ [none]))
       (qcf s a M w P (.backOut (cl s (c - 1))) (sm I'.reverse ++
           (List.replicate r.length none ++ [none, none] ++ L₀))
         (none :: sm (O' ++ srcW w P (if c = 0 then .bit b else .drop)) ++ [none])) := by
@@ -318,7 +344,8 @@ theorem round {c : ℕ} (hs : c ≤ s) {O' : List Bool} (b : Bool) (r I' : List 
   -- step off the gap
   refine .head (st_left (x := none) (q' := some (.stepIn (cl s c))) rfl) ?_
   refine .head (st_stay (x := some z) (q' := some (.backIn (cl s c))) rfl) ?_
-  have hwalk := walk_left (s := s) (a := a) (M := M) (w := w) (P := P) (q := .backIn (cl s c)) (fun x => rfl) Z z L₀
+  have hwalk := walk_left (s := s) (a := a) (M := M) (w := w) (P := P) (q := .backIn (cl s c))
+    (fun x => rfl) Z z L₀
     (none :: sm O' ++ [none])
   refine Relation.ReflTransGen.trans hwalk ?_
   rw [← hIZ]
@@ -346,26 +373,31 @@ theorem round {c : ℕ} (hs : c ≤ s) {O' : List Bool} (b : Bool) (r I' : List 
   have hC₁e : C₁.headD none :: C₁.tail = C₁ := by
     rw [hC₁]
     cases I' <;> rfl
-  have hstay := st_stay (s := s) (a := a) (M := M) (w := w) (P := P) (q := .rest src (cl s c) (cl a a))
+  have hstay := st_stay (s := s) (a := a) (M := M) (w := w) (P := P)
+    (q := .rest src (cl s c) (cl a a))
     (q' := some (.toGap src (cl s ((cl s c).val - 1)))) (L := L₁) (C := C₁) (x := C₁.headD none)
     (by simp [qtr, ha])
   rw [hC₁e] at hstay
   refine .head hstay ?_
   rw [hcv]
-  have hw₁ := walk_right (s := s) (a := a) (M := M) (w := w) (P := P) (q := .toGap src (cl s (c - 1))) (fun x => rfl) I' L₁
+  have hw₁ := walk_right (s := s) (a := a) (M := M) (w := w) (P := P)
+    (q := .toGap src (cl s (c - 1))) (fun x => rfl) I' L₁
     (none :: sm O' ++ [none])
   have heC : C₁ = sm I' ++ (none :: sm O' ++ [none]) := by simp [hC₁]
   rw [heC]
   refine Relation.ReflTransGen.trans hw₁ ?_
   refine .head (st_right (x := none) (q' := some (.toOut src (cl s (c - 1)))) rfl) ?_
-  have hw₂ := walk_right (s := s) (a := a) (M := M) (w := w) (P := P) (q := .toOut src (cl s (c - 1))) (fun x => rfl) O'
+  have hw₂ := walk_right (s := s) (a := a) (M := M) (w := w) (P := P)
+    (q := .toOut src (cl s (c - 1))) (fun x => rfl) O'
     (none :: (sm I'.reverse ++ L₁)) [none]
   refine Relation.ReflTransGen.trans hw₂ ?_
   refine .head (st_stay (x := none) (q' := some (.wr src (cl s (c - 1)) (cl M 0))) rfl) ?_
-  obtain ⟨C', hC', hwr⟩ := wr_run (s := s) (a := a) (M := M) (w := w) (P := P) (src := src) (c := cl s (c - 1)) (hM src)
+  obtain ⟨C', hC', hwr⟩ := wr_run (s := s) (a := a) (M := M) (w := w) (P := P) (src := src)
+    (c := cl s (c - 1)) (hM src)
     (srcW w P src) [] rfl (sm O'.reverse ++ none :: (sm I'.reverse ++ L₁)) [none] rfl
   refine Relation.ReflTransGen.trans hwr ?_
-  have hb := back_to_gap (s := s) (a := a) (M := M) (w := w) (P := P) (src := src) (c := cl s (c - 1)) (hM src)
+  have hb := back_to_gap (s := s) (a := a) (M := M) (w := w) (P := P) (src := src)
+    (c := cl s (c - 1)) (hM src)
     (O' ++ srcW w P src) (sm I'.reverse ++ L₁) C' hC'
   have he : sm (O' ++ srcW w P src).reverse ++ none :: (sm I'.reverse ++ L₁) =
       sm (srcW w P src).reverse ++ (sm O'.reverse ++ none :: (sm I'.reverse ++ L₁)) := by
@@ -382,6 +414,7 @@ theorem round {c : ℕ} (hs : c ≤ s) {O' : List Bool} (b : Bool) (r I' : List 
 /-- The cells of a list of blocks. -/
 def flat (bs : List (Bool × List Bool)) : List Bool := bs.flatMap fun x => x.1 :: x.2
 
+/-- If `L` holds only blanks, then `tq L (sm O ++ [none])` is the tape of `O`. -/
 theorem tq_final {L : List (Option Bool)} (hL : ∀ x ∈ L, x = none) (O : List Bool) :
     tq L (sm O ++ [none]) = BiTape.mk₁ O := by
   cases O with
@@ -454,7 +487,8 @@ theorem loop (hM : ∀ src, (srcW w P src).length ≤ M) (bs : List (Bool × Lis
       · simp [srcW]
     rw [List.append_assoc, heq]
 
-/-- **Correctness of the queue.** -/
+/-- **Correctness of the queue.** On an input made of blocks of length `a`, the machine outputs
+`P` followed by the words `w b` of the blocks after the first `s`. -/
 theorem queue_outputs (hM : ∀ src, (srcW w P src).length ≤ M) (bs : List (Bool × List Bool))
     (hbs : ∀ x ∈ bs, x.2.length + 1 = a) :
     (queueTM s a M w P).Outputs (flat bs) (P ++ (bs.drop s).flatMap fun x => w x.1) := by

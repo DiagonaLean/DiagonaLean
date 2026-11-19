@@ -21,13 +21,10 @@ import DiagonaLean.KAComm.KleeneAlgebra.Separation
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18, Section 3
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.ModelLeBool.Reduction
 
-open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA Nat.Partrec
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
+open DiagonaLean.KAComm.KleeneAlgebra DiagonaLean.Halt DiagonaLean.Halt.Encoding
+  DiagonaLean.Synthetic.Definitions
 
 /-- The inequality of `haltRed p`, with each letter `n` replaced by the word `1ⁿ0`. -/
 def haltRedB (p : EncodableTM Bool × List Bool) : InstB := sbI (haltRed p)

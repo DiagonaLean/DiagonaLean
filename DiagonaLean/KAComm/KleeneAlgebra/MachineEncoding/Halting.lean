@@ -20,7 +20,11 @@ term (Lemma 33).
 This gives a many-one reduction from `HaltProblem` to the complement of language-model inclusion
 (`KAComm/ModelLe/Reductions/Halt_to_ModelLe.lean`). It says nothing about pre-Kleene-algebra
 provability: for a machine that runs forever, whether the inequality is provable is left open, as
-in the paper.
+in the paper
+
+## References
+
+* [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 15, Lemma 33
 -/
 open scoped Computability
 

@@ -54,11 +54,13 @@ def tapeOf (B : Base) (n : ℕ) : List Bool :=
 /-- The digit symbol of a bit. -/
 def bitG (b : Bool) : PartrecToTM2.Γ' := if b = true then .bit1 else .bit0
 
+/-- On a positive number, `trNat` is `trPosNum`. -/
 theorem trNat_pos (p : PosNum) : PartrecToTM2.trNat (p : ℕ) = PartrecToTM2.trPosNum p := by
   have : (((p : ℕ) : ℕ) : Num) = Num.pos p := PosNum.of_to_nat p
   rw [PartrecToTM2.trNat, this]
   rfl
 
+/-- For `n ≠ 0`, the digits `trNat n` are the digit of `n % 2` followed by `trNat (n / 2)`. -/
 theorem trNat_step {n : ℕ} (hn : n ≠ 0) : PartrecToTM2.trNat n =
     bitG (if n % 2 = 1 then true else false) :: PartrecToTM2.trNat (n / 2) := by
   obtain ⟨p, rfl⟩ : ∃ p : PosNum, n = (p : ℕ) := by
@@ -90,6 +92,8 @@ theorem trNat_step {n : ℕ} (hn : n ≠ 0) : PartrecToTM2.trNat n =
     rw [h2, ← h2, trNat_pos, h2, h4, trNat_pos, ite_eq_left_of_eq_true _ _ (eq_true h3)]
     rfl
 
+/-- If `m ≤ f`, then the bits after `f` steps of `bitsStep` from `(m, acc)`, as `bitG` symbols,
+are those of `acc` followed by `trNat m`. -/
 theorem bits_iter (f m : ℕ) (acc : List Bool) (hm : m ≤ f) :
     ((bitsStep^[f] (m, acc)).2).map bitG = acc.map bitG ++ PartrecToTM2.trNat m := by
   induction f generalizing m acc with
@@ -108,9 +112,12 @@ theorem bits_iter (f m : ℕ) (acc : List Bool) (hm : m ≤ f) :
       rw [this, ih _ _ (by omega), trNat_step h0]
       simp
 
+/-- The bits of `n`, as `bitG` symbols, are `trNat n`. -/
 theorem bitsOf_map (n : ℕ) : (bitsOf n).map bitG = PartrecToTM2.trNat n := by
   simpa [bitsOf] using bits_iter n n [] le_rfl
 
+/-- If `e` sends `bit0` and `bit1` to the blocks of `B`, then the tape of `n` built from `e` is
+`tapeOf B n`. -/
 theorem tape_eq (B : Base) (e : PartrecToTM2.Γ' → List Bool) (h0 : e .bit0 = B.e0)
     (h1 : e .bit1 = B.e1) (n : ℕ) :
     B.e₀ ++ (PartrecToTM2.trNat n).reverse.flatMap e = tapeOf B n := by
@@ -119,14 +126,17 @@ theorem tape_eq (B : Base) (e : PartrecToTM2.Γ' → List Bool) (h0 : e .bit0 = 
   funext b
   cases b <;> simp [bitG, h0, h1]
 
+/-- `bitsStep` is primitive recursive. -/
 theorem bitsStep_prim : Primrec bitsStep := by
   unfold bitsStep
   prim
 
+/-- `bitsOf` is primitive recursive. -/
 theorem bitsOf_prim : Primrec bitsOf :=
   prim_snd (Primrec.nat_iterate Primrec.id (prim_pair Primrec.id (Primrec.const []))
     (Primrec₂.mk (bitsStep_prim.comp Primrec.snd)))
 
+/-- `tapeOf B` is primitive recursive. -/
 theorem tapeOf_prim (B : Base) : Primrec (tapeOf B) := by
   unfold tapeOf
   have h := bitsOf_prim
@@ -137,8 +147,10 @@ theorem tapeOf_prim (B : Base) : Primrec (tapeOf B) := by
 
 /-- The interpreter is correct. -/
 def Base.Good (B : Base) : Prop :=
-  ∀ (c : Code) (m : ℕ), m ∈ c.eval 0 → (NM B.K (tapeOf B (Encodable.encode c))).Outputs [] [decide (m ≠ 0)]
+  ∀ (c : Code) (m : ℕ), m ∈ c.eval 0 →
+    (NM B.K (tapeOf B (Encodable.encode c))).Outputs [] [decide (m ≠ 0)]
 
+/-- Some `Base` is correct. -/
 theorem exists_base : ∃ B : Base, B.Good := by
   have hg : Partrec fun n : ℕ => Code.eval (Denumerable.ofNat Code n) 0 :=
     Code.eval_part.comp (Computable.ofNat Code) (Computable.const 0)

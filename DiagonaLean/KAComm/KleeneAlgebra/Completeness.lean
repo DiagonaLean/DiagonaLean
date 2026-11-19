@@ -105,7 +105,9 @@ theorem complete_of_trace_le {ρ' : TD A} (hρ' : h.ResidBy ρ') : ∀ (n : ℕ)
   rw [hiter i (by omega), Finset.mem_singleton] at hv
   exact Finset.mem_image.2 ⟨i, Finset.mem_range.2 hi, hv.symm⟩
 
-/-- **Completeness along a trace**, with the residue left existential. -/
+/-- **Completeness along a trace.** Some residue `ρ` works for every trace: if `s 0 ∈ L`, each
+`s (i + 1)` is the only successor of `s i` under `e` for `i < n`, and `s n` has no successor, then
+`R (s 0) * e∗ ≤ sig∗ * rtS {s 0, …, s n} + err ρ`. -/
 theorem complete_of_trace : ∃ ρ : TD A, ∀ (n : ℕ) (s : ℕ → FreeMonoid A),
     s 0 ∈ L →
     (∀ i < n, ∀ v, SetSemiring.Mem (s i, v) (pl e) ↔ v = s (i + 1)) →

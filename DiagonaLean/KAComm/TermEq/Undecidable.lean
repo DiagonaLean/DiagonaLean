@@ -22,13 +22,10 @@ given the code of `M` (`not_machineDecidable_termEq_eqRed`), by computable insep
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorems 18 and 19
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.TermEq.Reduction
 
-open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA Nat.Partrec
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
+open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing Nat.Partrec DiagonaLean.Foundations.Computability
+  DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
   DiagonaLean.Halt.Undecidable
 
 /-- **Provable equality in pre-Kleene algebra with commutativity over `ℕ` is `Undecidable`**, given

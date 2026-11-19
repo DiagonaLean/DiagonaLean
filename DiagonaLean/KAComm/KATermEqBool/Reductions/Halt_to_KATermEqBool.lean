@@ -20,13 +20,10 @@ and `C` are the interpreter's table and the race program from the recursion theo
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorems 18 and 19
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.KATermEqBool.Reduction
 
-open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA Nat.Partrec
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
+open DiagonaLean.KAComm.KleeneAlgebra Nat.Partrec DiagonaLean.Foundations.Computability
+  DiagonaLean.Halt
 
 /-- `reductionB B C` reduces `HaltProblem` to provable equality in Kleene algebra over `{0, 1}`. -/
 theorem halt_reducesto_kaTermEqBool_spec {B : Base} {C : Code} (hB : B.Good)

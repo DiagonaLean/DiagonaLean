@@ -19,8 +19,6 @@ of a monoid is shown to be a Kleene algebra.
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Section 2, Theorem 18
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.KleeneAlgebra
 
 namespace RExp
@@ -52,7 +50,7 @@ inductive KAEquiv (C : X → X → Prop) : RExp X → RExp X → Prop where
   | kstar_mul_le_self {a b} : KAEquiv C (plus (mul a b) b) b →
       KAEquiv C (plus (mul (star a) b) b) b
 
-/-- Reflexivity of `KAEquiv`. -/
+/-- `KAEquiv C` is reflexive. -/
 theorem KAEquiv.refl {C : X → X → Prop} (e : RExp X) : KAEquiv C e e := .ofEquiv (.refl e)
 
 /-- The setoid of provable equality in Kleene algebra. -/

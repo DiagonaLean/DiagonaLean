@@ -20,83 +20,114 @@ section Prim
 
 variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
 
+/-- The identity function is primitive recursive. -/
 theorem prim_self : Primrec fun x : α => x := Primrec.id
 
+/-- The pairing `fun x => (f x, g x)` of two primitive recursive functions is primitive
+recursive. -/
 theorem prim_pair {f : α → β} {g : α → γ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => (f x, g x) := hf.pair hg
 
+/-- The first projection of a primitive recursive function is primitive recursive. -/
 theorem prim_fst {f : α → β × γ} (hf : Primrec f) : Primrec fun x => (f x).1 := Primrec.fst.comp hf
 
+/-- The second projection of a primitive recursive function is primitive recursive. -/
 theorem prim_snd {f : α → β × γ} (hf : Primrec f) : Primrec fun x => (f x).2 := Primrec.snd.comp hf
 
+/-- `Nat.pair` of two primitive recursive functions is primitive recursive. -/
 theorem prim_natPair {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => Nat.pair (f x) (g x) := Primrec₂.natPair.comp hf hg
 
+/-- `Nat.unpair` of a primitive recursive function is primitive recursive. -/
 theorem prim_unpair {f : α → ℕ} (hf : Primrec f) : Primrec fun x => (f x).unpair :=
   Primrec.unpair.comp hf
 
+/-- Consing the values of two primitive recursive functions is primitive recursive. -/
 theorem prim_cons {f : α → β} {g : α → List β} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => f x :: g x := Primrec.list_cons.comp hf hg
 
+/-- Appending the values of two primitive recursive functions is primitive recursive. -/
 theorem prim_append {f g : α → List β} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => f x ++ g x := Primrec.list_append.comp hf hg
 
+/-- `List.headI` of a primitive recursive function is primitive recursive. -/
 theorem prim_headI {inst : Inhabited β} {f : α → List β} (hf : Primrec f) :
     Primrec fun x => (f x).headI := Primrec.list_headI.comp hf
 
+/-- `List.tail` of a primitive recursive function is primitive recursive. -/
 theorem prim_tail {f : α → List β} (hf : Primrec f) : Primrec fun x => (f x).tail :=
   Primrec.list_tail.comp hf
 
+/-- `List.length` of a primitive recursive function is primitive recursive. -/
 theorem prim_length {f : α → List β} (hf : Primrec f) : Primrec fun x => (f x).length :=
   Primrec.list_length.comp hf
 
+/-- `List.range` of a primitive recursive function is primitive recursive. -/
 theorem prim_range {f : α → ℕ} (hf : Primrec f) : Primrec fun x => List.range (f x) :=
   Primrec.list_range.comp hf
 
+/-- `List.reverse` of a primitive recursive function is primitive recursive. -/
 theorem prim_reverse {f : α → List β} (hf : Primrec f) : Primrec fun x => (f x).reverse :=
   Primrec.list_reverse.comp hf
 
+/-- The sum of two primitive recursive functions is primitive recursive. -/
 theorem prim_add {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => f x + g x := Primrec.nat_add.comp hf hg
 
+/-- The truncated difference of two primitive recursive functions is primitive recursive. -/
 theorem prim_sub {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => f x - g x := Primrec.nat_sub.comp hf hg
 
+/-- The product of two primitive recursive functions is primitive recursive. -/
 theorem prim_mul {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => f x * g x := Primrec.nat_mul.comp hf hg
 
+/-- The remainder `f x % g x` of two primitive recursive functions is primitive recursive. -/
 theorem prim_mod {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => f x % g x := Primrec.nat_mod.comp hf hg
 
+/-- The quotient `f x / g x` of two primitive recursive functions is primitive recursive. -/
 theorem prim_div {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => f x / g x := Primrec.nat_div.comp hf hg
 
+/-- `List.getD` with primitive recursive list and index is primitive recursive. -/
 theorem prim_getD {f : α → List β} {g : α → ℕ} (d : β) (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => (f x).getD (g x) d := (Primrec.list_getD d).comp hf hg
 
+/-- An `if` with a primitive recursive condition and primitive recursive branches is primitive
+recursive. -/
 theorem prim_ite {c : α → Prop} [DecidablePred c] {f g : α → β} (hc : PrimrecPred c)
     (hf : Primrec f) (hg : Primrec g) : Primrec fun x => if c x then f x else g x :=
   Primrec.ite hc hf hg
 
+/-- Equality of two primitive recursive functions is a primitive recursive predicate. -/
 theorem pred_eq {f g : α → β} (hf : Primrec f) (hg : Primrec g) :
     PrimrecPred fun x => f x = g x := Primrec.eq.comp hf hg
 
+/-- `f x < g x` for primitive recursive `f` and `g` is a primitive recursive predicate. -/
 theorem pred_lt {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     PrimrecPred fun x => f x < g x := Primrec.nat_lt.comp hf hg
 
+/-- `f x ≤ g x` for primitive recursive `f` and `g` is a primitive recursive predicate. -/
 theorem pred_le {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     PrimrecPred fun x => f x ≤ g x := Primrec.nat_le.comp hf hg
 
+/-- The conjunction of two primitive recursive predicates is primitive recursive. -/
 theorem pred_and {p q : α → Prop} (hp : PrimrecPred p) (hq : PrimrecPred q) :
     PrimrecPred fun x => p x ∧ q x := hp.and hq
 
+/-- Disequality of two primitive recursive functions is a primitive recursive predicate. -/
 theorem pred_ne {f g : α → β} (hf : Primrec f) (hg : Primrec g) :
     PrimrecPred fun x => f x ≠ g x := (pred_eq hf hg).not
 
+/-- Mapping a primitive recursive function over a primitive recursive list is primitive
+recursive. -/
 theorem prim_map {f : α → List β} {g : α → β → γ} (hf : Primrec f)
     (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).map (g x) :=
   Primrec.list_map hf hg.to₂
 
+/-- `List.flatMap` of a primitive recursive function over a primitive recursive list is primitive
+recursive. -/
 theorem prim_flatMap {f : α → List β} {g : α → β → List γ} (hf : Primrec f)
     (hg : Primrec fun y : α × β => g y.1 y.2) : Primrec fun x => (f x).flatMap (g x) :=
   Primrec.list_flatMap hf hg.to₂

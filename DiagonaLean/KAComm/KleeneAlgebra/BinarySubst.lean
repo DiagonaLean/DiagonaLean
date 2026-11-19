@@ -15,12 +15,10 @@ injective substitution reflects inclusion in the language model (`pl_le_of_sb`);
 prefix code, so it is injective (`cd_injective`). The substitution on expression codes, `subC`, is
 primitive recursive, and `equiv_iff_map` moves provable equality between `Bool ⊕ Bool` and `ℕ ⊕ ℕ`.
 -/
-open scoped Computability
 
 namespace DiagonaLean.KAComm.KleeneAlgebra
 
-open Cslib.Turing Enc RExp FreePreKA TD Nat.Partrec DiagonaLean.Foundations.Computability
-open DiagonaLean.Halt DiagonaLean.Halt.Encoding
+open RExp FreePreKA TD DiagonaLean.Foundations.Computability
 
 section subst
 
@@ -50,7 +48,8 @@ theorem comm_words (u v : List B) :
   refine Commute.list_prod_left _ _ fun x hx => Commute.list_prod_right _ _ fun y hy => ?_
   obtain ⟨a, _, rfl⟩ := List.mem_map.1 hx
   obtain ⟨b, _, rfl⟩ := List.mem_map.1 hy
-  exact (mk_eq_mk (C := DComm)).2 (RExp.Equiv.comm (x := (Sum.inl a : B ⊕ B)) (y := Sum.inr b) trivial)
+  exact (mk_eq_mk (C := DComm)).2
+    (RExp.Equiv.comm (x := (Sum.inl a : B ⊕ B)) (y := Sum.inr b) trivial)
 
 /-- Substitution preserves provable equality in pre-Kleene algebra. -/
 theorem Equiv.sb (w : A → List B) {e f : RExp (A ⊕ A)} (h : Equiv DComm e f) :
@@ -222,7 +221,8 @@ theorem wsub_injective {w : A → List B} (h : Function.Injective (cd w)) :
 
 /-- An injective substitution reflects inclusion in the language model. -/
 theorem pl_le_of_sb {w : A → List B} (hw : Function.Injective (cd w)) {e f : RExp (A ⊕ A)}
-    (h : pl (mk (KleeneAlgebra.sb w e)) ≤ pl (mk (KleeneAlgebra.sb w f))) : pl (mk e) ≤ pl (mk f) := by
+    (h : pl (mk (KleeneAlgebra.sb w e)) ≤ pl (mk (KleeneAlgebra.sb w f))) :
+    pl (mk e) ≤ pl (mk f) := by
   intro x hx
   obtain ⟨x', hx', he⟩ := (mem_pl_sb w f _).1 (h ((mem_pl_sb w e _).2 ⟨x, hx, rfl⟩))
   rwa [← wsub_injective hw he]

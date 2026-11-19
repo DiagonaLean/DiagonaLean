@@ -57,7 +57,8 @@ theorem mem_cpf (f : ι → A) (s : W A) :
   rw [cpf, mem_pl_sum]
   simp only [Finset.mem_univ, true_and, dg, mem_ofPair]
 
-/-- The language of `(cpf f)∗`: copies of words over the range of `f`. -/
+/-- The language of `(cpf f)∗` consists of the copies `(w, w)` of words `w` over the range of
+`f`. -/
 theorem mem_cpf_star (f : ι → A) (s : W A) :
     SetSemiring.Mem s (pl (cpf f)∗) ↔
       ∃ c : List ι, s = (FreeMonoid.ofList (c.map f), FreeMonoid.ofList (c.map f)) := by

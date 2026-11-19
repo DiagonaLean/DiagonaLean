@@ -70,15 +70,15 @@ instance : Mul NatBotTop := ⟨mul⟩
 instance : KStar NatBotTop := ⟨star⟩
 
 /-- `0` unfolds to `bot`. -/
-@[simp] lemma zero_def : (0 : NatBotTop) = bot := rfl
+@[simp] theorem zero_def : (0 : NatBotTop) = bot := rfl
 /-- `1` unfolds to `nat 0`. -/
-@[simp] lemma one_def : (1 : NatBotTop) = nat 0 := rfl
+@[simp] theorem one_def : (1 : NatBotTop) = nat 0 := rfl
 /-- `+` unfolds to `NatBotTop.add`. -/
-@[simp] lemma add_def (a b : NatBotTop) : a + b = add a b := rfl
+@[simp] theorem add_def (a b : NatBotTop) : a + b = add a b := rfl
 /-- `*` unfolds to `NatBotTop.mul`. -/
-@[simp] lemma mul_def (a b : NatBotTop) : a * b = mul a b := rfl
+@[simp] theorem mul_def (a b : NatBotTop) : a * b = mul a b := rfl
 /-- `∗` unfolds to `NatBotTop.star`. -/
-@[simp] lemma kstar_def (a : NatBotTop) : a∗ = star a := rfl
+@[simp] theorem kstar_def (a : NatBotTop) : a∗ = star a := rfl
 
 /-- `NatBotTop` is a semiring. -/
 instance : Semiring NatBotTop where
@@ -128,11 +128,12 @@ theorem not_left_induction : ¬ ∀ a b : NatBotTop, a * b ≤ b → a∗ * b �
   change ¬ (add (mul (star (nat 0)) (nat 0)) (nat 0) = nat 0)
   simp [star, mul, add]
 
-/-- `NatBotTop` admits no Kleene algebra structure with the same semiring and star. -/
+/-- **`NatBotTop` admits no Kleene algebra structure with the same semiring and star.** -/
 theorem not_kleeneAlgebra (K : KleeneAlgebra NatBotTop)
     (hstar : ∀ a, @KStar.kstar NatBotTop K.toKStar a = a∗)
     (hle : ∀ a b : NatBotTop, @LE.le NatBotTop K.toLE a b ↔ a ≤ b)
-    (hmul : ∀ a b : NatBotTop, @HMul.hMul NatBotTop NatBotTop NatBotTop (@instHMul NatBotTop K.toMul) a b = a * b) :
+    (hmul : ∀ a b : NatBotTop,
+      @HMul.hMul NatBotTop NatBotTop NatBotTop (@instHMul NatBotTop K.toMul) a b = a * b) :
     False := by
   apply not_left_induction
   intro a b hab

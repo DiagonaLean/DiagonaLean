@@ -3,9 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
+import Mathlib.Algebra.FreeMonoid.Basic
 import DiagonaLean.KAComm.KleeneAlgebra.Free
 import DiagonaLean.KAComm.KleeneAlgebra.SetStar
-import Mathlib.Algebra.FreeMonoid.Basic
 
 @[expose] public section
 
@@ -203,7 +203,8 @@ theorem eq_zero_of_pl_eq_zero (e : TD A) (h : ∀ s, ¬ SetSemiring.Mem s (pl e)
   | one => exact (h 1 rfl).elim
   | sym x => rcases x with a | a <;> exact (h _ rfl).elim
   | plus e f ihe ihf =>
-    rw [mk_plus, ihe fun s hs => h s (by rw [mk_plus, pl_add, SetSemiring.mem_add]; exact Or.inl hs),
+    rw [mk_plus,
+      ihe fun s hs => h s (by rw [mk_plus, pl_add, SetSemiring.mem_add]; exact Or.inl hs),
       ihf fun s hs => h s (by rw [mk_plus, pl_add, SetSemiring.mem_add]; exact Or.inr hs), add_zero]
   | mul e f ihe ihf =>
     by_cases he : ∃ a, SetSemiring.Mem a (pl (mk e))

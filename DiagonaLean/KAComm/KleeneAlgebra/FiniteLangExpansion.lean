@@ -42,7 +42,8 @@ def lng (e : TD A) : Set (W A) := {s | SetSemiring.Mem s (pl e)}
 /-- In an idempotent semiring, summing `g ∘ φ` over `U` is summing `g` over the image. -/
 theorem sum_comp_eq_sum_image {ι κ : Type*} [DecidableEq κ] (U : Finset ι) (φ : ι → κ)
     (g : κ → TD A) : ∑ i ∈ U, g (φ i) = ∑ k ∈ U.image φ, g k := by
-  refine le_antisymm (sum_le_of_forall _ _ fun i hi => le_sum_of_mem g (Finset.mem_image_of_mem φ hi))
+  refine le_antisymm
+    (sum_le_of_forall _ _ fun i hi => le_sum_of_mem g (Finset.mem_image_of_mem φ hi))
     (sum_le_of_forall _ _ fun k hk => ?_)
   obtain ⟨i, hi, rfl⟩ := Finset.mem_image.1 hk
   exact le_sum_of_mem (fun i => g (φ i)) hi
@@ -69,7 +70,8 @@ variable [DecidableEq A]
 
 /-- **Theorem 6 (repaired).** A guarded term with a finite language is the sum of the strings in
 its language. -/
-theorem eq_sum_of_guarded_of_finite_lang (r : RExp (A ⊕ A)) (hg : guarded r = true) (hfin : (lng (mk r : TD A)).Finite) :
+theorem eq_sum_of_guarded_of_finite_lang (r : RExp (A ⊕ A)) (hg : guarded r = true)
+    (hfin : (lng (mk r : TD A)).Finite) :
     (mk r : TD A) = ∑ s ∈ hfin.toFinset, ofPair s := by
   induction r with
   | zero =>
@@ -172,10 +174,12 @@ theorem eq_sum_of_guarded_of_finite_lang (r : RExp (A ⊕ A)) (hg : guarded r = 
           List.prod_replicate n s⟩
 
 /-- **Corollary 7 (repaired).** Guarded terms with the same finite language are equal. -/
-theorem eq_of_guarded_of_lang_eq (r₁ r₂ : RExp (A ⊕ A)) (hg₁ : guarded r₁ = true) (hg₂ : guarded r₂ = true)
+theorem eq_of_guarded_of_lang_eq (r₁ r₂ : RExp (A ⊕ A)) (hg₁ : guarded r₁ = true)
+    (hg₂ : guarded r₂ = true)
     (hfin : (lng (mk r₁ : TD A)).Finite) (h : lng (mk r₁ : TD A) = lng (mk r₂)) :
     (mk r₁ : TD A) = mk r₂ := by
-  rw [eq_sum_of_guarded_of_finite_lang r₁ hg₁ hfin, eq_sum_of_guarded_of_finite_lang r₂ hg₂ (h ▸ hfin)]
+  rw [eq_sum_of_guarded_of_finite_lang r₁ hg₁ hfin,
+    eq_sum_of_guarded_of_finite_lang r₂ hg₂ (h ▸ hfin)]
   congr 1
   ext s; simp [h]
 

@@ -3,9 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
+import Mathlib.Tactic.DeriveEncodable
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.LanguageSoundness
 import DiagonaLean.KAComm.KleeneAlgebra.Syntax
-import Mathlib.Tactic.DeriveEncodable
 
 @[expose] public section
 

@@ -22,14 +22,10 @@ statement is the case of Theorem 18 where the predicate is equality of languages
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.LangEqBool.Reduction
 
-open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA Nat.Partrec
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
-  DiagonaLean.Halt.Undecidable
+open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing TD FreePreKA DiagonaLean.Synthetic.Definitions
+  DiagonaLean.Synthetic.Notation DiagonaLean.Halt.Undecidable
 
 /-- **The failure of equality of languages over `{0, 1}` is `Undecidable`.** -/
 def undecidableNotLangEqBool : Undecidable (Complement LangEqBoolProblem) :=

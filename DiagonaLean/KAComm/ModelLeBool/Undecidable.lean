@@ -22,14 +22,10 @@ itself (`not_machineDecidable_between_bool`).
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.ModelLeBool.Reduction
 
-open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA Nat.Partrec
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
-  DiagonaLean.Halt.Undecidable
+open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing TD DiagonaLean.Synthetic.Definitions
+  DiagonaLean.Synthetic.Notation DiagonaLean.Halt.Undecidable
 
 /-- **The failure of inclusion of languages over `{0, 1}` is `Undecidable`.** -/
 def undecidableNotModelLeBool : Undecidable (Complement ModelLeBoolProblem) :=

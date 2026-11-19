@@ -38,13 +38,11 @@ codes (`encNat`, `encBool`).
 * R. M. Smullyan, *Undecidability and recursive inseparability* (1958)
 -/
 
-open scoped Computability
-
 namespace DiagonaLean.KAComm.KleeneAlgebra
 
-open Cslib.Turing SingleTapeTM Enc RExp FreePreKA TD Turing Nat.Partrec
-  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
-  DiagonaLean.Halt.Undecidable DiagonaLean.Halt.Compositions DiagonaLean.Synthetic.Definitions
+open Cslib.Turing SingleTapeTM RExp TD Nat.Partrec DiagonaLean.Foundations.Computability
+  DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Halt.Undecidable
+  DiagonaLean.Halt.Compositions DiagonaLean.Synthetic.Definitions
 
 /-- The data of a `HaltProblem` instance. -/
 abbrev HD := List (ℕ × ℕ) × SC
@@ -170,7 +168,9 @@ theorem race_iff {ka : Bool} {B : Base} {G : List Bool → ℕ × ℕ} {C : Code
     rw [ite_eq_right_of_eq_false _ _ (eq_false hT)] at hm
     exact neg l (by simpa using hout 0 hm) hS
 
-/-- **Smullyan's argument, for any instance family.** -/
+/-- **Smullyan's argument, for any instance family.** If the proof test on the instance family
+`G` decides `Q`, and the interpreter's output on `l` decides `Q l`, then `p` halts iff `Q` holds
+on the tape of the race program of `p`. -/
 theorem halt_iff_of_family {ka : Bool} {B : Base} {G : List Bool → ℕ × ℕ} {C : Code} (hB : B.Good)
     (hC : RaceOn ka B G C) {Q : List Bool → Prop}
     (hQ : ∀ l, Q l ↔ ∃ k, Checks ka k (G l).1 (G l).2)
@@ -211,7 +211,8 @@ theorem rel_neg {ka : Bool} {K : UConst} {l : List Bool} (h : (NM K l).Outputs [
   · simpa [Rel] using rInst_neg h
   · simpa [Rel] using rInst_neg_ka h
 
-/-- **Smullyan's argument, for the race program.** -/
+/-- **Smullyan's argument, for the race program.** `p` halts iff the two sides of
+`reduction B C p` are related by `Rel ka`. -/
 theorem halt_iff_rel {ka : Bool} {B : Base} {C : Code} (hB : B.Good) (hC : RaceProg ka B C)
     (p : EncodableTM Bool × List Bool) :
     HaltProblem p ↔ Rel ka (reduction B C p).1 (reduction B C p).2 :=

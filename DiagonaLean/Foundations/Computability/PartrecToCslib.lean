@@ -3,8 +3,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.Foundations.Computability.TM0ToCslib
 import Mathlib.Computability.PartrecBasis
+import DiagonaLean.Foundations.Computability.TM0ToCslib
 
 @[expose] public section
 
@@ -42,6 +42,7 @@ inductive L2 (uc : Code) where
   | orig (q : Λ')
   | check
 
+/-- `L2 uc` is inhabited, by the label of the start of `uc`. -/
 instance (uc : Code) : Inhabited (L2 uc) := ⟨.orig (trNormal uc Cont'.halt)⟩
 
 /-- Statements of the TM2 machine, over labels `Λ`. -/
@@ -73,6 +74,7 @@ def lift (c : Cf2 Λ') : Cf2 (L2 uc) :=
     | some q => .orig q
     | none => .check), c.var, c.stk⟩
 
+/-- One `TM2` step of `rwS uc s` is the lift of one step of `s`. -/
 theorem stepAux_rwS (s : St2 Λ') (v : Option Γ') (S : K' → List Γ') :
     TM2.stepAux (rwS uc s) v S = lift uc (TM2.stepAux s v S) := by
   induction s generalizing v S with
@@ -88,6 +90,7 @@ theorem stepAux_rwS (s : St2 Λ') (v : Option Γ') (S : K' → List Γ') :
   | goto l => rfl
   | halt => rfl
 
+/-- If `tr` reaches `b` from `a`, then `tr2 uc` reaches the lift of `b` from the lift of `a`. -/
 theorem reaches_lift {a b : Cf2 Λ'} (h : Reaches (TM2.step tr) a b) :
     Reaches (TM2.step (tr2 uc)) (lift uc a) (lift uc b) := by
   induction h with
@@ -101,6 +104,8 @@ theorem reaches_lift {a b : Cf2 Λ'} (h : Reaches (TM2.step tr) a b) :
       subst hd
       exact Option.mem_def.2 (congrArg some (stepAux_rwS uc (tr q) v S))
 
+/-- If `T` contains the labels `orig q` for `q ∈ S` and the label `check`, then `rwS uc s` is
+supported by `T` whenever `s` is supported by `S`. -/
 theorem supports_rwS {S : Finset Λ'} {T : Finset (L2 uc)} (hT : ∀ q ∈ S, L2.orig q ∈ T)
     (hc : L2.check ∈ T) (s : St2 Λ') (hs : TM2.SupportsStmt S s) :
     TM2.SupportsStmt T (rwS uc s) := by
@@ -118,6 +123,7 @@ open scoped Classical in
 noncomputable def supp2 : Finset (L2 uc) :=
   insert .check ((codeSupp uc Cont'.halt).image .orig)
 
+/-- `tr2 uc` is supported by `supp2 uc`. -/
 theorem supports2 : TM2.Supports (tr2 uc) (supp2 uc) := by
   classical
   have hs := tr_supports uc Cont'.halt
@@ -155,6 +161,7 @@ def bitOf : Option Γ' → Bool
   | some Γ'.cons => false
   | _ => true
 
+/-- For `m ≠ 0`, `trNat m` is nonempty. -/
 theorem trNat_ne_nil {m : ℕ} (hm : m ≠ 0) : trNat m ≠ [] := by
   intro h
   have hz : (m : Num) = 0 := by
@@ -166,6 +173,7 @@ theorem trNat_ne_nil {m : ℕ} (hm : m ≠ 0) : trNat m ≠ [] := by
       cases p <;> simp [trNum, trPosNum] at h
   exact hm (by have := Num.to_of_nat m; rw [hz] at this; simpa using this.symm)
 
+/-- The bit read from the top of `trList [m]` is `decide (m ≠ 0)`. -/
 theorem bitOf_top (m : ℕ) : bitOf (trList [m]).head? = decide (m ≠ 0) := by
   by_cases hm : m = 0
   · subst hm
@@ -176,6 +184,7 @@ theorem bitOf_top (m : ℕ) : bitOf (trList [m]).head? = decide (m ≠ 0) := by
       decide_true]
     cases x <;> first | rfl | simp [natEnd] at hend
 
+/-- `K'` is finite. -/
 instance instFintypeK' : Fintype K' := ⟨{K'.main, K'.rev, K'.aux, K'.stack}, by rintro ⟨⟩ <;> simp⟩
 
 /-- The alphabet of the TM1 machine. -/
@@ -184,6 +193,8 @@ abbrev Γ2 := TM2to1.Γ' K' (fun _ : K' => Γ')
 /-- The cell of the initial tape holding `a`. -/
 def cell (b : Bool) (a : Γ') : Γ2 := (b, update (fun _ => none) K'.main (some a))
 
+/-- The `TM2to1` initial tape for `trList [n]` is the cell `cell true Γ'.cons` followed by the
+cells of the reversed digits of `n`. -/
 theorem trInit_eq (n : ℕ) :
     TM2to1.trInit (Γ := fun _ : K' => Γ') K'.main (trList [n]) =
       cell true Γ'.cons :: (trNat n).reverse.map (cell false) := by
@@ -192,6 +203,8 @@ theorem trInit_eq (n : ℕ) :
   simp only [hrev]
   rfl
 
+/-- Translating the tape of `l` cell by cell through `enc` gives the tape of the concatenated
+blocks. -/
 theorem trTape_mk₁ {n : ℕ} {enc : Γ2 → List.Vector Bool n}
     (enc0 : enc default = List.Vector.replicate n false) (l : List Γ2) :
     TM1to1.trTape enc0 (Tape.mk₁ l) =
@@ -225,7 +238,8 @@ theorem exists_machine (g : ℕ →. ℕ) (hg : Partrec g) :
   have h2 := tr2_eval uc hv
   obtain ⟨b₁, hb₁, hb₁e⟩ := StateTransition.tr_eval (TM2to1.tr_respects M2)
     (TM2to1.trCfg_init K'.main (trList [n])) h2
-  obtain ⟨b₂, hb₂, hb₂e⟩ := StateTransition.tr_eval (TM1to1.tr_respects dec M1 encdec (enc0 := enc0))
+  obtain ⟨b₂, hb₂, hb₂e⟩ := StateTransition.tr_eval
+    (TM1to1.tr_respects dec M1 encdec (enc0 := enc0))
     (a₂ := (TM1.init ((TM2to1.trInit K'.main (trList [n])).flatMap fun x => (enc x).toList) :
       TM1.Cfg Bool (TM1to1.Λ' Γ2 _ _) _))
     (by simp only [TM1to1.trCfg, TM1.init, trTape_mk₁]; rfl) hb₁e

@@ -23,7 +23,8 @@ recursive in `l` (`prim_rowFn`).
 
 * `rowFn`: the transition table, as arithmetic on row codes.
 * `NM`: the machine.
-* `exists_uconst`: any machine `W` has a constant `K` with `W.Outputs l [b] → (NM K l).Outputs [] [b]`.
+* `exists_uconst`: any machine `W` has a constant `K` with
+  `W.Outputs l [b] → (NM K l).Outputs [] [b]`.
 -/
 
 namespace DiagonaLean.Foundations.Computability
@@ -44,9 +45,11 @@ def hc : Option Bool → ℕ
   | some false => 1
   | some true => 2
 
+/-- `optOf` inverts `hc`. -/
 @[simp] theorem optOf_hc (o : Option Bool) : optOf (hc o) = o := by
   rcases o with _ | _ | _ <;> rfl
 
+/-- Symbol codes are below `3`. -/
 theorem hc_lt (o : Option Bool) : hc o < 3 := by
   rcases o with _ | _ | _ <;> decide
 
@@ -62,6 +65,7 @@ def mvc : Option Dir → ℕ
   | some .left => 1
   | some .right => 2
 
+/-- `mvOf` inverts `mvc`. -/
 @[simp] theorem mvOf_mvc (o : Option Dir) : mvOf (mvc o) = o := by
   rcases o with _ | _ | _ <;> rfl
 
@@ -80,8 +84,11 @@ def rowM (r : ℕ) : ℕ := r.unpair.2.unpair.1
 /-- The next-state code of a row. -/
 def rowX (r : ℕ) : ℕ := r.unpair.2.unpair.2
 
+/-- The symbol of `mkRow a m x` is `a`. -/
 @[simp] theorem rowA_mkRow (a m x : ℕ) : rowA (mkRow a m x) = a := by simp [rowA, mkRow]
+/-- The movement of `mkRow a m x` is `m`. -/
 @[simp] theorem rowM_mkRow (a m x : ℕ) : rowM (mkRow a m x) = m := by simp [rowM, mkRow]
+/-- The next-state code of `mkRow a m x` is `x`. -/
 @[simp] theorem rowX_mkRow (a m x : ℕ) : rowX (mkRow a m x) = x := by simp [rowX, mkRow]
 
 /-- Add `off` to the next state of a row, keeping `0` (halt). -/
@@ -122,7 +129,9 @@ def NM : SingleTapeTM Bool where
     let r := rowFn K l q.val (hc h)
     (⟨optOf (rowA r), mvOf (rowM r)⟩, nxOf (NN K l) (rowX r))
 
+/-- The states of `NM K l` are encodable. -/
 instance : Encodable (NM K l).State := inferInstanceAs (Encodable (Fin (NN K l + 1)))
+/-- Equality of states of `NM K l` is decidable. -/
 instance : DecidableEq (NM K l).State := inferInstanceAs (DecidableEq (Fin (NN K l + 1)))
 
 /-! ### Running it -/
@@ -132,12 +141,15 @@ def cf (j : ℕ) (t : BiTape Bool) : (NM K l).Cfg := ⟨some (Fin.ofNat (NN K l 
 
 variable {K l}
 
+/-- One step of `NM K l` follows the row `rowFn K l q (hc t.head)`. -/
 theorem nm_step (q : Fin (NN K l + 1)) (t : BiTape Bool) :
     (NM K l).step (⟨some q, t⟩ : (NM K l).Cfg) =
       some (⟨nxOf (NN K l) (rowX (rowFn K l q.val (hc t.head))),
         (t.write (optOf (rowA (rowFn K l q.val (hc t.head))))).optionMove
           (mvOf (rowM (rowFn K l q.val (hc t.head))))⟩ : (NM K l).Cfg) := rfl
 
+/-- If the row for state `j` and the head of `t` is `mkRow a m (x + 1)`, then `NM K l` steps from
+state `j` to state `x`, writing `optOf a` and moving by `mvOf m`. -/
 theorem cf_step {j a m x : ℕ} {t : BiTape Bool} (hj : j < NN K l + 1)
     (hr : rowFn K l j (hc t.head) = mkRow a m (x + 1)) :
     (NM K l).TransitionRelation (cf K l j t)
@@ -147,11 +159,14 @@ theorem cf_step {j a m x : ℕ} {t : BiTape Bool} (hj : j < NN K l + 1)
   rw [hv, hr, rowA_mkRow, rowM_mkRow, rowX_mkRow] at h
   exact h
 
+/-- Erasing the head of `tp h L []` and moving left gives `tp L.head? L.tail []`. -/
 theorem tp_left_none (h : Option Bool) (L : List Bool) :
     ((tp h L []).write none).optionMove (some .left) = tp L.head? L.tail [] := by
   simp only [tp, BiTape.write, BiTape.optionMove, BiTape.move, BiTape.moveLeft, mapSome_head,
     mapSome_tail, cons_none_mapSome_nil]
 
+/-- If `pre ++ suf = l`, then from state `|pre|` with `pre` written, `NM K l` writes the rest of
+`l` and reaches state `|l|`. -/
 theorem writer_run (suf pre : List Bool) (hl : pre ++ suf = l) :
     Relation.ReflTransGen (NM K l).TransitionRelation
       (cf K l pre.length (tp none pre.reverse []))
@@ -179,6 +194,8 @@ theorem writer_run (suf pre : List Bool) (hl : pre ++ suf = l) :
     have := ih (pre ++ [a]) (by rw [← hl]; simp)
     simpa using this
 
+/-- From state `|l| + 1`, `NM K l` sweeps left over `A` and reaches the initial state of `W` on
+the tape of `A.reverse ++ R`. -/
 theorem sweep_nm (A R : List Bool) :
     Relation.ReflTransGen (NM K l).TransitionRelation
       (cf K l (l.length + 1) (tp A.head? A.tail R))
@@ -210,7 +227,8 @@ theorem sweep_nm (A R : List Bool) :
 theorem nm_start :
     Relation.ReflTransGen (NM K l).TransitionRelation
       ((NM K l).initCfg []) (cf K l (l.length + 2 + K.w0) (BiTape.mk₁ l)) := by
-  have h₀ : (NM K l).initCfg [] = cf K l ([] : List Bool).length (tp none ([] : List Bool).reverse []) :=
+  have h₀ : (NM K l).initCfg [] =
+      cf K l ([] : List Bool).length (tp none ([] : List Bool).reverse []) :=
     rfl
   rw [h₀]
   refine (writer_run l [] rfl).trans ?_
@@ -241,6 +259,8 @@ def rowsOf : List ℕ :=
   (List.range (3 * (k + 1))).map fun idx =>
     rowEnc W e (W.tr (e.symm (Fin.ofNat (k + 1) (idx / 3))) (optOf (idx % 3)))
 
+/-- Entry `3 * i + hc h` of the table of `W` is the row of the transition of `W` at state
+`e.symm i` and symbol `h`. -/
 theorem rowsOf_get (i : Fin (k + 1)) (h : Option Bool) :
     (rowsOf W e).getD (3 * i.val + hc h) 0 = rowEnc W e (W.tr (e.symm i) h) := by
   have hlt := hc_lt h
@@ -324,11 +344,13 @@ def qc : Option St → ℕ
   | none => 0
   | some q => Encodable.encode q + 1
 
+/-- `qc` is injective. -/
 theorem qc_injective : Function.Injective (qc : Option St → ℕ) := by
   rintro (_ | a) (_ | b) h <;> simp_all [qc]
 
 end codes
 
+/-- `hc` is injective. -/
 theorem hc_injective : Function.Injective hc := by
   intro a b h
   simpa using congrArg optOf h
@@ -336,6 +358,7 @@ theorem hc_injective : Function.Injective hc := by
 /-- The tape symbols. -/
 def syms : List (Option Bool) := [none, some false, some true]
 
+/-- Every tape symbol is in `syms`. -/
 theorem mem_syms (o : Option Bool) : o ∈ syms := by
   rcases o with _ | _ | _ <;> simp [syms]
 
@@ -345,23 +368,28 @@ section Prim
 
 variable {α : Type*} [Primcodable α]
 
+/-- `rowA` of a primitive recursive function is primitive recursive. -/
 theorem prim_rowA {f : α → ℕ} (hf : Primrec f) : Primrec fun x => rowA (f x) := by
   unfold rowA
   prim
 
+/-- `rowM` of a primitive recursive function is primitive recursive. -/
 theorem prim_rowM {f : α → ℕ} (hf : Primrec f) : Primrec fun x => rowM (f x) := by
   unfold rowM
   prim
 
+/-- `rowX` of a primitive recursive function is primitive recursive. -/
 theorem prim_rowX {f : α → ℕ} (hf : Primrec f) : Primrec fun x => rowX (f x) := by
   unfold rowX
   prim
 
+/-- `mkRow` of primitive recursive functions is primitive recursive. -/
 theorem prim_mkRow {a m r : α → ℕ} (ha : Primrec a) (hm : Primrec m) (hr : Primrec r) :
     Primrec fun x => mkRow (a x) (m x) (r x) := by
   unfold mkRow
   prim
 
+/-- `bitCode` of a primitive recursive function is primitive recursive. -/
 theorem prim_bitCode {f : α → Bool} (hf : Primrec f) : Primrec fun x => bitCode (f x) := by
   unfold bitCode
   exact prim_ite (pred_eq hf (Primrec.const true)) (Primrec.const _) (Primrec.const _)
@@ -380,11 +408,13 @@ section Prim
 
 variable {α : Type*} [Primcodable α]
 
+/-- `rowFn K` of primitive recursive functions is primitive recursive. -/
 theorem prim_rowFn (K : UConst) {l : α → List Bool} {q h : α → ℕ} (hl : Primrec l)
     (hq : Primrec q) (hh : Primrec h) : Primrec fun x => rowFn K (l x) (q x) (h x) := by
   unfold rowFn shift
   prim
 
+/-- `NN K` of a primitive recursive function is primitive recursive. -/
 theorem prim_NN (K : UConst) {l : α → List Bool} (hl : Primrec l) :
     Primrec fun x => NN K (l x) := by
   unfold NN

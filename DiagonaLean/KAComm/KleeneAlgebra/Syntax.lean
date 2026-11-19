@@ -3,10 +3,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.KAComm.KleeneAlgebra.Automata
-import DiagonaLean.KAComm.KleeneAlgebra.Expansion
 import Mathlib.Logic.Encodable.Basic
 import Mathlib.Algebra.BigOperators.Group.List.Basic
+import DiagonaLean.KAComm.KleeneAlgebra.Automata
+import DiagonaLean.KAComm.KleeneAlgebra.Expansion
 
 @[expose] public section
 
@@ -22,8 +22,6 @@ alphabet. Renaming along `Sum.map g g` preserves provable inclusion (`le_map`) a
 
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Lemma 26
 -/
-
-open scoped Computability
 
 namespace DiagonaLean.KAComm.KleeneAlgebra
 

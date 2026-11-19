@@ -26,6 +26,7 @@ inductive CS where
   | s0 | lft | toD | toR | trim | home
   deriving DecidableEq
 
+/-- `CS` is finite. -/
 instance : Fintype CS :=
   ⟨{.s0, .lft, .toD, .toR, .trim, .home}, by intro x; cases x <;> simp⟩
 
@@ -39,6 +40,8 @@ open Cslib.Turing
 
 variable {T : SingleTapeTM Bool}
 
+/-- If `T` in state `q` reading the head of `t` writes and moves by `stmt` to `q'`, then `T`
+steps from `⟨some q, t⟩` to the configuration that results. -/
 theorem g_step {q : T.State} {t : BiTape Bool} {stmt : SingleTapeTM.Stmt Bool}
     {q' : Option T.State} (h : T.tr q t.head = (stmt, q')) {c' : T.Cfg}
     (hc : c' = (⟨q', (t.write stmt.symbol).optionMove stmt.movement⟩ : T.Cfg)) :
@@ -48,6 +51,7 @@ theorem g_step {q : T.State} {t : BiTape Bool} {stmt : SingleTapeTM.Stmt Bool}
     | (⟨wr, dir⟩, q'') => some (⟨q'', (t.write wr).optionMove dir⟩ : T.Cfg)) = _
   rw [h]
 
+/-- A transition that writes `x` and moves right takes `tq L C` to `tq (x :: L) C.tail`. -/
 theorem g_right {q : T.State} {q' : Option T.State} {L C : List (Option Bool)} {x : Option Bool}
     (h : T.tr q (C.headD none) = (⟨x, some .right⟩, q')) :
     T.TransitionRelation (⟨some q, tq L C⟩ : T.Cfg) (⟨q', tq (x :: L) C.tail⟩ : T.Cfg) := by
@@ -55,6 +59,8 @@ theorem g_right {q : T.State} {q' : Option T.State} {L C : List (Option Bool)} {
   show _ = (⟨q', ((tq L C).write x).optionMove (some .right)⟩ : T.Cfg)
   rw [tq_right]
 
+/-- A transition that writes `x` and moves left takes `tq L C` to
+`tq L.tail (L.headD none :: x :: C.tail)`. -/
 theorem g_left {q : T.State} {q' : Option T.State} {L C : List (Option Bool)} {x : Option Bool}
     (h : T.tr q (C.headD none) = (⟨x, some .left⟩, q')) :
     T.TransitionRelation (⟨some q, tq L C⟩ : T.Cfg)
@@ -63,11 +69,13 @@ theorem g_left {q : T.State} {q' : Option T.State} {L C : List (Option Bool)} {x
   show _ = (⟨q', ((tq L C).write x).optionMove (some .left)⟩ : T.Cfg)
   rw [tq_left]
 
+/-- A transition that writes `x` and stays takes `tq L C` to `tq L (x :: C.tail)`. -/
 theorem g_stay {q : T.State} {q' : Option T.State} {L C : List (Option Bool)} {x : Option Bool}
     (h : T.tr q (C.headD none) = (⟨x, none⟩, q')) :
     T.TransitionRelation (⟨some q, tq L C⟩ : T.Cfg) (⟨q', tq L (x :: C.tail)⟩ : T.Cfg) :=
   g_step h rfl
 
+/-- A state that moves right over every bit, keeping it, walks over the bits `X` to its right. -/
 theorem g_walk_right {q : T.State} (h : ∀ x, T.tr q (some x) = (⟨some x, some .right⟩, some q))
     (X : List Bool) (L C : List (Option Bool)) :
     Relation.ReflTransGen T.TransitionRelation (⟨some q, tq L (sm X ++ C)⟩ : T.Cfg)
@@ -80,6 +88,8 @@ theorem g_walk_right {q : T.State} (h : ∀ x, T.tr q (some x) = (⟨some x, som
     rw [e]
     exact ih (some x :: L)
 
+/-- A state that moves left over every bit, keeping it, walks left over the bits `X` up to the
+first blank. -/
 theorem g_walk_left {q : T.State} (h : ∀ x, T.tr q (some x) = (⟨some x, some .left⟩, some q))
     (X : List Bool) (y : Bool) (L C : List (Option Bool)) :
     Relation.ReflTransGen T.TransitionRelation
@@ -135,6 +145,8 @@ abbrev RC (M : TM0.Machine Bool Λ) (S : Finset Λ) (hS : TM0.Supports M (S : Se
     (enter : Λ → CS) (x y : (WC M S hS enter).Cfg) : Prop :=
   Relation.ReflTransGen (WC M S hS enter).TransitionRelation x y
 
+/-- In state `lft`, the machine erases a run of `u` cells holding `false` to its left and stops
+at the blank beyond them. -/
 theorem lft_run (u : ℕ) (Z : List (Option Bool)) :
     RC M S hS enter
       (cg M S hS enter .lft (sm (List.replicate u false)).tail
@@ -153,6 +165,7 @@ theorem lft_run (u : ℕ) (Z : List (Option Bool)) :
     rw [e₂]
     exact ih (none :: Z)
 
+/-- In state `toD`, the machine moves right over `u` blanks. -/
 theorem toD_run (u : ℕ) (L Y : List (Option Bool)) :
     RC M S hS enter (cg M S hS enter .toD L (List.replicate u none ++ Y))
       (cg M S hS enter .toD (List.replicate u none ++ L) Y) := by
@@ -165,6 +178,8 @@ theorem toD_run (u : ℕ) (L Y : List (Option Bool)) :
     rw [e]
     exact ih (none :: L)
 
+/-- In state `trim`, the machine erases a run of `j` cells holding `false` and stops on the
+`true` before them. -/
 theorem trim_run (j : ℕ) (A Y : List (Option Bool)) :
     RC M S hS enter
       (cg M S hS enter .trim (sm (List.replicate j false) ++ some true :: A).tail
@@ -184,12 +199,14 @@ theorem trim_run (j : ℕ) (A Y : List (Option Bool)) :
     rw [e₂]
     exact ih (none :: Y)
 
+/-- Blank cells appended to a cell list do not change its `stk`. -/
 theorem stk_append_nones (X : List (Option Bool)) {Y : List (Option Bool)}
     (hY : ∀ y ∈ Y, y = none) : stk (X ++ Y) = stk X := by
   induction X with
   | nil => exact stk_nones hY
   | cons x X ih => simp only [List.cons_append, stk_cons, ih]
 
+/-- If `L` and `Y` hold only blanks, then `tq L (sm (d :: D) ++ Y)` is the tape of `d :: D`. -/
 theorem tq_final' {L Y : List (Option Bool)} (hL : ∀ x ∈ L, x = none) (hY : ∀ y ∈ Y, y = none)
     (d : Bool) (D : List Bool) : tq L (sm (d :: D) ++ Y) = BiTape.mk₁ (d :: D) := by
   simp only [tq, stk_nones hL, List.map_cons, List.cons_append, List.headD_cons, List.tail_cons,
@@ -240,8 +257,8 @@ theorem clean_run (u j : ℕ) (d : Bool) (D X₀ : List Bool) (hX : (d :: D).rev
   have hstep := g_right (T := WC M S hS enter) (q := .inr .home) (q' := none)
     (L := List.replicate u none)
     (C := none :: sm (d :: D) ++ (List.replicate j none ++ [none])) (x := none) rfl
-  have hfinal : tq (none :: List.replicate u none) (sm (d :: D) ++ (List.replicate j none ++ [none]))
-      = BiTape.mk₁ (d :: D) := by
+  have hfinal : tq (none :: List.replicate u none)
+      (sm (d :: D) ++ (List.replicate j none ++ [none])) = BiTape.mk₁ (d :: D) := by
     refine tq_final' ?_ ?_ d D
     · intro x hx
       rcases List.mem_cons.1 hx with rfl | hx
@@ -264,6 +281,8 @@ end clean
 
 /-! ### Tapes up to blanks -/
 
+/-- If `Y` ends in `true` and `X` equals `Y` up to blanks, then `X` is `Y` followed by some cells
+holding `false`. -/
 theorem mk_eq_of_last {X Y : List Bool} {Y₀ : List Bool} (h : Y.reverse = true :: Y₀)
     (he : (ListBlank.mk X : ListBlank Bool) = ListBlank.mk Y) :
     ∃ j, X = Y ++ List.replicate j false := by
@@ -276,6 +295,7 @@ theorem mk_eq_of_last {X Y : List Bool} {Y₀ : List Bool} (h : Y.reverse = true
       simp at h
   · exact ⟨n, hn⟩
 
+/-- If `L` equals the empty list up to blanks, then `L` is a list of cells holding `false`. -/
 theorem mk_nil_eq {L : List Bool} (he : (ListBlank.mk L : ListBlank Bool) = ListBlank.mk []) :
     ∃ u, L = List.replicate u false := by
   rcases Quotient.exact he with ⟨n, hn⟩ | ⟨n, hn⟩
@@ -283,6 +303,8 @@ theorem mk_nil_eq {L : List Bool} (he : (ListBlank.mk L : ListBlank Bool) = List
     exact ⟨0, by simpa using (List.append_eq_nil_iff.1 hn'.symm).1⟩
   · exact ⟨n, hn⟩
 
+/-- If `data` ends in `true` and the tape of `data` is `ab h L R`, then `L` holds only `false`
+and `h` followed by `R` is `data` followed by cells holding `false`. -/
 theorem tape_shape {data D₀ : List Bool} (hd : data.reverse = true :: D₀) {h : Option Bool}
     {L R : List Bool} (he : (Tape.mk₁ data : Tape Bool) = ab h L R) :
     ∃ u j, L = List.replicate u false ∧ h.getD false :: R = data ++ List.replicate j false := by
@@ -298,10 +320,12 @@ theorem tape_shape {data D₀ : List Bool} (hd : data.reverse = true :: D₀) {h
 
 /-! ### Blocks ending in `true` -/
 
+/-- The cell `cell false a` is not the blank. -/
 theorem cell_ne_default (a : Γ') : cell false a ≠ (default : Γ2) := fun h => by
   have := congrFun (congrArg Prod.snd h) K'.main
   simp [cell] at this
 
+/-- The cell `cell true a` is not the blank. -/
 theorem cell_true_ne_default (a : Γ') : cell true a ≠ (default : Γ2) := fun h => by
   have := congrArg Prod.fst h
   simp [cell] at this
@@ -373,7 +397,9 @@ theorem flat_last {k : ℕ} {enc : Γ2 → List.Vector Bool k}
     rw [List.flatMap_cons, List.reverse_append, hX]
     rfl
 
-/-- A partial recursive function, as a machine with a full output. -/
+/-- Every partial recursive function `g` is computed by a machine with a full output: for a block
+encoding `e₀`, `e` of the digits, the machine takes the tape of `n` to exactly the tape of `m`, for
+every `m ∈ g n`. -/
 theorem exists_compiled (g : ℕ →. ℕ) (hg : Partrec g) :
     ∃ (W : Cslib.Turing.SingleTapeTM Bool) (k : ℕ) (e₀ : List Bool) (e : Γ' → List Bool)
       (r0 r1 : List Bool),
@@ -408,7 +434,8 @@ theorem exists_compiled (g : ℕ →. ℕ) (hg : Partrec g) :
   have h2 := tr2_eval uc hv
   obtain ⟨b₁, hb₁, hb₁e⟩ := StateTransition.tr_eval (TM2to1.tr_respects M2)
     (TM2to1.trCfg_init K'.main (trList [n])) h2
-  obtain ⟨b₂, hb₂, hb₂e⟩ := StateTransition.tr_eval (TM1to1.tr_respects dec M1 encdec (enc0 := enc0))
+  obtain ⟨b₂, hb₂, hb₂e⟩ := StateTransition.tr_eval
+    (TM1to1.tr_respects dec M1 encdec (enc0 := enc0))
     (a₂ := (TM1.init ((TM2to1.trInit K'.main (trList [n])).flatMap fun x => (enc x).toList) :
       TM1.Cfg Bool (TM1to1.Λ' Γ2 _ _) _))
     (by simp only [TM1to1.trCfg, TM1.init, trTape_mk₁]; rfl) hb₁e

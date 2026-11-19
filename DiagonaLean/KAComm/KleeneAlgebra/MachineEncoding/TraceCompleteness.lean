@@ -29,7 +29,8 @@ variable {Sym : Type} [Inhabited Sym] [Fintype Sym] {M : SingleTapeTM Sym}
 
 variable (M) in
 /-- The sum of the right copies of all cell letters. -/
-noncomputable def Cr : TD (Letter Sym M.State) := ∑ o : Option Sym, R (FreeMonoid.of (Letter.cell o))
+noncomputable def Cr : TD (Letter Sym M.State) :=
+  ∑ o : Option Sym, R (FreeMonoid.of (Letter.cell o))
 
 variable (M) in
 /-- The sum of the right copies of all running head letters. -/
@@ -60,7 +61,8 @@ theorem R_wdF_le_crun (d : Data M) (hd : d.Running) : R (wdF d) ≤ crun M := by
   rw [this, map_mul, map_mul, map_mul, map_mul, crun]
   refine mul_le_mul' (mul_le_mul' (mul_le_mul' (mul_le_mul' le_rfl (R_cells_le _)) ?_)
     (R_cells_le _)) le_rfl
-  exact le_sum_of_mem (fun p : M.State × Option Sym => R (FreeMonoid.of (Letter.head (some p.1) p.2)))
+  exact le_sum_of_mem
+    (fun p : M.State × Option Sym => R (FreeMonoid.of (Letter.head (some p.1) p.2)))
     (Finset.mem_univ (q, h))
 
 variable [DecidableEq Sym] [DecidableEq M.State]

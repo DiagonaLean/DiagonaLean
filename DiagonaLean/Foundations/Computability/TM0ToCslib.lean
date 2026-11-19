@@ -3,8 +3,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import Mathlib.Computability.TuringMachine.ToPartrec
 import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
+import Mathlib.Computability.TuringMachine.ToPartrec
 
 @[expose] public section
 
@@ -41,6 +41,7 @@ abbrev WState (Stop : Type) := {q // q ∈ S} ⊕ Stop
 
 variable {M S}
 
+/-- If `M` is supported by `S` and steps from `q ∈ S` to `q'`, then `q' ∈ S`. -/
 theorem next_mem (hS : TM0.Supports M (S : Set Λ)) {q : Λ} (hq : q ∈ S) {a : Bool} {q' : Λ}
     {s : TM0.Stmt Bool} (hm : M q a = some (q', s)) : q' ∈ S := by
   obtain ⟨-, h⟩ := hS
@@ -73,45 +74,57 @@ def tp (h : Option Bool) (L R : List Bool) : BiTape Bool :=
 def ab (h : Option Bool) (L R : List Bool) : Tape Bool :=
   ⟨h.getD false, ListBlank.mk L, ListBlank.mk R⟩
 
+/-- The head of `StackTape.mapSome R` is `R.head?`. -/
 theorem mapSome_head (R : List Bool) : (StackTape.mapSome R).head = R.head? := by
   cases R <;> rfl
 
+/-- The tail of `StackTape.mapSome R` is `StackTape.mapSome R.tail`. -/
 theorem mapSome_tail (R : List Bool) : (StackTape.mapSome R).tail = StackTape.mapSome R.tail := by
   cases R <;> rfl
 
+/-- Consing `some a` onto `StackTape.mapSome L` gives `StackTape.mapSome (a :: L)`. -/
 theorem cons_some_mapSome (a : Bool) (L : List Bool) :
     StackTape.cons (some a) (StackTape.mapSome L) = StackTape.mapSome (a :: L) := rfl
 
+/-- Consing a blank onto the empty `StackTape` leaves it empty. -/
 theorem cons_none_mapSome_nil :
     StackTape.cons none (StackTape.mapSome ([] : List Bool)) = StackTape.mapSome [] := rfl
 
+/-- `R.head?.getD false` is `R.headI`. -/
 theorem headI_getD (R : List Bool) : R.head?.getD false = R.headI := by
   cases R <;> rfl
 
+/-- Writing `a` and moving right on `tp h L R` gives `tp R.head? (a :: L) R.tail`. -/
 theorem tp_move_right (h : Option Bool) (a : Bool) (L R : List Bool) :
     ((tp h L R).write (some a)).optionMove (some .right) = tp R.head? (a :: L) R.tail := by
   simp only [tp, BiTape.write, BiTape.optionMove, BiTape.move, BiTape.moveRight, mapSome_head,
     mapSome_tail, cons_some_mapSome]
 
+/-- Writing `a` and moving left on `tp h L R` gives `tp L.head? L.tail (a :: R)`. -/
 theorem tp_move_left (h : Option Bool) (a : Bool) (L R : List Bool) :
     ((tp h L R).write (some a)).optionMove (some .left) = tp L.head? L.tail (a :: R) := by
   simp only [tp, BiTape.write, BiTape.optionMove, BiTape.move, BiTape.moveLeft, mapSome_head,
     mapSome_tail, cons_some_mapSome]
 
+/-- Moving right on `ab h L R` gives `ab R.head? (h.getD false :: L) R.tail`. -/
 theorem ab_move_right (h : Option Bool) (L R : List Bool) :
     (ab h L R).move .right = ab R.head? (h.getD false :: L) R.tail := by
   simp only [ab, Tape.move, ListBlank.head_mk, ListBlank.tail_mk, ListBlank.cons_mk, headI_getD]
 
+/-- Moving left on `ab h L R` gives `ab L.head? L.tail (h.getD false :: R)`. -/
 theorem ab_move_left (h : Option Bool) (L R : List Bool) :
     (ab h L R).move .left = ab L.head? L.tail (h.getD false :: R) := by
   simp only [ab, Tape.move, ListBlank.head_mk, ListBlank.tail_mk, ListBlank.cons_mk, headI_getD]
 
+/-- Writing `x` on `ab h L R` gives `ab (some x) L R`. -/
 theorem ab_write (h : Option Bool) (x : Bool) (L R : List Bool) :
     (ab h L R).write x = ab (some x) L R := rfl
 
+/-- The `TM0` tape of `l` is `ab l.head? [] l.tail`. -/
 theorem ab_mk₁ (l : List Bool) : (Tape.mk₁ l : Tape Bool) = ab l.head? [] l.tail := by
   simp only [Tape.mk₁, Tape.mk₂, Tape.mk', ab, ListBlank.head_mk, ListBlank.tail_mk, headI_getD]
 
+/-- The Cslib tape of `l` is `tp l.head? [] l.tail`. -/
 theorem tp_mk₁ (l : List Bool) : BiTape.mk₁ l = tp l.head? [] l.tail := by
   cases l <;> rfl
 
@@ -127,15 +140,21 @@ variable {M S hS enter stopTr}
 /-- One step of `wrap`, from its transition table. -/
 theorem wrap_step {q : WState S Stop} {t : BiTape Bool} {stmt : SingleTapeTM.Stmt Bool}
     {q' : Option (WState S Stop)} (h : wrapTrG M S hS enter stopTr q t.head = (stmt, q'))
-    {w' : (wrapG M S hS enter stopTr).Cfg} (hw : w' = (⟨q', (t.write stmt.symbol).optionMove stmt.movement⟩ : (wrapG M S hS enter stopTr).Cfg)) :
-    (wrapG M S hS enter stopTr).TransitionRelation (⟨some q, t⟩ : (wrapG M S hS enter stopTr).Cfg) w' := by
+    {w' : (wrapG M S hS enter stopTr).Cfg}
+    (hw : w' = (⟨q', (t.write stmt.symbol).optionMove stmt.movement⟩ :
+      (wrapG M S hS enter stopTr).Cfg)) :
+    (wrapG M S hS enter stopTr).TransitionRelation (⟨some q, t⟩ : (wrapG M S hS enter stopTr).Cfg)
+      w' := by
   subst hw
   show (match wrapTrG M S hS enter stopTr q t.head with
     | (⟨wr, dir⟩, q'') =>
       some (⟨q'', (t.write wr).optionMove dir⟩ : (wrapG M S hS enter stopTr).Cfg)) = _
   rw [h]
 
-theorem rel_step {a b : TM0.Cfg Bool Λ} {w : (wrapG M S hS enter stopTr).Cfg} (hr : WRel M S hS enter stopTr a w)
+/-- If `w` represents `a` and `M` steps from `a` to `b`, then `wrapG` steps from `w` to some
+configuration representing `b`. -/
+theorem rel_step {a b : TM0.Cfg Bool Λ} {w : (wrapG M S hS enter stopTr).Cfg}
+    (hr : WRel M S hS enter stopTr a w)
     (hb : b ∈ TM0.step M a) :
     ∃ w', WRel M S hS enter stopTr b w' ∧ (wrapG M S hS enter stopTr).TransitionRelation w w' := by
   obtain ⟨hq, h, L, R, rfl, hT⟩ := hr
@@ -147,7 +166,8 @@ theorem rel_step {a b : TM0.Cfg Bool Λ} {w : (wrapG M S hS enter stopTr).Cfg} (
   let st : WState S Stop := .inl ⟨q', hq'⟩
   cases s with
   | write x =>
-    have htr : wrapTrG M S hS enter stopTr (.inl ⟨q, hq⟩) (tp h L R).head = (⟨some x, none⟩, some st) := by
+    have htr : wrapTrG M S hS enter stopTr (.inl ⟨q, hq⟩) (tp h L R).head =
+        (⟨some x, none⟩, some st) := by
       simp only [wrapTrG, tp]
       split <;> simp_all [st]
     exact ⟨⟨some st, tp (some x) L R⟩, ⟨hq', _, L, R, rfl, ab_write h x L R⟩, wrap_step htr rfl⟩
@@ -164,7 +184,10 @@ theorem rel_step {a b : TM0.Cfg Bool Λ} {w : (wrapG M S hS enter stopTr).Cfg} (
       exact ⟨⟨some st, tp L.head? L.tail (h.getD false :: R)⟩,
         ⟨hq', _, _, _, rfl, ab_move_left h L R⟩, wrap_step htr (by rw [tp_move_left]; rfl)⟩
 
-theorem rel_reaches {a b : TM0.Cfg Bool Λ} {w : (wrapG M S hS enter stopTr).Cfg} (hr : WRel M S hS enter stopTr a w)
+/-- If `w` represents `a` and `M` reaches `b` from `a`, then `wrapG` reaches from `w` some
+configuration representing `b`. -/
+theorem rel_reaches {a b : TM0.Cfg Bool Λ} {w : (wrapG M S hS enter stopTr).Cfg}
+    (hr : WRel M S hS enter stopTr a w)
     (hab : Reaches (TM0.step M) a b) :
     ∃ w', WRel M S hS enter stopTr b w' ∧
       Relation.ReflTransGen (wrapG M S hS enter stopTr).TransitionRelation w w' := by
@@ -217,12 +240,14 @@ abbrev wrap : SingleTapeTM Bool := wrapG M S hS (fun q => .inl (bit q)) sweepTr
 
 variable {M S hS bit}
 
-
+/-- Erasing the head of `tp h [] R` and moving right gives `tp R.head? [] R.tail`. -/
 theorem tp_erase (h : Option Bool) (R : List Bool) :
     ((tp h [] R).write none).optionMove (some .right) = tp R.head? [] R.tail := by
   simp only [tp, BiTape.write, BiTape.optionMove, BiTape.move, BiTape.moveRight, mapSome_head,
     mapSome_tail, cons_none_mapSome_nil]
 
+/-- In the erasing state for `b`, `wrap` erases the cells `R` to its right and halts with the
+tape `[b]`. -/
 theorem erase_run (b : Bool) (R : List Bool) :
     Relation.ReflTransGen (wrap M S hS bit).TransitionRelation
       (⟨some (.inr (.inr b)), tp R.head? [] R.tail⟩ : (wrap M S hS bit).Cfg)
@@ -233,6 +258,8 @@ theorem erase_run (b : Bool) (R : List Bool) :
     exact .head (wrap_step (stmt := ⟨none, some .right⟩) (q' := some (.inr (.inr b))) rfl
       (by rw [List.head?_cons, List.tail_cons]; exact (congrArg _ (tp_erase _ R)).symm)) ih
 
+/-- In the sweeping state for `b`, `wrap` reaches the halting configuration with tape `[b]` from
+every tape `tp (some x) L R`. -/
 theorem sweep_run (b : Bool) (L : List Bool) (x : Bool) (R : List Bool) :
     Relation.ReflTransGen (wrap M S hS bit).TransitionRelation
       (⟨some (.inr (.inl b)), tp (some x) L R⟩ : (wrap M S hS bit).Cfg)
@@ -240,7 +267,8 @@ theorem sweep_run (b : Bool) (L : List Bool) (x : Bool) (R : List Bool) :
   induction L generalizing x R with
   | nil =>
     refine .head (wrap_step (stmt := ⟨some x, some .left⟩) (q' := some (.inr (.inl b))) rfl
-      (w' := ⟨some (.inr (.inl b)), tp none [] (x :: R)⟩) (congrArg _ (tp_move_left _ x [] R).symm)) ?_
+      (w' := ⟨some (.inr (.inl b)), tp none [] (x :: R)⟩)
+      (congrArg _ (tp_move_left _ x [] R).symm)) ?_
     exact .head (wrap_step (stmt := ⟨none, some .right⟩) (q' := some (.inr (.inr b))) rfl
       (congrArg _ (tp_erase _ (x :: R)).symm)) (erase_run b (x :: R))
   | cons y L ih =>
@@ -249,7 +277,8 @@ theorem sweep_run (b : Bool) (L : List Bool) (x : Bool) (R : List Bool) :
       (congrArg _ (tp_move_left _ x (y :: L) R).symm)) (ih y (x :: R))
 
 variable (M S hS bit) in
-/-- **Correctness of `wrap`.** If `M` stops in `c` on `l`, then `wrap` outputs `[bit c.q]` on `l`. -/
+/-- **Correctness of `wrap`.** If `M` stops in `c` on `l`, then `wrap` outputs `[bit c.q]` on
+`l`. -/
 theorem wrap_outputs {l : List Bool} {c : TM0.Cfg Bool Λ}
     (hc : c ∈ StateTransition.eval (TM0.step M) (TM0.init l)) :
     (wrap M S hS bit).Outputs l [bit c.q] := by
