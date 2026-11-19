@@ -107,6 +107,7 @@ import DiagonaLean.Foundations.Computability.Computer
 import DiagonaLean.Foundations.Computability.CodeSim
 import DiagonaLean.Foundations.Computability.ProofRace
 import DiagonaLean.Foundations.Computability.OutputSearch
+import DiagonaLean.Foundations.Computability.MachineBridge
 
 import DiagonaLean.Foundations.CombinatoryLogic.Code
 import DiagonaLean.Foundations.CombinatoryLogic.ProofSearch
