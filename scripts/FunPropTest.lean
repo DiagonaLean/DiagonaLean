@@ -568,4 +568,60 @@ def Rose.firstKids : Rose → List Rose
   | .node _ cs => cs.take 1 ++ (cs.map Rose.firstKids).flatten
 example : Primrec Rose.firstKids := by primrec_rec
 
+/-! Option fields: Lean splits the equations by `none` and `some`. -/
+
+inductive OTree where
+  | leaf (n : ℕ)
+  | node (l : Option OTree) (k : ℕ) (r : Option OTree)
+  deriving Inhabited
+derive_primcodable OTree
+
+inductive OT where
+  | leaf (n : ℕ)
+  | node (l : Option OT) (cs : List OT) (r : Option OT)
+derive_primcodable OT
+
+example : Primrec fun n : ℕ => OTree.node (some (.leaf n)) n none := by fun_prop
+
+def OTree.sum : OTree → ℕ
+  | .leaf n => n
+  | .node l k r =>
+    (match l with | none => 0 | some t => t.sum) + k + (match r with | none => 0 | some t => t.sum)
+example : Primrec OTree.sum := by primrec_rec
+
+def OTree.sum3 : OTree → ℕ
+  | .leaf n => n
+  | .node none k none => k
+  | .node (some l) k none => l.sum3 + k
+  | .node none k (some r) => k + r.sum3
+  | .node (some l) k (some r) => l.sum3 + k + r.sum3
+@[fun_prop] theorem OTree.sum3_primrec : Primrec OTree.sum3 := by primrec_rec
+
+def OTree.leftOnly : OTree → ℕ
+  | .leaf n => n
+  | .node none k _ => k
+  | .node (some l) _ _ => l.leftOnly
+example : Primrec OTree.leftOnly := by primrec_rec
+
+def OTree.mirror : OTree → OTree
+  | .leaf n => .leaf n
+  | .node none k none => .node none k none
+  | .node (some l) k none => .node none k (some l.mirror)
+  | .node none k (some r) => .node (some r.mirror) k none
+  | .node (some l) k (some r) => .node (some r.mirror) k (some l.mirror)
+example : Primrec OTree.mirror := by primrec_rec
+
+def OT.size : OT → ℕ
+  | .leaf n => n
+  | .node l cs r => (match l with | none => 0 | some c => c.size + 1) + (cs.map OT.size).sum +
+      (match r with | none => 1 | some c => c.size)
+example : Primrec OT.size := by primrec_rec
+
+/-- A paramorphism through an option field: it uses the subtree itself. -/
+def OTree.bigLeft : OTree → ℕ
+  | .leaf n => n
+  | .node none k _ => k
+  | .node (some l) k _ => if k < l.sum3 then l.bigLeft else k
+example : Primrec OTree.bigLeft := by primrec_rec
+
 end Nested

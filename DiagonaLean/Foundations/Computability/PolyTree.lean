@@ -403,6 +403,13 @@ theorem ofFn_getElem_eq_map' {β γ : Type*} (L : List β) (F : β → γ) {n : 
   subst hn
   exact List.ofFn_getElem_eq_map ..
 
+theorem length_toList_option {β : Type*} (o : Option β) : o.toList.length = o.isSome.toNat := by
+  cases o <;> rfl
+
+theorem head?_map_toList {β γ : Type*} (o : Option β) (f : β → γ) :
+    (o.toList.map f).head? = o.map f := by
+  cases o <;> rfl
+
 /-- `l` cut into consecutive pieces of lengths `ns`. -/
 def chunks {σ : Type*} : List ℕ → List σ → List (List σ)
   | [], _ => []

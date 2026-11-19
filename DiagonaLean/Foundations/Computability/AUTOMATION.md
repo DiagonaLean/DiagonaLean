@@ -85,8 +85,8 @@ A command or deriving handler, `deriving PrimcodableW`, reads an inductive type'
 | Inductive type | Status |
 |---|---|
 | Finitely many children per constructor, `Primcodable` constructor data | Covered directly |
-| Nested, children in a `List T` | **Covered** (M13): the shape records each list's length. |
-| Nested in other containers (`Option T`, `List (List T)`, …) | Same idea, not done yet. |
+| Nested, children in a `List T` or an `Option T` | **Covered** (M13): the shape records each list's length and whether each option is `some`. |
+| Nested in other containers (`List (List T)`, …) | Same idea, not done yet. |
 | Mutual, indexed families | Need indexed W-types. Same idea, more machinery. Later. |
 | Infinitely branching (a child per `ℕ`) | Not `Primcodable` in general (functions `ℕ → T` are not finitely codable). Out of scope. |
 
@@ -215,7 +215,8 @@ and close the side goals with the layers above. With layer 2, `c₁` and `c₂` 
 * *Tactic:* `primrec_rec` accepts right-hand sides that use a list field through `List.map (fun c => … f p c …)` and `List.length`. Other uses of the subterms (paramorphisms) are rejected with a message.
 * *Tests* (`FunPropTest.lean`): rose trees, a list field between plain fields, two list fields, a type parameter, results in the type itself; and a rejected paramorphism.
 * *Paramorphisms (2026-11-19):* a right-hand side may also use the subterms themselves (`cs.map label`, `cs.take 1`); `primrec_rec` then proves the pair `(t, f t)` primitive recursive, with the results on a list field as pairs, as for plain types.
-* *Not covered yet:* other containers (`Option T`, `List (List T)`, `T × T` in a list), `foldr`/`foldl` directly over a list field (`map` first), recursion through a `filter`, and mutual families.
+* *Option fields (2026-11-19):* the shape records whether an `Option T` field is `some`, and `ofTree` has one case per assignment of `true`/`false`. The step gets `o.map (f p)`. Lean cannot prove termination for `o.map f` written directly, so users write a `match` or `none`/`some` patterns, and Lean then splits the equations; `primrec_rec` puts them back together with `Option.elim` and proves the constructor's equation by cases.
+* *Not covered yet:* other containers (`List (List T)`, `T × T` in a list), `foldr`/`foldl` directly over a list field (`map` first), recursion through a `filter`, and mutual families.
 * *Bug fixed on the way:* `primrec_rec` counted a constructor's type parameters as fields when they were variables (`PRose α` with `α` a variable).
 
 The many-sorted design that follows is still the plan for mutual families.
