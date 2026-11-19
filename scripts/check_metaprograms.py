@@ -41,6 +41,11 @@ ALLOWED = {
     },
     # not imported by `DiagonaLean.lean`; evaluates a reduction to show that it runs
     "DiagonaLean/Synthetic/EvalExample.lean": {r"#eval\b"},
+    # defines `derive_primcodable`, which only parses and elaborates generated source text as
+    # ordinary commands; the functions that change the environment directly stay forbidden here
+    "DiagonaLean/Foundations/Computability/DerivePrimcodable.lean": {
+        r":\s*command\b|\bCommandElabM?\b|\bcommand_elab\b",
+    },
 }
 
 

@@ -11,7 +11,7 @@ import DiagonaLean.Foundations.Computability.Prim
 /-! # λ-terms as natural numbers
 
 `tc` codes a locally nameless λ-term over the variables `ℕ` as a natural number, so that its
-constructors are plain arithmetic, and registers the lemmas for it with the `prim` tactic.
+constructors are plain arithmetic, and registers the lemmas for it with `fun_prop`.
 `tc` is injective (`tc_injective`).
 -/
 
@@ -55,28 +55,22 @@ section Prim
 variable {α : Type*} [Primcodable α]
 
 /-- `cb` applied to a primitive recursive function is primitive recursive. -/
-theorem prim_cb {f : α → ℕ} (hf : Primrec f) : Primrec fun x => cb (f x) :=
+@[fun_prop] theorem prim_cb {f : α → ℕ} (hf : Primrec f) : Primrec fun x => cb (f x) :=
   prim_natPair (Primrec.const 0) hf
 
 /-- `cf` applied to a primitive recursive function is primitive recursive. -/
-theorem prim_cf {f : α → ℕ} (hf : Primrec f) : Primrec fun x => cf (f x) :=
+@[fun_prop] theorem prim_cf {f : α → ℕ} (hf : Primrec f) : Primrec fun x => cf (f x) :=
   prim_natPair (Primrec.const 1) hf
 
 /-- `cl` applied to a primitive recursive function is primitive recursive. -/
-theorem prim_cl {f : α → ℕ} (hf : Primrec f) : Primrec fun x => cl (f x) :=
+@[fun_prop] theorem prim_cl {f : α → ℕ} (hf : Primrec f) : Primrec fun x => cl (f x) :=
   prim_natPair (Primrec.const 2) hf
 
 /-- `cp` applied to primitive recursive functions is primitive recursive. -/
-theorem prim_cp {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_cp {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => cp (f x) (g x) := prim_natPair (Primrec.const 3) (prim_natPair hf hg)
 
 end Prim
 
-macro_rules
-  | `(tactic| prim_step) => `(tactic| with_reducible first
-    | apply prim_cb
-    | apply prim_cf
-    | apply prim_cl
-    | apply prim_cp)
 
 end DiagonaLean.Foundations.LambdaCalculus

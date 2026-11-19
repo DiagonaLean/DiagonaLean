@@ -230,7 +230,7 @@ theorem conv_iff_checks {t u : SKI} : Conv t u ↔ ∃ k, Checks k (skc t) (skc 
 /-- `results` is primitive recursive. -/
 theorem results_prim : Primrec results := by
   unfold results
-  prim
+  fun_prop
 
 /-- `stepS` is primitive recursive. -/
 theorem stepS_prim : Primrec fun y : Stk × ℕ => stepS y.1 y.2 := by
@@ -239,9 +239,14 @@ theorem stepS_prim : Primrec fun y : Stk × ℕ => stepS y.1 y.2 := by
       (Primrec.list_getElem?.comp (results_prim.comp Primrec.fst) Primrec.snd) Primrec.fst
   exact h.of_eq fun y => (List.getD_eq_getElem?_getD ..).symm
 
+/-- `stepS` applied to primitive recursive functions is primitive recursive. -/
+@[fun_prop] theorem prim_stepS {α : Type*} [Primcodable α] {f : α → Stk} {g : α → ℕ}
+    (hf : Primrec f) (hg : Primrec g) : Primrec fun x => stepS (f x) (g x) :=
+  stepS_prim.comp (hf.pair hg)
+
 /-- Running the program with code `k` from the empty stack is primitive recursive in `k`. -/
-theorem run_prim : Primrec fun k : ℕ => run (Denumerable.ofNat (List ℕ) k) [] :=
-  Primrec.list_foldl (Primrec.ofNat _) (Primrec.const []) (stepS_prim.comp Primrec.snd).to₂
+theorem run_prim : Primrec fun k : ℕ => run (Denumerable.ofNat (List ℕ) k) [] := by
+  unfold run; fun_prop
 
 /-- `Checks` is a primitive recursive predicate. -/
 theorem checks_prim : PrimrecPred fun x : ℕ × ℕ × ℕ => Checks x.1 x.2.1 x.2.2 := by

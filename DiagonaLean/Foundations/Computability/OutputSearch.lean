@@ -45,13 +45,8 @@ theorem readOut_part : Partrec readOut := by
   · have h : Primrec fun y : (List (ℕ × ℕ) × SC) × ℕ => decide (Test y.1 y.2) :=
       test_prim.decide
     exact (h.to_comp.partrec).of_eq fun y => rfl
-  · have hit : Primrec fun y : (List (ℕ × ℕ) × SC) × ℕ => (sstep y.1.1)^[y.2] y.1.2 :=
-      Primrec.nat_iterate Primrec.snd (prim_snd Primrec.fst)
-        (sstep_prim.comp (prim_pair (prim_fst (prim_fst Primrec.fst)) Primrec.snd)).to₂
-    have h : Primrec fun y : (List (ℕ × ℕ) × SC) × ℕ => outBit ((sstep y.1.1)^[y.2] y.1.2) := by
-      unfold outBit
-      exact Primrec.ite (pred_eq (prim_fst (prim_snd (prim_snd hit))) (Primrec.const _))
-        (Primrec.const 1) (Primrec.const 0)
+  · have h : Primrec fun y : (List (ℕ × ℕ) × SC) × ℕ => outBit ((sstep y.1.1)^[y.2] y.1.2) := by
+      unfold outBit; fun_prop
     exact h.to_comp
 
 /-- **The reader returns the output bit.** If `M` outputs `[b]` on `w`, then `readOut` on the

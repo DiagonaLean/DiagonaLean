@@ -345,56 +345,45 @@ section Prim
 
 variable {α : Type*} [Primcodable α]
 
-theorem prim_rowA {f : α → ℕ} (hf : Primrec f) : Primrec fun x => rowA (f x) := by
+@[fun_prop] theorem prim_rowA {f : α → ℕ} (hf : Primrec f) : Primrec fun x => rowA (f x) := by
   unfold rowA
-  prim
+  fun_prop
 
-theorem prim_rowM {f : α → ℕ} (hf : Primrec f) : Primrec fun x => rowM (f x) := by
+@[fun_prop] theorem prim_rowM {f : α → ℕ} (hf : Primrec f) : Primrec fun x => rowM (f x) := by
   unfold rowM
-  prim
+  fun_prop
 
-theorem prim_rowX {f : α → ℕ} (hf : Primrec f) : Primrec fun x => rowX (f x) := by
+@[fun_prop] theorem prim_rowX {f : α → ℕ} (hf : Primrec f) : Primrec fun x => rowX (f x) := by
   unfold rowX
-  prim
+  fun_prop
 
-theorem prim_mkRow {a m r : α → ℕ} (ha : Primrec a) (hm : Primrec m) (hr : Primrec r) :
+@[fun_prop] theorem prim_mkRow {a m r : α → ℕ} (ha : Primrec a) (hm : Primrec m) (hr : Primrec r) :
     Primrec fun x => mkRow (a x) (m x) (r x) := by
   unfold mkRow
-  prim
+  fun_prop
 
-theorem prim_bitCode {f : α → Bool} (hf : Primrec f) : Primrec fun x => bitCode (f x) := by
+@[fun_prop] theorem prim_bitCode {f : α → Bool} (hf : Primrec f) : Primrec fun x => bitCode (f x) := by
   unfold bitCode
   exact prim_ite (pred_eq hf (Primrec.const true)) (Primrec.const _) (Primrec.const _)
 
 end Prim
 
-macro_rules
-  | `(tactic| prim_step) => `(tactic| with_reducible first
-    | apply prim_rowA
-    | apply prim_rowM
-    | apply prim_rowX
-    | apply prim_mkRow
-    | apply prim_bitCode)
 
 section Prim
 
 variable {α : Type*} [Primcodable α]
 
-theorem prim_rowFn (K : UConst) {l : α → List Bool} {q h : α → ℕ} (hl : Primrec l)
+@[fun_prop] theorem prim_rowFn (K : UConst) {l : α → List Bool} {q h : α → ℕ} (hl : Primrec l)
     (hq : Primrec q) (hh : Primrec h) : Primrec fun x => rowFn K (l x) (q x) (h x) := by
   unfold rowFn shift
-  prim
+  fun_prop
 
-theorem prim_NN (K : UConst) {l : α → List Bool} (hl : Primrec l) :
+@[fun_prop] theorem prim_NN (K : UConst) {l : α → List Bool} (hl : Primrec l) :
     Primrec fun x => NN K (l x) := by
   unfold NN
-  prim
+  fun_prop
 
 end Prim
 
-macro_rules
-  | `(tactic| prim_step) => `(tactic| with_reducible first
-    | apply prim_rowFn
-    | apply prim_NN)
 
 end DiagonaLean.Foundations.Computability
