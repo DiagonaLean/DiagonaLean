@@ -24,6 +24,6 @@ open DiagonaLean.PCP DiagonaLean.AmbigCFG DiagonaLean.Synthetic.Notation
 `pcpReducesAmbigCFG`. -/
 def ambigcfgUndecidable (b0 b1 : α) (hne : b0 ≠ b1) :
     Undecidable (fun G : AmbigCFGInstance α => G.2.DecisionProblem) := by
-  reduceFromPCP over_letters b0 b1 via pcpReducesAmbigCFG
+  reduce_from_pcp over_letters b0 b1 via pcpReducesAmbigCFG
 
 end DiagonaLean.AmbigCFG.Reduction

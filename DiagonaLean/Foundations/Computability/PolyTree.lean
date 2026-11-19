@@ -29,20 +29,25 @@ course-of-values equation (`codeFold_eq`) and agrees with the fold on codes of t
 
 `PTree` is its own inductive type rather than Mathlib's `WType`, which already has a different
 `Encodable` instance.
+
+For nested inductive types (`DerivePrimcodable.lean`), a node's children are cut into the pieces
+belonging to each field with `chunks`, which is primitive recursive (`prim_chunks`).
 -/
 
 namespace DiagonaLean.Foundations.Computability
 
 open Encodable
 
+universe u
+
 /-- Trees whose nodes carry a shape `a : α` and `ar a` children. -/
-inductive PTree (α : Type) (ar : α → ℕ) : Type where
+inductive PTree (α : Type u) (ar : α → ℕ) : Type u where
   /-- A node with shape `a` and children `cs`. -/
   | node (a : α) (cs : Fin (ar a) → PTree α ar)
 
 namespace PTree
 
-variable {α : Type} {ar : α → ℕ}
+variable {α : Type u} {ar : α → ℕ}
 
 section Encode
 
@@ -275,7 +280,7 @@ theorem mkOpt_primrec [Fact (Primrec ar)] :
   exact h.of_eq fun q => (mkOpt_eq_decodeT q.1 q.2).symm
 
 /-- `mkOpt` applied to primitive recursive functions is primitive recursive. -/
-@[fun_prop] theorem prim_mkOpt [Fact (Primrec ar)] {β : Type} [Primcodable β] {f : β → α}
+@[fun_prop] theorem prim_mkOpt [Fact (Primrec ar)] {β : Type*} [Primcodable β] {f : β → α}
     {g : β → List (PTree α ar)} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => mkOpt (f x) (g x) := mkOpt_primrec.comp hf hg
 
@@ -305,7 +310,7 @@ end Prim
 
 section Fold
 
-variable {P σ : Type}
+variable {P σ : Type*}
 
 /-- The fold of a tree with parameter `p`: a node with shape `a` gets `step p a` of the results
 on its children, in order. -/
@@ -378,9 +383,71 @@ theorem codeFold_eq (step : P → α → List σ → σ) (p : P) (n : ℕ) :
 
 end Fold
 
+/-! ### Helpers for nested inductive types -/
+
+/-- Two nodes are equal when their shapes are, and their children are, index by index. -/
+theorem node_congr {a a' : α} (h : a = a') {cs : Fin (ar a) → PTree α ar}
+    {cs' : Fin (ar a') → PTree α ar} (hc : ∀ (i : ℕ) (hi : i < ar a), cs ⟨i, hi⟩ = cs' ⟨i, h ▸ hi⟩) :
+    node a cs = node a' cs' := by
+  subst h
+  congr 1
+  funext ⟨i, hi⟩
+  exact hc i hi
+
+end PTree
+
+/-- `List.ofFn_getElem_eq_map`, for an index type `Fin n` with `n` only equal to the length. -/
+theorem ofFn_getElem_eq_map' {β γ : Type*} (L : List β) (F : β → γ) {n : ℕ}
+    (h : ∀ i : Fin n, i.val < L.length) (hn : n = L.length) :
+    List.ofFn (fun i : Fin n => F (L[i.val]'(h i))) = L.map F := by
+  subst hn
+  exact List.ofFn_getElem_eq_map ..
+
+theorem length_toList_option {β : Type*} (o : Option β) : o.toList.length = o.isSome.toNat := by
+  cases o <;> rfl
+
+theorem head?_map_toList {β γ : Type*} (o : Option β) (f : β → γ) :
+    (o.toList.map f).head? = o.map f := by
+  cases o <;> rfl
+
+/-- `l` cut into consecutive pieces of lengths `ns`. -/
+def chunks {σ : Type*} : List ℕ → List σ → List (List σ)
+  | [], _ => []
+  | n :: ns, l => l.take n :: chunks ns (l.drop n)
+
+theorem chunks_cons_append {σ : Type*} (n : ℕ) (ns : List ℕ) (A B : List σ) (h : A.length = n) :
+    chunks (n :: ns) (A ++ B) = A :: chunks ns B := by
+  subst h
+  simp [chunks]
+
+theorem chunks_singleton {σ : Type*} (n : ℕ) (A : List σ) (h : A.length = n) :
+    chunks [n] A = [A] := by
+  subst h
+  simp [chunks]
+
+theorem chunks_eq {σ : Type*} (ns : List ℕ) (l : List σ) :
+    chunks ns l = (List.range ns.length).map fun i =>
+      (l.drop (ns.take i).sum).take (ns.getD i 0) := by
+  induction ns generalizing l with
+  | nil => rfl
+  | cons n ns ih =>
+    rw [chunks, ih, List.length_cons, List.range_succ_eq_map, List.map_cons, List.map_map]
+    congr 1
+    refine List.map_congr_left fun i _ => ?_
+    simp [List.drop_drop]
+
+@[fun_prop] theorem prim_chunks {β σ : Type*} [Primcodable β] [Primcodable σ] {f : β → List ℕ}
+    {g : β → List σ} (hf : Primrec f) (hg : Primrec g) : Primrec fun x => chunks (f x) (g x) := by
+  simp only [chunks_eq]
+  fun_prop
+
+namespace PTree
+
+variable {α : Type u} {ar : α → ℕ}
+
 section FoldPrim
 
-variable {P σ : Type} [Primcodable α] [Fact (Primrec ar)] [Primcodable P] [Primcodable σ]
+variable {P σ : Type*} [Primcodable α] [Fact (Primrec ar)] [Primcodable P] [Primcodable σ]
   [Inhabited σ]
 
 /-- **Theorem B.** A fold with a primitive recursive step is primitive recursive, in the

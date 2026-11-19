@@ -24,6 +24,6 @@ undecidable, for any alphabet `α` with two distinct letters `b0`, `b1`, through
 `pcpReducesEmpCFG`. -/
 def empcfgUndecidable {α : Type} [DecidableEq α] (b0 b1 : α) (hne : b0 ≠ b1) :
     Undecidable (@DiagonaLean.EmpCFG.DecisionProblem (Term α)) := by
-  reduceFromPCP over_letters b0 b1 via pcpReducesEmpCFG
+  reduce_from_pcp over_letters b0 b1 via pcpReducesEmpCFG
 
 end EmpCFG.Reduction

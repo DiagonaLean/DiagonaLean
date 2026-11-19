@@ -32,6 +32,13 @@ definition `f` that recurses on its last argument, with any number of parameters
   decides which equation applies, and looks up every recursive call in the table of earlier
   values. The equations for this table form are proved by case analysis on `n`, with `omega` for
   the bounds;
+* on an inductive type `T` with a lemma `T.primrec_of_eqns` (from `derive_primcodable`, or written
+  by hand), applies it, with the step of each constructor read off its equation. For a nested `T`
+  (a field `xs : List T` or `o : Option T`), the right-hand side may use `xs` through
+  `List.map (fun c => … f p c …) xs` and `xs.length`, and `o` through `Option.map`, which become the
+  same over the results. Equations that Lean splits by `none` and `some` on an option field are
+  put back together with `Option.elim`. A right-hand side that uses the subterms themselves is a
+  paramorphism, proved through the pair `(t, f t)`;
 
 and closes the remaining `Primrec` goals with `fun_prop`. It fails, with a message, on
 overlapping patterns (equation lemmas with hypotheses), nested recursive calls (`f (f n)`), and
@@ -314,6 +321,174 @@ private def applyLemma (goal : MVarId) (lemName : Name) (assign : List (Name × 
   let open_ ← mvs.filterM fun mv => return !(← mv.mvarId!.isAssigned)
   return open_.map Expr.mvarId!
 
+/-- The fields of a constructor application `pat`: its arguments after the type's parameters. -/
+private def ctorFields (pat : Expr) : MetaM (Array Expr) := do
+  let np ← match pat.getAppFn with
+    | .const c _ => do
+      match (← getEnv).find? c with
+      | some (.ctorInfo ci) => pure ci.numParams
+      | _ => pure 0
+    | _ => pure 0
+  return pat.getAppArgs[np:].toArray.filter (·.isFVar)
+
+/-- For a nested inductive type: the step `fun a data res… => rhs` of constructor `ctor`, from its
+equations `es`. A recursive call `f p x` on a field `x : T` becomes its result; a list field
+`xs : List T` may be used through `List.map (fun c => … f p c …) xs` and `xs.length`, and an
+option field `o : Option T` through `Option.map`, which become the same over its results. Lean
+splits the equations of a constructor with option fields by `none` and `some y`; the step then
+does `Option.elim` on the results of those fields, with the equation that matches in each branch.
+For a paramorphism (`para`), the results are pairs `(subterm, result)`: a recursive call becomes
+the second component, a subterm the first, a list or option field used otherwise becomes its
+results mapped by `Prod.fst`, and the step also rebuilds the node. -/
+private def nestedStep (fn : Name) (fx : Fixed) (tName : Name) (recTy listTy σ P : Expr) (k : ℕ)
+    (ctor : Name) (es : Array Name) (para : Bool := false) : MetaM Expr := do
+  let listσ ← mkAppM ``List #[σ]
+  let optσ ← mkAppM ``Option #[σ]
+  let optTy ← mkAppM ``Option #[recTy]
+  let ci ← getConstInfoCtor ctor
+  let ctorTy ← instantiateForall (← instantiateTypeLevelParams ci.toConstantVal recTy.getAppFn.constLevels!)
+    recTy.getAppArgs
+  forallTelescopeReducing ctorTy fun fieldsC _ => do
+  -- 1: a field `T`, 2: a field `List T`, 3: a field `Option T`, 0: data
+  let kinds ← fieldsC.mapM fun x => do
+    let ty ← inferType x
+    if ← isDefEq ty recTy then return 1 else if ← isDefEq ty listTy then return 2
+    else if ← isDefEq ty optTy then return 3 else return (0 : ℕ)
+  let recPos := (List.range fieldsC.size).filter (kinds[·]! != 0)
+  let dataC := ((List.range fieldsC.size).filter (kinds[·]! == 0)).map (fieldsC[·]!)
+  withLocalDeclD `a P fun a => do
+  let pa ← projs a k
+  -- the results on the recursive fields, and a variable for the content of each option
+  let rec mkVars (i : ℕ) (vs : Array Expr) (k' : Array Expr → MetaM Expr) : MetaM Expr := do
+    if h : i < recPos.length then
+      let kd := kinds[recPos[i]]!
+      withLocalDeclD ((← fieldsC[recPos[i]]!.fvarId!.getUserName).appendAfter "_r")
+        (if kd == 1 then σ else if kd == 2 then listσ else optσ) fun v => mkVars (i + 1) (vs.push v) k'
+    else k' vs
+  mkVars 0 #[] fun vs => do
+  let resAt (pos : ℕ) : Expr := vs[recPos.idxOf pos]!
+  let optPos := recPos.filter (kinds[·]! == 3)
+  let rec mkRos (i : ℕ) (ros : Array Expr) (k' : Array Expr → MetaM Expr) : MetaM Expr := do
+    if h : i < optPos.length then
+      withLocalDeclD `ro σ fun r => mkRos (i + 1) (ros.push r) k'
+    else k' ros
+  mkRos 0 #[] fun ros => do
+  let roAt (pos : ℕ) : Expr := ros[optPos.idxOf pos]!
+  -- each equation: what it says about each option field (`none`: unsplit), and its right-hand
+  -- side over the shared variables
+  let mut cases : Array (Array (Option Bool) × Expr) := #[]
+  for e in es do
+    let c ← withEqn fx e k fun xs ps pat rhs => do
+      let args := pat.getAppArgs[ci.numParams:].toArray
+      unless args.size == fieldsC.size do throwError "primrec_rec: unexpected pattern in `{e}`"
+      let mut spec : Array (Option Bool) := #[]
+      -- an equation-local subterm and what replaces it: its result, or an option's content
+      let mut subRes : Array (Expr × Expr × Bool) := #[]  -- (variable, result, is it a content)
+      let mut renames : Array (Expr × Expr) := #[]
+      for pos in List.range args.size do
+        let x := args[pos]!
+        let kd := kinds[pos]!
+        if kd == 0 then
+          unless x.isFVar do throwError "primrec_rec: a data field is matched in `{e}`"
+          renames := renames.push (x, fieldsC[pos]!)
+        else if kd == 3 && !x.isFVar then
+          if x.isAppOfArity ``Option.none 1 then spec := spec.push (some false)
+          else if x.isAppOfArity ``Option.some 2 && x.appArg!.isFVar then
+            spec := spec.push (some true)
+            subRes := subRes.push (x.appArg!, roAt pos, true)
+          else throwError "primrec_rec: unsupported pattern `{x}` in `{e}`"
+        else
+          unless x.isFVar do throwError "primrec_rec: unsupported pattern `{x}` in `{e}`"
+          if kd == 3 then spec := spec.push none
+          subRes := subRes.push (x, resAt pos, false)
+      let resOf (x : Expr) : Option (Expr × Bool) := subRes.findSome? fun (y, v, b) =>
+        if y == x then some (v, b) else none
+      let rhs' ← Meta.transform rhs (pre := fun t => do
+        if isRecCall fn fx ps t then
+          if let some (v, _) := resOf t.appArg! then
+            return .done (← if para then mkAppM ``Prod.snd #[v] else pure v)
+        let isMap := t.isAppOfArity ``List.map 4 || t.isAppOfArity ``Option.map 4
+        if isMap then
+          if let some (R, false) := resOf t.appArg! then
+            let F₀ := t.appFn!.appArg!
+            let F ← if F₀.isLambda then pure F₀ else etaExpand F₀
+            let F' ← lambdaTelescope F fun cs body => do
+              let body := body.headBeta
+              unless cs.size == 1 do
+                throwError "primrec_rec: unexpected `map` over `{t.appArg!}`"
+              let c := cs[0]!
+              withLocalDeclD `r σ fun r => do
+                let body' ← Meta.transform body (pre := fun u => do
+                  if isRecCall fn fx ps u && u.appArg! == c then
+                    return .done (← if para then mkAppM ``Prod.snd #[r] else pure r)
+                  return .continue)
+                let body' ← if para then pure (body'.replaceFVar c (← mkAppM ``Prod.fst #[r]))
+                  else pure body'
+                if body'.containsFVar c.fvarId! then
+                  throwError "primrec_rec: the function mapped over `{t.appArg!}` uses its \
+                    argument other than through a recursive call of `{fn}`"
+                mkLambdaFVars #[r] body'
+            if F'.isLambda && F'.bindingBody! == .bvar 0 then return .done R
+            return .done (← mkAppM t.getAppFn.constName! #[F', R])
+        if t.isAppOfArity ``List.length 2 && !para then
+          if let some (R, false) := resOf t.appArg! then return .done (← mkAppM ``List.length #[R])
+        return .continue)
+      -- for a paramorphism, the subterms themselves, from the pairs
+      let rhs' ← if !para then pure rhs' else do
+        let subs ← subRes.mapM fun (_, v, isContent) => do
+          if isContent then return ← mkAppM ``Prod.fst #[v]
+          let kd := kinds[recPos[vs.idxOf v]!]!
+          if kd == 1 then mkAppM ``Prod.fst #[v] else
+            let fstFn ← withLocalDeclD `r σ fun r => do mkLambdaFVars #[r] (← mkAppM ``Prod.fst #[r])
+            mkAppM (if kd == 2 then ``List.map else ``Option.map) #[fstFn, v]
+        pure (rhs'.replaceFVars (subRes.map (·.1)) subs)
+      for (x, _, _) in subRes do
+        if rhs'.containsFVar x.fvarId! then
+          throwError "primrec_rec: the equation `{e}` uses the subterm `{x}` other than \
+            through recursive calls, `map` and `List.length` (a paramorphism)"
+      if (rhs'.find? (·.isConstOf fn)).isSome then
+        throwError "primrec_rec: `{fn}` calls itself on something other than a direct \
+          subterm (only structural recursion on `{tName}` is supported)"
+      let rhs' := (rhs'.replaceFVars (renames.map (·.1)) (renames.map (·.2))).replaceFVars ps pa
+      if rhs'.hasAnyFVar (fun f => xs.any (·.fvarId! == f)) then
+        throwError "primrec_rec: could not express the right-hand side of `{e}` in the step"
+      return (spec, rhs')
+    cases := cases.push c
+  -- the decision on the option fields that some equation splits
+  let splitOpts := (List.range optPos.length).filter fun j =>
+    cases.any fun (sp, _) => sp[j]!.isSome
+  let rec tree (fuel : ℕ) (j : ℕ) (cons : Array (Option Bool)) : MetaM Expr := do
+    match fuel with
+    | 0 => throwError "primrec_rec: internal error (option split)"
+    | fuel + 1 =>
+    if h : j < splitOpts.length then
+      let jj := splitOpts[j]
+      let pos := optPos[jj]!
+      let noneB ← tree fuel (j + 1) (cons.set! jj (some false))
+      let someB ← tree fuel (j + 1) (cons.set! jj (some true))
+      mkAppM ``Option.elim #[resAt pos, noneB, ← mkLambdaFVars #[roAt pos] someB]
+    else
+      let ok (sp : Array (Option Bool)) : Bool := (List.range sp.size).all fun i =>
+        match sp[i]!, cons[i]! with
+        | some b, some b' => b == b'
+        | _, _ => true
+      match cases.find? (fun (sp, _) => ok sp) with
+      | some (_, r) => pure r
+      | none => throwError "primrec_rec: `{fn}` has no equation for a combination of `none` and \
+          `some` in the option fields of `{ctor}`"
+  let body ← tree (splitOpts.length + 1) 0 (Array.replicate optPos.length none)
+  let body ← if !para then pure body else do
+    let node := mkAppN (mkAppN (mkConst ctor recTy.getAppFn.constLevels!) recTy.getAppArgs)
+      (← (List.range fieldsC.size).toArray.mapM fun pos => do
+        let kd := kinds[pos]!
+        if kd == 0 then return fieldsC[pos]!
+        let v := resAt pos
+        if kd == 1 then mkAppM ``Prod.fst #[v] else
+          let fstFn ← withLocalDeclD `r σ fun r => do mkLambdaFVars #[r] (← mkAppM ``Prod.fst #[r])
+          mkAppM (if kd == 2 then ``List.map else ``Option.map) #[fstFn, v])
+    mkAppM ``Prod.mk #[node, body]
+  mkLambdaFVars (#[a] ++ dataC.toArray ++ vs) body
+
 /-- `primrec_rec` proves `Primrec f` or `Primrec₂ f` for a recursion `f` on `ℕ` or on lists;
 see the module docstring. -/
 elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
@@ -447,15 +622,24 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
       throwError "primrec_rec: `{fn}` recurses on `{tName}`, which has no lemma `{lemName}`"
     -- the equation lemma of each constructor
     let mut byCtor : Std.HashMap Name Name := {}
+    let mut byCtorAll : Std.HashMap Name (Array Name) := {}
     for e in eqns do
       let c ← withEqn fx e k fun _ _ pat _ => do
         let .const c _ := pat.getAppFn
           | throwError "primrec_rec: the equation `{e}` does not match a constructor"
         pure c
       byCtor := byCtor.insert c e
+      byCtorAll := byCtorAll.insert c ((byCtorAll.getD c #[]).push e)
     -- a paramorphism: some right-hand side uses a subterm outside a recursive call
-    let para ← eqns.anyM fun e => withEqn fx e k fun _ ps pat rhs => do
-      let fields := pat.getAppArgs.filter (·.isFVar)
+    -- a nested type (fields of type `List T`): the step gets the results on each field
+    let nested := (← getConstInfoInduct tName).isNested
+    let listTy ← mkAppM ``List #[recTy]
+    let σ₀ ← withEqn fx eqns[0]! k fun _ _ _ rhs => inferType rhs
+    let para ← if nested then byCtorAll.toList.anyM fun (c, es) => do
+        try discard <| nestedStep fn fx tName recTy listTy σ₀ P k c es; pure false
+        catch _ => pure true
+      else eqns.anyM fun e => withEqn fx e k fun _ ps pat rhs => do
+      let fields ← ctorFields pat
       let recFields ← fields.filterM fun x => do isDefEq (← inferType x) recTy
       let rhs' ← Meta.transform rhs (pre := fun t => do
         if isRecCall fn fx ps t then
@@ -463,7 +647,6 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
         return .continue)
       return recFields.any fun r => (rhs'.find? (· == r)).isSome
     -- for a paramorphism, prove the pair `(t, f p t)` primitive recursive instead
-    let σ₀ ← withEqn fx eqns[0]! k fun _ _ _ rhs => inferType rhs
     let goal₃ ← if !para then pure goal₂ else do
       let F₃ ← withLocalDeclD `a P fun a => withLocalDeclD `t recTy fun t => do
         mkLambdaFVars #[a, t] (← mkAppM ``Prod.mk #[t, (mkApp2 F₂ a t).headBeta])
@@ -514,10 +697,11 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
       let σ ← if para then mkAppM ``Prod #[recTy, σ₀] else pure σ₀
       let listσ ← mkAppM ``List #[σ]
       let dflt ← mkAppOptM ``Inhabited.default #[σ, none]
-      let g ← withLocalDeclD `a P fun a => withLocalDeclD `rs listσ fun rs => do
+      let g ← if nested then nestedStep fn fx tName recTy listTy σ P k c (byCtorAll.getD c #[e]) para else
+        withLocalDeclD `a P fun a => withLocalDeclD `rs listσ fun rs => do
         let pa ← projs a k
         withEqn fx e k fun _ ps pat rhs => do
-          let fields := pat.getAppArgs.filter (·.isFVar)
+          let fields ← ctorFields pat
           let recFields ← fields.filterM fun x => do isDefEq (← inferType x) recTy
           let dataFields ← fields.filterM fun x => return !(recFields.contains x)
           let entry (j : ℕ) : MetaM Expr := mkAppM ``List.getD #[rs, mkNatLit j, dflt]
@@ -539,8 +723,39 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
             mkAppM ``Prod.mk #[node, rhs'']
           mkLambdaFVars (#[a] ++ dataFields ++ #[rs]) (body.replaceFVars ps pa)
       unless ← isDefEq gmv g do
-        throwError "primrec_rec: the equation `{e}` does not fit `{lemName}`"
-      if para then
+        throwError "primrec_rec: the equation `{e}` does not fit `{lemName}`: \
+          `{g} : {← inferType g}` against `{← inferType gmv}`"
+      if nested then
+        -- prove `f p (c fields) = g p data (f p x) (xs.map (f p)) …` from the equations, by cases
+        -- on the option fields
+        let es := byCtorAll.getD c #[e]
+        let lems ← (es.map mkIdent).mapM fun i => `(Parser.Tactic.simpLemma| $i:ident)
+        let ci ← getConstInfoCtor c
+        let ctorTy ← instantiateForall
+          (← instantiateTypeLevelParams ci.toConstantVal recTy.getAppFn.constLevels!) recTy.getAppArgs
+        let optTy ← mkAppM ``Option #[recTy]
+        let optIdx ← forallTelescopeReducing ctorTy fun xs _ =>
+          (List.range xs.size).filterM fun i => do isDefEq (← inferType xs[i]!) optTy
+        let names := (List.range ci.numFields).toArray.map fun i => mkIdent (Name.mkSimple s!"x{i}")
+        setGoals [mv.mvarId!]
+        evalTactic (← `(tactic| intro p $names*))
+        for i in optIdx do
+          let nm := names[i]!
+          evalTactic (← `(tactic| all_goals cases $nm:ident))
+        evalTactic (← `(tactic| all_goals first
+          | (simp only [$lems,*, List.map_map, Option.map_map, Function.comp_def,
+              List.length_map, Option.map_some, Option.map_none, Option.elim_some,
+              Option.elim_none]; done)
+          | (simp only [$lems,*, List.map_map, Option.map_map, Function.comp_def,
+              List.length_map, Option.map_some, Option.map_none, Option.elim_some,
+              Option.elim_none]; rfl)
+          | (simp only [$lems,*, List.map_map, Option.map_map, Function.comp_def,
+              List.length_map, List.map_id', Option.map_id', Prod.mk.injEq, Option.map_some,
+              Option.map_none, Option.elim_some, Option.elim_none]; done)
+          | simp [$lems,*, List.map_map, Option.map_map, Function.comp_def]))
+        unless (← getGoals).isEmpty do
+          throwError "primrec_rec: could not prove the equation for `{e}` in the form of `{lemName}`"
+      else if para then
         -- prove `(c fields, f p (c fields)) = g p data [(r, f p r), …]` from the equation
         let eqId := mkIdent e
         setGoals [mv.mvarId!]
