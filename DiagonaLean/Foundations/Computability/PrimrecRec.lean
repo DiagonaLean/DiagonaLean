@@ -32,6 +32,10 @@ definition `f` that recurses on its last argument, with any number of parameters
   decides which equation applies, and looks up every recursive call in the table of earlier
   values. The equations for this table form are proved by case analysis on `n`, with `omega` for
   the bounds;
+* on an inductive type `T` with a lemma `T.primrec_of_eqns` (from `derive_primcodable`, or written
+  by hand), applies it, with the step of each constructor read off its equation. For a nested `T`
+  (a field `xs : List T`), the right-hand side may use `xs` through `List.map (fun c => … f p c …) xs`
+  and `xs.length`, which become the same over the list of results on `xs`;
 
 and closes the remaining `Primrec` goals with `fun_prop`. It fails, with a message, on
 overlapping patterns (equation lemmas with hypotheses), nested recursive calls (`f (f n)`), and
@@ -314,6 +318,76 @@ private def applyLemma (goal : MVarId) (lemName : Name) (assign : List (Name × 
   let open_ ← mvs.filterM fun mv => return !(← mv.mvarId!.isAssigned)
   return open_.map Expr.mvarId!
 
+/-- The fields of a constructor application `pat`: its arguments after the type's parameters. -/
+private def ctorFields (pat : Expr) : MetaM (Array Expr) := do
+  let np ← match pat.getAppFn with
+    | .const c _ => do
+      match (← getEnv).find? c with
+      | some (.ctorInfo ci) => pure ci.numParams
+      | _ => pure 0
+    | _ => pure 0
+  return pat.getAppArgs[np:].toArray.filter (·.isFVar)
+
+/-- For a nested inductive type: the step `fun a data rs… => rhs` of the equation `e`, with a
+recursive call `f p x` on a field `x : T` replaced by its result, and a list field `xs : List T`
+used only through `List.map (fun c => … f p c …) xs` and `xs.length`, rewritten over the list of
+its results. -/
+private def nestedStep (fn : Name) (fx : Fixed) (tName : Name) (recTy listTy σ P : Expr) (k : ℕ)
+    (e : Name) : MetaM Expr := do
+  let listσ ← mkAppM ``List #[σ]
+  withLocalDeclD `a P fun a => do
+    let pa ← projs a k
+    withEqn fx e k fun _ ps pat rhs => do
+      let fields ← ctorFields pat
+      let kinds ← fields.mapM fun x => do
+        let ty ← inferType x
+        if ← isDefEq ty recTy then return 1 else if ← isDefEq ty listTy then return 2 else return 0
+      let recs := (fields.zip kinds).filter (·.2 != 0)
+      let dataFields := ((fields.zip kinds).filter (·.2 == 0)).map (·.1)
+      let rec go (i : ℕ) (vs : Array Expr) : MetaM Expr := do
+        if h : i < recs.size then
+          let (x, kd) := recs[i]
+          let nm := (← x.fvarId!.getUserName).appendAfter "_r"
+          withLocalDeclD nm (if kd == 1 then σ else listσ) fun v => go (i + 1) (vs.push v)
+        else
+          let resOf (x : Expr) : Option Expr := (recs.zip vs).findSome? fun ((y, _), v) =>
+            if y == x then some v else none
+          let rhs' ← Meta.transform rhs (pre := fun t => do
+            if isRecCall fn fx ps t then
+              if let some v := resOf t.appArg! then return .done v
+            if t.isAppOfArity ``List.map 4 then
+              if let some R := resOf t.appArg! then
+                let F₀ := t.appFn!.appArg!
+                let F ← if F₀.isLambda then pure F₀ else etaExpand F₀
+                let F' ← lambdaTelescope F fun cs body => do
+                  let body := body.headBeta
+                  unless cs.size == 1 do
+                    throwError "primrec_rec: unexpected `List.map` over `{t.appArg!}`"
+                  let c := cs[0]!
+                  withLocalDeclD `r σ fun r => do
+                    let body' ← Meta.transform body (pre := fun u => do
+                      if isRecCall fn fx ps u && u.appArg! == c then return .done r
+                      return .continue)
+                    if body'.containsFVar c.fvarId! then
+                      throwError "primrec_rec: the function mapped over `{t.appArg!}` uses its \
+                        argument other than through a recursive call of `{fn}`"
+                    mkLambdaFVars #[r] body'
+                if F'.isLambda && F'.bindingBody! == .bvar 0 then return .done R
+                return .done (← mkAppM ``List.map #[F', R])
+            if t.isAppOfArity ``List.length 2 then
+              if let some R := resOf t.appArg! then return .done (← mkAppM ``List.length #[R])
+            return .continue)
+          for (x, _) in recs do
+            if rhs'.containsFVar x.fvarId! then
+              throwError "primrec_rec: the equation `{e}` uses the subterm `{x}` other than \
+                through recursive calls, `List.map` and `List.length` (paramorphisms on nested \
+                types are not supported)"
+          if (rhs'.find? (·.isConstOf fn)).isSome then
+            throwError "primrec_rec: `{fn}` calls itself on something other than a direct \
+              subterm (only structural recursion on `{tName}` is supported)"
+          mkLambdaFVars (#[a] ++ dataFields ++ vs) (rhs'.replaceFVars ps pa)
+      go 0 #[]
+
 /-- `primrec_rec` proves `Primrec f` or `Primrec₂ f` for a recursion `f` on `ℕ` or on lists;
 see the module docstring. -/
 elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
@@ -454,8 +528,11 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
         pure c
       byCtor := byCtor.insert c e
     -- a paramorphism: some right-hand side uses a subterm outside a recursive call
-    let para ← eqns.anyM fun e => withEqn fx e k fun _ ps pat rhs => do
-      let fields := pat.getAppArgs.filter (·.isFVar)
+    -- a nested type (fields of type `List T`): the step gets the results on each field
+    let nested := (← getConstInfoInduct tName).isNested
+    let listTy ← mkAppM ``List #[recTy]
+    let para ← if nested then pure false else eqns.anyM fun e => withEqn fx e k fun _ ps pat rhs => do
+      let fields ← ctorFields pat
       let recFields ← fields.filterM fun x => do isDefEq (← inferType x) recTy
       let rhs' ← Meta.transform rhs (pre := fun t => do
         if isRecCall fn fx ps t then
@@ -514,10 +591,11 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
       let σ ← if para then mkAppM ``Prod #[recTy, σ₀] else pure σ₀
       let listσ ← mkAppM ``List #[σ]
       let dflt ← mkAppOptM ``Inhabited.default #[σ, none]
-      let g ← withLocalDeclD `a P fun a => withLocalDeclD `rs listσ fun rs => do
+      let g ← if nested then nestedStep fn fx tName recTy listTy σ P k e else
+        withLocalDeclD `a P fun a => withLocalDeclD `rs listσ fun rs => do
         let pa ← projs a k
         withEqn fx e k fun _ ps pat rhs => do
-          let fields := pat.getAppArgs.filter (·.isFVar)
+          let fields ← ctorFields pat
           let recFields ← fields.filterM fun x => do isDefEq (← inferType x) recTy
           let dataFields ← fields.filterM fun x => return !(recFields.contains x)
           let entry (j : ℕ) : MetaM Expr := mkAppM ``List.getD #[rs, mkNatLit j, dflt]
@@ -539,8 +617,19 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
             mkAppM ``Prod.mk #[node, rhs'']
           mkLambdaFVars (#[a] ++ dataFields ++ #[rs]) (body.replaceFVars ps pa)
       unless ← isDefEq gmv g do
-        throwError "primrec_rec: the equation `{e}` does not fit `{lemName}`"
-      if para then
+        throwError "primrec_rec: the equation `{e}` does not fit `{lemName}`: \
+          `{g} : {← inferType g}` against `{← inferType gmv}`"
+      if nested then
+        -- prove `f p (c fields) = g p data (f p x) (xs.map (f p)) …` from the equation
+        let eqId := mkIdent e
+        setGoals [mv.mvarId!]
+        evalTactic (← `(tactic| (intros; first
+          | (simp only [$eqId:ident, List.map_map, Function.comp_def, List.length_map]; done)
+          | (simp only [$eqId:ident, List.map_map, Function.comp_def, List.length_map]; rfl)
+          | simp [$eqId:ident, List.map_map, Function.comp_def])))
+        unless (← getGoals).isEmpty do
+          throwError "primrec_rec: could not prove the equation for `{e}` in the form of `{lemName}`"
+      else if para then
         -- prove `(c fields, f p (c fields)) = g p data [(r, f p r), …]` from the equation
         let eqId := mkIdent e
         setGoals [mv.mvarId!]

@@ -456,3 +456,73 @@ example : Primrec fun n : ℕ => (List.range n).insert 3 := by fun_prop
 example : Primrec fun n : ℕ => (List.range n).zipIdx := by fun_prop
 example : Primrec fun n : ℕ => (List.range n) ×ˢ (List.range n) := by fun_prop
 example : Primrec fun n : ℕ => (List.range n).foldl max 0 := by fun_prop
+
+/-! ### `derive_primcodable` and `primrec_rec` on nested types (fields of type `List T`) -/
+
+section Nested
+
+inductive Rose where
+  | node (a : ℕ) (cs : List Rose)
+  deriving Inhabited
+derive_primcodable Rose
+
+inductive Mix where
+  | leaf (n : ℕ)
+  | bin (l : Mix) (b : Bool) (cs : List Mix) (r : Mix)
+derive_primcodable Mix
+
+inductive Three where
+  | nil
+  | one (k : ℕ) (t : Three)
+  | two (xs : List Three) (b : Bool) (ys : List Three)
+derive_primcodable Three
+
+inductive PRose (α : Type) where
+  | node (a : α) (cs : List (PRose α))
+derive_primcodable PRose
+
+example : Primrec fun n : ℕ => Rose.node n [Rose.node (n + 1) [], Rose.node 0 []] := by fun_prop
+
+def Rose.size : Rose → ℕ
+  | .node a cs => a + (cs.map Rose.size).sum
+example : Primrec Rose.size := by primrec_rec
+
+def Rose.depth : Rose → ℕ
+  | .node _ cs => (cs.map fun c => c.depth + 1).foldr max 0
+example : Primrec Rose.depth := by primrec_rec
+
+def Rose.mirror : Rose → Rose
+  | .node a cs => .node a (cs.map Rose.mirror).reverse
+example : Primrec Rose.mirror := by primrec_rec
+
+def Rose.width : Rose → ℕ
+  | .node _ cs => cs.length + (cs.map Rose.width).foldr max 0
+example : Primrec Rose.width := by primrec_rec
+
+def Rose.scale (k : ℕ) : Rose → Rose
+  | .node a cs => .node (a * k) (cs.map (Rose.scale k))
+example : Primrec₂ Rose.scale := by primrec_rec
+
+def Mix.total : Mix → ℕ
+  | .leaf n => n
+  | .bin l b cs r => l.total + (if b then (cs.map Mix.total).sum else cs.length) + r.total
+example : Primrec Mix.total := by primrec_rec
+
+def Three.count : Three → ℕ
+  | .nil => 1
+  | .one k t => k + t.count
+  | .two xs _ ys => (xs.map Three.count).sum * (ys.map Three.count).sum
+example : Primrec Three.count := by primrec_rec
+
+def PRose.flat {α : Type} : PRose α → List α
+  | .node a cs => a :: (cs.map PRose.flat).flatten
+example {α : Type} [Primcodable α] : Primrec (@PRose.flat α) := by primrec_rec
+
+/-- A paramorphism on a nested type (it looks at the children themselves): not supported. -/
+def Rose.kids : Rose → ℕ
+  | .node _ cs => (cs.map fun c => match c with | .node a _ => a).sum + (cs.map Rose.kids).sum
+example : True := by
+  fail_if_success (have : Primrec Rose.kids := by primrec_rec)
+  trivial
+
+end Nested
