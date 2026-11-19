@@ -331,9 +331,11 @@ private def ctorFields (pat : Expr) : MetaM (Array Expr) := do
 /-- For a nested inductive type: the step `fun a data rs… => rhs` of the equation `e`, with a
 recursive call `f p x` on a field `x : T` replaced by its result, and a list field `xs : List T`
 used only through `List.map (fun c => … f p c …) xs` and `xs.length`, rewritten over the list of
-its results. -/
+its results. For a paramorphism (`para`), the results are pairs `(subterm, result)`: a recursive
+call becomes the second component, a subterm the first, and a list field `xs` used otherwise
+becomes `R.map Prod.fst`; the step then also rebuilds the node. -/
 private def nestedStep (fn : Name) (fx : Fixed) (tName : Name) (recTy listTy σ P : Expr) (k : ℕ)
-    (e : Name) : MetaM Expr := do
+    (e : Name) (para : Bool := false) : MetaM Expr := do
   let listσ ← mkAppM ``List #[σ]
   withLocalDeclD `a P fun a => do
     let pa ← projs a k
@@ -354,7 +356,8 @@ private def nestedStep (fn : Name) (fx : Fixed) (tName : Name) (recTy listTy σ 
             if y == x then some v else none
           let rhs' ← Meta.transform rhs (pre := fun t => do
             if isRecCall fn fx ps t then
-              if let some v := resOf t.appArg! then return .done v
+              if let some v := resOf t.appArg! then
+                return .done (← if para then mkAppM ``Prod.snd #[v] else pure v)
             if t.isAppOfArity ``List.map 4 then
               if let some R := resOf t.appArg! then
                 let F₀ := t.appFn!.appArg!
@@ -366,17 +369,35 @@ private def nestedStep (fn : Name) (fx : Fixed) (tName : Name) (recTy listTy σ 
                   let c := cs[0]!
                   withLocalDeclD `r σ fun r => do
                     let body' ← Meta.transform body (pre := fun u => do
-                      if isRecCall fn fx ps u && u.appArg! == c then return .done r
+                      if isRecCall fn fx ps u && u.appArg! == c then
+                        return .done (← if para then mkAppM ``Prod.snd #[r] else pure r)
                       return .continue)
+                    let body' ← if para then pure (body'.replaceFVar c (← mkAppM ``Prod.fst #[r]))
+                      else pure body'
                     if body'.containsFVar c.fvarId! then
                       throwError "primrec_rec: the function mapped over `{t.appArg!}` uses its \
                         argument other than through a recursive call of `{fn}`"
                     mkLambdaFVars #[r] body'
                 if F'.isLambda && F'.bindingBody! == .bvar 0 then return .done R
                 return .done (← mkAppM ``List.map #[F', R])
-            if t.isAppOfArity ``List.length 2 then
+            if t.isAppOfArity ``List.length 2 && !para then
               if let some R := resOf t.appArg! then return .done (← mkAppM ``List.length #[R])
             return .continue)
+          -- for a paramorphism, the subterms themselves, from the pairs
+          let fstOf (kd : ℕ) (v : Expr) : MetaM Expr := do
+            if kd == 1 then mkAppM ``Prod.fst #[v] else
+              let fstFn ← withLocalDeclD `r σ fun r => do mkLambdaFVars #[r] (← mkAppM ``Prod.fst #[r])
+              mkAppM ``List.map #[fstFn, v]
+          let recXs := recs.map (·.1)
+          if para then
+            let subs ← (recs.zip vs).mapM fun ((_, kd), v) => fstOf kd v
+            let rhs'' := rhs'.replaceFVars recXs subs
+            if (rhs''.find? (·.isConstOf fn)).isSome then
+              throwError "primrec_rec: `{fn}` calls itself on something other than a direct \
+                subterm (only structural recursion on `{tName}` is supported)"
+            let node := pat.replaceFVars recXs subs
+            let body ← mkAppM ``Prod.mk #[node, rhs'']
+            return ← mkLambdaFVars (#[a] ++ dataFields ++ vs) (body.replaceFVars ps pa)
           for (x, _) in recs do
             if rhs'.containsFVar x.fvarId! then
               throwError "primrec_rec: the equation `{e}` uses the subterm `{x}` other than \
@@ -531,7 +552,11 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
     -- a nested type (fields of type `List T`): the step gets the results on each field
     let nested := (← getConstInfoInduct tName).isNested
     let listTy ← mkAppM ``List #[recTy]
-    let para ← if nested then pure false else eqns.anyM fun e => withEqn fx e k fun _ ps pat rhs => do
+    let σ₀ ← withEqn fx eqns[0]! k fun _ _ _ rhs => inferType rhs
+    let para ← if nested then eqns.anyM fun e => do
+        try discard <| nestedStep fn fx tName recTy listTy σ₀ P k e; pure false
+        catch _ => pure true
+      else eqns.anyM fun e => withEqn fx e k fun _ ps pat rhs => do
       let fields ← ctorFields pat
       let recFields ← fields.filterM fun x => do isDefEq (← inferType x) recTy
       let rhs' ← Meta.transform rhs (pre := fun t => do
@@ -540,7 +565,6 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
         return .continue)
       return recFields.any fun r => (rhs'.find? (· == r)).isSome
     -- for a paramorphism, prove the pair `(t, f p t)` primitive recursive instead
-    let σ₀ ← withEqn fx eqns[0]! k fun _ _ _ rhs => inferType rhs
     let goal₃ ← if !para then pure goal₂ else do
       let F₃ ← withLocalDeclD `a P fun a => withLocalDeclD `t recTy fun t => do
         mkLambdaFVars #[a, t] (← mkAppM ``Prod.mk #[t, (mkApp2 F₂ a t).headBeta])
@@ -591,7 +615,7 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
       let σ ← if para then mkAppM ``Prod #[recTy, σ₀] else pure σ₀
       let listσ ← mkAppM ``List #[σ]
       let dflt ← mkAppOptM ``Inhabited.default #[σ, none]
-      let g ← if nested then nestedStep fn fx tName recTy listTy σ P k e else
+      let g ← if nested then nestedStep fn fx tName recTy listTy σ P k e para else
         withLocalDeclD `a P fun a => withLocalDeclD `rs listσ fun rs => do
         let pa ← projs a k
         withEqn fx e k fun _ ps pat rhs => do
@@ -626,6 +650,8 @@ elab (name := primrecRec) "primrec_rec" : tactic => withMainContext do
         evalTactic (← `(tactic| (intros; first
           | (simp only [$eqId:ident, List.map_map, Function.comp_def, List.length_map]; done)
           | (simp only [$eqId:ident, List.map_map, Function.comp_def, List.length_map]; rfl)
+          | (simp only [$eqId:ident, List.map_map, Function.comp_def, List.length_map,
+              List.map_id', Prod.mk.injEq]; done)
           | simp [$eqId:ident, List.map_map, Function.comp_def])))
         unless (← getGoals).isEmpty do
           throwError "primrec_rec: could not prove the equation for `{e}` in the form of `{lemName}`"
