@@ -1,16 +1,16 @@
 /-
-Copyright (c) 2026 Akhilesh Balaji. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Akhilesh Balaji
 -/
 
-import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
-
 import DiagonaLean.Halt.Basic
 
-/-
-  A Problem is defined as a Predicate on a Type X.
-  A reduction is defined using a function f : X → Y such that for all x : X, P1 x ↔ P2 (f x), where P1 : X → Prop and P2 : Y → Prop are the two problems.
+/-! # Core synthetic computability definitions
+
+## References
+
+* [Y. Forster, D. Larchey-Wendling, A. Dudenhefner, et al.,
+    *A Coq Library of Undecidable Problems*][ForsterEtAl2020]
 -/
 
 @[expose] public section
@@ -20,47 +20,88 @@ open DiagonaLean.Halt Cslib.Turing
 
 variable {X Y Z : Type*}
 
-/-! ## Core synthetic computability definitions -/
+/-- `Complement P` is the complement decision problem. -/
+def Complement (P : X → Prop) : X → Prop := fun x => ¬P x
 
-/-- `complement P` is the complement decision problem. -/
-def complement (P : X → Prop) : X → Prop := fun x => ¬P x
+/-- `Reflects b p` means provability of `p` coincides with `b = true`. -/
+def Reflects (b : Bool) (p : Prop) : Prop := p ↔ b = true
 
-/-- `reflects b p` means provability of `p` coincides with `b = true`. -/
-def reflects (b : Bool) (p : Prop) : Prop := p ↔ b = true
-
-/-- `decider f P` means `f` pointwise reflects `P` via `reflects`. -/
-def decider (f : X → Bool) (P : X → Prop) : Prop :=
-  ∀ x, reflects (f x) (P x)
+/-- `Decider f P` means `f` pointwise reflects `P` via `reflects`. -/
+def Decider (f : X → Bool) (P : X → Prop) : Prop :=
+  ∀ x, Reflects (f x) (P x)
 
 /-- `decidable P` means there exists a total Boolean decider for `P`. -/
 def SDecidable (P : X → Prop) : Prop :=
-  ∃ f : X → Bool, decider f P
+  ∃ f : X → Bool, Decider f P
 
-/-- `PropEnumerator f P` means `f` surjects onto the positive instances of `P`. -/
-def PropEnumerator (f : ℕ → Option X) (P : X → Prop) : Prop :=
+/-- `D` is a Turing-machine decider for `P` under the encoding `enc : X → List Bool`: it halts
+on `enc x` with output `[true]` when `P x` holds, and `[false]` when it does not. -/
+def TMDeciderFor (D : SingleTapeTM Bool) (enc : X → List Bool) (P : X → Prop) : Prop :=
+  ∀ x, (P x → SingleTapeTM.Outputs D (enc x) [true]) ∧
+       (¬ P x → SingleTapeTM.Outputs D (enc x) [false])
+
+/-- `P` is machine-decidable under `enc` if some `SingleTapeTM Bool` decides it via
+`TMDeciderFor`. Unlike `SDecidable`, the witness here is an actual Turing machine, so this
+predicate is not classically vacuous: `SDecidable P` holds for every `P` (via
+`Classical.propDecidable`), but `MachineDecidable enc P` genuinely requires `P` to be
+algorithmically decidable. -/
+def MachineDecidable (enc : X → List Bool) (P : X → Prop) : Prop :=
+  ∃ D : SingleTapeTM Bool, TMDeciderFor D enc P
+
+/-- `enumerator f P` means `f` surjects onto the positive instances of `P`. -/
+def Enumerator (f : ℕ → Option X) (P : X → Prop) : Prop :=
   ∀ x, P x ↔ ∃ n, f n = some x
 
-/-- `SEnumerable P` means there exists an enumerator for `P`. -/
+/-- `enumerable P` means there exists an enumerator for `P`. -/
 def SEnumerable (P : X → Prop) : Prop :=
-  ∃ f : ℕ → Option X, PropEnumerator f P
+  ∃ f : ℕ → Option X, Enumerator f P
 
 /-- `semi_decider f P` means `f` semi-decides `P` via Boolean sequences. -/
-def semi_decider (f : X → ℕ → Bool) (P : X → Prop) : Prop :=
+def SemiDecider (f : X → ℕ → Bool) (P : X → Prop) : Prop :=
   ∀ x, P x ↔ ∃ n, f x n = true
 
 /-- `semi_decidable P` means there exists a semi-decider for `P`. -/
-def semi_decidable (P : X → Prop) : Prop :=
-  ∃ f : X → ℕ → Bool, semi_decider f P
+def SemiDecidable (P : X → Prop) : Prop :=
+  ∃ f : X → ℕ → Bool, SemiDecider f P
 
-/-- `PropositionalReduction f P Q` means `f` many-one reduces `P` to `Q`. -/
-def PropositionalReduction (f : X → Y) (P : X → Prop) (Q : Y → Prop) : Prop :=
+/-- `reduction f P Q` means `f` many-one reduces `P` to `Q`. Unlike `ManyOneReduces`, `f` is a
+plain parameter here rather than existentially/structurally packaged: `Reduction f P Q` is a
+`Prop` (for a *fixed*, already-in-hand `f`), whereas `P ⪯ₘ Q` bundles the choice of `f` itself. -/
+def Reduction (f : X → Y) (P : X → Prop) (Q : Y → Prop) : Prop :=
   ∀ x, P x ↔ Q (f x)
 
-/-- `ManyOneReduces p q` means that there exists a many-one reduction from `p` to `q`. -/
-def ManyOneReduces (p : X → Prop) (q : Y → Prop) : Prop :=
-  ∃ f : X → Y, ∀ x, p x ↔ q (f x)
+/-- If `f` many-one reduces `p` to `q` then we write `p ⪯ₘ[f] q`. -/
+notation:50 p " ⪯ₘ[" f "] " q => Reduction f p q
 
+/-- Many-one reducibility: `f` witnesses `p ⪯ₘ q` when `p x ↔ q (f x)` for every `x`. Packaged
+as a structure (rather than `∃ f, ...`) so a reduction is data: `.f` projects out the witness
+function directly, without going through `Classical.choose`.
+
+**Convention, checked by `#check_reductions`.** Lean's logic is classical, so a term of this
+structure exists for almost any non-trivial `p` and `q`: the case split `if p x then a else b`,
+with `q a` and `¬ q b`, is a valid `f` with no algorithmic content. To keep `⪯ₘ` meaningful, every
+reduction is built by a definition that Lean compiles: not `noncomputable`, and without
+`implemented_by`, `extern` or `unsafe`. Lean refuses to compile a case split on an undecided `p x`,
+since the `Decidable (p x)` instance can only come from classical choice. The definition may read
+data carried by its input, such as a machine's `stateEncodable` field (see
+`PCP.Reduction.haltToPcp`).
+
+Proofs are never compiled, so a reduction is never stated as a proposition: an undecidability
+result is a definition whose value is the reduction (`Undecidable` is a type), and composing
+results composes their functions. A theorem may take reductions as hypotheses, but may not conclude
+that one exists, as `Nonempty (p ⪯ₘ q)` would.
+
+`#check_reductions` (`Synthetic/ReductionCheck.lean`), run in CI by `scripts/CheckReductions.lean`,
+checks these rules over the library. A reduction that passes runs as a Lean program; that is not a
+proof that a Turing machine computes it on encoded inputs, which is the `ComputesReduction`
+hypothesis of `not_machineDecidable_of_halt_reduces`. -/
+structure ManyOneReduces (p : X → Prop) (q : Y → Prop) where
+  /-- The reduction function. -/
+  f : X → Y
+  /-- `f` witnesses the reduction: `p ⪯ₘ[f] q`, i.e. `p x ↔ q (f x)` for every `x`. -/
+  hf : p ⪯ₘ[f] q
+
+/-- If `p` many-one reduces to `q` then we write `p ⪯ₘ q`. -/
 notation:50 p " ⪯ₘ " q => ManyOneReduces p q
-
 
 end DiagonaLean.Synthetic.Definitions

@@ -1,76 +1,48 @@
 /-
-Copyright (c) 2026 Akhilesh Balaji. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Akhilesh Balaji
 -/
 
-import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
-
 import DiagonaLean.Halt.Basic
 import DiagonaLean.Synthetic.Definitions
+import DiagonaLean.Synthetic.ReductionChain
 
-@[expose] public section
+/-! # Core undecidability definitions
+
+## References
+
+* [Y. Forster, D. Larchey-Wendling, A. Dudenhefner, et al.,
+    *A Coq Library of Undecidable Problems*][ForsterEtAl2020]
+-/
+
 
 namespace DiagonaLean.Synthetic.Notation
-open DiagonaLean.Halt Cslib.Turing DiagonaLean.Synthetic.Definitions
+open DiagonaLean.Halt DiagonaLean.Halt.Encoding Cslib.Turing DiagonaLean.Synthetic.Definitions
 
 variable {X Y : Type*}
 
-/-- The Turing machine halting problem. -/
-def HALT : SingleTapeTM Bool × List Bool → Prop := fun ⟨M, w⟩ => Halts M w
+/-- `p` is undecidable: a many-one reduction from `HaltProblem` to `p`. This is data, not a `Prop`:
+an undecidability result is a definition whose value is the reduction, and composing results
+composes their functions (`undecidabilityFromReducibility`).
 
-/-- `p` is undecidable: deciding `p` would make `complement HALT` enumerable,
-    which combined with enumerability of HALT would make HALT decidable. -/
-def undecidable (p : X → Prop) : Prop :=
-  SDecidable p → SEnumerable (complement HALT)
+Lean's logic is classical, so the bare existence of a term of this type would say nothing: the case
+split `if HaltProblem x then a else b` reduces `HaltProblem` to every `p` with a positive and a
+negative instance. That case split is not a program, and Lean refuses to compile it. So an
+undecidability result means something because it is a definition that Lean compiles, with no escape
+hatch in its dependencies; `#check_reductions` (`Synthetic/ReductionCheck.lean`) checks this in CI.
+The statement that a Turing machine computes the reduction is
+`not_machineDecidable_of_halt_reduces`. -/
+abbrev Undecidable (p : X → Prop) : Type _ := HaltProblem ⪯ₘ p
 
--- ── Auxiliary ────────────────────────────────────────────────────────────
+/-- Undecidability propagates upward along many-one reductions: the reduction from `HaltProblem`
+to `q` is the composition of the two functions. -/
+def undecidabilityFromReducibility {p : X → Prop} {q : Y → Prop}
+    (hp : Undecidable p) (hpq : p ⪯ₘ q) : Undecidable q :=
+  ReductionChain.ReducesTransitive hp hpq
 
-private lemma dec_compl {X : Type*} {p : X → Prop}
-    (h : SDecidable p) : SDecidable (complement p) := by
-  obtain ⟨f, hf⟩ := h
-  refine ⟨fun x => !f x, fun x => ?_⟩
-  constructor
-  · intro hn
-    dsimp only
-    cases hfx : f x
-    · rfl
-    · exact absurd ((hf x).mpr hfx) hn
-  · intro hfx hp
-    dsimp only at hfx
-    have : f x = true := (hf x).mp hp
-    simp [this] at hfx
-
-private lemma dec_compl' {p : X → Prop}
-    (h : SDecidable (complement (complement p))) : SDecidable p := by
-  obtain ⟨f, hf⟩ := h
-  refine ⟨f, fun x => ?_⟩
-  have key : ¬¬p x ↔ f x = true := by simpa [complement, reflects] using hf x
-  exact ⟨fun hpx => key.mp (fun hn => hn hpx),
-         fun hfx => Classical.byContradiction (key.mpr hfx)⟩
-
--- ── Main lemmas ───────────────────────────────────────────────────────────
-
-/-- Undecidability propagates upward along many-one reductions. -/
-lemma undecidability_from_reducibility {p : X → Prop} {q : Y → Prop}
-    (hp : undecidable p) (hpq : p ⪯ₘ q) : undecidable q := by
-  obtain ⟨f, hf⟩ := hpq
-  intro ⟨d, hd⟩
-  exact hp ⟨fun x => d (f x), fun x => (hf x).trans (hd (f x))⟩
-
-/-- If `¬p` is undecidable then so is `p`. -/
-lemma undecidability_from_complement {p : X → Prop}
-    (h : undecidable (complement p)) : undecidable p :=
-  fun hp => h (dec_compl hp)
-
-/-- If `¬p` is undecidable then so is `¬¬p`. -/
-lemma undecidability_to_complement {p : X → Prop}
-    (h : undecidable (complement p)) : undecidable (complement (complement p)) :=
-  fun hcc => h (dec_compl (dec_compl' hcc))
-
--- ── Tactic sugar ──────────────────────────────────────────────────────────
-
+/-- Tactic to prove undecidability by reduction from another undecidable problem.
+Translates `undec from H` to `apply undecidabilityFromReducibility H`. -/
 macro "undec" "from" H:term : tactic =>
-  `(tactic| apply undecidability_from_reducibility $H)
+  `(tactic| apply undecidabilityFromReducibility $H)
 
 end DiagonaLean.Synthetic.Notation
