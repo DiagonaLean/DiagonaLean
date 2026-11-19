@@ -10,7 +10,7 @@ Fix a universal code `u` and its SKI translation `U = u.toSKI` (Cslib's `Nat.Par
 
 For a `HaltProblem` instance `p` with data `d`, the race program `C` runs a race on input `d`: it searches for a halting run of `p` and for a proof that `inst U C d` is convertible to `FF`, and returns `1` if the halting run comes first and `0` otherwise. The reduction `reduction U C` sends `p` to `(inst U C d, FF)`. Its only classical ingredients are the finite constants `U` and the code `C` from Mathlib's recursion theorem. The race and the instance live in `Foundations/CombinatoryLogic/Race.lean`.
 
-Convertibility is `∃ k, Checks k ..` for a primitive recursive proof checker `Checks` (`Foundations/CombinatoryLogic/ProofSearch.lean`), a stack machine over pairs of term codes whose instructions are the rules of SKI conversion (`conv_iff_checks`). It follows `KACommUndecidable/KleeneAlgebra/ProofSearch.lean`.
+Convertibility is `∃ k, Checks k ..` for a primitive recursive proof checker `Checks` (`Foundations/CombinatoryLogic/ProofSearch.lean`), a stack machine over pairs of term codes whose instructions are the rules of SKI conversion (`conv_iff_checks`). It follows `KAComm/KleeneAlgebra/ProofSearch.lean`.
 
 `halt_reducesto_skiConv_spec` gives `HaltProblem ⪯ₘ[reduction U C] SKIConvProblem`, packaged as `haltReducesSKIConv`.
 

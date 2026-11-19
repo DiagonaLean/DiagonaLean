@@ -5,7 +5,7 @@
 itself and on the base the problem folders share: `Synthetic` (the notions of reduction and
 undecidability) and `Halt` (the source problem). The check follows imports transitively, so
 importing a `Synthetic` module that imports `PCP` also fails. Code that only one problem uses
-belongs in that problem's folder, as `MPCP/Normalize/` and `KACommUndecidable/KleeneAlgebra/` do.
+belongs in that problem's folder, as `MPCP/Normalize/` and `KAComm/KleeneAlgebra/` do.
 
 Usage: python3 scripts/check_layering.py [ROOT]   (ROOT defaults to the repository root)
 """

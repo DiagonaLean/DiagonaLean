@@ -27,23 +27,23 @@ graph LR
   HALT --> UTMHalt
   HALT --> SKIConv
   HALT --> BetaConv
-  HALT --> KA["KA with commutativity<br/>(T, K, L equality and inclusion)"]
+  HALT --> KA["KAComm: KA with commutativity<br/>(8 problems: T, K, L equality and L inclusion,<br/>over ℕ and over {0, 1})"]
 ```
 
-| Problem | Question | Folder | Notions proved |
+| Problem | Question | Folder | Proved |
 |---|---|---|---|
-| Halting | Does Turing machine $M$ halt on input $w$? | `Halt/` | No machine decides it (`halt_undecidable`, `halt_not_machinedecidable`). Also the self-halting problem. |
-| Universal machine halting | For a fixed weakly universal machine $U$, does $U$ halt on $w$? | `UTMHalt/` | No machine decides it |
+| Halting | Does Turing machine $M$ halt on input $w$? | `Halt/` | `¬ MachineDecidable` (`halt_not_machinedecidable`); no machine decides it or self-halting (`halt_undecidable`, `self_halt_undecidable`) |
+| Universal machine halting | For a fixed weakly universal machine $U$, does $U$ halt on $w$? | `UTMHalt/` | No machine decides it (`not_exists_haltDeciderFor_of_isWeaklyUniversal`) |
 | Modified PCP | Given tiles and a designated start tile, is there a match that begins with it? | `MPCP/` | `Undecidable` |
 | Post Correspondence Problem | Given tiles $(u_i, v_i)$, is there a nonempty sequence with $u_{i_1}\cdots u_{i_n} = v_{i_1}\cdots v_{i_n}$? | `PCP/` | `Undecidable`, over any alphabet with two letters |
 | Ambiguity of CFGs | Does a context-free grammar have two parse trees for some word? | `AmbigCFG/` | `Undecidable` |
 | Intersection of CFGs | Do the languages of two context-free grammars intersect? (Emptiness of the intersection is the complement.) | `EmpCFG/` | `Undecidable` |
 | Matrix mortality | Given a finite set of $3 \times 3$ integer matrices, does some product of them equal $0$? | `MatMort/` | `Undecidable` |
-| SKI convertibility | Do two SKI terms have a common reduct? | `SKIConv/` | Both: `Undecidable` and no machine decides it |
-| β-conversion | Are two λ-terms β-convertible? | `BetaConv/` | Both |
-| Kleene algebra with commutativity | Is $e = f$ provable in Kleene algebra (or pre-Kleene algebra) with commutativity conditions on letters? Equality and inclusion in the language model too. | `KACommUndecidable/` | Both. Includes the paper's Theorem 18 for every theory in between. |
+| SKI convertibility | Do two SKI terms have a common reduct? | `SKIConv/` | `Undecidable`, `¬ MachineDecidable` |
+| β-conversion | Are two λ-terms β-convertible? | `BetaConv/` | `Undecidable`, `¬ MachineDecidable` |
+| Kleene algebra with commutativity | Is $e = f$ provable in Kleene algebra (`KATermEq`) or pre-Kleene algebra (`TermEq`) with commutativity conditions on letters? Is $\mathcal L(e) = \mathcal L(f)$ (`LangEq`), or $\mathcal L(e) \subseteq \mathcal L(f)$ (`ModelLe`), in the language model? Each over $\Sigma = \mathbb N$ and over $\Sigma = \{0, 1\}$ (`XBool`). | `KAComm/` | `Undecidable` (for `LangEq`, `ModelLe`: of the complement), `¬ MachineDecidable`; also `¬ MachineDecidable` for every theory between pre-Kleene algebra and the language model (Theorem 18) |
 
-The Kleene algebra folder formalises A. Azevedo de Amorim, C. Zhang and M. Gaboardi, *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979). Its main results hold with no hypotheses. It also finds and repairs an error in the paper's Theorem 6. Its [README](DiagonaLean/KACommUndecidable/README.md) states the results mathematically and explains how to audit them, and [STATUS.md](DiagonaLean/KACommUndecidable/STATUS.md) records what is open.
+The Kleene algebra folder formalises A. Azevedo de Amorim, C. Zhang and M. Gaboardi, *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979). Its main results hold with no hypotheses. It also finds and repairs an error in the paper's Theorem 6. Its [README](DiagonaLean/KAComm/README.md) states the results mathematically and explains how to audit them, and [STATUS.md](DiagonaLean/KAComm/STATUS.md) records what is open.
 
 Shared machinery lives in `Foundations/`:
 
@@ -54,7 +54,7 @@ Shared machinery lives in `Foundations/`:
 
 ## Two Notions of Undecidability
 
-Lean is classical, so every proposition is "decidable" in the sense of `Classical.propDecidable`. Undecidability therefore has to be stated relative to some notion of computation. The library uses two, and the strongest results are stated in both.
+Lean is classical, so every proposition is "decidable" in the sense of `Classical.propDecidable`. Undecidability therefore has to be stated relative to some notion of computation. The library uses two: `Undecidable p` and `¬ MachineDecidable enc p`. In the table above, a problem lists each notion that is proved for it.
 
 ### 1. `Undecidable p`: a compiled many-one reduction from halting
 
@@ -91,7 +91,7 @@ This statement quantifies over actual Turing machines (Cslib's `SingleTapeTM`) r
 * *Limitation:* it is relative to the encoding. An encoding that stores the answer in its first bit makes any predicate decidable. So the library's reference encodings are proved injective, and the results come with `_of_conv` variants that hold for any encoding a machine computes from the reference one.
 
 ### Which to read
-For trust, read the `¬ MachineDecidable` theorem and the definitions it uses (see the [audit guide](DiagonaLean/KACommUndecidable/README.md#auditing-the-definitions)). For composing results and building the reduction graph, use `Undecidable`.
+For trust, read the `¬ MachineDecidable` theorem and the definitions it uses (see the [audit guide](DiagonaLean/KAComm/README.md#auditing-the-definitions)). For composing results and building the reduction graph, use `Undecidable`.
 
 ## How to Use It
 
@@ -149,15 +149,15 @@ def swappedUndecidable : Undecidable SwappedPCP :=
 `#check @name` shows a statement with all its binders, and `#print axioms name` lists what it depends on. A sound result lists only `propext`, `Classical.choice` and `Quot.sound`. For example:
 
 ```lean
-#check @DiagonaLean.KATermEq.Reduction.not_machineDecidable_kaTermEq_bool
--- ¬ MachineDecidable encBool fun i => KAEquiv DComm i.1 i.2
+#check @DiagonaLean.KAComm.KATermEqBool.Reduction.not_machineDecidable_kaTermEqBool
+-- ¬ MachineDecidable encBool KATermEqBoolProblem
 ```
 
 ### Contribute
 Read [CONTRIBUTING.md](CONTRIBUTING.md) first. It covers:
 
 * the commit conventions;
-* the folder layout: each problem has `Basic.lean` (the problem), `Reductions/X_to_Y.lean` (the reductions) and `Undecidable.lean` (the results), and `Foundations/` may depend only on `Foundations`, `Synthetic` and `Halt`;
+* the folder layout: each problem `X` has `Basic.lean` (the problem), `Reductions/Y_to_X.lean` (the reductions) and `Undecidable.lean` (the results); problems from one larger result are subfolders of a shared folder, as in `KAComm/`; and `Foundations/` may depend only on `Foundations`, `Synthetic` and `Halt`;
 * the conventions for reductions that `#check_reductions` relies on.
 
 CI runs `lake build`, `lake lint`, `#check_reductions`, `scripts/check_metaprograms.py` (no metaprogram that edits the environment) and `scripts/check_layering.py`.

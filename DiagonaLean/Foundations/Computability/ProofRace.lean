@@ -21,7 +21,7 @@ holds iff some proof of `G C d` passes the test, output `1` makes `Q` hold, and 
 it fail. Run on the code of a machine, the same argument gives that no machine decides such a
 predicate (`not_machineDecidable_of_race`). The race is shared by
 `Foundations/CombinatoryLogic/Race.lean` and `Foundations/LambdaCalculus/Race.lean`; the race in
-`KACommUndecidable/KleeneAlgebra/Race.lean` runs against the instance of a machine instead of a
+`KAComm/KleeneAlgebra/Race.lean` runs against the instance of a machine instead of a
 program.
 
 ## References

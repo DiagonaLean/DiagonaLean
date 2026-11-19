@@ -40,9 +40,9 @@ example : Computable fun n => double (double n) + 1 := by fun_prop
 
 /-! ### Library definitions -/
 
-example : Primrec DiagonaLean.KACommUndecidable.KleeneAlgebra.subC :=
-  DiagonaLean.KACommUndecidable.KleeneAlgebra.subC_prim
-example : Primrec fun n => (DiagonaLean.KACommUndecidable.KleeneAlgebra.subC n, n + 1) := by
+example : Primrec DiagonaLean.KAComm.KleeneAlgebra.subC :=
+  DiagonaLean.KAComm.KleeneAlgebra.subC_prim
+example : Primrec fun n => (DiagonaLean.KAComm.KleeneAlgebra.subC n, n + 1) := by
   fun_prop
 
 /-! ### `primrec_rec`: structural recursion from equation lemmas -/
@@ -244,7 +244,7 @@ end PTree
 
 section M7
 
-open Cslib DiagonaLean.KACommUndecidable.KleeneAlgebra
+open Cslib DiagonaLean.KAComm.KleeneAlgebra
 
 def skiSize : SKI → ℕ
   | .S => 1
