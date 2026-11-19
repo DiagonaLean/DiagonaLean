@@ -5,13 +5,16 @@ Authors: Kshitij Salunke, Aalok Thakkar, Claude Opus
 
 import Mathlib.Computability.Halting
 import DiagonaLean.Rice.Reductions.Halt_to_Rice
+import DiagonaLean.Foundations.Computability.MachineBridge
 
 @[expose] public section
 
 /-! # Rice's theorem
 
 If `C` is non-trivial (`IsNontrivial`), then `RiceProblem C` is not a computable predicate
-(`not_computablePred_rice`, from Mathlib's `ComputablePred.rice`).
+(`not_computablePred_rice`, from Mathlib's `ComputablePred.rice`). So no machine decides it, under
+any computable encoding of programs (`not_machineDecidable_rice`, through
+`not_machineDecidable_of_not_computablePred`).
 
 The undecidability results split on whether `C` contains the nowhere-defined function, which is
 itself computed by a program. If it does not and `cT` computes a function in `C`, then
@@ -31,7 +34,8 @@ since they are only known to exist.
 
 namespace DiagonaLean.Rice.Reduction
 
-open Nat.Partrec DiagonaLean.Synthetic.Notation
+open Nat.Partrec DiagonaLean.Synthetic.Notation DiagonaLean.Synthetic.Definitions
+  DiagonaLean.Foundations.Computability
 
 /-- **Rice's theorem.** If `C` is non-trivial, then `RiceProblem C` is not a computable
 predicate. -/
@@ -40,6 +44,13 @@ theorem not_computablePred_rice {C : Set (ℕ →. ℕ)} (h : IsNontrivial C) :
   obtain ⟨⟨c, hc₁⟩, d, hd⟩ := h
   exact hd (ComputablePred.rice C hc (Code.exists_code.2 ⟨c, rfl⟩) (Code.exists_code.2 ⟨d, rfl⟩)
     hc₁)
+
+/-- **No machine decides Rice's problem.** If `C` is non-trivial, no `SingleTapeTM Bool` decides
+`RiceProblem C` under a computable encoding `enc` of programs, such as `encUnary`. -/
+theorem not_machineDecidable_rice {C : Set (ℕ →. ℕ)} (h : IsNontrivial C)
+    {enc : Code → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc (RiceProblem C) :=
+  not_machineDecidable_of_not_computablePred henc (not_computablePred_rice h)
 
 /-- **Rice's problem is `Undecidable`.** If `cT` computes a function in `C` and the
 nowhere-defined function is not in `C`, then `RiceProblem C` is `Undecidable`, given a waiter
