@@ -176,6 +176,38 @@ that `fun_prop` proves computable. [`examples/Automation.lean`](examples/Automat
 guided tour of all of it (`lake env lean examples/Automation.lean`), and
 [`AUTOMATION.md`](DiagonaLean/Foundations/Computability/AUTOMATION.md) explains how it works.
 
+### Tactics and commands
+DiagonaLean defines these. Each one produces an ordinary proof or definition that the kernel
+checks.
+
+**Reductions and undecidability**
+
+| Tactic or command | What it does | Defined in |
+|---|---|---|
+| `reduceFromPCP over_letters b0 b1 via R` | Proves `Undecidable Q` from a reduction `R : PCP ⪯ₘ Q`, over the alphabet of the letters `b0 ≠ b1` | [`Synthetic/Tactics/ReduceFromPCP.lean`](DiagonaLean/Synthetic/Tactics/ReduceFromPCP.lean) |
+| `undec from H` | Reduces `Undecidable Q` to a reduction `P ⪯ₘ Q`, given `H : Undecidable P` | [`Synthetic/Undecidability.lean`](DiagonaLean/Synthetic/Undecidability.lean) |
+| `reduce_chain H` | Proves a reduction by composing with `H` and reflexivity | [`Synthetic/ReductionChain.lean`](DiagonaLean/Synthetic/ReductionChain.lean) |
+| `#check_reductions` / `#check_reductions local` | Checks that every reduction (in the library, or in the current file) is a definition Lean compiles, with no classical escape hatch | [`Synthetic/ReductionCheck.lean`](DiagonaLean/Synthetic/ReductionCheck.lean) |
+
+For example, the last definition in *Prove a new problem undecidable* above can be written
+
+```lean
+def swappedUndecidable : Undecidable SwappedPCP := by
+  reduceFromPCP over_letters true false via pcpReducesSwapped
+```
+
+**Computability**
+
+| Tactic or command | What it does | Defined in |
+|---|---|---|
+| `fun_prop` (set up for `Primrec`, `PrimrecPred`, `Computable`) | Proves that a function built by composition is primitive recursive or computable | [`Foundations/Computability/Prim.lean`](DiagonaLean/Foundations/Computability/Prim.lean) |
+| `primrec_rec` | Proves `Primrec f` or `Primrec₂ f` for `f` defined by recursion on `ℕ`, lists, or a type from `derive_primcodable`, read off `f`'s equations | [`Foundations/Computability/PrimrecRec.lean`](DiagonaLean/Foundations/Computability/PrimrecRec.lean) |
+| `derive_primcodable T` | Makes an inductive type `Primcodable`, with `fun_prop` lemmas for its constructors and the recursion principle `primrec_rec` uses; nested `List T` and `Option T` fields and universe-polymorphic types are supported | [`Foundations/Computability/DerivePrimcodable.lean`](DiagonaLean/Foundations/Computability/DerivePrimcodable.lean) |
+| `tm_computer F` | Proves `∃ R : SingleTapeTM Bool, ∀ l, R.Outputs l (F l)` for `F : List Bool → List Bool` that `fun_prop` proves computable | [`Foundations/Computability/Computer.lean`](DiagonaLean/Foundations/Computability/Computer.lean) |
+| `tm_computes F` | Reduces `∃ R, ComputesReduction R enc₁ enc₂ f` to the equation `F (enc₁ x) = enc₂ (f x)`, for the `¬ MachineDecidable` results | [`Foundations/Computability/Computer.lean`](DiagonaLean/Foundations/Computability/Computer.lean) |
+
+[`examples/Automation.lean`](examples/Automation.lean) shows the computability tactics at work.
+
 ### Inspect a result
 `#check @name` shows a statement with all its binders, and `#print axioms name` lists what it depends on. A sound result lists only `propext`, `Classical.choice` and `Quot.sound`. For example:
 
