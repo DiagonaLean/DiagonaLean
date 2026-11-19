@@ -139,9 +139,9 @@ def pcpOracle {α : Type} (P : DiagonaLean.PCP.Stack α) : Bool :=
 def bad13 {α : Type} : @DiagonaLean.PCP.DecisionProblem α ⪯ₘ fun b : Bool => b = true :=
   ⟨pcpOracle, fun P => by simp [pcpOracle, oracle_spec]⟩
 
-/-- `reduceFromPCP` with that reduction: the composite depends on the oracle too. -/
+/-- `reduce_from_pcp` with that reduction: the composite depends on the oracle too. -/
 def bad14 : Undecidable fun b : Bool => b = true := by
-  reduceFromPCP over_letters true false via bad13
+  reduce_from_pcp over_letters true false via bad13
 
 /-- A `partial def`: compiled, with no logical body. -/
 partial def spin (n : ℕ) : ℕ := spin (n + 1)
@@ -321,9 +321,9 @@ def good2 : (fun n : ℕ => Even (double n)) ⪯ₘ fun _ : ℕ => True :=
 def goodPCP : @DiagonaLean.PCP.DecisionProblem Bool ⪯ₘ @DiagonaLean.PCP.DecisionProblem Bool :=
   ⟨id, fun _ => Iff.rfl⟩
 
-/-- `reduceFromPCP` with an honest reduction and explicit letters. -/
+/-- `reduce_from_pcp` with an honest reduction and explicit letters. -/
 def good3 : Undecidable (@DiagonaLean.PCP.DecisionProblem Bool) := by
-  reduceFromPCP over_letters true false via goodPCP
+  reduce_from_pcp over_letters true false via goodPCP
 
 /-- A theorem may take reductions as hypotheses. -/
 theorem good4 {p : ℕ → Prop} (r : HaltProblem ⪯ₘ p) (x : EncodableTM Bool × List Bool) :

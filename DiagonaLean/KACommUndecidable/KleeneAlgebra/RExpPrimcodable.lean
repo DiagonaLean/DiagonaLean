@@ -4,196 +4,40 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.ExprCode
-import DiagonaLean.Foundations.Computability.PolyTree
+import DiagonaLean.Foundations.Computability.DerivePrimcodable
 import DiagonaLean.Foundations.Computability.TaggedCode
 
 @[expose] public section
 
 /-! # Regular expressions are `Primcodable`
 
-`RExp X` is the tree type `PTree (Fin 5 ⊕ X) rexpAr`: a node is one of `zero`, `one`, `plus`,
-`mul`, `star` (shapes `inl 0` to `inl 4`, with 0, 0, 2, 2 and 1 children) or a letter `inr x`
-(no children). `toTree` and `ofTree` are inverse (`rexpEquiv`), so `RExp X` is `Primcodable` for
-any `Primcodable X`, by Theorem A (`PTree.primcodable`). The constructors are primitive recursive
-(`plus_primrec` and so on), through `PTree.mkOpt`.
+`derive_primcodable` makes `RExp X` `Primcodable` for any `Primcodable X`, through its trees
+(Theorem A), with `fun_prop` lemmas for the constructors (`RExp.prim_plus` and so on) and
+structural recursion (`RExp.primrec_of_eqns`, Theorem B), which `primrec_rec` uses.
 
 The hand-made code `rc` of `ExprCode.lean` is a correct encoding: it is primitive recursive
-(`rc_primrec`, by Theorem B, `PTree.fold_primrec`), it has a primitive recursive decoder
-(`rcDec_primrec`, `rcDec_rc`), and so primitive recursion through `rc` is primitive recursion
-(`primrec_iff_rc`).
+(`rc_primrec`, by `primrec_rec`), it has a primitive recursive decoder (`rcDec_primrec`,
+`rcDec_rc`), and so primitive recursion through `rc` is primitive recursion (`primrec_iff_rc`).
 -/
+
+derive_primcodable DiagonaLean.KACommUndecidable.KleeneAlgebra.RExp
 
 namespace DiagonaLean.KACommUndecidable.KleeneAlgebra
 
-open DiagonaLean.Foundations.Computability PTree
+open DiagonaLean.Foundations.Computability
 
 namespace RExp
-
-variable {X : Type}
-
-/-- The arity of each shape of a regular expression. -/
-def rexpAr : Fin 5 ⊕ X → ℕ
-  | .inl i => if i.val = 2 ∨ i.val = 3 then 2 else if i.val = 4 then 1 else 0
-  | .inr _ => 0
-
-/-- The tree of shapes of an expression. -/
-abbrev Tree (X : Type) := PTree (Fin 5 ⊕ X) rexpAr
-
-/-- An expression as a tree. -/
-def toTree : RExp X → Tree X
-  | zero => .node (.inl 0) Fin.elim0
-  | one => .node (.inl 1) Fin.elim0
-  | sym x => .node (.inr x) Fin.elim0
-  | plus e f => .node (.inl 2) fun i => if i.val = 0 then toTree e else toTree f
-  | mul e f => .node (.inl 3) fun i => if i.val = 0 then toTree e else toTree f
-  | star e => .node (.inl 4) fun _ => toTree e
-
-/-- A tree as an expression. -/
-def ofTree : Tree X → RExp X
-  | .node (.inl ⟨0, _⟩) _ => zero
-  | .node (.inl ⟨1, _⟩) _ => one
-  | .node (.inl ⟨2, _⟩) cs => plus (ofTree (cs ⟨0, by simp [rexpAr]⟩)) (ofTree (cs ⟨1, by simp [rexpAr]⟩))
-  | .node (.inl ⟨3, _⟩) cs => mul (ofTree (cs ⟨0, by simp [rexpAr]⟩)) (ofTree (cs ⟨1, by simp [rexpAr]⟩))
-  | .node (.inl ⟨4, _⟩) cs => star (ofTree (cs ⟨0, by simp [rexpAr]⟩))
-  | .node (.inr x) _ => sym x
-
-theorem ofTree_toTree (e : RExp X) : ofTree (toTree e) = e := by
-  induction e <;> simp_all [toTree, ofTree]
-
-theorem toTree_ofTree (t : Tree X) : toTree (ofTree t) = t := by
-  induction t with
-  | node a cs ih =>
-    rcases a with ⟨_ | _ | _ | _ | _ | i, hi⟩ | x
-    · simp only [ofTree, toTree]; congr 1; funext ⟨j, hj⟩; simp at hj
-    · simp only [ofTree, toTree]; congr 1; funext ⟨j, hj⟩; simp at hj
-    · simp only [ofTree, toTree]; congr 1; funext ⟨j, hj⟩
-      rcases j with _ | _ | j
-      · simp [ih]
-      · simp [ih]
-      · simp [rexpAr] at hj
-    · simp only [ofTree, toTree]; congr 1; funext ⟨j, hj⟩
-      rcases j with _ | _ | j
-      · simp [ih]
-      · simp [ih]
-      · simp [rexpAr] at hj
-    · simp only [ofTree, toTree]; congr 1; funext ⟨j, hj⟩
-      rcases j with _ | j
-      · simp [ih]
-      · simp [rexpAr] at hj
-    · omega
-    · simp only [ofTree, toTree]; congr 1; funext ⟨j, hj⟩; simp at hj
-
-/-- Expressions and their trees. -/
-def rexpEquiv : RExp X ≃ Tree X where
-  toFun := toTree
-  invFun := ofTree
-  left_inv := ofTree_toTree
-  right_inv := toTree_ofTree
-
-section Prim
-
-variable [Primcodable X]
-
-/-- The arities are primitive recursive. -/
-instance : Fact (Primrec (rexpAr (X := X))) := ⟨(Primrec.sumCasesOn Primrec.id
-  ((Primrec.dom_finite fun i : Fin 5 =>
-    if i.val = 2 ∨ i.val = 3 then 2 else if i.val = 4 then 1 else 0).comp₂ Primrec₂.right)
-  ((Primrec.const 0).comp₂ Primrec₂.right)).of_eq fun x => by cases x <;> rfl⟩
-
-/-- **Regular expressions are `Primcodable`**, through their trees. -/
-instance primcodable : Primcodable (RExp X) := Primcodable.ofEquiv _ rexpEquiv
-
-/-- `toTree` is primitive recursive. -/
-theorem toTree_primrec : Primrec (toTree (X := X)) := Primrec.of_equiv (e := rexpEquiv)
-
-/-- `ofTree` is primitive recursive. -/
-theorem ofTree_primrec : Primrec (ofTree (X := X)) := Primrec.of_equiv_symm (e := rexpEquiv)
-
-attribute [fun_prop] toTree_primrec ofTree_primrec
-
-omit [Primcodable X] in
-/-- A constructor through `mkOpt`: building the node, then reading it back. -/
-theorem ofTree_mkOpt {a : Fin 5 ⊕ X} {l : List (Tree X)} (h : l.length = rexpAr a) :
-    (mkOpt a l).map ofTree = some (ofTree (.node a fun i => l[i.val]'(by have := i.isLt; omega))) := by
-  rw [mkOpt, dite_eq_left_of_eq_true (eq_true h)]
-  rfl
-
-/-- `plus` is primitive recursive. -/
-theorem plus_primrec : Primrec₂ (plus : RExp X → RExp X → RExp X) := by
-  have h : Primrec fun q : RExp X × RExp X =>
-      ((mkOpt (.inl 2) [toTree q.1, toTree q.2]).map ofTree).getD zero := by fun_prop
-  exact h.of_eq fun q => by
-    rw [ofTree_mkOpt (by rfl)]
-    simp [ofTree, ofTree_toTree]
-
-/-- `mul` is primitive recursive. -/
-theorem mul_primrec : Primrec₂ (mul : RExp X → RExp X → RExp X) := by
-  have h : Primrec fun q : RExp X × RExp X =>
-      ((mkOpt (.inl 3) [toTree q.1, toTree q.2]).map ofTree).getD zero := by fun_prop
-  exact h.of_eq fun q => by
-    rw [ofTree_mkOpt (by rfl)]
-    simp [ofTree, ofTree_toTree]
-
-/-- `star` is primitive recursive. -/
-theorem star_primrec : Primrec (star : RExp X → RExp X) := by
-  have h : Primrec fun e : RExp X => ((mkOpt (.inl 4) [toTree e]).map ofTree).getD zero := by
-    fun_prop
-  exact h.of_eq fun e => by
-    rw [ofTree_mkOpt (by rfl)]
-    simp [ofTree, ofTree_toTree]
-
-/-- `sym` is primitive recursive. -/
-theorem sym_primrec : Primrec (sym : X → RExp X) := by
-  have h : Primrec fun x : X => ((mkOpt (.inr x) ([] : List (Tree X))).map ofTree).getD zero := by
-    fun_prop
-  exact h.of_eq fun x => by
-    rw [ofTree_mkOpt (by rfl)]
-    simp [ofTree]
-
-@[fun_prop] theorem prim_plus {β : Type} [Primcodable β] {f g : β → RExp X} (hf : Primrec f)
-    (hg : Primrec g) : Primrec fun x => plus (f x) (g x) := plus_primrec.comp hf hg
-@[fun_prop] theorem prim_mul {β : Type} [Primcodable β] {f g : β → RExp X} (hf : Primrec f)
-    (hg : Primrec g) : Primrec fun x => mul (f x) (g x) := mul_primrec.comp hf hg
-@[fun_prop] theorem prim_star {β : Type} [Primcodable β] {f : β → RExp X} (hf : Primrec f) :
-    Primrec fun x => star (f x) := star_primrec.comp hf
-@[fun_prop] theorem prim_sym {β : Type} [Primcodable β] {f : β → X} (hf : Primrec f) :
-    Primrec fun x => sym (f x) := sym_primrec.comp hf
-
-end Prim
 
 /-! ### The hand-made code `rc` is primitive recursive -/
 
 /-- `symC` is primitive recursive. -/
-theorem symC_primrec : Primrec symC := by
+@[fun_prop] theorem symC_primrec : Primrec symC := by
   have h : Primrec fun x : ℕ ⊕ ℕ => x.elim (fun a => 2 * a) (fun a => 2 * a + 1) := by fun_prop
   exact h.of_eq fun x => by cases x <;> rfl
 
-/-- One step of `rc`, on a node with shape `s` and the codes `rs` of its children. -/
-def rcStep (_ : Unit) (s : Fin 5 ⊕ (ℕ ⊕ ℕ)) (rs : List ℕ) : ℕ :=
-  s.elim (fun i => if i.val = 0 then cz else if i.val = 1 then co
-      else if i.val = 2 then cp rs.headI rs.tail.headI
-      else if i.val = 3 then cm rs.headI rs.tail.headI else ct rs.headI)
-    fun x => cs (symC x)
-
-/-- `rc` is a fold over the tree of an expression. -/
-theorem rc_eq_fold (e : RExp (ℕ ⊕ ℕ)) : rc e = fold rcStep () (toTree e) := by
-  induction e with
-  | zero => rfl
-  | one => rfl
-  | sym x => rfl
-  | plus e f ihe ihf => simp [rc, toTree, fold, rcStep, ihe, ihf, List.ofFn, rexpAr, Fin.foldr_succ, Fin.foldr_zero]
-  | mul e f ihe ihf => simp [rc, toTree, fold, rcStep, ihe, ihf, List.ofFn, rexpAr, Fin.foldr_succ, Fin.foldr_zero]
-  | star e ih => simp [rc, toTree, fold, rcStep, ih, List.ofFn, rexpAr, Fin.foldr_succ, Fin.foldr_zero]
-
 /-- **The hand-made code `rc` is primitive recursive** with respect to the `Primcodable` encoding
 of expressions. -/
-theorem rc_primrec : Primrec rc := by
-  have hs : Primrec fun q : Unit × ((Fin 5 ⊕ (ℕ ⊕ ℕ)) × List ℕ) => rcStep q.1 q.2.1 q.2.2 := by
-    have := symC_primrec
-    unfold rcStep
-    fun_prop
-  exact (((fold_primrec hs).comp (Primrec.const ()) toTree_primrec)).of_eq fun e =>
-    (rc_eq_fold e).symm
+theorem rc_primrec : Primrec rc := by primrec_rec
 
 /-! ### Decoding `rc` codes -/
 
@@ -268,66 +112,6 @@ recursively isomorphic. -/
 theorem primrec_iff_rc {β : Type} [Primcodable β] {f : β → RExp (ℕ ⊕ ℕ)} :
     Primrec f ↔ Primrec fun b => rc (f b) :=
   TaggedCode.primrec_iff rcKids rcKids_lt rcBuild rc_spec rc_primrec rcKids_primrec rcBuild_primrec
-
-/-! ### Structural recursion on regular expressions -/
-
-/-- **Structural recursion on regular expressions is primitive recursive.** A function given by one
-equation per constructor, each with a primitive recursive right-hand side in the parameter, the
-constructor's data and the results on the subexpressions, is primitive recursive. -/
-theorem primrec_of_eqns {X P σ : Type} [Primcodable X] [Primcodable P] [Primcodable σ]
-    [Inhabited σ] {f : P → RExp X → σ} (gzero gone gplus gmul gstar : P → List σ → σ)
-    (gsym : P → X → List σ → σ)
-    (hzero : ∀ p, f p zero = gzero p []) (hone : ∀ p, f p one = gone p [])
-    (hsym : ∀ p x, f p (sym x) = gsym p x [])
-    (hplus : ∀ p e g, f p (plus e g) = gplus p [f p e, f p g])
-    (hmul : ∀ p e g, f p (mul e g) = gmul p [f p e, f p g])
-    (hstar : ∀ p e, f p (star e) = gstar p [f p e])
-    (hgzero : Primrec fun q : P × List σ => gzero q.1 q.2)
-    (hgone : Primrec fun q : P × List σ => gone q.1 q.2)
-    (hgplus : Primrec fun q : P × List σ => gplus q.1 q.2)
-    (hgmul : Primrec fun q : P × List σ => gmul q.1 q.2)
-    (hgstar : Primrec fun q : P × List σ => gstar q.1 q.2)
-    (hgsym : Primrec fun q : P × (X × List σ) => gsym q.1 q.2.1 q.2.2) : Primrec₂ f := by
-  let step : P → Fin 5 ⊕ X → List σ → σ := fun p s rs =>
-    s.elim (fun i => if i.val = 0 then gzero p rs else if i.val = 1 then gone p rs
-        else if i.val = 2 then gplus p rs else if i.val = 3 then gmul p rs else gstar p rs)
-      fun x => gsym p x rs
-  have hstep : Primrec fun q : P × ((Fin 5 ⊕ X) × List σ) => step q.1 q.2.1 q.2.2 := by
-    have lift : ∀ {g : P → List σ → σ}, (Primrec fun q : P × List σ => g q.1 q.2) →
-        Primrec fun y : (P × ((Fin 5 ⊕ X) × List σ)) × Fin 5 => g y.1.1 y.1.2.2 := fun h =>
-      h.comp ((Primrec.fst.comp Primrec.fst).pair (Primrec.snd.comp (Primrec.snd.comp Primrec.fst)))
-    have h₁ : Primrec fun y : (P × ((Fin 5 ⊕ X) × List σ)) × Fin 5 =>
-        if y.2.val = 0 then gzero y.1.1 y.1.2.2 else if y.2.val = 1 then gone y.1.1 y.1.2.2
-        else if y.2.val = 2 then gplus y.1.1 y.1.2.2 else if y.2.val = 3 then gmul y.1.1 y.1.2.2
-        else gstar y.1.1 y.1.2.2 := by
-      have := lift hgzero; have := lift hgone; have := lift hgplus; have := lift hgmul
-      have := lift hgstar
-      fun_prop
-    have h₂ : Primrec fun y : (P × ((Fin 5 ⊕ X) × List σ)) × X => gsym y.1.1 y.2 y.1.2.2 :=
-      hgsym.comp ((Primrec.fst.comp Primrec.fst).pair
-        (Primrec.snd.pair (Primrec.snd.comp (Primrec.snd.comp Primrec.fst))))
-    exact prim_sumElim (o := fun q : P × ((Fin 5 ⊕ X) × List σ) => q.2.1)
-      (f := fun y (i : Fin 5) => if i.val = 0 then gzero y.1 y.2.2 else if i.val = 1 then
-        gone y.1 y.2.2 else if i.val = 2 then gplus y.1 y.2.2 else if i.val = 3 then
-        gmul y.1 y.2.2 else gstar y.1 y.2.2)
-      (g := fun y x => gsym y.1 x y.2.2) (Primrec.fst.comp Primrec.snd) h₁ h₂
-  have heq : ∀ p e, f p e = fold step p (toTree e) := by
-    intro p e
-    induction e with
-    | zero => rw [hzero]; rfl
-    | one => rw [hone]; rfl
-    | sym x => rw [hsym]; rfl
-    | plus e g ihe ihg =>
-      rw [hplus, ihe, ihg]
-      simp [toTree, fold, step, List.ofFn, rexpAr, Fin.foldr_succ, Fin.foldr_zero]
-    | mul e g ihe ihg =>
-      rw [hmul, ihe, ihg]
-      simp [toTree, fold, step, List.ofFn, rexpAr, Fin.foldr_succ, Fin.foldr_zero]
-    | star e ih =>
-      rw [hstar, ih]
-      simp [toTree, fold, step, List.ofFn, rexpAr, Fin.foldr_succ, Fin.foldr_zero]
-  exact ((fold_primrec hstep).comp Primrec.fst (toTree_primrec.comp Primrec.snd)).of_eq
-    fun q => (heq q.1 q.2).symm
 
 end RExp
 
