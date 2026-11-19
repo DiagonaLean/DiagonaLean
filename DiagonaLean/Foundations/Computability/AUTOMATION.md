@@ -189,6 +189,38 @@ and close the side goals with the layers above. With layer 2, `c₁` and `c₂` 
 
 ## What's next
 
+### Next steps, in order (2026-11-19)
+
+**Immediate**
+
+1. Push `feat/nested-containers` and open it as a PR stacked on #39.
+2. Check CI on #39.
+
+**The PR stack** (needs the reviewers)
+
+3. Get #35 reviewed, and settle its `bitsPair` overlap with #37.
+4. Merge in order: #35, #36, #38, #39, then the `feat/nested-containers` PR. Split #38 if its size stalls review.
+
+**Applied work: new results**
+
+5. **Halt → MPCP/PCP at machine level** (recommended next feature). It gives the PCP chain, and MatMort with it, machine-level undecidability like KA, SKI and β: build the tiles from the machine's code as `dataC` does, prove that primitive recursive with `fun_prop`/`primrec_rec`, and close with `tm_computes`.
+6. **A concrete code for grammars** (rules over numbered nonterminals), which unblocks PCP → EmpCFG and PCP → AmbigCFG.
+
+**Automation gaps**
+
+7. `List (List T)` fields, and other containers (`T × T` in a list).
+8. Mutual inductive families: the many-sorted design under M13.
+9. `primrec_rec`: recursion through a `filter`; `foldr`/`foldl` directly over a list field; recursion on an argument other than the last; two lists at once (`zipWith`-shaped); calls on grandchildren and deeper.
+10. A `fun_prop` hook for `primrec_rec`, so a recursive definition needs no separately stated lemma.
+11. When a function on a right-hand side has no `fun_prop` lemma, `primrec_rec` runs into a heartbeat timeout instead of failing with a clear message.
+12. Switch `SKI` to `derive_primcodable`, as `RExp` and `Term` were; its `primrec_of_eqns` is still hand-written.
+
+**Longer term**
+
+13. M9: offer `fun_prop` for `Primrec`/`Computable` and Theorems A and B to Mathlib.
+14. M10 and M11: see *Long term* below for how hard they are.
+15. Option B, a verified compiler to Cslib's `MultiTapeTM` with step counts, only if running-time bounds become a goal (see M12).
+
 ### Where the work is
 
 | PR | Contents | Base | State (2026-11-19) |
@@ -197,6 +229,7 @@ and close the side goals with the layers above. With layer 2, `c₁` and `c₂` 
 | #36 | `prim` → `fun_prop` (M1) | #35's branch | Waiting for #35 |
 | #38 | Everything else here: M2–M8, M3b, paramorphisms, `derive_primcodable` | #36's branch | CI green on `6af24df`; later commits pushed |
 | #39 | M13 for nested types, the M12 decision, this file (`feat/nested-primcodable`) | #38's branch | Opened 2026-11-19 |
+| — | Universe-polymorphic `derive_primcodable`, `RExp` and `Term` derived, nested paramorphisms, `Option T` fields (`feat/nested-containers`) | #39's branch | Local, not pushed yet |
 | #37 (Aalok) | Moves `bitsPair` to `Foundations/Computability`; SKI/β problems via `Foundations` relations | `main` | Overlaps #35 (same `bitsPair` move); whichever merges second needs a small conflict fix |
 
 
@@ -278,6 +311,12 @@ Offer `fun_prop` for `Primrec` and `Computable`, and Theorems A and B, to Mathli
 ### 6. Long term: M10, M11
 
 The certifying translation of Layer 4.
+
+**How hard (assessed 2026-11-19).** The difficulty is coverage, not soundness: the output is an ordinary proof that the kernel checks.
+
+* **M10, first-order fragment: moderate.** What M10 adds is the friction it removes: today every helper a definition calls needs its own `@[fun_prop]` lemma, stated by hand. The kernel terms Lean compiles definitions to are awkward. Structural recursion becomes `brecOn`/`below`, a `match` becomes an auxiliary matcher, and an `if` needs its condition translated to a `PrimrecPred`, which is easy for comparisons and hard for arbitrary `Decidable` instances. The practical route is a driver around the existing tactics, working from equation lemmas rather than raw kernel terms. It would prove every helper in the call graph automatically, handle `match`/`if` in bodies, and cache the results as lemmas. About 4–8 focused sessions for the library's definitions; robustness on arbitrary Lean code is open-ended.
+* **M11, higher-order and well-founded recursion: hard, a research project.** Well-founded recursion without a primitive recursive bound gives `Computable`, not `Primrec`, and general (non-tail) recursion has to go through `Partrec.fix` (loops only) or the recursion theorem: in effect, compiling to a stack or continuation machine with a correctness proof. Higher-order recursion (a function-valued motive: System T, Ackermann) is worse. Mathlib's `Computable` only covers `Primcodable` types, and functions are not `Primcodable`, so it needs defunctionalisation or closure conversion, a real verified compiler, with no infrastructure in Mathlib. Forster and Kunze's certifying extraction is the closest analogue, and was a thesis-scale effort. Many weeks to months.
+* **Payoff here.** Reductions are almost always primitive recursive, and the current tools prove them. An "M10-lite" (automatic helper lemmas, `match` support) would be a convenience worth doing after the applied work. M11 matters only for functions beyond primitive recursion, which no reduction in the library needs.
 
 ## Open questions
 
