@@ -57,4 +57,9 @@ def reducesCompl {P : X → Prop} {Q : Y → Prop}
     (h : P ⪯ₘ Q) : Complement P ⪯ₘ Complement Q :=
   ⟨h.f, reduces_complement_spec h⟩
 
+/-- `reduce_chain H` proves a reduction by applying transitivity with `H` and closing with
+reflexivity, as often as needed. -/
+macro "reduce_chain" H:term : tactic =>
+  `(tactic| repeat (first | exact reducesRefl _ | apply reducesTrans $H))
+
 end DiagonaLean.Synthetic.ReductionChain

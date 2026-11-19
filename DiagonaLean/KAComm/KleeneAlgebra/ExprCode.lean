@@ -12,7 +12,7 @@ import DiagonaLean.Foundations.Computability.Prim
 /-! # Expressions as natural numbers
 
 `rc` codes an expression as a natural number, so that its constructors are plain arithmetic, and
-the `prim` tactic learns to handle those constructors.
+the lemmas for those constructors are registered with `fun_prop`.
 -/
 
 namespace DiagonaLean.KAComm.KleeneAlgebra
@@ -84,28 +84,22 @@ section Prim
 variable {α : Type*} [Primcodable α]
 
 /-- `cs` applied to a primitive recursive function is primitive recursive. -/
-theorem prim_cs {f : α → ℕ} (hf : Primrec f) : Primrec fun x => cs (f x) :=
+@[fun_prop] theorem prim_cs {f : α → ℕ} (hf : Primrec f) : Primrec fun x => cs (f x) :=
   prim_natPair (Primrec.const 2) hf
 
 /-- `cp` applied to primitive recursive functions is primitive recursive. -/
-theorem prim_cp {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_cp {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => cp (f x) (g x) := prim_natPair (Primrec.const 3) (prim_natPair hf hg)
 
 /-- `cm` applied to primitive recursive functions is primitive recursive. -/
-theorem prim_cm {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_cm {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => cm (f x) (g x) := prim_natPair (Primrec.const 4) (prim_natPair hf hg)
 
 /-- `ct` applied to a primitive recursive function is primitive recursive. -/
-theorem prim_ct {f : α → ℕ} (hf : Primrec f) : Primrec fun x => ct (f x) :=
+@[fun_prop] theorem prim_ct {f : α → ℕ} (hf : Primrec f) : Primrec fun x => ct (f x) :=
   prim_natPair (Primrec.const 5) hf
 
 end Prim
 
-macro_rules
-  | `(tactic| prim_step) => `(tactic| with_reducible first
-    | apply prim_cs
-    | apply prim_cp
-    | apply prim_cm
-    | apply prim_ct)
 
 end DiagonaLean.KAComm.KleeneAlgebra

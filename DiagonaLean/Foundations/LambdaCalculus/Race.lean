@@ -56,9 +56,8 @@ theorem tc_tr_toChurch (n : ℕ) :
 
 /-- The code of the translation of `toChurch n` is primitive recursive in `n`. -/
 theorem tc_tr_toChurch_prim : Primrec fun n => tc (tr (toChurch n)) := by
-  have h : Primrec fun n : ℕ => (fun m => cp (tc (tr SKI.Succ)) m)^[n] (tc (tr SKI.Zero)) :=
-    Primrec.nat_iterate Primrec.id (Primrec.const _)
-      (prim_cp (Primrec.const _) Primrec.snd).to₂
+  have h : Primrec fun n : ℕ => (fun m => cp (tc (tr SKI.Succ)) m)^[n] (tc (tr SKI.Zero)) := by
+    fun_prop
   exact h.of_eq fun n => (tc_tr_toChurch n).symm
 
 /-- The code of `linst U c n` is built from the codes of its parts with `cp`. -/
@@ -75,7 +74,7 @@ theorem tc_linst_prim (U : SKI) : Primrec fun x : Code × ℕ => tc (linst U x.1
   have h' : Primrec fun x : Code × ℕ =>
       cp (cp (cp (tc (tr U)) (tc (tr (toChurch (Nat.pair (Encodable.encode x.1) x.2)))))
         (tc (tr (K ⬝ FF)))) (tc (tr TT)) := by
-    prim
+    fun_prop
   exact h'.of_eq fun x => (tc_linst U x.1 x.2).symm
 
 /-- The proof test: `k` codes a program that checks the β-conversion with codes `i`. -/

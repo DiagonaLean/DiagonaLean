@@ -344,27 +344,18 @@ variable {α : Type*} [Primcodable α]
 
 /-- `tokens` is primitive recursive. -/
 theorem tokens_prim : Primrec tokens := by
-  unfold tokens
-  have h : Primrec₂ fun (_ : List Bool) (y : Bool × List ℕ) =>
-      if y.1 = true then 0 :: y.2 else (y.2.headI + 1) :: y.2.tail := by
-    apply Primrec₂.mk
-    prim
-  exact (Primrec.list_foldr (h := fun _ y => if y.1 = true then 0 :: y.2 else
-    (y.2.headI + 1) :: y.2.tail) Primrec.id (Primrec.const [0]) h).of_eq fun w => by
-      congr 1
+  unfold tokens; fun_prop
 
 /-- `tokens` of a primitive recursive function is primitive recursive. -/
-theorem prim_tokens {f : α → List Bool} (hf : Primrec f) : Primrec fun x => tokens (f x) :=
+@[fun_prop] theorem prim_tokens {f : α → List Bool} (hf : Primrec f) : Primrec fun x => tokens (f x) :=
   tokens_prim.comp hf
 
 end Prim
 
-macro_rules
-  | `(tactic| prim_step) => `(tactic| with_reducible apply prim_tokens)
 
 /-- `dataC` is primitive recursive. -/
-theorem dataC_prim : Primrec dataC := by
+@[fun_prop] theorem dataC_prim : Primrec dataC := by
   unfold dataC rowsC rowTok
-  prim
+  fun_prop
 
 end DiagonaLean.Foundations.Computability

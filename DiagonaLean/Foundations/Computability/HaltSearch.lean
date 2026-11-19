@@ -187,33 +187,26 @@ variable {α : Type*} [Primcodable α]
 
 /-- `lookup` is primitive recursive. -/
 theorem lookup_prim : Primrec fun y : List (ℕ × ℕ) × ℕ => lookup y.1 y.2 := by
-  unfold lookup
-  have h : Primrec₂ fun (x : List (ℕ × ℕ) × ℕ) (y : (ℕ × ℕ) × ℕ) =>
-      if y.1.1 = x.2 then y.1.2 else y.2 := by
-    apply Primrec₂.mk
-    prim
-  exact Primrec.list_foldr Primrec.fst (Primrec.const 0) h
+  unfold lookup; fun_prop
 
 /-- `lookup` of primitive recursive functions is primitive recursive. -/
-theorem prim_lookup {f : α → List (ℕ × ℕ)} {g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
+@[fun_prop] theorem prim_lookup {f : α → List (ℕ × ℕ)} {g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => lookup (f x) (g x) := lookup_prim.comp (hf.pair hg)
 
 end Prim
 
-macro_rules
-  | `(tactic| prim_step) => `(tactic| with_reducible apply prim_lookup)
 
 /-- `sstep` is primitive recursive. -/
 theorem sstep_prim : Primrec fun y : List (ℕ × ℕ) × SC => sstep y.1 y.2 := by
   unfold sstep
-  prim
+  fun_prop
+
+@[fun_prop] theorem prim_sstep {α : Type*} [Primcodable α] {f : α → List (ℕ × ℕ)} {g : α → SC}
+    (hf : Primrec f) (hg : Primrec g) : Primrec fun x => sstep (f x) (g x) :=
+  sstep_prim.comp (hf.pair hg)
 
 /-- **The halting test is primitive recursive.** -/
 theorem test_prim : PrimrecPred fun x : (List (ℕ × ℕ) × SC) × ℕ => Test x.1 x.2 := by
-  unfold Test
-  have h : Primrec fun x : (List (ℕ × ℕ) × SC) × ℕ => (sstep x.1.1)^[x.2] x.1.2 :=
-    Primrec.nat_iterate Primrec.snd (prim_snd Primrec.fst)
-      (Primrec₂.mk (sstep_prim.comp (prim_pair (prim_fst (prim_fst Primrec.fst)) Primrec.snd)))
-  exact pred_eq (prim_fst h) (Primrec.const 0)
+  unfold Test; fun_prop
 
 end DiagonaLean.Foundations.Computability

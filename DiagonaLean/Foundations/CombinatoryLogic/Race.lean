@@ -89,7 +89,7 @@ theorem skc_inst_prim (U : SKI) : Primrec fun x : Code × ℕ => skc (inst U x.1
   have h' : Primrec fun x : Code × ℕ =>
       ca (ca (ca (skc U) (skc (toChurch (Nat.pair (Encodable.encode x.1) x.2)))) (skc (K ⬝ FF)))
         (skc TT) := by
-    prim
+    fun_prop
   exact h'.of_eq fun x => (skc_inst U x.1 x.2).symm
 
 /-- The proof test: `k` codes a program that checks the conversion with codes `i`. -/

@@ -10,7 +10,7 @@ The project has three goals:
 
 * **A library of undecidable problems.** Each problem is stated once, and the reductions to it are proved correct. The classical problems from automata theory are covered, and so are results from current research, such as the undecidability of Kleene algebra with commutativity conditions (arXiv:2411.15979).
 * **Honest statements.** Lean's logic is classical, so a naive statement of undecidability can be proved by a case split on whether a machine halts. The library rules this out in two ways, described in [Two notions of undecidability](#two-notions-of-undecidability).
-* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. `reduceFromPCP` is the first such tactic.
+* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. `reduce_from_pcp` and `undec from` are the first such tactics.
 
 DiagonaLean continues <https://github.com/aalok-thakkar/undecidability/>.
 
@@ -27,6 +27,7 @@ graph LR
   HALT --> UTMHalt
   HALT --> SKIConv
   HALT --> BetaConv
+  HALT --> Rice
   HALT --> KA["KAComm: KA with commutativity<br/>(8 problems: T, K, L equality and L inclusion,<br/>over ℕ and over {0, 1})"]
 ```
 
@@ -41,6 +42,7 @@ graph LR
 | Matrix mortality | Given a finite set of $3 \times 3$ integer matrices, does some product of them equal $0$? | [`MatMort/`](DiagonaLean/MatMort/README.md) | `Undecidable` |
 | SKI convertibility | Do two SKI terms have a common reduct? | [`SKIConv/`](DiagonaLean/SKIConv/README.md) | `Undecidable`, `¬ MachineDecidable` |
 | β-conversion | Are two λ-terms β-convertible? | [`BetaConv/`](DiagonaLean/BetaConv/README.md) | `Undecidable`, `¬ MachineDecidable` |
+| Rice's problem | For a set $C$ of partial functions $\mathbb N \rightharpoonup \mathbb N$, does a program compute a function in $C$? | [`Rice/`](DiagonaLean/Rice/README.md) | `¬ ComputablePred` for every non-trivial $C$; `Undecidable` when $C$ contains some computable function but not the nowhere-defined one; of the complement when $C$ contains the nowhere-defined function and misses some computable function |
 | Kleene algebra with commutativity | Is $e = f$ provable in Kleene algebra (`KATermEq`) or pre-Kleene algebra (`TermEq`) with commutativity conditions on letters? Is $\mathcal L(e) = \mathcal L(f)$ (`LangEq`), or $\mathcal L(e) \subseteq \mathcal L(f)$ (`ModelLe`), in the language model? Each over $\Sigma = \mathbb N$ and over $\Sigma = \{0, 1\}$ (`XBool`). | [`KAComm/`](DiagonaLean/KAComm/README.md) | `Undecidable` (for `LangEq`, `ModelLe`: of the complement), `¬ MachineDecidable`; also `¬ MachineDecidable` for every theory between pre-Kleene algebra and the language model (Theorem 18) |
 
 The Kleene algebra folder formalises A. Azevedo de Amorim, C. Zhang and M. Gaboardi, *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979). Its main results hold with no hypotheses. It also finds and repairs an error in the paper's Theorem 6. Its [README](DiagonaLean/KAComm/README.md) states the results mathematically and explains how to audit them, and [STATUS.md](DiagonaLean/KAComm/STATUS.md) records what is open.
@@ -145,6 +147,69 @@ def swappedUndecidable : Undecidable SwappedPCP :=
 #print axioms swappedUndecidable  -- propext, Classical.choice, Quot.sound
 ```
 
+### Prove a function primitive recursive, computable, or computed by a Turing machine
+The tactics in `DiagonaLean.Foundations.Computability` do this one definition at a time, with one
+call each:
+
+```lean
+import DiagonaLean
+open DiagonaLean.Foundations.Computability
+
+def fib : ℕ → ℕ
+  | 0 => 0
+  | 1 => 1
+  | n + 2 => fib n + fib (n + 1)
+
+@[fun_prop] theorem fib_primrec : Primrec fib := by primrec_rec   -- recursion
+example : Primrec fun n : ℕ => fib (2 * n) + n := by fun_prop     -- composition
+example : Computable fib := by fun_prop                           -- Primrec ⇒ Computable
+
+inductive Rose where                                               -- your own type
+  | node (label : ℕ) (kids : List Rose)
+derive_primcodable Rose
+
+def Rose.total : Rose → ℕ
+  | .node a cs => a + (cs.map Rose.total).sum
+example : Primrec Rose.total := by primrec_rec
+```
+
+and `tm_computer F` gives a `SingleTapeTM Bool` computing a function `F : List Bool → List Bool`
+that `fun_prop` proves computable. [`examples/Automation.lean`](examples/Automation.lean) is a
+guided tour of all of it (`lake env lean examples/Automation.lean`), and
+[`AUTOMATION.md`](DiagonaLean/Foundations/Computability/AUTOMATION.md) explains how it works.
+
+### Tactics and commands
+DiagonaLean defines these. Each one produces an ordinary proof or definition that the kernel
+checks.
+
+**Reductions and undecidability**
+
+| Tactic or command | What it does | Defined in |
+|---|---|---|
+| `reduce_from_pcp over_letters b0 b1 via R` | Proves `Undecidable Q` from a reduction `R : PCP ⪯ₘ Q`, over the alphabet of the letters `b0 ≠ b1` | [`Synthetic/Tactics/ReduceFromPCP.lean`](DiagonaLean/Synthetic/Tactics/ReduceFromPCP.lean) |
+| `undec from H` | Reduces `Undecidable Q` to a reduction `P ⪯ₘ Q`, given `H : Undecidable P` | [`Synthetic/Undecidability.lean`](DiagonaLean/Synthetic/Undecidability.lean) |
+| `reduce_chain H` | Proves a reduction by composing with `H` and reflexivity | [`Synthetic/ReductionChain.lean`](DiagonaLean/Synthetic/ReductionChain.lean) |
+| `#check_reductions` / `#check_reductions local` | Checks that every reduction (in the library, or in the current file) is a definition Lean compiles, with no classical escape hatch | [`Synthetic/ReductionCheck.lean`](DiagonaLean/Synthetic/ReductionCheck.lean) |
+
+For example, the last definition in *Prove a new problem undecidable* above can be written
+
+```lean
+def swappedUndecidable : Undecidable SwappedPCP := by
+  reduce_from_pcp over_letters true false via pcpReducesSwapped
+```
+
+**Computability**
+
+| Tactic or command | What it does | Defined in |
+|---|---|---|
+| `fun_prop` (set up for `Primrec`, `PrimrecPred`, `Computable`) | Proves that a function built by composition is primitive recursive or computable | [`Foundations/Computability/Prim.lean`](DiagonaLean/Foundations/Computability/Prim.lean) |
+| `primrec_rec` | Proves `Primrec f` or `Primrec₂ f` for `f` defined by recursion on `ℕ`, lists, or a type from `derive_primcodable`, read off `f`'s equations | [`Foundations/Computability/PrimrecRec.lean`](DiagonaLean/Foundations/Computability/PrimrecRec.lean) |
+| `derive_primcodable T` | Makes an inductive type `Primcodable`, with `fun_prop` lemmas for its constructors and the recursion principle `primrec_rec` uses; nested `List T` and `Option T` fields and universe-polymorphic types are supported | [`Foundations/Computability/DerivePrimcodable.lean`](DiagonaLean/Foundations/Computability/DerivePrimcodable.lean) |
+| `tm_computer F` | Proves `∃ R : SingleTapeTM Bool, ∀ l, R.Outputs l (F l)` for `F : List Bool → List Bool` that `fun_prop` proves computable | [`Foundations/Computability/Computer.lean`](DiagonaLean/Foundations/Computability/Computer.lean) |
+| `tm_computes F` | Reduces `∃ R, ComputesReduction R enc₁ enc₂ f` to the equation `F (enc₁ x) = enc₂ (f x)`, for the `¬ MachineDecidable` results | [`Foundations/Computability/Computer.lean`](DiagonaLean/Foundations/Computability/Computer.lean) |
+
+[`examples/Automation.lean`](examples/Automation.lean) shows the computability tactics at work.
+
 ### Inspect a result
 `#check @name` shows a statement with all its binders, and `#print axioms name` lists what it depends on. A sound result lists only `propext`, `Classical.choice` and `Quot.sound`. For example:
 
@@ -164,6 +229,6 @@ CI runs `lake build`, `lake lint`, `#check_reductions`, `scripts/CheckMetaprogra
 
 ## Roadmap
 
-* **Core framework:** the problems above, `Undecidable` and `MachineDecidable`, the reduction check, and the `reduceFromPCP` tactic. String rewriting is still to come.
+* **Core framework:** the problems above, `Undecidable` and `MachineDecidable`, the reduction check, and the `reduce_from_pcp` tactic. String rewriting is still to come.
 * **Base theorems:** the acceptance problem, Rice, Rice–Shapiro and Greibach. A reduction graph registered through attributes, and a tactic that searches it.
 * **Standard reduction library:** more models of computation (RAM machines, register machines, μ-recursive functions) and their equivalence with Turing machines, where Cslib does not already have them.

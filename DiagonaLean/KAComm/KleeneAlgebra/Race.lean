@@ -308,13 +308,11 @@ theorem not_machineDecidable_of_family {Y : Type*} {enc : Y → List Bool} {P : 
   -- the tape of the race program of a code
   let tape : List Bool → List Bool := fun w =>
     tapeOf B (Encodable.encode (C.curry (Encodable.encode (dataC w))))
-  have htape : Primrec tape := (tapeOf_prim B).comp (Primrec.encode.comp
-    (Code.primrec₂_curry.comp (Primrec.const C) (Primrec.encode.comp dataC_prim)))
-  let F : List Bool → List Bool := fun w => bitsPair (G B.K (tape w)).1 (G B.K (tape w)).2
-  have hF : Primrec F := by
-    have h := (hG B.K).comp htape
-    exact bitsOf_prim.comp (prim_natPair (prim_fst h) (prim_snd h))
-  obtain ⟨R, hR⟩ := exists_computer F hF.to_comp
+  have htape : Primrec tape := by dsimp only [tape]; fun_prop
+  have hGK := hG B.K
+  obtain ⟨R, hR⟩ : ∃ R : SingleTapeTM Bool,
+      ∀ w, R.Outputs w (bitsPair (G B.K (tape w)).1 (G B.K (tape w)).2) := by
+    tm_computer fun w => bitsPair (G B.K (tape w)).1 (G B.K (tape w)).2
   have hiff : ∀ M : EncodableTM Bool, Halts M.toSingleTapeTM (encodeBoolTM M) ↔
       P (inst B.K (tape (encodeBoolTM M))) := fun M =>
     race_iff (Q := fun l => P (inst B.K l)) hB hC (hQ B.K) (pos B.K) (neg B.K)

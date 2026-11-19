@@ -44,4 +44,9 @@ def undecidabilityFromReducibility {p : X → Prop} {q : Y → Prop}
     (hp : Undecidable p) (hpq : p ⪯ₘ q) : Undecidable q :=
   ReductionChain.reducesTrans hp hpq
 
+/-- `undec from H` reduces a goal `Undecidable q` to a reduction `p ⪯ₘ q`, given
+`H : Undecidable p`; it applies `undecidabilityFromReducibility H`. -/
+macro "undec" "from" H:term : tactic =>
+  `(tactic| apply undecidabilityFromReducibility $H)
+
 end DiagonaLean.Synthetic.Notation

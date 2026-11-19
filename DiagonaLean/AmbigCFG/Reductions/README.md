@@ -63,4 +63,4 @@ So one tree goes via `S → A` (child yielding `encodeA is₁`) and the other vi
 An instance bundles the grammar with the number of tiles of the PCP instance (`AmbigCFGInstance`), so that all instances share one type. The reduction `pcpToAmbigCFG` sends `P` to `⟨P.length, Stack.toGrammar P⟩`, `pcp_reducesto_ambigCFG_spec` states `PCP.DecisionProblem ⪯ₘ[pcpToAmbigCFG] (fun G => AmbigCFG.DecisionProblem G.2)`, and `pcpReducesAmbigCFG` packages the two.
 
 ### Undecidability
-`Undecidable.lean` collects `undecidableAmbigCFG b0 b1 hne`: CFG ambiguity is `Undecidable` over any alphabet with two distinct letters `b0` and `b1`. It is obtained with `reduceFromPCP` from `pcpReducesAmbigCFG`.
+`Undecidable.lean` collects `undecidableAmbigCFG b0 b1 hne`: CFG ambiguity is `Undecidable` over any alphabet with two distinct letters `b0` and `b1`. It is obtained with `reduce_from_pcp` from `pcpReducesAmbigCFG`.

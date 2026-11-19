@@ -36,4 +36,4 @@ Given a word `w` in both languages, we get stacks `A_top` and `A_bot` with `cano
 Both directions together are `pcp_iff_nempcfg`: `PCP.DecisionProblem P ↔ IntersectionNonempty (topCFG P) (botCFG P)`. Its negation, with `IntersectionEmpty`, is `npcp_iff_empcfg`. The reduction `pcpToEmpCFG` sends `P` to `(topCFG P, botCFG P)`, `pcp_reducesto_empCFG_spec` states `PCP.DecisionProblem ⪯ₘ[pcpToEmpCFG] EmpCFG.DecisionProblem`, and `pcpReducesEmpCFG` packages the two.
 
 ### Undecidability
-`Undecidable.lean` collects `undecidableEmpCFG b0 b1 hne`: the nonemptiness of the intersection of two CFGs (`EmpCFG.DecisionProblem`) is `Undecidable` over the alphabet `Term α` for any `α` with two distinct letters `b0` and `b1`. It is obtained with `reduceFromPCP` from `pcpReducesEmpCFG`.
+`Undecidable.lean` collects `undecidableEmpCFG b0 b1 hne`: the nonemptiness of the intersection of two CFGs (`EmpCFG.DecisionProblem`) is `Undecidable` over the alphabet `Term α` for any `α` with two distinct letters `b0` and `b1`. It is obtained with `reduce_from_pcp` from `pcpReducesEmpCFG`.

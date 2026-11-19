@@ -29,6 +29,6 @@ holds over the terminals `Term α`, for any alphabet `α` with two distinct lett
 through `pcpReducesEmpCFG`. -/
 def undecidableEmpCFG {α : Type} [DecidableEq α] (b0 b1 : α) (hne : b0 ≠ b1) :
     Undecidable (@DiagonaLean.EmpCFG.DecisionProblem (Term α)) := by
-  reduceFromPCP over_letters b0 b1 via pcpReducesEmpCFG
+  reduce_from_pcp over_letters b0 b1 via pcpReducesEmpCFG
 
 end DiagonaLean.EmpCFG.Reduction
