@@ -195,13 +195,12 @@ and close the side goals with the layers above. With layer 2, `c₁` and `c₂` 
 
 **Immediate**
 
-1. Push `feat/nested-containers` and open it as a PR stacked on #39.
-2. Check CI on #39.
+1. Check CI on #39 and #40.
 
 **The PR stack** (needs the reviewers)
 
 3. Get #35 reviewed, and settle its `bitsPair` overlap with #37.
-4. Merge in order: #35, #36, #38, #39, then the `feat/nested-containers` PR. Split #38 if its size stalls review.
+4. Merge in order: #35, #36, #38, #39, #40. Split #38 if its size stalls review.
 
 **Applied work: new results**
 
@@ -231,7 +230,7 @@ and close the side goals with the layers above. With layer 2, `c₁` and `c₂` 
 | #36 | `prim` → `fun_prop` (M1) | #35's branch | Waiting for #35 |
 | #38 | Everything else here: M2–M8, M3b, paramorphisms, `derive_primcodable` | #36's branch | CI green on `6af24df`; later commits pushed |
 | #39 | M13 for nested types, the M12 decision, this file (`feat/nested-primcodable`) | #38's branch | Opened 2026-11-19 |
-| — | Universe-polymorphic `derive_primcodable`, `RExp` and `Term` derived, nested paramorphisms, `Option T` fields (`feat/nested-containers`) | #39's branch | Local, not pushed yet |
+| #40 | Universe-polymorphic `derive_primcodable`, `RExp` and `Term` derived, nested paramorphisms, `Option T` fields, examples, README tactics table, `reduce_from_pcp` (`feat/nested-containers`) | #39's branch | Opened 2026-11-19 |
 | #37 (Aalok) | Moves `bitsPair` to `Foundations/Computability`; SKI/β problems via `Foundations` relations | `main` | Overlaps #35 (same `bitsPair` move); whichever merges second needs a small conflict fix |
 
 
