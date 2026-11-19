@@ -11,7 +11,7 @@ import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
 @[expose] public section
 
-/-! #  PCP ⪯ₘ AmbigCFG
+/-! # PCP ⪯ₘ AmbigCFG
 
 Reduction from PCP to CFG ambiguity. Given a PCP instance `P`, the grammar `P.toGrammar` is
 ambiguous iff `P` has a solution. The main result is `pcp_iff_ambigcfg`.
@@ -37,6 +37,7 @@ inductive PCPNonterm | S | A | B
   deriving DecidableEq, Repr
 
 open PCPNonterm in
+/-- `PCPNonterm` is finite, with elements `S`, `A` and `B`. -/
 instance : Fintype PCPNonterm where
   elems := {S, A, B}
   complete x := by cases x <;> simp
@@ -76,27 +77,14 @@ def rulesS (P : Stack α) : Finset (ContextFreeRule (PCPAlpha P) PCPNonterm) :=
   { ⟨PCPNonterm.S, [Symbol.nonterminal PCPNonterm.A]⟩,
     ⟨PCPNonterm.S, [Symbol.nonterminal PCPNonterm.B]⟩ }
 
-/-- The grammar whose language is `τ1`-encodings: initial nonterminal `A`, rules `rulesA P`. -/
-def Stack.τ1.toGrammar (P : Stack α) : ContextFreeGrammar (PCPAlpha P) where
-  NT      := PCPNonterm
-  initial := PCPNonterm.A
-  rules   := rulesA P
-
-/-- The grammar whose language is `τ2`-encodings: initial nonterminal `B`, rules `rulesB P`. -/
-def Stack.τ2.toGrammar (P : Stack α) : ContextFreeGrammar (PCPAlpha P) where
-  NT      := PCPNonterm
-  initial := PCPNonterm.B
-  rules   := rulesB P
-
 /-- The grammar `G(P)` for a PCP instance `P`.
 
 `LA` consists of strings of the form `τ₁(A) ++ aᵢₘ … aᵢ₁`
 and `LB` of strings of the form `τ₂(A) ++ aᵢₘ … aᵢ₁`
 for a common reversed index sequence. A string lies in `LA ∩ LB`
 iff the tiles `i₁, …, iₘ` form a PCP solution.
-Such a string has two parse trees from `S` (one via `A`, one via `B`), so:
-
-**`G(P).DecisionProblem ↔ PCP.DecisionProblem P`** (proved separately) -/
+Such a string has two parse trees from `S` (one via `A`, one via `B`), so
+`AmbigCFG.DecisionProblem G(P) ↔ PCP.DecisionProblem P` (`pcp_iff_ambigcfg`). -/
 def Stack.toGrammar (P : Stack α) : ContextFreeGrammar (PCPAlpha P) where
   NT      := PCPNonterm
   initial := PCPNonterm.S
@@ -109,13 +97,13 @@ open DiagonaLean.PCP DiagonaLean.AmbigCFG
 
 variable {P : Stack α}
 
-/-- The word encoded by a (possibly empty) index list `is` in the **top** grammar:
+/-- The word encoded by a (possibly empty) index list `is` in the top grammar:
 `encodeA [i₁, i₂, …, iₘ] = w_{i₁} w_{i₂} … w_{iₘ} aᵢₘ … aᵢ₂ aᵢ₁`,
 i.e. top-words in forward order, index tokens in reverse order. -/
 def encodeA (is : List (Fin P.length)) : List (PCPAlpha P) :=
   (τ1 (is.map (P[·]))).map Sum.inl ++ is.reverse.map Sum.inr
 
-/-- Same encoding for the **bot** grammar:
+/-- Same encoding for the bottom grammar:
 `encodeB [i₁, i₂, …, iₘ] = x_{i₁} x_{i₂} … x_{iₘ} aᵢₘ … aᵢ₂ aᵢ₁`. -/
 def encodeB (is : List (Fin P.length)) : List (PCPAlpha P) :=
   (τ2 (is.map (P[·]))).map Sum.inl ++ is.reverse.map Sum.inr
@@ -196,7 +184,7 @@ theorem encodeA_eq_encodeB_cross {is js : List (Fin P.length)}
   grind +suggestions
 
 /-- `baseProd PCPNonterm.A i P[i].top` belongs to `(Stack.toGrammar P).rules`. -/
-private lemma baseA_mem (i : Fin P.length) :
+private theorem baseA_mem (i : Fin P.length) :
     baseProd PCPNonterm.A i P[i].top ∈ (Stack.toGrammar P).rules := by
   simp only [Stack.toGrammar]
   apply Finset.mem_union.mpr; left
@@ -204,7 +192,7 @@ private lemma baseA_mem (i : Fin P.length) :
   exact Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ _, by simp⟩
 
 /-- `recProd PCPNonterm.A i P[i].top` belongs to `(Stack.toGrammar P).rules`. -/
-private lemma recA_mem (i : Fin P.length) :
+private theorem recA_mem (i : Fin P.length) :
     recProd PCPNonterm.A i P[i].top ∈ (Stack.toGrammar P).rules := by
   simp only [Stack.toGrammar]
   apply Finset.mem_union.mpr; left
@@ -212,21 +200,21 @@ private lemma recA_mem (i : Fin P.length) :
   exact Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ _, by simp⟩
 
 /-- `baseProd PCPNonterm.B i P[i].bot` belongs to `(Stack.toGrammar P).rules`. -/
-private lemma baseB_mem (i : Fin P.length) :
+private theorem baseB_mem (i : Fin P.length) :
     baseProd PCPNonterm.B i P[i].bot ∈ (Stack.toGrammar P).rules := by
   simp only [Stack.toGrammar]
   apply Finset.mem_union.mpr; right
   exact Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ _, by simp⟩
 
 /-- `recProd PCPNonterm.B i P[i].bot` belongs to `(Stack.toGrammar P).rules`. -/
-private lemma recB_mem (i : Fin P.length) :
+private theorem recB_mem (i : Fin P.length) :
     recProd PCPNonterm.B i P[i].bot ∈ (Stack.toGrammar P).rules := by
   simp only [Stack.toGrammar]
   apply Finset.mem_union.mpr; right
   exact Finset.mem_biUnion.mpr ⟨i, Finset.mem_univ _, by simp⟩
 
 /-- `S → A` belongs to `(Stack.toGrammar P).rules`. -/
-private lemma SA_mem :
+private theorem SA_mem :
     (⟨PCPNonterm.S, [Symbol.nonterminal PCPNonterm.A]⟩ :
       ContextFreeRule (PCPAlpha P) PCPNonterm) ∈ (Stack.toGrammar P).rules := by
   simp only [Stack.toGrammar]
@@ -235,7 +223,7 @@ private lemma SA_mem :
   simp [rulesS]
 
 /-- `S → B` belongs to `(Stack.toGrammar P).rules`. -/
-private lemma SB_mem :
+private theorem SB_mem :
     (⟨PCPNonterm.S, [Symbol.nonterminal PCPNonterm.B]⟩ :
       ContextFreeRule (PCPAlpha P) PCPNonterm) ∈ (Stack.toGrammar P).rules := by
   simp only [Stack.toGrammar]
@@ -261,15 +249,15 @@ theorem rule_shape {r : ContextFreeRule (PCPAlpha P) PCPNonterm}
 
 /-- The all-terminal forest for a base production `v → w · aᵢ`. -/
 def liftForestBase (i : Fin P.length) (w : List α) :
-    (Stack.toGrammar P).Forest (liftWord w ++ [idxSym i]) :=
+    Forest (Stack.toGrammar P) (liftWord w ++ [idxSym i]) :=
   match w with
   | [] => .consT (Sum.inr i) .nil
   | a :: rest => .consT (Sum.inl a) (liftForestBase i rest)
 
 /-- The forest for a recursive production `v → w · v · aᵢ`, given a subtree at `v`. -/
 def liftForestRec (v : PCPNonterm) (i : Fin P.length) (w : List α)
-    (child : (Stack.toGrammar P).ParseTree v) :
-    (Stack.toGrammar P).Forest (liftWord w ++ [Symbol.nonterminal v, idxSym i]) :=
+    (child : ParseTree (Stack.toGrammar P) v) :
+    Forest (Stack.toGrammar P) (liftWord w ++ [Symbol.nonterminal v, idxSym i]) :=
   match w with
   | [] => .consN child (.consT (Sum.inr i) .nil)
   | a :: rest => .consT (Sum.inl a) (liftForestRec v i rest child)
@@ -277,20 +265,20 @@ def liftForestRec (v : PCPNonterm) (i : Fin P.length) (w : List α)
 /-- The yield of `liftForestBase i w` is `w.map Sum.inl ++ [Sum.inr i]`. -/
 theorem liftForestBase_yield (i : Fin P.length) (w : List α) :
     (liftForestBase (P := P) i w).yield = w.map Sum.inl ++ [Sum.inr i] := by
-  induction w <;> simp_all +decide [ liftForestBase, ContextFreeGrammar.Forest.yield ]
+  induction w <;> simp_all +decide [ liftForestBase, Forest.yield ]
   expose_names
   exact List.reverse_inj.mp (congrArg List.reverse tail_ih)
 
 /-- The yield of `liftForestRec v i w child` is `w.map Sum.inl ++ child.yield ++ [Sum.inr i]`. -/
 theorem liftForestRec_yield (v : PCPNonterm) (i : Fin P.length) (w : List α)
-    (child : (Stack.toGrammar P).ParseTree v) :
+    (child : ParseTree (Stack.toGrammar P) v) :
     (liftForestRec v i w child).yield = w.map Sum.inl ++ (child.yield ++ [Sum.inr i]) := by
-  induction w <;> simp_all +decide [ liftForestRec, ContextFreeGrammar.Forest.yield ]
+  induction w <;> simp_all +decide [ liftForestRec, Forest.yield ]
   expose_names
   exact List.reverse_inj.mp (congrArg List.reverse tail_ih)
 
 /-- Canonical parse tree rooted at `A` for a nonempty index list. -/
-def buildA : (is : List (Fin P.length)) → is ≠ [] → (Stack.toGrammar P).ParseTree PCPNonterm.A
+def buildA : (is : List (Fin P.length)) → is ≠ [] → ParseTree (Stack.toGrammar P) PCPNonterm.A
   | [i], _ =>
       @.node _ (Stack.toGrammar P) (baseProd PCPNonterm.A i P[i].top) (baseA_mem i)
         (liftForestBase i P[i].top)
@@ -299,7 +287,7 @@ def buildA : (is : List (Fin P.length)) → is ≠ [] → (Stack.toGrammar P).Pa
         (liftForestRec PCPNonterm.A i P[i].top (buildA (j :: rest) (by simp)))
 
 /-- Canonical parse tree rooted at `B` for a nonempty index list. -/
-def buildB : (is : List (Fin P.length)) → is ≠ [] → (Stack.toGrammar P).ParseTree PCPNonterm.B
+def buildB : (is : List (Fin P.length)) → is ≠ [] → ParseTree (Stack.toGrammar P) PCPNonterm.B
   | [i], _ =>
       @.node _ (Stack.toGrammar P) (baseProd PCPNonterm.B i P[i].bot) (baseB_mem i)
         (liftForestBase i P[i].bot)
@@ -331,14 +319,14 @@ theorem buildB_yield : ∀ (is : List (Fin P.length)) (h : is ≠ []),
       grind
 
 /-- The unique forest over an empty symbol list is `.nil`. -/
-theorem forest_nil_inv (f : (Stack.toGrammar P).Forest []) :
+theorem forest_nil_inv (f : Forest (Stack.toGrammar P) []) :
     f = .nil := by
   cases f; rfl
 
 /-- Any forest headed by a terminal `t` is `.consT t rest` for some `rest`. -/
 theorem forest_consT_inv {t : PCPAlpha P}
     {ss : List (Symbol (PCPAlpha P) PCPNonterm)}
-    (f : (Stack.toGrammar P).Forest (Symbol.terminal t :: ss)) :
+    (f : Forest (Stack.toGrammar P) (Symbol.terminal t :: ss)) :
     ∃ rest, f = .consT t rest := by
   cases f with
   | consT t rest => exact ⟨rest, rfl⟩
@@ -346,14 +334,14 @@ theorem forest_consT_inv {t : PCPAlpha P}
 /-- Any forest headed by a nonterminal `n` is `.consN child rest` for some `child` and `rest`. -/
 theorem forest_consN_inv {n : PCPNonterm}
     {ss : List (Symbol (PCPAlpha P) PCPNonterm)}
-    (f : (Stack.toGrammar P).Forest (Symbol.nonterminal n :: ss)) :
-    ∃ (child : (Stack.toGrammar P).ParseTree n), ∃ rest, f = .consN child rest := by
+    (f : Forest (Stack.toGrammar P) (Symbol.nonterminal n :: ss)) :
+    ∃ (child : ParseTree (Stack.toGrammar P) n), ∃ rest, f = .consN child rest := by
   cases f with
   | consN child rest => exact ⟨child, rest, rfl⟩
 
 /-- Any forest matching the shape of a base production is `liftForestBase i w`. -/
 theorem forest_base_eq (i : Fin P.length) (w : List α)
-    (f : (Stack.toGrammar P).Forest (liftWord w ++ [idxSym i])) :
+    (f : Forest (Stack.toGrammar P) (liftWord w ++ [idxSym i])) :
     f = liftForestBase i w := by
   revert f;
   induction' w with a w ih;
@@ -368,27 +356,27 @@ theorem forest_base_eq (i : Fin P.length) (w : List α)
 /-- Any forest matching the shape of a recursive production is `liftForestRec v i w child`
 for some subtree `child`. -/
 theorem forest_rec_eq (v : PCPNonterm) (i : Fin P.length) (w : List α)
-    (f : (Stack.toGrammar P).Forest (liftWord w ++ [Symbol.nonterminal v, idxSym i])) :
+    (f : Forest (Stack.toGrammar P) (liftWord w ++ [Symbol.nonterminal v, idxSym i])) :
     ∃ child, f = liftForestRec v i w child := by
   induction w;
   · obtain ⟨ child, rest, h ⟩ := forest_consN_inv f;
     obtain ⟨ rest, h ⟩ := forest_consT_inv rest;
     exact ⟨ child, by cases forest_nil_inv rest; aesop ⟩;
   · obtain ⟨ rest, hrest ⟩ := forest_consT_inv f;
-    obtain ⟨ child, hchild ⟩ := ‹∀ ( f : P.toGrammar.Forest
+    obtain ⟨ child, hchild ⟩ := ‹∀ ( f : Forest P.toGrammar
       ( liftWord _ ++ [ Symbol.nonterminal v, idxSym i ] ) ),
         ∃ child, f = liftForestRec v i _ child› rest;
         use child; aesop;
 
-/-- One-step inversion of a parse tree rooted at `A`: it uses either a base or
-recursive production for some tile `i`. -/
-theorem ptA_inv {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
+/-- A parse tree rooted at `A` uses, at its root, either the base or the recursive
+production of some tile `i`. -/
+theorem ptA_inv {n : PCPNonterm} (t : ParseTree (Stack.toGrammar P) n)
     (hn : n = PCPNonterm.A) :
-    (∃ i, HEq t (@ContextFreeGrammar.ParseTree.node _ (Stack.toGrammar P)
+    (∃ i, HEq t (@ParseTree.node _ (Stack.toGrammar P)
       (baseProd PCPNonterm.A i P[i].top)
         (baseA_mem i) (liftForestBase i P[i].top))) ∨
-    (∃ i, ∃ child : (Stack.toGrammar P).ParseTree PCPNonterm.A,
-        HEq t (@ContextFreeGrammar.ParseTree.node _ (Stack.toGrammar P)
+    (∃ i, ∃ child : ParseTree (Stack.toGrammar P) PCPNonterm.A,
+        HEq t (@ParseTree.node _ (Stack.toGrammar P)
           (recProd PCPNonterm.A i P[i].top)
             (recA_mem i) (liftForestRec PCPNonterm.A i P[i].top child))) := by
   obtain ⟨ r, hr, c ⟩ := t;
@@ -399,15 +387,15 @@ theorem ptA_inv {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
     use Or.inr ⟨ i, child, by aesop ⟩ ;
   · exact Or.inl ⟨ i, by congr; exact forest_base_eq i P[i].top c ⟩
 
-/-- One-step inversion of a parse tree rooted at `B`: it uses either a base or
-recursive production for some tile `i`. -/
-theorem ptB_inv {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
+/-- A parse tree rooted at `B` uses, at its root, either the base or the recursive
+production of some tile `i`. -/
+theorem ptB_inv {n : PCPNonterm} (t : ParseTree (Stack.toGrammar P) n)
     (hn : n = PCPNonterm.B) :
-    (∃ i, HEq t (@ContextFreeGrammar.ParseTree.node _ (Stack.toGrammar P)
+    (∃ i, HEq t (@ParseTree.node _ (Stack.toGrammar P)
       (baseProd PCPNonterm.B i P[i].bot)
         (baseB_mem i) (liftForestBase i P[i].bot))) ∨
-    (∃ i, ∃ child : (Stack.toGrammar P).ParseTree PCPNonterm.B,
-        HEq t (@ContextFreeGrammar.ParseTree.node _ (Stack.toGrammar P)
+    (∃ i, ∃ child : ParseTree (Stack.toGrammar P) PCPNonterm.B,
+        HEq t (@ParseTree.node _ (Stack.toGrammar P)
           (recProd PCPNonterm.B i P[i].bot)
             (recB_mem i) (liftForestRec PCPNonterm.B i P[i].bot child))) := by
   obtain ⟨ r, hr, c ⟩ := t;
@@ -418,15 +406,15 @@ theorem ptB_inv {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
     use Or.inr ⟨ i, child, by aesop ⟩ ;
   · exact Or.inl ⟨ i, by congr; exact forest_base_eq i P[i].bot c ⟩
 
-/-- Inversion of a parse tree rooted at `S`: it uses `S → A` or `S → B`. -/
-theorem ptS_inv {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
+/-- A parse tree rooted at `S` uses `S → A` or `S → B` at its root. -/
+theorem ptS_inv {n : PCPNonterm} (t : ParseTree (Stack.toGrammar P) n)
     (hn : n = PCPNonterm.S) :
-    (∃ child : (Stack.toGrammar P).ParseTree PCPNonterm.A,
-        HEq t (@ContextFreeGrammar.ParseTree.node _ (Stack.toGrammar P)
+    (∃ child : ParseTree (Stack.toGrammar P) PCPNonterm.A,
+        HEq t (@ParseTree.node _ (Stack.toGrammar P)
           ⟨PCPNonterm.S, [Symbol.nonterminal PCPNonterm.A]⟩ SA_mem
           (.consN child .nil))) ∨
-    (∃ child : (Stack.toGrammar P).ParseTree PCPNonterm.B,
-        HEq t (@ContextFreeGrammar.ParseTree.node _ (Stack.toGrammar P)
+    (∃ child : ParseTree (Stack.toGrammar P) PCPNonterm.B,
+        HEq t (@ParseTree.node _ (Stack.toGrammar P)
           ⟨PCPNonterm.S, [Symbol.nonterminal PCPNonterm.B]⟩ SB_mem
           (.consN child .nil))) := by
   rcases t with ⟨ r, hr, c ⟩ ;
@@ -439,7 +427,7 @@ theorem ptS_inv {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
     use Or.inr ⟨ child, by cases forest_nil_inv rest; aesop ⟩ ;
 
 /-- Every `A`-rooted parse tree is `buildA is h` for some nonempty index list `is`. -/
-theorem ptA_char {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
+theorem ptA_char {n : PCPNonterm} (t : ParseTree (Stack.toGrammar P) n)
     (hn : n = PCPNonterm.A) :
     ∃ (is : List (Fin P.length)) (h : is ≠ []), HEq t (buildA is h) := by
   revert t;
@@ -452,7 +440,7 @@ theorem ptA_char {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
     · have h_child : child.yield.length < t.yield.length := by
         have h_child : t.yield = P[i].top.map Sum.inl ++ (child.yield ++ [Sum.inr i]) := by
           convert liftForestRec_yield PCPNonterm.A i P[i].top child using 1;
-          convert congr_arg ( fun x : P.toGrammar.ParseTree PCPNonterm.A => x.yield )
+          convert congr_arg ( fun x : ParseTree P.toGrammar PCPNonterm.A => x.yield )
             ( eq_of_heq hi ) using 1;
           exact List.toList_toArray
         simp +arith +decide [ h_child ];
@@ -463,13 +451,13 @@ theorem ptA_char {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
   · cases hn
 
 /-- Every `B`-rooted parse tree is `buildB is h` for some nonempty index list `is`. -/
-theorem ptB_char {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
+theorem ptB_char {n : PCPNonterm} (t : ParseTree (Stack.toGrammar P) n)
     (hn : n = PCPNonterm.B) :
     ∃ (is : List (Fin P.length)) (h : is ≠ []), HEq t (buildB is h) := by
   induction' n with n ih;
   · cases hn;
   · cases hn;
-  · have h_ind : ∀ (n : ℕ) (t : (Stack.toGrammar P).ParseTree PCPNonterm.B),
+  · have h_ind : ∀ (n : ℕ) (t : ParseTree (Stack.toGrammar P) PCPNonterm.B),
         t.yield.length = n → ∃ is : List (Fin P.length), ∃ h : is ≠ [], t ≍ buildB is h := by
       intro n
       induction' n using Nat.strong_induction_on with n ih
@@ -479,7 +467,7 @@ theorem ptB_char {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
       · have h_child : child.yield.length < n := by
           have h_child : t.yield = P[i].bot.map Sum.inl ++ (child.yield ++ [Sum.inr i]) := by
             convert liftForestRec_yield PCPNonterm.B i P[i].bot child using 1;
-            convert congr_arg ( fun x : P.toGrammar.ParseTree PCPNonterm.B => x.yield )
+            convert congr_arg ( fun x : ParseTree P.toGrammar PCPNonterm.B => x.yield )
               ( eq_of_heq hi ) using 1;
             exact List.toList_toArray
           simp +arith +decide [ h_child ] at ht ⊢ ; linarith;
@@ -490,7 +478,7 @@ theorem ptB_char {n : PCPNonterm} (t : (Stack.toGrammar P).ParseTree n)
     exact h_ind _ _ rfl
 
 /-- `A`-rooted trees with equal yields are equal: the `A`-grammar is unambiguous. -/
-theorem ptA_yield_inj (t₁ t₂ : (Stack.toGrammar P).ParseTree PCPNonterm.A)
+theorem ptA_yield_inj (t₁ t₂ : ParseTree (Stack.toGrammar P) PCPNonterm.A)
     (hy : t₁.yield = t₂.yield) : t₁ = t₂ := by
   obtain ⟨is₁, h₁, he₁⟩ := ptA_char t₁ rfl
   obtain ⟨is₂, h₂, he₂⟩ := ptA_char t₂ rfl
@@ -501,7 +489,7 @@ theorem ptA_yield_inj (t₁ t₂ : (Stack.toGrammar P).ParseTree PCPNonterm.A)
   subst this; rfl
 
 /-- `B`-rooted trees with equal yields are equal: the `B`-grammar is unambiguous. -/
-theorem ptB_yield_inj (t₁ t₂ : (Stack.toGrammar P).ParseTree PCPNonterm.B)
+theorem ptB_yield_inj (t₁ t₂ : ParseTree (Stack.toGrammar P) PCPNonterm.B)
     (hy : t₁.yield = t₂.yield) : t₁ = t₂ := by
   obtain ⟨is₁, h₁, he₁⟩ := ptB_char t₁ rfl
   obtain ⟨is₂, h₂, he₂⟩ := ptB_char t₂ rfl
@@ -515,18 +503,18 @@ theorem ptB_yield_inj (t₁ t₂ : (Stack.toGrammar P).ParseTree PCPNonterm.B)
   subst this; rfl
 
 /-- The yield of an `S → A` node equals the yield of its `A`-child. -/
-theorem yield_SA (child : (Stack.toGrammar P).ParseTree PCPNonterm.A) :
-    (@ContextFreeGrammar.ParseTree.node _ (Stack.toGrammar P)
+theorem yield_SA (child : ParseTree (Stack.toGrammar P) PCPNonterm.A) :
+    (@ParseTree.node _ (Stack.toGrammar P)
       ⟨PCPNonterm.S, [Symbol.nonterminal PCPNonterm.A]⟩ SA_mem
       (.consN child .nil)).yield = child.yield := by
-  simp +decide [ ContextFreeGrammar.ParseTree.yield, ContextFreeGrammar.Forest.yield ]
+  simp +decide [ ParseTree.yield, Forest.yield ]
 
 /-- The yield of an `S → B` node equals the yield of its `B`-child. -/
-theorem yield_SB (child : (Stack.toGrammar P).ParseTree PCPNonterm.B) :
-    (@ContextFreeGrammar.ParseTree.node _ (Stack.toGrammar P)
+theorem yield_SB (child : ParseTree (Stack.toGrammar P) PCPNonterm.B) :
+    (@ParseTree.node _ (Stack.toGrammar P)
       ⟨PCPNonterm.S, [Symbol.nonterminal PCPNonterm.B]⟩ SB_mem
       (.consN child .nil)).yield = child.yield := by
-  simp +decide [ ContextFreeGrammar.ParseTree.yield, ContextFreeGrammar.Forest.yield ]
+  simp +decide [ ParseTree.yield, Forest.yield ]
 
 omit [DecidableEq α] in
 /-- Any sub-stack of `P` is `is.map (P[·])` for some index list `is`. -/
@@ -539,13 +527,14 @@ theorem exists_indexList (L : Stack α) (hsub : ∀ t ∈ L, t ∈ P) :
       fun is his => ⟨ i :: is, by aesop ⟩
 
 /-- If `P` has a solution then `toGrammar P` is ambiguous. -/
-theorem ambiguous_if_pcp (h : PCP.DecisionProblem P) : (Stack.toGrammar P).DecisionProblem := by
+theorem ambiguous_if_pcp (h : PCP.DecisionProblem P) :
+    AmbigCFG.DecisionProblem (Stack.toGrammar P) := by
   obtain ⟨ L, hLne, hLsub, hLeq ⟩ := h
   obtain ⟨ is, hmap ⟩ := exists_indexList L hLsub
   refine' ⟨ _, _, _, _ ⟩
-  · exact @ContextFreeGrammar.ParseTree.node _ ( Stack.toGrammar P ) ⟨ PCPNonterm.S,
+  · exact @ParseTree.node _ ( Stack.toGrammar P ) ⟨ PCPNonterm.S,
     [ Symbol.nonterminal PCPNonterm.A ] ⟩ SA_mem ( .consN ( buildA is ( by grind ) ) .nil )
-  · exact @ContextFreeGrammar.ParseTree.node _ ( Stack.toGrammar P ) ⟨ PCPNonterm.S,
+  · exact @ParseTree.node _ ( Stack.toGrammar P ) ⟨ PCPNonterm.S,
     [ Symbol.nonterminal PCPNonterm.B ] ⟩ SB_mem ( .consN ( buildB is ( by grind ) ) .nil )
   · exact (by all_goals generalize_proofs at *; grind)
   · exact (by
@@ -554,7 +543,8 @@ theorem ambiguous_if_pcp (h : PCP.DecisionProblem P) : (Stack.toGrammar P).Decis
     exact encodeA_eq_encodeB_iff.mpr ( by aesop ))
 
 /-- If `toGrammar P` is ambiguous then `P` has a solution. -/
-theorem pcp_if_ambiguous (h : (Stack.toGrammar P).DecisionProblem) : PCP.DecisionProblem P := by
+theorem pcp_if_ambiguous (h : AmbigCFG.DecisionProblem (Stack.toGrammar P)) :
+    PCP.DecisionProblem P := by
   obtain ⟨t1, t2, hne, hyield⟩ := h
   rcases ptS_inv t1 rfl with ( ⟨cA1, heq1⟩ | ⟨cB1, heq1⟩ )
   rcases ptS_inv t2 rfl with ( ⟨cA2, heq2⟩ | ⟨cB2, heq2⟩ )
@@ -588,24 +578,31 @@ theorem pcp_if_ambiguous (h : (Stack.toGrammar P).DecisionProblem) : PCP.Decisio
 
 /-- `toGrammar P` is ambiguous iff `P` has a solution. -/
 theorem pcp_iff_ambigcfg (P : Stack α) :
-    PCP.DecisionProblem P ↔ (P.toGrammar).DecisionProblem :=
+    PCP.DecisionProblem P ↔ AmbigCFG.DecisionProblem P.toGrammar :=
   ⟨ambiguous_if_pcp, pcp_if_ambiguous⟩
 
 /-- A context-free grammar over `PCPAlpha` for *some* tile-count `n`, bundled into one
   fixed type. `Stack.toGrammar P`'s own alphabet `PCPAlpha P = Sum α (Fin P.length)`
   depends on `P.length`, so it can't itself be the codomain of a many-one reduction
-  `Stack α → Y` for a single fixed `Y` — `Undecidable`/`ManyOneReduces` need that.
+  `Stack α → Y` for a single fixed `Y`, which `Undecidable` and `ManyOneReduces` need.
   Bundling the length alongside the grammar is the standard way to state "CFG
   ambiguity is undecidable" once instances don't all share one alphabet. -/
 abbrev AmbigCFGInstance (α : Type) : Type 1 :=
   Σ n : ℕ, ContextFreeGrammar (Sum α (Fin n))
 
-/-- The grammar of a PCP instance, bundled with its tile count. -/
+/-- **The reduction.** It sends a PCP instance to its grammar, bundled with its tile count. -/
 def pcpToAmbigCFG (P : Stack α) : AmbigCFGInstance α := ⟨P.length, Stack.toGrammar P⟩
+
+/-- `pcpToAmbigCFG` reduces PCP to CFG ambiguity: `P` has a solution iff its grammar is
+  ambiguous. -/
+theorem pcp_reducesto_ambigCFG_spec :
+    @PCP.DecisionProblem α ⪯ₘ[pcpToAmbigCFG]
+      fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2 :=
+  fun P => pcp_iff_ambigcfg P
 
 /-- PCP many-one reduces to CFG ambiguity through `pcpToAmbigCFG`. -/
 def pcpReducesAmbigCFG :
-    @PCP.DecisionProblem α ⪯ₘ fun G : AmbigCFGInstance α => G.2.DecisionProblem :=
-  ⟨pcpToAmbigCFG, fun _ => ⟨ambiguous_if_pcp, pcp_if_ambiguous⟩⟩
+    @PCP.DecisionProblem α ⪯ₘ fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2 :=
+  ⟨pcpToAmbigCFG, pcp_reducesto_ambigCFG_spec⟩
 
 end DiagonaLean.AmbigCFG.Reduction

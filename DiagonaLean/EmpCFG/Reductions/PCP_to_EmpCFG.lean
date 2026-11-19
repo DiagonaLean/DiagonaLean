@@ -10,7 +10,7 @@ import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
 @[expose] public section
-open DiagonaLean.Synthetic.Notation
+
 /-! # PCP ⪯ₘ EmpCFG
 
 Reduction from PCP to EmpCFG following the Hopcroft–Ullman construction. Strings in the intersection
@@ -23,7 +23,9 @@ results are `pcp_iff_nempcfg` and `npcp_iff_empcfg`.
   *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
 
-namespace EmpCFG.Reduction
+open DiagonaLean.Synthetic.Notation
+
+namespace DiagonaLean.EmpCFG.Reduction
 
 open DiagonaLean.EmpCFG DiagonaLean.PCP ContextFreeGrammar
 
@@ -42,19 +44,19 @@ def τProj (proj : Tile α → List α) : Stack α → List α
 omit [DecidableEq α] in
 /-- `τProj proj` of the empty stack is empty. -/
 @[simp]
-lemma τProj_nil (proj : Tile α → List α) :
+theorem τProj_nil (proj : Tile α → List α) :
     τProj proj ([] : Stack α) = [] := rfl
 
 omit [DecidableEq α] in
 /-- `τProj proj` of a cons stack prepends `proj t`. -/
 @[simp]
-lemma τProj_cons (proj : Tile α → List α) (t : Tile α) (A : Stack α) :
+theorem τProj_cons (proj : Tile α → List α) (t : Tile α) (A : Stack α) :
     τProj proj (t :: A) = proj t ++ τProj proj A := rfl
 
 omit [DecidableEq α] in
 /-- `τProj proj` distributes over stack concatenation. -/
 @[simp]
-lemma τProj_append (proj : Tile α → List α) (A B : Stack α) :
+theorem τProj_append (proj : Tile α → List α) (A B : Stack α) :
     τProj proj (A ++ B) = τProj proj A ++ τProj proj B := by
   induction A with
   | nil => simp
@@ -63,7 +65,7 @@ lemma τProj_append (proj : Tile α → List α) (A B : Stack α) :
 omit [DecidableEq α] in
 /-- `τProj Tile.top` equals `τ1`. -/
 @[simp]
-lemma τProj_top (A : Stack α) : τProj Tile.top A = τ1 A := by
+theorem τProj_top (A : Stack α) : τProj Tile.top A = τ1 A := by
   induction A with
   | nil => rfl
   | cons t A ih => simp [τ1, ih]
@@ -71,7 +73,7 @@ lemma τProj_top (A : Stack α) : τProj Tile.top A = τ1 A := by
 omit [DecidableEq α] in
 /-- `τProj Tile.bot` equals `τ2`. -/
 @[simp]
-lemma τProj_bot (A : Stack α) : τProj Tile.bot A = τ2 A := by
+theorem τProj_bot (A : Stack α) : τProj Tile.bot A = τ2 A := by
   induction A with
   | nil => rfl
   | cons t A ih => simp [τ2, ih]
@@ -107,7 +109,7 @@ abbrev botCFG (P : Stack α) : ContextFreeGrammar (Term α) := genCFG Tile.bot P
 
 /-- A rule belongs to `(genCFG proj P).rules` iff it is `recRule proj t` or `baseRule proj t` for
   some `t ∈ P`. -/
-lemma mem_rules_iff (proj : Tile α → List α) (P : Stack α)
+theorem mem_rules_iff (proj : Tile α → List α) (P : Stack α)
     (r : ContextFreeRule (Term α) Unit) :
     r ∈ (genCFG proj P).rules ↔
       ∃ t ∈ P, r = recRule proj t ∨ r = baseRule proj t := by
@@ -129,14 +131,14 @@ def canonString (proj : Tile α → List α) (A : Stack α) : List (Term α) :=
 omit [DecidableEq α] in
 /-- `canonString proj` of the empty stack is empty. -/
 @[simp]
-lemma canonString_nil (proj : Tile α → List α) :
+theorem canonString_nil (proj : Tile α → List α) :
     canonString proj ([] : Stack α) = [] := by
   simp [canonString]
 
 omit [DecidableEq α] in
 /-- `canonString proj` of a cons stack prepends `(proj t).inl` and appends `[Sum.inr t]`. -/
 @[simp]
-lemma canonString_cons (proj : Tile α → List α)
+theorem canonString_cons (proj : Tile α → List α)
     (t : Tile α) (A : Stack α) :
     canonString proj (t :: A) =
       (proj t).map Sum.inl ++ canonString proj A ++ [Sum.inr t] := by
@@ -152,55 +154,55 @@ abbrev embedT (A : Stack α) : List (Symbol (Term α) Unit) :=
 
 omit [DecidableEq α] in
 /-- `embedA` distributes over word concatenation. -/
-lemma embedA_append (w₁ w₂ : List α) :
+theorem embedA_append (w₁ w₂ : List α) :
     embedA (w₁ ++ w₂) = embedA w₁ ++ embedA w₂ := by simp [embedA]
 
 omit [DecidableEq α] in
 /-- `embedT` distributes over stack concatenation. -/
-lemma embedT_append (A B : Stack α) :
+theorem embedT_append (A B : Stack α) :
     embedT (A ++ B) = embedT A ++ embedT B := by simp [embedT]
 
 omit [DecidableEq α] in
 /-- `embedA` of the empty word is empty. -/
 @[simp]
-lemma embedA_nil : embedA ([] : List α) = [] := rfl
+theorem embedA_nil : embedA ([] : List α) = [] := rfl
 
 omit [DecidableEq α] in
 /-- `embedT` of the empty stack is empty. -/
 @[simp]
-lemma embedT_nil : embedT ([] : Stack α) = [] := rfl
+theorem embedT_nil : embedT ([] : Stack α) = [] := rfl
 
 omit [DecidableEq α] in
 /-- `embedT` of a singleton stack is the single terminal symbol. -/
 @[simp]
-lemma embedT_singleton (t : Tile α) :
+theorem embedT_singleton (t : Tile α) :
     embedT [t] = [Symbol.terminal (Sum.inr t)] := rfl
 
 omit [DecidableEq α] in
 /-- `(canonString proj A).map Symbol.terminal` equals
   `embedA (τProj proj A) ++ embedT A.reverse`. -/
-lemma canonString_map_terminal (proj : Tile α → List α) (A : Stack α) :
+theorem canonString_map_terminal (proj : Tile α → List α) (A : Stack α) :
     (canonString proj A).map Symbol.terminal =
       embedA (τProj proj A) ++ embedT A.reverse := by
   simp [canonString, embedA, embedT, List.map_map, Function.comp_def]
 
 omit [DecidableEq α] in
-/-- `Rewrites.input_output` packaged for `recRule`. -/
-private lemma recRule_rewrites (proj : Tile α → List α) (t : Tile α) :
+/-- `recRule proj t` rewrites `[S]` to its own output. -/
+private theorem recRule_rewrites (proj : Tile α → List α) (t : Tile α) :
     (recRule proj t).Rewrites [Symbol.nonterminal ()]
       (embedA (proj t) ++ [Symbol.nonterminal ()] ++ [Symbol.terminal (Sum.inr t)]) :=
   ContextFreeRule.Rewrites.input_output
 
 omit [DecidableEq α] in
-/-- `Rewrites.input_output` packaged for `baseRule`. -/
-private lemma baseRule_rewrites (proj : Tile α → List α) (t : Tile α) :
+/-- `baseRule proj t` rewrites `[S]` to its own output. -/
+private theorem baseRule_rewrites (proj : Tile α → List α) (t : Tile α) :
     (baseRule proj t).Rewrites [Symbol.nonterminal ()]
       (embedA (proj t) ++ [Symbol.terminal (Sum.inr t)]) :=
   ContextFreeRule.Rewrites.input_output
 
 /-- From `[S]`, the grammar derives the "intermediate" form
   `embedA (τProj proj A) ++ [S] ++ embedT A.reverse` for any `A` whose tiles are all in `P`. -/
-private lemma derives_intermediate (proj : Tile α → List α) (P : Stack α)
+private theorem derives_intermediate (proj : Tile α → List α) (P : Stack α)
     (A : Stack α) (h_mem : ∀ t ∈ A, t ∈ P) :
     (genCFG proj P).Derives [Symbol.nonterminal ()]
       (embedA (τProj proj A) ++ [Symbol.nonterminal ()] ++ embedT A.reverse) := by
@@ -232,7 +234,7 @@ private lemma derives_intermediate (proj : Tile α → List α) (P : Stack α)
 
 /-- The grammar derives `(canonString proj A).map Symbol.terminal` from `[S]` for any non-empty `A`
   with tiles in `P`. -/
-private lemma derives_canonString_map (proj : Tile α → List α) (P : Stack α)
+private theorem derives_canonString_map (proj : Tile α → List α) (P : Stack α)
     (A : Stack α) (h_ne : A ≠ []) (h_mem : ∀ t ∈ A, t ∈ P) :
     (genCFG proj P).Derives [Symbol.nonterminal ()]
       ((canonString proj A).map Symbol.terminal) := by
@@ -263,14 +265,14 @@ private lemma derives_canonString_map (proj : Tile α → List α) (P : Stack α
 
 /-- For any non-empty stack `A` with tiles in `P`, the grammar `genCFG proj P` generates the
   canonical string. -/
-lemma genCFG_generates_canonString (proj : Tile α → List α) (P : Stack α)
+theorem genCFG_generates_canonString (proj : Tile α → List α) (P : Stack α)
     (A : Stack α) (h_ne : A ≠ []) (h_mem : ∀ t ∈ A, t ∈ P) :
     (canonString proj A) ∈ (genCFG proj P).language :=
   derives_canonString_map proj P A h_ne h_mem
 
 omit [DecidableEq α] in
 /-- No `.nonterminal` symbol occurs in `embedA w`. -/
-private lemma not_nonterminal_in_embedA (w : List α) (n : Unit) :
+private theorem not_nonterminal_in_embedA (w : List α) (n : Unit) :
     Symbol.nonterminal n ∉ embedA w := by
   intro h
   obtain ⟨a, _, ha⟩ := List.mem_map.mp h
@@ -278,7 +280,7 @@ private lemma not_nonterminal_in_embedA (w : List α) (n : Unit) :
 
 omit [DecidableEq α] in
 /-- No `.nonterminal` symbol occurs in `embedT A`. -/
-private lemma not_nonterminal_in_embedT (A : Stack α) (n : Unit) :
+private theorem not_nonterminal_in_embedT (A : Stack α) (n : Unit) :
     Symbol.nonterminal n ∉ embedT A := by
   intro h
   obtain ⟨t, _, ht⟩ := List.mem_map.mp h
@@ -286,7 +288,7 @@ private lemma not_nonterminal_in_embedT (A : Stack α) (n : Unit) :
 
 /-- Splitting at a unique element: if `xs ++ [a] ++ ys = us ++ [a] ++ vs` and `a ∉ xs` and `a ∉ ys`,
   then `xs = us` and `ys = vs`. -/
-private lemma split_at_unique {β : Type} {a : β} {xs ys us vs : List β}
+private theorem split_at_unique {β : Type} {a : β} {xs ys us vs : List β}
     (h_xs : a ∉ xs) (h_ys : a ∉ ys)
     (heq : xs ++ [a] ++ ys = us ++ [a] ++ vs) :
     xs = us ∧ ys = vs := by
@@ -328,12 +330,12 @@ private def Form (proj : Tile α → List α) (P : Stack α)
 
 omit [DecidableEq α] in
 /-- `[S]` satisfies `Form` with the empty stack. -/
-private lemma form_init (proj : Tile α → List α) (P : Stack α) :
+private theorem form_init (proj : Tile α → List α) (P : Stack α) :
     Form proj P [Symbol.nonterminal ()] := by
   refine Or.inl ⟨[], by simp, ?_⟩; simp
 
 /-- The invariant `Form` is preserved by a single `Produces` step. -/
-private lemma form_step (proj : Tile α → List α) (P : Stack α)
+private theorem form_step (proj : Tile α → List α) (P : Stack α)
     {s s' : List (Symbol (Term α) Unit)}
     (h_form : Form proj P s) (h_step : (genCFG proj P).Produces s s') :
     Form proj P s' := by
@@ -403,7 +405,7 @@ private lemma form_step (proj : Tile α → List α) (P : Stack α)
     · exact not_nonterminal_in_embedT _ _ h2
 
 /-- The invariant `Form` is preserved by any number of `Produces` steps. -/
-private lemma form_preserved (proj : Tile α → List α) (P : Stack α)
+private theorem form_preserved (proj : Tile α → List α) (P : Stack α)
     {s s' : List (Symbol (Term α) Unit)} (h_derives : (genCFG proj P).Derives s s')
     (h_init : Form proj P s) : Form proj P s' := by
   induction h_derives with
@@ -411,7 +413,7 @@ private lemma form_preserved (proj : Tile α → List α) (P : Stack α)
   | tail _ h_step h_ih => exact form_step proj P h_ih h_step
 
 /-- Any string reachable from `[S]` in the grammar satisfies `Form`. -/
-private lemma form_holds (proj : Tile α → List α) (P : Stack α)
+private theorem form_holds (proj : Tile α → List α) (P : Stack α)
     {s : List (Symbol (Term α) Unit)}
     (h_derives : (genCFG proj P).Derives [Symbol.nonterminal ()] s) :
     Form proj P s :=
@@ -419,7 +421,7 @@ private lemma form_holds (proj : Tile α → List α) (P : Stack α)
 
 /-- A List `w` is in `(genCFG proj P).language` iff it is
   `canonString proj A` for some non-empty stack `A` with tiles in `P`. -/
-lemma mem_language_iff_canonString (proj : Tile α → List α) (P : Stack α)
+theorem mem_language_iff_canonString (proj : Tile α → List α) (P : Stack α)
     (w : List (Term α)) :
     w ∈ (genCFG proj P).language ↔
     ∃ A : Stack α, A ≠ [] ∧ (∀ t ∈ A, t ∈ P) ∧ w = canonString proj A := by
@@ -451,7 +453,7 @@ lemma mem_language_iff_canonString (proj : Tile α → List α) (P : Stack α)
 
 /-- A list of the form `xs.map Sum.inl ++ ys.map Sum.inr` is uniquely decomposable: the `inl` prefix
   and `inr` suffix are determined by the list. -/
-private lemma list_inl_inr_split {β γ : Type} :
+private theorem list_inl_inr_split {β γ : Type} :
     ∀ (xs xs' : List β) (ys ys' : List γ),
     xs.map Sum.inl ++ ys.map Sum.inr = xs'.map Sum.inl ++ ys'.map Sum.inr →
     xs = xs' ∧ ys = ys' := by
@@ -493,7 +495,7 @@ private lemma list_inl_inr_split {β γ : Type} :
 /-- A PCP instance `P` is solvable iff the intersection of the two derived context-free grammars
   `topCFG P` and `botCFG P` is non-empty. -/
 theorem pcp_iff_nempcfg (P : Stack α) :
-    DecisionProblem P ↔ IntersectionNonempty (topCFG P) (botCFG P) := by
+    PCP.DecisionProblem P ↔ IntersectionNonempty (topCFG P) (botCFG P) := by
   constructor
   · rintro ⟨A, h_ne, h_mem, h_eq⟩
     refine ⟨canonString Tile.top A, ?_, ?_⟩
@@ -519,7 +521,7 @@ theorem pcp_iff_nempcfg (P : Stack α) :
 /-- A PCP instance `P` is not solvable iff the intersection of the two derived context-free grammars
   `topCFG P` and `botCFG P` is empty. -/
 theorem npcp_iff_empcfg (P : Stack α) :
-    ¬ DecisionProblem P ↔ IntersectionEmpty (topCFG P) (botCFG P) := by
+    ¬ PCP.DecisionProblem P ↔ IntersectionEmpty (topCFG P) (botCFG P) := by
   unfold IntersectionEmpty
   constructor
   · intro h w ⟨hw_top, hw_bot⟩
@@ -528,14 +530,19 @@ theorem npcp_iff_empcfg (P : Stack α) :
     obtain ⟨w, hw_top, hw_bot⟩ := (pcp_iff_nempcfg P).mp h_sol
     exact h w ⟨hw_top, hw_bot⟩
 
-/-- The two grammars of a PCP instance. -/
+/-- **The reduction.** It sends a PCP instance to its two grammars. -/
 def pcpToEmpCFG (P : Stack α) : ContextFreeGrammar (Term α) × ContextFreeGrammar (Term α) :=
   (topCFG P, botCFG P)
 
+/-- `pcpToEmpCFG` reduces PCP to the non-emptiness of the intersection of two context-free
+grammars: `P` has a solution iff `topCFG P` and `botCFG P` share a word. -/
+theorem pcp_reducesto_empCFG_spec :
+    @PCP.DecisionProblem α ⪯ₘ[pcpToEmpCFG] @EmpCFG.DecisionProblem (Term α) :=
+  pcp_iff_nempcfg
+
 /-- PCP many-one reduces to the non-emptiness of the intersection of two context-free grammars,
 through `pcpToEmpCFG`. -/
-def pcpReducesEmpCFG :
-    @DiagonaLean.PCP.DecisionProblem α ⪯ₘ @DiagonaLean.EmpCFG.DecisionProblem (Term α) :=
-  ⟨pcpToEmpCFG, pcp_iff_nempcfg⟩
+def pcpReducesEmpCFG : @PCP.DecisionProblem α ⪯ₘ @EmpCFG.DecisionProblem (Term α) :=
+  ⟨pcpToEmpCFG, pcp_reducesto_empCFG_spec⟩
 
-end EmpCFG.Reduction
+end DiagonaLean.EmpCFG.Reduction

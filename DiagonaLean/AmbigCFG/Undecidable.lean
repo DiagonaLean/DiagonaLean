@@ -9,9 +9,15 @@ import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFG
 
 /-! # Undecidability of CFG ambiguity
 
-CFG ambiguity is undecidable over any alphabet with two distinct letters (`ambigcfgUndecidable`).
+CFG ambiguity is undecidable over any alphabet with two distinct letters (`undecidableAmbigCFG`).
 An instance bundles the grammar with the number of tiles of the PCP instance it came from
 (`AmbigCFGInstance`), so that all instances share one type.
+
+## References
+
+* [J. E. Hopcroft, R. Motwani, J. D. Ullman,
+  *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
+  Theorem 9.20.
 -/
 
 variable {α : Type} [DecidableEq α]
@@ -20,10 +26,10 @@ namespace DiagonaLean.AmbigCFG.Reduction
 
 open DiagonaLean.PCP DiagonaLean.AmbigCFG DiagonaLean.Synthetic.Notation
 
-/-- CFG ambiguity is undecidable over any alphabet with two distinct letters `b0`, `b1`, through
-`pcpReducesAmbigCFG`. -/
-def ambigcfgUndecidable (b0 b1 : α) (hne : b0 ≠ b1) :
-    Undecidable (fun G : AmbigCFGInstance α => G.2.DecisionProblem) := by
+/-- **CFG ambiguity is `Undecidable`.** This holds over any alphabet with two distinct letters
+`b0`, `b1`, through `pcpReducesAmbigCFG`. -/
+def undecidableAmbigCFG (b0 b1 : α) (hne : b0 ≠ b1) :
+    Undecidable (fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2) := by
   reduceFromPCP over_letters b0 b1 via pcpReducesAmbigCFG
 
 end DiagonaLean.AmbigCFG.Reduction
