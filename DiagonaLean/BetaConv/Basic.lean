@@ -3,16 +3,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Claude Opus
 -/
 
-import Cslib.Languages.LambdaCalculus.LocallyNameless.Untyped.FullBetaConfluence
+import DiagonaLean.Foundations.LambdaCalculus.ProofSearch
 
 @[expose] public section
 
 /-! # β-conversion of λ-terms
 
 An instance is a pair of locally nameless λ-terms over the variables `ℕ`. `DecisionProblem` asks
-whether the two terms are β-convertible, that is, whether they have a common reduct under
-Cslib's full β-reduction `FullBeta`. By confluence (`confluent_fullBeta`) this is the
-equivalence closure of `FullBeta` (`decisionProblem_iff_eqvGen`). `BetaConvProblem` names it.
+whether the two terms are β-convertible (`Foundations.LambdaCalculus.BetaConv`), that is, whether
+they have a common reduct under Cslib's full β-reduction `FullBeta`. By confluence
+(`confluent_fullBeta`) this is the equivalence closure of `FullBeta` (`decisionProblem_iff_eqvGen`).
+`BetaConvProblem` names it.
 
 The locally closed terms of `Term ℕ` are the λ-terms up to α-equivalence, and on them this is
 β-conversion. Cslib's `FullBeta` takes no step from a term that is not locally closed
@@ -30,7 +31,7 @@ namespace DiagonaLean.BetaConv
 open Cslib LambdaCalculus.LocallyNameless.Untyped Term Relation
 
 /-- `DecisionProblem i` holds iff the two terms of `i` have a common β-reduct. -/
-def DecisionProblem (i : Term ℕ × Term ℕ) : Prop := Join (ReflTransGen FullBeta) i.1 i.2
+def DecisionProblem (i : Term ℕ × Term ℕ) : Prop := Foundations.LambdaCalculus.BetaConv i.1 i.2
 
 /-- β-conversion of λ-terms. -/
 abbrev BetaConvProblem : Term ℕ × Term ℕ → Prop := DecisionProblem

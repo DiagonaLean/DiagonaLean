@@ -3,16 +3,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Claude Opus
 -/
 
-import Cslib.Languages.CombinatoryLogic.Confluence
+import DiagonaLean.Foundations.CombinatoryLogic.ProofSearch
 
 @[expose] public section
 
 /-! # Convertibility of SKI terms
 
 An instance is a pair of SKI terms. `DecisionProblem` asks whether the two terms are
-convertible, that is, whether they have a common reduct under Cslib's reduction `Red`. By
-confluence (`join_mRed_equivalence`) this is the equivalence closure of `Red`
-(`decisionProblem_iff_eqvGen`), which Hindley and Seldin call weak equality.
+convertible (`Foundations.CombinatoryLogic.Conv`), that is, whether they have a common reduct
+under Cslib's reduction `Red`. By confluence (`join_mRed_equivalence`) this is the equivalence
+closure of `Red` (`decisionProblem_iff_eqvGen`), which Hindley and Seldin call weak equality.
 `SKIConvProblem` names it.
 
 ## References
@@ -26,7 +26,7 @@ namespace DiagonaLean.SKIConv
 open Cslib SKI Relation
 
 /-- `DecisionProblem i` holds iff the two terms of `i` have a common reduct. -/
-def DecisionProblem (i : SKI × SKI) : Prop := Join (ReflTransGen Red) i.1 i.2
+def DecisionProblem (i : SKI × SKI) : Prop := Foundations.CombinatoryLogic.Conv i.1 i.2
 
 /-- Convertibility of SKI terms. -/
 abbrev SKIConvProblem : SKI × SKI → Prop := DecisionProblem
