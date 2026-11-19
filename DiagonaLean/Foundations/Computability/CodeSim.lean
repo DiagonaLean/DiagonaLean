@@ -312,14 +312,7 @@ section Prim
 variable {α : Type*} [Primcodable α]
 
 theorem tokens_prim : Primrec tokens := by
-  unfold tokens
-  have h : Primrec₂ fun (_ : List Bool) (y : Bool × List ℕ) =>
-      if y.1 = true then 0 :: y.2 else (y.2.headI + 1) :: y.2.tail := by
-    apply Primrec₂.mk
-    fun_prop
-  exact (Primrec.list_foldr (h := fun _ y => if y.1 = true then 0 :: y.2 else
-    (y.2.headI + 1) :: y.2.tail) Primrec.id (Primrec.const [0]) h).of_eq fun w => by
-      congr 1
+  unfold tokens; fun_prop
 
 @[fun_prop] theorem prim_tokens {f : α → List Bool} (hf : Primrec f) : Primrec fun x => tokens (f x) :=
   tokens_prim.comp hf
@@ -327,7 +320,7 @@ theorem tokens_prim : Primrec tokens := by
 end Prim
 
 
-theorem dataC_prim : Primrec dataC := by
+@[fun_prop] theorem dataC_prim : Primrec dataC := by
   unfold dataC rowsC rowTok
   fun_prop
 

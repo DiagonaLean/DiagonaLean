@@ -65,9 +65,8 @@ theorem skc_toChurch (n : ℕ) :
 
 /-- The code of `toChurch n` is primitive recursive in `n`. -/
 theorem skc_toChurch_prim : Primrec fun n => skc (toChurch n) := by
-  have h : Primrec fun n : ℕ => (fun m => ca (skc SKI.Succ) m)^[n] (skc SKI.Zero) :=
-    Primrec.nat_iterate Primrec.id (Primrec.const _)
-      (prim_ca (Primrec.const _) Primrec.snd).to₂
+  have h : Primrec fun n : ℕ => (fun m => ca (skc SKI.Succ) m)^[n] (skc SKI.Zero) := by
+    fun_prop
   exact h.of_eq fun n => (skc_toChurch n).symm
 
 end DiagonaLean.Foundations.CombinatoryLogic

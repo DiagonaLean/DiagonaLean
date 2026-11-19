@@ -74,13 +74,7 @@ theorem listOf_numOf (l : List Bool) : listOf (numOf l) = l := by
   simp [listOf, bitsOf_numOf]
 
 theorem numOf_prim : Primrec numOf := by
-  unfold numOf
-  have h : Primrec₂ fun (_ : List Bool) (y : ℕ × Bool) => 2 * y.1 + y.2.toNat := by
-    apply Primrec₂.mk
-    have hb : Primrec fun z : List Bool × (ℕ × Bool) => z.2.2.toNat :=
-      (Primrec.dom_finite Bool.toNat).comp (prim_snd Primrec.snd)
-    exact prim_add (prim_mul (Primrec.const 2) (prim_fst Primrec.snd)) hb
-  exact Primrec.list_foldl Primrec.id (Primrec.const 1) h
+  unfold numOf; fun_prop
 
 theorem listOf_prim : Primrec listOf :=
   prim_tail (prim_reverse bitsOf_prim)
@@ -183,5 +177,18 @@ theorem exists_computes {X Y : Type*} {enc₁ : X → List Bool} {enc₂ : Y →
     ∃ R : SingleTapeTM Bool, ComputesReduction R enc₁ enc₂ f := by
   obtain ⟨R, hR⟩ := exists_computer F hF
   exact ⟨R, fun x => h x ▸ hR (enc₁ x)⟩
+
+/-- `tm_computes F` reduces a goal `∃ R : SingleTapeTM Bool, ComputesReduction R enc₁ enc₂ f` to
+`∀ x, F (enc₁ x) = enc₂ (f x)`, proving that `F : List Bool → List Bool` is `Computable` with
+`fun_prop`: first as `Primrec`, then directly. -/
+macro "tm_computes " F:term : tactic =>
+  `(tactic| refine exists_computes $F
+    (by first | exact Primrec.to_comp (by fun_prop) | fun_prop) ?_)
+
+/-- `tm_computer F` proves `∃ R : SingleTapeTM Bool, ∀ l, R.Outputs l (F l)`, proving that `F` is
+`Computable` with `fun_prop`: first as `Primrec`, then directly. -/
+macro "tm_computer " F:term : tactic =>
+  `(tactic| exact exists_computer $F
+    (by first | exact Primrec.to_comp (by fun_prop) | fun_prop))
 
 end DiagonaLean.Foundations.Computability

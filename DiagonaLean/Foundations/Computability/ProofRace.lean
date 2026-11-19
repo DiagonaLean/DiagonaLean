@@ -162,13 +162,12 @@ theorem not_machineDecidable_of_race {Y : Type*} {enc : Y → List Bool} {P : Y 
     ¬ MachineDecidable enc P := by
   rintro ⟨D, hD⟩
   obtain ⟨C, hC⟩ := exists_raceOn hchk hG
-  let F : List Bool → List Bool := fun w =>
-    bitsOf (Nat.pair (G C (Encodable.encode (dataC w))).1 (G C (Encodable.encode (dataC w))).2)
-  have hF : Primrec F := by
-    have h : Primrec fun w => G C (Encodable.encode (dataC w)) :=
-      hG.comp (Primrec.const C) (Primrec.encode.comp dataC_prim)
-    exact bitsOf_prim.comp (prim_natPair (prim_fst h) (prim_snd h))
-  obtain ⟨R, hR⟩ := exists_computer F hF.to_comp
+  have hGC : Primrec (G C) := hG.comp (Primrec.const C) Primrec.id
+  obtain ⟨R, hR⟩ : ∃ R : SingleTapeTM Bool, ∀ w, R.Outputs w
+      (bitsOf (Nat.pair (G C (Encodable.encode (dataC w))).1
+        (G C (Encodable.encode (dataC w))).2)) := by
+    tm_computer fun w => bitsOf (Nat.pair (G C (Encodable.encode (dataC w))).1
+      (G C (Encodable.encode (dataC w))).2)
   have hiff : ∀ M : EncodableTM Bool, Halts M.toSingleTapeTM (encodeBoolTM M) ↔
       P (inst C (Encodable.encode (dataC (encodeBoolTM M)))) := fun M =>
     race_iff (Q := fun n => P (inst C n)) hC (hQ C) (pos C) (neg C) (dataC (encodeBoolTM M))

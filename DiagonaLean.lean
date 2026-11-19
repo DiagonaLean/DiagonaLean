@@ -18,6 +18,7 @@ import DiagonaLean.PCP.AlphabetLift
 import DiagonaLean.PCP.Reductions.Halt_to_PCP
 import DiagonaLean.PCP.Reductions.MPCP_to_PCP
 import DiagonaLean.PCP.Undecidable
+import DiagonaLean.PCP.Primrec
 
 import DiagonaLean.AmbigCFG.Basic
 import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFG
@@ -30,6 +31,7 @@ import DiagonaLean.EmpCFG.Undecidable
 import DiagonaLean.MatMort.Basic
 import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
 import DiagonaLean.MatMort.Undecidable
+import DiagonaLean.MatMort.Primrec
 
 import DiagonaLean.KACommUndecidable.Basic
 import DiagonaLean.KACommUndecidable.Reductions.Halt_to_TermEq
@@ -66,6 +68,13 @@ import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 import DiagonaLean.Synthetic.ReductionCheck
 
 import DiagonaLean.Foundations.Computability.Prim
+import DiagonaLean.Foundations.Computability.PrimrecRec
+import DiagonaLean.Foundations.Computability.PolyTree
+import DiagonaLean.Foundations.Computability.TaggedCode
+import DiagonaLean.Foundations.Computability.FinsetPrim
+import DiagonaLean.Foundations.Computability.IntPrim
+import DiagonaLean.Foundations.Computability.MatrixPrim
+import DiagonaLean.Foundations.Computability.DerivePrimcodable
 import DiagonaLean.Foundations.Computability.ListConfig
 import DiagonaLean.Foundations.Computability.TM0ToCslib
 import DiagonaLean.Foundations.Computability.PartrecToCslib
@@ -82,11 +91,13 @@ import DiagonaLean.Foundations.Computability.OutputSearch
 import DiagonaLean.Foundations.CombinatoryLogic.Code
 import DiagonaLean.Foundations.CombinatoryLogic.ProofSearch
 import DiagonaLean.Foundations.CombinatoryLogic.Race
+import DiagonaLean.Foundations.CombinatoryLogic.Primcodable
 
 import DiagonaLean.Foundations.LambdaCalculus.Code
 import DiagonaLean.Foundations.LambdaCalculus.ProofSearch
 import DiagonaLean.Foundations.LambdaCalculus.Translation
 import DiagonaLean.Foundations.LambdaCalculus.Race
+import DiagonaLean.Foundations.LambdaCalculus.Primcodable
 
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.PreKleene
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.PreKleeneNotKleene
@@ -108,6 +119,7 @@ import DiagonaLean.KACommUndecidable.KleeneAlgebra.FreeKA
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.Inequality
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.Separation
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.ExprCode
+import DiagonaLean.KACommUndecidable.KleeneAlgebra.RExpPrimcodable
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.ProofSearch
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.Instance
 import DiagonaLean.KACommUndecidable.KleeneAlgebra.InstanceCode

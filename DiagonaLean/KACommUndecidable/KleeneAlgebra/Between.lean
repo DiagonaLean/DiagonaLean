@@ -77,11 +77,8 @@ theorem not_machineDecidable_of_interp {Y : Type*} {enc : Y → List Bool} {P : 
   -- the tape of the program that reads the output bit of the machine with code `w` on `w`
   let tape : List Bool → List Bool := fun w =>
     tapeOf B (Encodable.encode (C.curry (Encodable.encode (dataC w))))
-  have htape : Primrec tape := (tapeOf_prim B).comp (Primrec.encode.comp
-    (Code.primrec₂_curry.comp (Primrec.const C) (Primrec.encode.comp dataC_prim)))
-  have hF : Primrec fun w => bitsPair (G B.K (tape w)).1 (G B.K (tape w)).2 := by
-    have h := (hG B.K).comp htape
-    exact bitsOf_prim.comp (prim_natPair (prim_fst h) (prim_snd h))
+  have htape : Primrec tape := by dsimp only [tape]; fun_prop
+  have hGK := hG B.K
   have hout : ∀ {b : Bool} {M : EncodableTM Bool}, SelfOut b M →
       (NM B.K (tape (encodeBoolTM M))).Outputs [] [b] := by
     intro b M h
@@ -90,8 +87,10 @@ theorem not_machineDecidable_of_interp {Y : Type*} {enc : Y → List Bool} {P : 
       simp only [Code.eval_curry, hC, Nat.unpair_pair, Denumerable.ofNat_encode]
     have hm := hB _ _ (heval ▸ selfOut_mem h)
     cases b <;> simpa using hm
-  obtain ⟨R, hR⟩ := exists_computes (enc₁ := encodeBoolTM) (enc₂ := enc)
-    (f := fun M => inst B.K (tape (encodeBoolTM M))) _ hF.to_comp fun M => (henc _ _).symm
+  obtain ⟨R, hR⟩ : ∃ R : SingleTapeTM Bool, ComputesReduction R encodeBoolTM enc
+      fun M => inst B.K (tape (encodeBoolTM M)) := by
+    tm_computes fun w => bitsPair (G B.K (tape w)).1 (G B.K (tape w)).2
+    exact fun M => (henc _ _).symm
   exact not_machineDecidable_of_separation (fun _ h => pos _ _ (hout h))
     (fun _ h => neg _ _ (hout h)) hR
 
