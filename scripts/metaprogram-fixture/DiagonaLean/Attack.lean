@@ -1,4 +1,4 @@
-/-! Fixture for `scripts/check_metaprograms.py`, run by CI, which must reject it. Not built.
+/-! Fixture for `scripts/CheckMetaprograms.lean`, run by CI, which must reject it. Not built.
 
 A classical reduction that `#check_reductions` accepts: `run_cmd` adds it with `addDecl`, which
 the kernel checks, and copies the compiled code of an honest stub to it, so it is safe, not

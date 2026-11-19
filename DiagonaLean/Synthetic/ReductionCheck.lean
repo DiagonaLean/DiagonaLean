@@ -76,7 +76,7 @@ stub into the compiler's tables: the result is safe, not `noncomputable`, and ha
 the check, and rechecking the library with the kernel, as `lean4checker` does, accepts it too. A
 metaprogram can also add a declaration without the kernel (`debug.skipKernelTC`), such as a "proof"
 of `False` that uses no axiom, which neither this check nor `#print axioms` can see. So
-`scripts/check_metaprograms.py`, run by CI, rejects the commands and functions that change the
+`scripts/CheckMetaprograms.lean`, run by CI, rejects the commands and functions that change the
 environment (`run_cmd`, `#eval`, `addDecl`, `modifyEnv`, …) in the library's sources outside an
 allowlist; the tactics that the library defines with `elab` are reviewed by hand.
 
