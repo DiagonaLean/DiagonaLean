@@ -196,13 +196,13 @@ and close the side goals with the layers above. With layer 2, `c₁` and `c₂` 
 | #35 | `Undecidable` as data, the reduction check, the KA paper, the SKI/β merge | `main` | Review requested from Aalok |
 | #36 | `prim` → `fun_prop` (M1) | #35's branch | Waiting for #35 |
 | #38 | Everything else here: M2–M8, M3b, paramorphisms, `derive_primcodable` | #36's branch | CI green on `6af24df`; later commits pushed |
-| (new) | M13 for nested types, the M12 decision, this file (`feat/nested-primcodable`) | #38's branch | Opened 2026-11-19 |
+| #39 | M13 for nested types, the M12 decision, this file (`feat/nested-primcodable`) | #38's branch | Opened 2026-11-19 |
 | #37 (Aalok) | Moves `bitsPair` to `Foundations/Computability`; SKI/β problems via `Foundations` relations | `main` | Overlaps #35 (same `bitsPair` move); whichever merges second needs a small conflict fix |
 
 
 ### 1. Get the stack reviewed and merged (no new code)
 
-* Merge order: #35, then #36, then #38, then the M13 PR. GitHub retargets each stacked PR when its base merges.
+* Merge order: #35, then #36, then #38, then #39. GitHub retargets each stacked PR when its base merges.
 * Settle the #35 / #37 overlap with Aalok first.
 * #38 is large. If review stalls, split it: (a) tactics (`fun_prop` for `Computable`, `primrec_rec`, `tm_computer`); (b) Theorems A and B (`PolyTree.lean`, `TaggedCode.lean`); (c) the `Primcodable` files for `RExp`, `SKI`, `Term`; (d) `derive_primcodable`, which carries the policy change in `check_metaprograms.py` and deserves its own review.
 
