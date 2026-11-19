@@ -5,7 +5,7 @@ Authors: Aalok Thakkar, Claude Opus
 
 import DiagonaLean.BetaConv.Basic
 import DiagonaLean.Foundations.LambdaCalculus.Race
-import DiagonaLean.Foundations.Computability.Inseparable
+import DiagonaLean.Halt.Inseparable
 import DiagonaLean.Foundations.Computability.OutputSearch
 
 @[expose] public section
@@ -20,7 +20,7 @@ program from the recursion theorem.
 
 `sepRed U c` sends a machine `M` to the λ-instance of the reader program `c` on the data of `M`
 on its own code, against `tr FF`. If `M` outputs `[true]` the terms are β-convertible; if it
-outputs `[false]` they are not (`sepReducesBetaConv`). So β-conversion separates
+outputs `[false]` they are not (`sepRed_separates`). So β-conversion separates
 `SelfOut true` from `SelfOut false`.
 
 ## References
@@ -34,7 +34,7 @@ namespace DiagonaLean.BetaConv.Reduction
 
 open Cslib SKI LambdaCalculus.LocallyNameless.Untyped Nat.Partrec
   DiagonaLean.Foundations.LambdaCalculus DiagonaLean.Foundations.Computability DiagonaLean.Halt
-  DiagonaLean.Halt.Encoding
+  DiagonaLean.Halt.Encoding DiagonaLean.Halt.Inseparable
 
 /-- **The reduction.** The λ-instance of the race program on the data of `p`, against
 `tr FF`. -/
@@ -59,10 +59,10 @@ def sepRed (U : SKI) (c : Code) (M : EncodableTM Bool) : Term ℕ × Term ℕ :=
   (linst U c (Encodable.encode (dataOf (M, encodeBoolTM M))), tr FF)
 
 /-- `sepRed U c` separates `SelfOut true` from `SelfOut false` by β-conversion. -/
-def sepReducesBetaConv {u : Code} (U : SKI) (c : Code)
+theorem sepRed_separates {u : Code} (U : SKI) (c : Code)
     (hu : Foundations.CombinatoryLogic.IsUniversal u) (hU : Computes U u.eval) (hc : IsReader c) :
-    SepReduces (SelfOut true) (SelfOut false) BetaConvProblem :=
-  ⟨sepRed U c, fun _ h => betaConv_linst_of_one hu hU (by simpa using mem_eval_of_outputs hc h),
+    Separates (SelfOut true) (SelfOut false) fun M => BetaConvProblem (sepRed U c M) :=
+  ⟨fun _ h => betaConv_linst_of_one hu hU (by simpa using mem_eval_of_outputs hc h),
     fun _ h => not_betaConv_linst_of_zero hu hU (by simpa using mem_eval_of_outputs hc h)⟩
 
 end DiagonaLean.BetaConv.Reduction

@@ -5,7 +5,7 @@ Authors: Aalok Thakkar, Claude Opus
 
 import DiagonaLean.SKIConv.Basic
 import DiagonaLean.Foundations.CombinatoryLogic.Race
-import DiagonaLean.Foundations.Computability.Inseparable
+import DiagonaLean.Halt.Inseparable
 import DiagonaLean.Foundations.Computability.OutputSearch
 
 @[expose] public section
@@ -20,7 +20,7 @@ recursion theorem.
 
 `sepRed U c` sends a machine `M` to the instance of the reader program `c` on the data of `M` on
 its own code, against `FF`. If `M` outputs `[true]` the reader returns `1` and the terms are
-convertible; if it outputs `[false]` the reader returns `0` and they are not (`sepReducesSKIConv`).
+convertible; if it outputs `[false]` the reader returns `0` and they are not (`sepRed_separates`).
 So convertibility separates `SelfOut true` from `SelfOut false`.
 
 ## References
@@ -32,6 +32,7 @@ namespace DiagonaLean.SKIConv.Reduction
 
 open Cslib SKI Nat.Partrec DiagonaLean.Foundations.CombinatoryLogic
   DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
+  DiagonaLean.Halt.Inseparable
 
 /-- **The reduction.** The instance of the race program on the data of `p`, against `FF`. -/
 def reduction (U : SKI) (C : Code) (p : EncodableTM Bool × List Bool) : SKI × SKI :=
@@ -54,10 +55,10 @@ def sepRed (U : SKI) (c : Code) (M : EncodableTM Bool) : SKI × SKI :=
   (inst U c (Encodable.encode (dataOf (M, encodeBoolTM M))), FF)
 
 /-- `sepRed U c` separates `SelfOut true` from `SelfOut false` by SKI convertibility. -/
-def sepReducesSKIConv {u : Code} (U : SKI) (c : Code) (hu : IsUniversal u)
+theorem sepRed_separates {u : Code} (U : SKI) (c : Code) (hu : IsUniversal u)
     (hU : Computes U u.eval) (hc : IsReader c) :
-    SepReduces (SelfOut true) (SelfOut false) SKIConvProblem :=
-  ⟨sepRed U c, fun _ h => conv_inst_of_one hu hU (by simpa using mem_eval_of_outputs hc h),
+    Separates (SelfOut true) (SelfOut false) fun M => SKIConvProblem (sepRed U c M) :=
+  ⟨fun _ h => conv_inst_of_one hu hU (by simpa using mem_eval_of_outputs hc h),
     fun _ h => not_conv_inst_of_zero hu hU (by simpa using mem_eval_of_outputs hc h)⟩
 
 end DiagonaLean.SKIConv.Reduction

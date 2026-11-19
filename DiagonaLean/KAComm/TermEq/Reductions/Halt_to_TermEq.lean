@@ -1,0 +1,43 @@
+/-
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Prathamesh TVH, Claude Opus
+-/
+
+import DiagonaLean.KAComm.TermEq.Basic
+import DiagonaLean.KAComm.KleeneAlgebra.Race
+
+@[expose] public section
+
+/-! # `HaltProblem ⪯ₘ` equality on `T Σ̈`
+
+`reduction B C` sends a `HaltProblem` instance `p` to the instance (`rInst`) of the race program of
+`p` over `ℕ`. By Smullyan's argument, `p` halts iff the two sides are provably equal in pre-Kleene
+algebra with commutativity (`halt_iff_rel`). The constants `B` and `C` are the interpreter's table
+and the race program from the recursion theorem.
+
+## References
+
+* [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorems 18 and 19
+-/
+
+open scoped Computability
+
+namespace DiagonaLean.KAComm.TermEq.Reduction
+
+open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing RExp TD FreePreKA Nat.Partrec
+  DiagonaLean.Foundations.Computability DiagonaLean.Halt DiagonaLean.Halt.Encoding
+  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
+
+/-- `reduction B C` reduces `HaltProblem` to provable equality in pre-Kleene algebra with
+commutativity. -/
+theorem halt_reducesto_termEq_spec {B : Base} {C : Code} (hB : B.Good)
+    (hC : RaceProg false B C) : HaltProblem ⪯ₘ[reduction B C] TermEqProblem := fun p => by
+  simpa [KAComm.KleeneAlgebra.Rel, DecisionProblem] using halt_iff_rel hB hC p
+
+/-- **The reduction.** `HaltProblem` many-one reduces to provable equality in pre-Kleene algebra
+with commutativity. -/
+def haltReducesTermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg false B C) :
+    HaltProblem ⪯ₘ TermEqProblem :=
+  ⟨reduction B C, halt_reducesto_termEq_spec hB hC⟩
+
+end DiagonaLean.KAComm.TermEq.Reduction
