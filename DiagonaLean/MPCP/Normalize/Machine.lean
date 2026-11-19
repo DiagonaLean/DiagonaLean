@@ -3,8 +3,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic)
 -/
 
-import DiagonaLean.MPCP.Normalize.Cell
 import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
+import DiagonaLean.MPCP.Normalize.Cell
+
+@[expose] public section
 
 /-! # The normalised machine
 
@@ -28,17 +30,20 @@ normTM cell …    6    4    2    1    3    5  …
 ```
 
 Cell `2 * j + 1` of `normTM tm` holds cell `j ≥ 0` of `tm`, and cell `-2 * j` holds cell
-`j < 0` of `tm`.  A symbol `b : Bool` of `tm` is stored as `(b, true)`, and a blank of `tm`
-is stored either as a genuine blank or as `Bl = (false, false)`; this way `normTM tm` never
-has to write a blank.  The marker `Mk = (true, false)` occurs only in cell `0`, which lets
-the machine detect the fold point (the only place where the position bookkeeping is
-irregular).
+`j < 0` of `tm`. A symbol `b : Bool` of `tm` is stored as `(b, true)` (`encSym`), and a blank
+of `tm` is stored either as a blank or as `Bl = (false, false)`; this way `normTM tm` never has
+to write a blank. The marker `Mk = (true, false)` occurs only in cell `0`, which lets the
+machine detect the fold point (the only place where the position bookkeeping is irregular).
 
 One step of `tm` is simulated by one to three steps of `normTM tm`, using the auxiliary
-control states in `Ctrl`.
+control states in `Ctrl`. The transition function is `normTr`, built from `simStep`.
+
+## References
+
+* [J. E. Hopcroft, R. Motwani, J. D. Ullman,
+  *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
 
-@[expose] public section
 namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing SingleTapeTM
@@ -52,7 +57,8 @@ def Mk : Sym2 := (true, false)
 /-- The symbol used to represent a blank that has been written by the simulated machine. -/
 def Bl : Sym2 := (false, false)
 
-lemma Bl_ne_Mk : Bl ≠ Mk := by decide
+/-- `Bl` and `Mk` are distinct. -/
+theorem Bl_ne_Mk : Bl ≠ Mk := by decide
 
 /-- Encoding of a symbol of the simulated machine. -/
 def encSym : Option Bool → Option Sym2
@@ -67,23 +73,29 @@ def decSym : Option Sym2 → Option Bool
 /-- Rewriting a cell with its own contents, avoiding blank writes. -/
 def preserve (a : Option Sym2) : Option Sym2 := some (a.getD Bl)
 
-@[simp] lemma decSym_encSym (c : Option Bool) : decSym (encSym c) = c := by
+/-- Decoding inverts encoding. -/
+@[simp] theorem decSym_encSym (c : Option Bool) : decSym (encSym c) = c := by
   cases c <;> rfl
 
-@[simp] lemma encSym_ne_none (c : Option Bool) : encSym c ≠ none := by
+/-- An encoded symbol is never blank. -/
+@[simp] theorem encSym_ne_none (c : Option Bool) : encSym c ≠ none := by
   cases c <;> simp [encSym]
 
-@[simp] lemma encSym_ne_Mk (c : Option Bool) : encSym c ≠ some Mk := by
+/-- An encoded symbol is never the marker. -/
+@[simp] theorem encSym_ne_Mk (c : Option Bool) : encSym c ≠ some Mk := by
   cases c <;> simp [encSym, Mk, Bl]
 
-@[simp] lemma preserve_ne_none (a : Option Sym2) : preserve a ≠ none := by simp [preserve]
+/-- `preserve a` is never blank. -/
+@[simp] theorem preserve_ne_none (a : Option Sym2) : preserve a ≠ none := by simp [preserve]
 
-@[simp] lemma decSym_preserve (a : Option Sym2) : decSym (preserve a) = decSym a := by
+/-- `preserve a` decodes to the same symbol as `a`. -/
+@[simp] theorem decSym_preserve (a : Option Sym2) : decSym (preserve a) = decSym a := by
   match a with
   | none => rfl
   | some (b, c) => rfl
 
-lemma preserve_ne_Mk {a : Option Sym2} (h : a ≠ some Mk) : preserve a ≠ some Mk := by
+/-- If `a` is not the marker, neither is `preserve a`. -/
+theorem preserve_ne_Mk {a : Option Sym2} (h : a ≠ some Mk) : preserve a ≠ some Mk := by
   match a with
   | none => simp [preserve, Bl, Mk]
   | some (b, c) => simpa [preserve] using h
@@ -108,13 +120,14 @@ inductive Ctrl
   | chkL2
   deriving DecidableEq, Inhabited
 
+/-- `Ctrl` is finite. -/
 instance : Fintype Ctrl :=
   ⟨⟨([Ctrl.start, Ctrl.simR, Ctrl.simL, Ctrl.mvRR, Ctrl.mvRL, Ctrl.chkR, Ctrl.chkL1,
       Ctrl.chkL2] : List Ctrl), by decide⟩, fun x => by cases x <;> decide⟩
 
-/-- A hand-written, genuinely computable encoding: unlike the classical `Fintype → Encodable`
-route (`Fintype.equivFin`, which needs choice to turn "finitely many elements" into a concrete
-enumeration), `Ctrl` is a small closed enum, so encode/decode can just be written by hand. -/
+/-- `Ctrl` is encodable, with `encode` and `decode` written by hand so that both are
+computable. The classical route `Fintype → Encodable` goes through `Fintype.equivFin`, which needs
+choice to turn "finitely many elements" into a concrete enumeration. -/
 instance : Encodable Ctrl where
   encode
     | .start => 0
@@ -140,8 +153,11 @@ instance : Encodable Ctrl where
 /-- The `sim` control state for a head on the right (`true`) or left (`false`) half. -/
 def Ctrl.sim (right : Bool) : Ctrl := if right then .simR else .simL
 
-@[simp] lemma Ctrl.sim_true : Ctrl.sim true = .simR := rfl
-@[simp] lemma Ctrl.sim_false : Ctrl.sim false = .simL := rfl
+/-- `Ctrl.sim true` is `Ctrl.simR`. -/
+@[simp] theorem Ctrl.sim_true : Ctrl.sim true = .simR := rfl
+
+/-- `Ctrl.sim false` is `Ctrl.simL`. -/
+@[simp] theorem Ctrl.sim_false : Ctrl.sim false = .simL := rfl
 
 variable (tm : SingleTapeTM Bool)
 
@@ -185,9 +201,11 @@ def normTM : SingleTapeTM Sym2 where
   q₀ := (tm.q₀, .start)
   tr := fun s a => normTr tm s.1 s.2 a
 
-@[simp] lemma normTM_State : (normTM tm).State = (tm.State × Ctrl) := rfl
+/-- A state of `normTM tm` is a state of `tm` paired with a control state. -/
+@[simp] theorem normTM_State : (normTM tm).State = (tm.State × Ctrl) := rfl
 
-@[simp] lemma normTM_tr (s : tm.State × Ctrl) (a : Option Sym2) :
+/-- The transition function of `normTM tm` is `normTr tm`. -/
+@[simp] theorem normTM_tr (s : tm.State × Ctrl) (a : Option Sym2) :
     (normTM tm).tr s a = normTr tm s.1 s.2 a := rfl
 
 /-- The encoded input: the marker, followed by the input interleaved with blanks. -/
@@ -196,40 +214,52 @@ def encInput (w : List Bool) : List Sym2 := Mk :: w.flatMap (fun b => [(b, true)
 /-- The fold of `tm`'s bi-infinite tape onto the cells `1, 2, 3, …`. -/
 def fold (j : ℤ) : ℤ := if 0 ≤ j then 2 * j + 1 else -2 * j
 
-lemma fold_of_nonneg {j : ℤ} (h : 0 ≤ j) : fold j = 2 * j + 1 := by simp [fold, h]
+/-- For `j ≥ 0`, `fold j = 2 * j + 1`. -/
+theorem fold_of_nonneg {j : ℤ} (h : 0 ≤ j) : fold j = 2 * j + 1 := by simp [fold, h]
 
-lemma fold_of_neg {j : ℤ} (h : j < 0) : fold j = -2 * j := by
+/-- For `j < 0`, `fold j = -2 * j`. -/
+theorem fold_of_neg {j : ℤ} (h : j < 0) : fold j = -2 * j := by
   simp [fold, h.not_ge]
 
-lemma one_le_fold (j : ℤ) : 1 ≤ fold j := by
+/-- Every value of `fold` is at least `1`. -/
+theorem one_le_fold (j : ℤ) : 1 ≤ fold j := by
   rcases le_or_gt 0 j with h | h
   · rw [fold_of_nonneg h]; omega
   · rw [fold_of_neg h]; omega
 
-lemma fold_pos (j : ℤ) : 0 < fold j := lt_of_lt_of_le zero_lt_one (one_le_fold j)
+/-- Every value of `fold` is positive. -/
+theorem fold_pos (j : ℤ) : 0 < fold j := lt_of_lt_of_le zero_lt_one (one_le_fold j)
 
-lemma fold_injective : Function.Injective fold := by
+/-- `fold` is injective. -/
+theorem fold_injective : Function.Injective fold := by
   intro a b hab
   rcases le_or_gt 0 a with ha | ha <;> rcases le_or_gt 0 b with hb | hb <;>
     simp only [fold_of_nonneg, fold_of_neg, ha, hb] at hab <;> omega
 
-lemma fold_eq_iff {a b : ℤ} : fold a = fold b ↔ a = b :=
+/-- `fold a = fold b` holds exactly when `a = b`. -/
+theorem fold_eq_iff {a b : ℤ} : fold a = fold b ↔ a = b :=
   ⟨fun h => fold_injective h, fun h => by rw [h]⟩
 
-lemma fold_succ_of_nonneg {i : ℤ} (h : 0 ≤ i) : fold (i + 1) = fold i + 2 := by
+/-- For `i ≥ 0`, `fold (i + 1) = fold i + 2`. -/
+theorem fold_succ_of_nonneg {i : ℤ} (h : 0 ≤ i) : fold (i + 1) = fold i + 2 := by
   rw [fold_of_nonneg h, fold_of_nonneg (by omega)]; ring
 
-lemma fold_pred_of_neg {i : ℤ} (h : i < 0) : fold (i - 1) = fold i + 2 := by
+/-- For `i < 0`, `fold (i - 1) = fold i + 2`. -/
+theorem fold_pred_of_neg {i : ℤ} (h : i < 0) : fold (i - 1) = fold i + 2 := by
   rw [fold_of_neg h, fold_of_neg (by omega)]; ring
 
-lemma fold_pred_of_pos {i : ℤ} (h : 0 < i) : fold (i - 1) = fold i - 2 := by
+/-- For `i > 0`, `fold (i - 1) = fold i - 2`. -/
+theorem fold_pred_of_pos {i : ℤ} (h : 0 < i) : fold (i - 1) = fold i - 2 := by
   rw [fold_of_nonneg h.le, fold_of_nonneg (by omega)]; ring
 
-lemma fold_succ_of_lt_neg_one {i : ℤ} (h : i < -1) : fold (i + 1) = fold i - 2 := by
+/-- For `i < -1`, `fold (i + 1) = fold i - 2`. -/
+theorem fold_succ_of_lt_neg_one {i : ℤ} (h : i < -1) : fold (i + 1) = fold i - 2 := by
   rw [fold_of_neg (by omega), fold_of_neg (by omega)]; ring
 
-lemma fold_zero : fold 0 = 1 := rfl
+/-- `fold 0 = 1`. -/
+theorem fold_zero : fold 0 = 1 := rfl
 
-lemma fold_neg_one : fold (-1) = 2 := rfl
+/-- `fold (-1) = 2`. -/
+theorem fold_neg_one : fold (-1) = 2 := rfl
 
 end DiagonaLean.MPCP.Normalize

@@ -8,15 +8,17 @@ import DiagonaLean.MPCP.Normalize.Input
 import DiagonaLean.Halt.Basic
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 
+@[expose] public section
+
 /-! # Reachable configurations of the normalised machine
 
 `PhaseInv` describes the configurations of `normTM tm` that arise during the simulation:
 each of them encodes a configuration of `tm`, the control state recording how far the
-current step of `tm` has been simulated.  It is closed under the transition relation, which
-gives both the halting equivalence and the `NoLeftBoundary` property.
+current step of `tm` has been simulated. It is closed under the transition relation
+(`phase_step`), so every reachable configuration satisfies it (`reach_phase`). This gives the
+halting equivalence `halts_normTM_iff` and the `NoLeftBoundary` property.
 -/
 
-@[expose] public section
 namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing SingleTapeTM
@@ -38,12 +40,15 @@ def PhaseInv (q : tm.State) (t : BiTape Bool) (i : ℤ)
 
 variable {tm}
 
-lemma PhaseInv.state_ne_none {q : tm.State} {t i s tp} (h : PhaseInv tm q t i s tp) :
+/-- The state of a simulation configuration is not `none`. -/
+theorem PhaseInv.state_ne_none {q : tm.State} {t i s tp} (h : PhaseInv tm q t i s tp) :
     s ≠ none := by
   rcases h with ⟨hs, _⟩ | ⟨hs, _⟩ | ⟨hs, _⟩ | ⟨hs, _⟩ | ⟨hs, _⟩ | ⟨hs, _⟩ | ⟨hs, _⟩ <;>
     simp [hs]
 
-/-- One step of the normalised machine from a simulation configuration. -/
+/-- From a simulation configuration, `normTM tm` takes a step, either to a simulation
+configuration of a configuration that `tm` reaches, or to a halted configuration when `tm` reaches
+a halting one. -/
 theorem phase_step {q : tm.State} {t : BiTape Bool} {i : ℤ}
     {s : Option (tm.State × Ctrl)} {tp : BiTape Sym2} (hp : PhaseInv tm q t i s tp) :
     ∃ c'' : (normTM tm).Cfg, (normTM tm).step ⟨s, tp⟩ = some c'' ∧
@@ -149,7 +154,7 @@ theorem phase_step {q : tm.State} {t : BiTape Bool} {i : ℤ}
 variable (tm)
 
 /-- The initial configuration of the normalised machine is a simulation configuration. -/
-lemma phaseInv_init (w : List Bool) :
+theorem phaseInv_init (w : List Bool) :
     PhaseInv tm tm.q₀ (BiTape.mk₁ w) 0
       ((normTM tm).initCfg (encInput w)).state ((normTM tm).initCfg (encInput w)).BiTape :=
   Or.inl ⟨rfl, rfl, invAt_init w⟩
@@ -186,7 +191,8 @@ def NoHaltFrom (c : tm.Cfg) : Prop :=
 
 variable {tm}
 
-lemma NoHaltFrom.mono {c c' : tm.Cfg} (h : NoHaltFrom tm c)
+/-- If `tm` cannot halt from `c` and reaches `c'` from `c`, then it cannot halt from `c'`. -/
+theorem NoHaltFrom.mono {c c' : tm.Cfg} (h : NoHaltFrom tm c)
     (hr : Relation.ReflTransGen tm.TransitionRelation c c') : NoHaltFrom tm c' :=
   fun tape hc => h tape (hr.trans hc)
 

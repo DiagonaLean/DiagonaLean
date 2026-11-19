@@ -6,7 +6,9 @@ Authors: Aalok Thakkar, Akhilesh Balaji
 import DiagonaLean.Halt.Compositions
 import DiagonaLean.Synthetic.Definitions
 
-/-! # Undecidability of the Halting Problem
+@[expose] public section
+
+/-! # Undecidability of the halting problem
 
 The main results are `self_halt_undecidable` and `halt_undecidable`, proved by diagonalization.
 `diagTM D` simulates `D` and inverts its output: if `D` says the input halts, `diagTM D` loops;
@@ -24,18 +26,16 @@ variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt.Encoding
      DiagonaLean.Halt.Compositions DiagonaLean.Halt.Helpers
 
-@[expose] public section
-
 namespace DiagonaLean.Halt.Undecidable
 
 /-- The transition relation of any `SingleTapeTM Bool` is deterministic. -/
-private lemma transitionRelation_det {tm : SingleTapeTM Bool}
+private theorem transitionRelation_det {tm : SingleTapeTM Bool}
     {a b c : tm.Cfg}
     (hab : tm.TransitionRelation a b) (hac : tm.TransitionRelation a c) :
     b = c := by grind
 
 /-- Any two traces from a common source in a `SingleTapeTM Bool` are comparable. -/
-private lemma trace_diamond {tm : SingleTapeTM Bool}
+private theorem trace_diamond {tm : SingleTapeTM Bool}
     {a b c : tm.Cfg}
     (hab : Relation.ReflTransGen tm.TransitionRelation a b)
     (hac : Relation.ReflTransGen tm.TransitionRelation a c) :
@@ -50,6 +50,7 @@ private inductive DiagPost : Type
   | loop
   deriving DecidableEq, Inhabited
 
+/-- `DiagPost` is finite. -/
 private instance : Fintype DiagPost where
   elems := {DiagPost.reading, DiagPost.loop}
   complete := fun x => by cases x <;> decide
@@ -83,19 +84,19 @@ private def liftCfg : D.Cfg → (diagTM D).Cfg
 /-- `liftCfg` maps the initial configuration of `D` on `w` to the initial configuration
 of `diagTM D` on `w`. -/
 @[simp]
-private lemma liftCfg_initCfg (w : List Bool) :
+private theorem liftCfg_initCfg (w : List Bool) :
     liftCfg D (SingleTapeTM.initCfg D w) =
       SingleTapeTM.initCfg (diagTM D) w := rfl
 
 /-- `liftCfg` maps the halting configuration of `D` with output `out` to the `reading`
 state of `diagTM D` with tape `mk₁ out`. -/
 @[simp]
-private lemma liftCfg_haltCfg (out : List Bool) :
+private theorem liftCfg_haltCfg (out : List Bool) :
     liftCfg D (SingleTapeTM.haltCfg D out) =
       ⟨some (.inr .reading), BiTape.mk₁ out⟩ := rfl
 
 /-- A single `D`-step lifts to a single `diagTM D`-step. -/
-private lemma step_liftCfg
+private theorem step_liftCfg
     {a b : D.Cfg} (h_ab : D.TransitionRelation a b) :
     (diagTM D).TransitionRelation (liftCfg D a) (liftCfg D b) := by
   obtain ⟨st_a, t_a⟩ := a
@@ -123,14 +124,14 @@ private lemma step_liftCfg
       simp only [SingleTapeTM.step, diagTM, h_tr]
 
 /-- A `D`-trace lifts to a `diagTM D`-trace via `liftCfg`. -/
-private lemma trace_liftCfg {a b : D.Cfg}
+private theorem trace_liftCfg {a b : D.Cfg}
     (h : Relation.ReflTransGen D.TransitionRelation a b) :
     Relation.ReflTransGen (diagTM D).TransitionRelation
       (liftCfg D a) (liftCfg D b) :=
   Relation.ReflTransGen.lift (liftCfg D) (fun _ _ => step_liftCfg D) _ _ h
 
 /-- From `reading` with head `some true`, the next state is `loop`. -/
-private lemma diagTM_reading_true (t : BiTape Bool)
+private theorem diagTM_reading_true (t : BiTape Bool)
     (h_head : t.head = some true) :
     (diagTM D).step ⟨some (.inr .reading), t⟩ =
       some ⟨some (.inr .loop), t.write none⟩ := by
@@ -138,7 +139,7 @@ private lemma diagTM_reading_true (t : BiTape Bool)
   cases h_head; rfl
 
 /-- From `reading` with head `some false`, the machine halts. -/
-private lemma diagTM_reading_false (t : BiTape Bool)
+private theorem diagTM_reading_false (t : BiTape Bool)
     (h_head : t.head = some false) :
     (diagTM D).step ⟨some (.inr .reading), t⟩ =
       some ⟨none, t.write none⟩ := by
@@ -146,13 +147,13 @@ private lemma diagTM_reading_false (t : BiTape Bool)
   cases h_head; rfl
 
 /-- From `loop`, the machine steps back to `loop`. -/
-private lemma diagTM_loop_step (t : BiTape Bool) :
+private theorem diagTM_loop_step (t : BiTape Bool) :
     (diagTM D).step ⟨some (.inr .loop), t⟩ =
       some ⟨some (.inr .loop), t.write none⟩ := by
   obtain ⟨h, l, r⟩ := t; rfl
 
 /-- A single step from a `loop` configuration produces another `loop` configuration. -/
-private lemma loop_closed
+private theorem loop_closed
     {a b : (diagTM D).Cfg}
     (h_loop : a.state = some (.inr .loop))
     (h_step : (diagTM D).TransitionRelation a b) :
@@ -162,7 +163,7 @@ private lemma loop_closed
   grind
 
 /-- Every configuration reachable from a `loop` configuration is also in `loop`. -/
-private lemma loop_persistent
+private theorem loop_persistent
     {a b : (diagTM D).Cfg}
     (h_loop : a.state = some (.inr .loop))
     (h_reach : Relation.ReflTransGen (diagTM D).TransitionRelation a b) :
@@ -172,7 +173,7 @@ private lemma loop_persistent
   | tail _ h_step ih => exact loop_closed D ih h_step
 
 /-- If `D` outputs `[false]` on `w`, then `diagTM D` halts on `w`. -/
-private lemma diagTM_halts_of_outputs_false
+private theorem diagTM_halts_of_outputs_false
     {w : List Bool}
     (h : SingleTapeTM.Outputs D w [false]) :
     Halts (diagTM D) w := by
@@ -186,7 +187,7 @@ private lemma diagTM_halts_of_outputs_false
   exact ⟨_, h_lift.tail h_step⟩
 
 /-- If `D` outputs `[true]` on `w`, then `diagTM D` does not halt on `w`. -/
-private lemma diagTM_loops_of_outputs_true
+private theorem diagTM_loops_of_outputs_true
     {w : List Bool}
     (h : SingleTapeTM.Outputs D w [true]) :
     ¬ Halts (diagTM D) w := by
@@ -209,7 +210,7 @@ private lemma diagTM_loops_of_outputs_true
     · simp at h_eq
     · simp [SingleTapeTM.TransitionRelation, SingleTapeTM.step] at h_step'
 
-/-- No `SingleTapeTM Bool` decides the self-halting problem. -/
+/-- **No `SingleTapeTM Bool` decides the self-halting problem.** -/
 theorem self_halt_undecidable :
     ¬ ∃ D : SingleTapeTM Bool, IsSelfHaltDecider D := by
   rintro ⟨D, h_dec⟩
@@ -226,7 +227,7 @@ theorem self_halt_undecidable :
 
 /-- A general halt decider for all `(M, w)` yields a self-halt decider by composing with
 `pairSelfTM`, which maps `encodeBoolTM M` to `encodePair (encodeBoolTM M) (encodeBoolTM M)`. -/
-lemma self_halt_decider_if_halt_decider {D} (h : IsHaltDecider D) :
+theorem self_halt_decider_if_halt_decider {D} (h : IsHaltDecider D) :
     ∃ D' : SingleTapeTM Bool, IsSelfHaltDecider D' :=
   ⟨compComputer pairSelfTM D, fun M => by
     obtain ⟨h_pos, h_neg⟩ := h M (encodeBoolTM M)
@@ -236,16 +237,16 @@ lemma self_halt_decider_if_halt_decider {D} (h : IsHaltDecider D) :
     · intro hM
       exact compComputer_seq_outputs (pairSelfTM_outputs _) (h_neg hM)⟩
 
-/-- No `SingleTapeTM Bool` decides the halting problem. -/
+/-- **No `SingleTapeTM Bool` decides the halting problem.** -/
 theorem halt_undecidable :
     ¬ ∃ D : SingleTapeTM Bool, IsHaltDecider D := by
   rintro ⟨D, h_dec⟩
   exact self_halt_undecidable (self_halt_decider_if_halt_decider h_dec)
 
-/-- `DTrue` is a single-tape Turing machine over `Bool` that scans right across
+/-- `trueTM` is a single-tape Turing machine over `Bool` that scans right across
 non-blank tape symbols until it reaches the first blank (`none`), writes `true`,
 and halts. -/
-def DTrue : SingleTapeTM Bool where
+def trueTM : SingleTapeTM Bool where
   State := Unit
   q₀ := ()
   tr _ a :=
@@ -253,48 +254,46 @@ def DTrue : SingleTapeTM Bool where
     | some _ => (⟨none, some Turing.Dir.right⟩, some ())
     | none   => (⟨some true, none⟩, none)
 
-/-- One step of `DTrue` on `h :: t` lands exactly on the initial configuration for `t`. -/
-private lemma DTrue_step_tail (h : Bool) (t : List Bool) :
-    DTrue.TransitionRelation (SingleTapeTM.initCfg DTrue (h :: t))
-      (SingleTapeTM.initCfg DTrue t) :=
+/-- One step of `trueTM` on `h :: t` lands exactly on the initial configuration for `t`. -/
+private theorem trueTM_step_tail (h : Bool) (t : List Bool) :
+    trueTM.TransitionRelation (SingleTapeTM.initCfg trueTM (h :: t))
+      (SingleTapeTM.initCfg trueTM t) :=
   by
-  show DTrue.step _ = some _
-  simp only [SingleTapeTM.step, SingleTapeTM.initCfg, DTrue, BiTape.mk₁,
+  show trueTM.step _ = some _
+  simp only [SingleTapeTM.step, SingleTapeTM.initCfg, trueTM, BiTape.mk₁,
     BiTape.write, BiTape.optionMove, BiTape.move, BiTape.moveRight,
     StackTape.cons, StackTape.mapSome, StackTape.head, StackTape.tail]
   cases t with
   | nil => exact Option.some_inj.mpr rfl
   | cons h' t' => exact Option.some_inj.mpr rfl
 
-/-- `DTrue` halts on every input, erasing the tape and writing `[true]`. -/
-theorem DTrue_outputs (l : List Bool) : SingleTapeTM.Outputs DTrue l [true] := by
+/-- `trueTM` halts on every input, erasing the tape and writing `[true]`. -/
+theorem trueTM_outputs (l : List Bool) : SingleTapeTM.Outputs trueTM l [true] := by
   induction l with
   | nil =>
     exact Relation.ReflTransGen.single rfl
   | cons h t ih =>
-    exact Relation.ReflTransGen.head (DTrue_step_tail h t) ih
+    exact Relation.ReflTransGen.head (trueTM_step_tail h t) ih
 
---Final step of halting problem which asserts existence of a turning Machine which does not satisfy Halting
+/-- Some `SingleTapeTM Bool` does not halt on some input. -/
 theorem exists_not_halts : ∃ (tm : SingleTapeTM Bool) (w : List Bool), ¬ Halts tm w := by
   by_contra h
   apply halt_undecidable
   simp at h
-  refine ⟨DTrue, fun tm w => ⟨fun _ => DTrue_outputs _, fun hc => absurd (h tm.toSingleTapeTM w) hc⟩⟩
+  refine ⟨trueTM, fun tm w =>
+    ⟨fun _ => trueTM_outputs _, fun hc => absurd (h tm.toSingleTapeTM w) hc⟩⟩
 
 open DiagonaLean.Synthetic.Definitions
 
 /-- The pair-encoding used by `IsHaltDecider`, packaged as a plain function of the encoding's
 domain so `HaltProblem` can be phrased as an instance of `MachineDecidable`. Uses the `Encodable`
 instance bundled with `p.1 : EncodableTM Bool` (its `stateEncodable` field) rather than a
-classically chosen one, since `Encodable` witnesses are data -- unlike `DecidableEq`, they are
+classically chosen one, since `Encodable` witnesses are data: unlike `DecidableEq`, they are
 not subsingletons, so which instance is used matters and must be threaded explicitly. -/
 def haltInputEncoding (p : EncodableTM Bool × List Bool) : List Bool :=
   encodePair (encodeBoolTM p.1) p.2
 
-/-- `IsHaltDecider D` is exactly `D` deciding `HaltProblem` under `haltInputEncoding`. Since
-`IsHaltDecider` now quantifies over a bundled `EncodableTM Bool` for each `tm`, both directions
-simply pass that same bundled value through to the other side, with no need to reconcile
-mismatched `Encodable` instances as the old `DecidableEq`-based proof did via `Subsingleton.elim`. -/
+/-- `IsHaltDecider D` is exactly `D` deciding `HaltProblem` under `haltInputEncoding`. -/
 theorem tmdeciderfor_halt_iff (D : SingleTapeTM Bool) :
     TMDeciderFor D haltInputEncoding HaltProblem ↔ IsHaltDecider D := by
   constructor
@@ -342,7 +341,7 @@ theorem machineDecidable_of_computes_reduction
 
 /-- Contrapositive of `machineDecidable_of_computes_reduction`: undecidability transports
 *forward* along a computable reduction. If `P` has no machine decider and `R` computes
-`f : P ⪯ₘ[f] Q`, then `Q` has none either -- a decider for `Q` would, via `R`, yield one for
+`f : P ⪯ₘ[f] Q`, then `Q` has none either: a decider for `Q` would, via `R`, yield one for
 `P`. -/
 theorem not_machineDecidable_of_computes_reduction
     {enc1 : X → List Bool} {enc2 : Y → List Bool} {P : X → Prop} {Q : Y → Prop}
@@ -352,8 +351,7 @@ theorem not_machineDecidable_of_computes_reduction
     ¬ MachineDecidable enc2 Q :=
   fun hQ => hP (machineDecidable_of_computes_reduction hR hf hQ)
 
-/-- Undecidability of any problem `Q` from a computable reduction of the halting problem:
-if a TM `R` computes `f : HaltProblem ⪯ₘ[f] Q` (from `haltInputEncoding` to `enc`), then `Q`
+/-- If a TM `R` computes `f : HaltProblem ⪯ₘ[f] Q` (from `haltInputEncoding` to `enc`), then `Q`
 is not machine-decidable. Combines `not_machineDecidable_of_computes_reduction` with
 `halt_not_machinedecidable`. -/
 theorem not_machineDecidable_of_halt_reduces

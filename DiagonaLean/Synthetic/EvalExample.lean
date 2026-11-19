@@ -6,6 +6,8 @@ Authors: Prathamesh Turaga
 import DiagonaLean.PCP.Reductions.Halt_to_PCP
 import DiagonaLean.Halt.Helpers
 
+@[expose] public section
+
 /-! # Evaluation fixture (not wired into `DiagonaLean.lean`)
 
 Runs the computable reduction `haltToPcp : EncodableTM Bool × List Bool → Stack _` on a concrete

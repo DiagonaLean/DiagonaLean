@@ -5,13 +5,16 @@ Authors: Aristotle (Harmonic), Akhilesh Balaji
 
 import DiagonaLean.UTMHalt.Basic
 
-/-! # Halt ⪯ₘ UTMHalt
-
-Given (an encoding of) a machine `tm` together with an input `w`, it halts exactly when `tm` halts
-on `w`, and produces exactly the output that `tm` produces on `w`.
--/
-
 @[expose] public section
+
+/-! # Halting of universal machines
+
+A weakly universal machine `U` halts on `instanceEncoding M w` exactly when `M` halts on `w`
+(`halt_iff_weakutmhalt`), and the same holds for a universal machine (`halt_iff_utmhalt`). A
+machine deciding the halting problem of a weakly universal machine decides the general halting
+problem (`isHaltDecider_of_isHaltDeciderFor`). These are equivalences of propositions; no
+many-one reduction is built, since no universal machine is constructed.
+-/
 
 namespace DiagonaLean.UTMHalt.Reduction
 
@@ -38,15 +41,13 @@ theorem isHaltDecider_of_isHaltDeciderFor {D : SingleTapeTM Bool}
   refine ⟨fun h => (hD _).1 ((hU tm w).mpr h), fun h => (hD _).2 ?_⟩
   exact fun h' => h ((hU tm w).mp h')
 
-/-- The halting problem many-one reduces to the halting problem of any weakly universal
-machine: an instance `(M, w)` is mapped to the encoded instance `encodeInstance M w`. -/
+/-- If `U` is weakly universal, then `M` halts on `w` iff `U` halts on `instanceEncoding M w`. -/
 theorem halt_iff_weakutmhalt (hU : IsWeaklyUniversal U) (M : EncodableTM Bool)
     (w : List Bool) :
     Halts M.toSingleTapeTM w ↔ WeakUTMHalts U hU M w :=
   (hU M w).symm
 
-/-- The halting problem many-one reduces to the halting problem of any universal
-machine: an instance `(M, w)` is mapped to the encoded instance `encodeInstance M w`. -/
+/-- If `U` is universal, then `M` halts on `w` iff `U` halts on `instanceEncoding M w`. -/
 theorem halt_iff_utmhalt (hU : IsUniversal U) (M : EncodableTM Bool)
     (w : List Bool) :
     Halts M.toSingleTapeTM w ↔ UTMHalts U hU M w :=

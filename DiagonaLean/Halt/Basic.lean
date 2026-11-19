@@ -5,11 +5,14 @@ Authors: Aalok Thakkar, Akhilesh Balaji
 
 import DiagonaLean.Halt.Encoding
 
-/-! # The Halting Problem: Basic Definitions
+@[expose] public section
+
+/-! # The halting problem
 
 The central notions used in the proof that the halting problem is
 undecidable: the `Halts`, `IsSelfHaltDecider`, and `IsHaltDecider` predicates for TMs
-are used in the statement of the headline theorems of `DiagonaLean.Halt`.
+are used in the statement of the headline theorems of `DiagonaLean.Halt`. The decision problem
+itself is `HaltProblem`, on pairs of an `EncodableTM Bool` and an input.
 
 ## References
 

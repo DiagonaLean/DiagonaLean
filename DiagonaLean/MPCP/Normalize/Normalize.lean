@@ -3,12 +3,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh Turaga
 -/
 
-
 import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
 import Cslib.Foundations.Data.BiTape
 import DiagonaLean.Halt.Basic
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.MPCP.Normalize.Properties
+
+@[expose] public section
 
 /-! # Normalisation of Turing machines
 
@@ -20,13 +21,17 @@ The reduction from the halting problem to MPCP in
 replaced, together with its input, by a machine over the alphabet `Bool × Bool` satisfying
 both conditions and halting exactly when the original machine halts.
 
-The witnesses are the explicit construction `normTM` (see `Normalize.Machine`) together with
-the encoded input `encInput`: the tape of `normTM tm` carries a marker in its leftmost cell
-and the bi-infinite tape of `tm` folded onto the cells to the right of the marker, with a
-blank written by `tm` represented by a dedicated non-blank symbol.
+The witnesses are the construction `normTM` (see `Normalize.Machine`) together with the
+encoded input `encInput`: the tape of `normTM tm` carries a marker in its leftmost cell and the
+bi-infinite tape of `tm` folded onto the cells to the right of the marker, with a blank written
+by `tm` represented by a dedicated non-blank symbol.
+
+## References
+
+* [J. E. Hopcroft, R. Motwani, J. D. Ullman,
+  *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
 
-@[expose] public section
 open Cslib.Turing SingleTapeTM
 
 namespace DiagonaLean.MPCP.Normalize

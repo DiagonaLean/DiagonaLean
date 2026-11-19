@@ -3,18 +3,21 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh Turaga
 -/
 
+import Mathlib.Order.SuccPred.Nat
 import DiagonaLean.PCP.Basic
 import DiagonaLean.Synthetic.Definitions
-import Mathlib.Order.SuccPred.Nat
+
+@[expose] public section
 
 /-! # Transporting PCP across alphabets
 
 Every PCP instance `P : Stack γ₁` can be recoded, one symbol at a time, into a PCP instance
 over any alphabet `γ₂` with at least two distinct elements: each symbol of `γ₁` is encoded
 by a fixed-width binary word over `γ₂`, and the codomain instance is solvable iff the
-source instance is. `PCP_alphabet_lift` packages this as a many-one reduction; the
-concrete data (`liftInstance`, `symbolBits`) is exported so downstream reductions can
-build the encoded instance and transport equivalences back and forth. -/
+source instance is (`decisionProblem_lifts`). `pcpAlphabetLift` packages this as a many-one
+reduction; the concrete data (`liftInstance`, `symbolBits`) is exported so downstream reductions
+can build the encoded instance and transport equivalences back and forth.
+-/
 
 namespace DiagonaLean.PCP.AlphabetLift
 
@@ -50,22 +53,24 @@ def liftWord (P :  DiagonaLean.PCP.Stack γ₁) (w : List γ₁) : List γ₂ :=
   w.flatMap (symbolWord b0 b1 P)
 
 /-- Lifts a single tile. -/
-def liftTile (P : DiagonaLean.PCP.Stack γ₁) (t : DiagonaLean.PCP.Tile γ₁) : DiagonaLean.PCP.Tile γ₂ :=
+def liftTile (P : DiagonaLean.PCP.Stack γ₁) (t : DiagonaLean.PCP.Tile γ₁) :
+    DiagonaLean.PCP.Tile γ₂ :=
   ⟨liftWord b0 b1 P t.top, liftWord b0 b1 P t.bot⟩
 
 /-- Lifts a whole PCP instance. -/
 def liftInstance (P : DiagonaLean.PCP.Stack γ₁) : DiagonaLean.PCP.Stack γ₂ :=
   P.map (liftTile b0 b1 P)
 
-/-- `liftWord` is a homomorphism w.r.t. concatenation — immediate from
+/-- `liftWord` is a homomorphism with respect to concatenation, by
     `List.flatMap_append`. -/
 theorem liftWord_append (P : DiagonaLean.PCP.Stack γ₁) (u v : List γ₁) :
     liftWord b0 b1 P (u ++ v) = liftWord b0 b1 P u ++ liftWord b0 b1 P v := by
   simp [liftWord, List.flatMap_append]
 
-/-- `τ1`/`τ2` (via `τProj`) commute with lifting: unfolding `foldr` and applying
-`liftWord_append` step by step. -/
-theorem tau_lift (proj : DiagonaLean.PCP.Tile γ₁ → List γ₁) (proj' : DiagonaLean.PCP.Tile γ₂ → List γ₂)
+/-- If the tile projections `proj` and `proj'` commute with lifting, then so do their `foldr`
+concatenations over a stack. -/
+theorem tau_lift (proj : DiagonaLean.PCP.Tile γ₁ → List γ₁)
+    (proj' : DiagonaLean.PCP.Tile γ₂ → List γ₂)
     (hproj : ∀ P t, proj' (liftTile b0 b1 P t) = liftWord b0 b1 P (proj t))
     (P : DiagonaLean.PCP.Stack γ₁) (A : DiagonaLean.PCP.Stack γ₁) :
     (A.map (liftTile b0 b1 P)).foldr (fun t acc => proj' t ++ acc) [] =
@@ -86,8 +91,8 @@ theorem symbolWord_length (P : DiagonaLean.PCP.Stack γ₁) (a : γ₁) :
   simp [symbolWord, symbolBits, natToBits_length]
 
 
-/-- `bitTo b0 b1` is injective whenever `b0 ≠ b1` — the only way two bits can
-    map to the same target symbol is if they're the same bit. -/
+/-- `bitTo b0 b1` is injective whenever `b0 ≠ b1`: two bits map to the same
+    target symbol only if they are the same bit. -/
 theorem bitTo_injective (hne : b0 ≠ b1) : Function.Injective (bitTo b0 b1) := by
   intro x y h
   cases x <;> cases y <;> simp only [bitTo] at h
@@ -96,9 +101,8 @@ theorem bitTo_injective (hne : b0 ≠ b1) : Function.Injective (bitTo b0 b1) := 
   · exact absurd h.symm hne
   · rfl
 
-/-- `natToBits len` is injective on naturals below `2^len` — standard
-    fixed-width binary decoding, by induction on the width, peeling one bit
-    at a time. -/
+/-- `natToBits len` is injective on naturals below `2^len`: fixed-width binary
+    decoding, by induction on the width, peeling one bit at a time. -/
 theorem natToBits_injective (len : ℕ) {m n : ℕ} (hm : m < 2 ^ len) (hn : n < 2 ^ len) :
     natToBits len m = natToBits len n → m = n := by
   induction len generalizing m n with
@@ -163,7 +167,7 @@ theorem pow_two_lt (n m : ℕ) (h1: 2^n < 2^m) (h2: 2^m < 2^(n+1)) : False := by
 theorem log2_le_log2_of_lt_pos (m n : ℕ) (h : m < n) (h_neq_zero : m ≠ 0) : m.log2 ≤ n.log2 := by
   by_contra hcon
   have hn_ne : n ≠ 0 := by omega
-  -- lower bound: 2 ^ m.log2 ≤ m — the contrapositive of `Nat.log2_lt` at k := m.log2
+  -- lower bound: 2 ^ m.log2 ≤ m, the contrapositive of `Nat.log2_lt` at k := m.log2
   have ha : (2 ^ (m.log2)) ≤ m ∧ m < (2 ^ (m.log2 + 1)) := by
     simp [(Nat.log2_eq_iff h_neq_zero).mp rfl]
   have hb : (2 ^ (n.log2)) ≤ n ∧ n < (2 ^ (n.log2 + 1)) := by
@@ -215,7 +219,8 @@ theorem symbolWord_injective (P : DiagonaLean.PCP.Stack γ₁) (hne : b0 ≠ b1)
     natToBits_injective _ hidxlt hidxlt' hbits
   have hga : (symbolsUsed P).get ⟨(symbolsUsed P).idxOf a, List.idxOf_lt_length_of_mem ha⟩ = a := by
     exact List.idxOf_get (List.idxOf_lt_length_of_mem ha)
-  have hga' : (symbolsUsed P).get ⟨(symbolsUsed P).idxOf a', List.idxOf_lt_length_of_mem ha'⟩ = a' := by
+  have hga' :
+      (symbolsUsed P).get ⟨(symbolsUsed P).idxOf a', List.idxOf_lt_length_of_mem ha'⟩ = a' := by
     exact List.idxOf_get (List.idxOf_lt_length_of_mem ha')
   rw [← hga, ← hga']
   simp [hidx]
@@ -371,7 +376,8 @@ theorem decisionProblem_lifts (P : DiagonaLean.PCP.Stack γ₁) (hne : b0 ≠ b1
           rw [← ft]
           simp [hfP]
         · show τ1 A = τ2 A
-          exact liftWord_injective b0 b1 P hne (mem_τ1_symbolsUsed P A hAmemP)  (mem_τ2_symbolsUsed P A hAmemP) (by rw [← hτ1, ← hτ2, hBeq])
+          exact liftWord_injective b0 b1 P hne (mem_τ1_symbolsUsed P A hAmemP)
+            (mem_τ2_symbolsUsed P A hAmemP) (by rw [← hτ1, ← hτ2, hBeq])
 
 /-- `liftInstance b0 b1` witnesses the many-one reduction from PCP over an arbitrary alphabet
 to PCP over a target alphabet. -/
@@ -381,7 +387,7 @@ theorem pcp_alphabet_lift_spec (hne : b0 ≠ b1) :
   fun P => decisionProblem_lifts b0 b1 P hne
 
 /-- Many-one reduction from PCP over an arbitrary alphabet to PCP over a target alphabet. -/
-def PCPAlphabetLift (hne : b0 ≠ b1) :
+def pcpAlphabetLift (hne : b0 ≠ b1) :
     (@DiagonaLean.PCP.DecisionProblem γ₁) ⪯ₘ (@DiagonaLean.PCP.DecisionProblem γ₂) :=
   ⟨liftInstance b0 b1, pcp_alphabet_lift_spec b0 b1 hne⟩
 

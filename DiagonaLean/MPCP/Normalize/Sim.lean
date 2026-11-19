@@ -5,12 +5,15 @@ Authors: Aristotle (Harmonic)
 
 import DiagonaLean.MPCP.Normalize.Steps
 
+@[expose] public section
+
 /-! # Simulating one step of the original machine
 
-One step of `tm` is simulated by one to three steps of `normTM tm`.
+One step of `tm` is simulated by one to three steps of `normTM tm`: a step into a running
+state by `sim_tm_step_running`, a halting step by `sim_tm_step_halt`. `NSteps` is reachability
+in `normTM tm`.
 -/
 
-@[expose] public section
 namespace DiagonaLean.MPCP.Normalize
 
 open Cslib.Turing SingleTapeTM
@@ -18,7 +21,9 @@ open Cslib.Turing SingleTapeTM
 variable (tm : SingleTapeTM Bool)
 variable {t : BiTape Bool} {i : ℤ} {t' : BiTape Sym2} {q : tm.State}
 
-lemma tm_step_eq (q : tm.State) (t : BiTape Bool) :
+/-- One step of `tm` from the state `q` writes, moves and changes state as `tm.tr q`
+prescribes on the head symbol. -/
+theorem tm_step_eq (q : tm.State) (t : BiTape Bool) :
     tm.step ⟨some q, t⟩ =
       some ⟨(tm.tr q t.head).2,
         (t.write (tm.tr q t.head).1.symbol).optionMove (tm.tr q t.head).1.movement⟩ := by
@@ -29,14 +34,17 @@ lemma tm_step_eq (q : tm.State) (t : BiTape Bool) :
 abbrev NSteps (c c' : (normTM tm).Cfg) : Prop :=
   Relation.ReflTransGen (normTM tm).TransitionRelation c c'
 
-lemma nsteps_single {c c' : (normTM tm).Cfg} (h : (normTM tm).step c = some c') :
+/-- A single step of `normTM tm` is an `NSteps` path. -/
+theorem nsteps_single {c c' : (normTM tm).Cfg} (h : (normTM tm).step c = some c') :
     NSteps tm c c' :=
   Relation.ReflTransGen.single h
 
-lemma sim_of_nonneg {i : ℤ} (hi : 0 ≤ i) : Ctrl.sim (decide (0 ≤ i)) = Ctrl.simR := by
+/-- For `i ≥ 0`, `Ctrl.sim (decide (0 ≤ i))` is `Ctrl.simR`. -/
+theorem sim_of_nonneg {i : ℤ} (hi : 0 ≤ i) : Ctrl.sim (decide (0 ≤ i)) = Ctrl.simR := by
   simp [Ctrl.sim, hi]
 
-lemma sim_of_neg {i : ℤ} (hi : i < 0) : Ctrl.sim (decide (0 ≤ i)) = Ctrl.simL := by
+/-- For `i < 0`, `Ctrl.sim (decide (0 ≤ i))` is `Ctrl.simL`. -/
+theorem sim_of_neg {i : ℤ} (hi : i < 0) : Ctrl.sim (decide (0 ≤ i)) = Ctrl.simL := by
   rw [decide_eq_false (by omega : ¬ (0 ≤ i))]
   rfl
 

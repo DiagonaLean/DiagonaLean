@@ -5,10 +5,12 @@ Authors: Claude Opus
 
 import Lean
 
+@[expose] public section
+
 /-! # Checking that reductions are computed by compiled definitions
 
-`Undecidable p` is the type `HaltProblem ⪯ₘ p`, and Lean's logic is classical, so a term of it exists
-for every `p` with a positive and a negative instance: the reduction can be the case split
+`Undecidable p` is the type `HaltProblem ⪯ₘ p`, and Lean's logic is classical, so a term of it
+exists for every `p` with a positive and a negative instance: the reduction can be the case split
 `fun x => if HaltProblem x then a else b`. A reduction carries algorithmic content only when its
 function is a program. Lean refuses to compile that case split, so an undecidability result is a
 definition whose value is the reduction, and what has to be checked is that the definition
@@ -19,18 +21,18 @@ file instead), private ones included.
 A reduction is a term of `ManyOneReduces` (`⪯ₘ`): a term whose type, after its parameters and after
 unfolding every definition, is a reduction structure, listed in `reductionStructs`. Unfolding
 matters, since a type can reach a reduction structure through an alias whose own type is not
-literally a sort, such as `def T : (fun _ => Type 1) () := Undecidable p`, or through a field of a
-structure, such as `box.T` for `def box : Box := ⟨Undecidable p⟩`. A *carrier* is a reduction structure or an untrusted
-definition, other than a reduction itself, whose body mentions a carrier, such as `Undecidable`,
-`T` or `box`.
+syntactically a sort, such as `def T : (fun _ => Type 1) () := Undecidable p`, or through a field
+of a structure, such as `box.T` for `def box : Box := ⟨Undecidable p⟩`. A *carrier* is a reduction
+structure or an untrusted definition, other than a reduction itself, whose body mentions a
+carrier, such as `Undecidable`, `T` or `box`.
 
 1. **Every reduction is a compiled definition with honest proofs.** A definition whose type ends in
    a reduction is safe, not `noncomputable`, without `implemented_by` or `extern`, and has compiled
    code. Its dependencies are free of escape hatches (see below). Its proofs, and the theorems they
    use, depend on no axiom beyond `propext`, `Classical.choice` and `Quot.sound`: not `sorry`, not
    an `axiom` of the library, and not `native_decide`, whose proofs trust compiled code that an
-   escape hatch can make lie. Likewise every `@[csimp]` lemma, since it replaces the compiled code of
-   a definition and a false one makes a classical definition compile.
+   escape hatch can make lie. Likewise every `@[csimp]` lemma, since it replaces the compiled code
+   of a definition and a false one makes a classical definition compile.
 2. **Reductions are not wrapped.** A definition returns a reduction only as its result, never
    inside another type such as an `Equiv` or a pair, and no constructor of a structure, inductive
    type or inductive proposition takes one. Otherwise a reduction could be passed around inside a
@@ -348,7 +350,8 @@ def declViolations (env : Environment) (tainted carriers : NameSet) (c : Name) (
   | .axiomInfo a =>
     return if mentionsAny carriers a.type then #[m!"is an axiom about reductions"] else #[]
   | .ctorInfo k =>
-    return if mentionsAny carriers k.type then #[m!"stores a reduction inside another type"] else #[]
+    return if mentionsAny carriers k.type then #[m!"stores a reduction inside another type"]
+      else #[]
   | _ => return #[]
 
 /-- The reduction structures, and every untrusted definition, other than a reduction, whose body

@@ -1,23 +1,30 @@
 /-
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Akhilesh Balaji, Aristotle (Harmonic).
+Authors: Akhilesh Balaji, Aristotle (Harmonic)
 -/
 
 import Mathlib.Tactic
+import Mathlib.Order.SuccPred.Nat
 import DiagonaLean.Halt.Basic
 import DiagonaLean.Halt.Helpers
-import Mathlib.Order.SuccPred.Nat
 
-variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
+@[expose] public section
 
-open Cslib.Turing SingleTapeTM DiagonaLean.Halt.Helpers DiagonaLean.Halt.Encoding
-
-/-! # Sequential Composition and Self-Pairing
+/-! # Sequential composition and self-pairing
 
 Sequential composition of single-tape TMs and the self-pairing machine `pairSelfTM`,
 which computes `w ↦ encodePair w w = w ++ [true, true] ++ w`. Together these are used
 to reduce `IsHaltDecider` to `IsSelfHaltDecider` by preprocessing the input.
+
+## References
+
+* [J. E. Hopcroft, R. Motwani, J. D. Ullman,
+  *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
+
+variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
+
+open Cslib.Turing SingleTapeTM DiagonaLean.Halt.Helpers DiagonaLean.Halt.Encoding
 
 namespace DiagonaLean.Halt.Compositions
 
@@ -32,7 +39,7 @@ def compCfgR (tm1 tm2 : SingleTapeTM Symbol) : tm2.Cfg → (compComputer tm1 tm2
   | ⟨st, t⟩ => ⟨Option.map Sum.inr st, t⟩
 
 /-- A single step of `tm1` lifts to a single step of the composed machine. -/
-lemma compCfgL_step {tm1 tm2 : SingleTapeTM Symbol} {a b : tm1.Cfg}
+theorem compCfgL_step {tm1 tm2 : SingleTapeTM Symbol} {a b : tm1.Cfg}
     (h : tm1.TransitionRelation a b) :
     (compComputer tm1 tm2).TransitionRelation (compCfgL tm1 tm2 a) (compCfgL tm1 tm2 b) := by
   rcases a with ⟨ _ | q, t ⟩ <;> rcases b with ⟨ _ | q', t' ⟩ <;>
@@ -42,7 +49,7 @@ lemma compCfgL_step {tm1 tm2 : SingleTapeTM Symbol} {a b : tm1.Cfg}
     unfold SingleTapeTM.compComputer; aesop;
 
 /-- A single step of `tm2` lifts to a single step of the composed machine. -/
-lemma compCfgR_step {tm1 tm2 : SingleTapeTM Symbol} {a b : tm2.Cfg}
+theorem compCfgR_step {tm1 tm2 : SingleTapeTM Symbol} {a b : tm2.Cfg}
     (h : tm2.TransitionRelation a b) :
     (compComputer tm1 tm2).TransitionRelation (compCfgR tm1 tm2 a) (compCfgR tm1 tm2 b) := by
   cases a ; cases b ; simp_all +decide [ compComputer ];
@@ -50,9 +57,9 @@ lemma compCfgR_step {tm1 tm2 : SingleTapeTM Symbol} {a b : tm2.Cfg}
     simp_all +decide [ compCfgR, SingleTapeTM.TransitionRelation,
                         SingleTapeTM.step, compComputer ]
 
-/-- The first phase: running `tm1` from its initial config on `w` to a halt with output
-`mid` corresponds, in the composed machine, to reaching the start of `tm2`'s phase. -/
-lemma comp_left_trace {tm1 tm2 : SingleTapeTM Symbol} {w mid : List Symbol}
+/-- If `tm1` outputs `mid` on `w`, then the composed machine runs from its initial
+configuration on `w` to the initial state of `tm2` on the tape of `mid`. -/
+theorem comp_left_trace {tm1 tm2 : SingleTapeTM Symbol} {w mid : List Symbol}
     (h : tm1.Outputs w mid) :
     Relation.ReflTransGen (compComputer tm1 tm2).TransitionRelation
       (SingleTapeTM.initCfg (compComputer tm1 tm2) w)
@@ -62,9 +69,9 @@ lemma comp_left_trace {tm1 tm2 : SingleTapeTM Symbol} {w mid : List Symbol}
   simpa [Function.onFun, compCfgL, SingleTapeTM.initCfg, SingleTapeTM.haltCfg, compComputer]
     using hlift
 
-/-- The second phase: running `tm2` from `mid` to a halt with output `out` corresponds,
-in the composed machine, to going from the start of `tm2`'s phase to the final halt. -/
-lemma comp_right_trace {tm1 tm2 : SingleTapeTM Symbol} {mid out : List Symbol}
+/-- If `tm2` outputs `out` on `mid`, then the composed machine runs from the initial state of
+`tm2` on the tape of `mid` to its halting configuration with output `out`. -/
+theorem comp_right_trace {tm1 tm2 : SingleTapeTM Symbol} {mid out : List Symbol}
     (h : tm2.Outputs mid out) :
     Relation.ReflTransGen (compComputer tm1 tm2).TransitionRelation
       ⟨some (Sum.inr tm2.q₀), BiTape.mk₁ mid⟩
@@ -76,7 +83,7 @@ lemma comp_right_trace {tm1 tm2 : SingleTapeTM Symbol} {mid out : List Symbol}
 
 /-- If `tm1` outputs `mid` from `w` and `tm2` outputs `out` from `mid`,
 their sequential composition outputs `out` from `w`. -/
-lemma compComputer_seq_outputs {tm1 tm2 : SingleTapeTM Symbol}
+theorem compComputer_seq_outputs {tm1 tm2 : SingleTapeTM Symbol}
     {w mid out : List Symbol}
     (h1 : tm1.Outputs w mid)
     (h2 : tm2.Outputs mid out) :
@@ -134,24 +141,26 @@ open PairSelfState
 /-- Builds a `StackTape` from a list of cells; trailing blanks are trimmed by `StackTape.cons`. -/
 def ofList (l : List (Option Bool)) : StackTape Bool := l.foldr StackTape.cons StackTape.nil
 
+/-- `ofList []` is the empty tape. -/
 @[simp]
-lemma ofList_nil : ofList [] = StackTape.nil := rfl
+theorem ofList_nil : ofList [] = StackTape.nil := rfl
 
+/-- `ofList (a :: l)` is `StackTape.cons a (ofList l)`. -/
 @[simp]
-lemma ofList_cons (a : Option Bool) (l : List (Option Bool)) :
+theorem ofList_cons (a : Option Bool) (l : List (Option Bool)) :
     ofList (a :: l) = StackTape.cons a (ofList l) := rfl
 
 /-- The head of `ofList l` equals the first element of `l`, defaulting to `none`. -/
-lemma ofList_headD (l : List (Option Bool)) : (ofList l).head = l.headD none := by
+theorem ofList_headD (l : List (Option Bool)) : (ofList l).head = l.headD none := by
   induction l <;> simp +decide [ *, ofList ]
 
 /-- The tail of `ofList l` equals `ofList l.tail`. -/
-lemma ofList_tail (l : List (Option Bool)) : (ofList l).tail = ofList l.tail := by
+theorem ofList_tail (l : List (Option Bool)) : (ofList l).tail = ofList l.tail := by
   cases l <;> simp +decide [ * ]
   rfl
 
 /-- Appending a trailing `none` to `ofList l` is a no-op. -/
-lemma ofList_append_none (l : List (Option Bool)) : ofList (l ++ [none]) = ofList l := by
+theorem ofList_append_none (l : List (Option Bool)) : ofList (l ++ [none]) = ofList l := by
   induction l <;> aesop
 
 /-- A `pairSelfTM` configuration in list form: `left` are the cells to the left of the head
@@ -159,8 +168,9 @@ lemma ofList_append_none (l : List (Option Bool)) : ofList (l ++ [none]) = ofLis
 def cfgOf (q : PairSelfState) (left right : List (Option Bool)) : pairSelfTM.Cfg :=
   ⟨some q, ⟨right.headD none, ofList left, ofList right.tail⟩⟩
 
-/-- A rightward step. -/
-lemma step_right {q q' : PairSelfState} {wr : Option Bool} {left right : List (Option Bool)}
+/-- If the transition of `pairSelfTM` on the head cell moves right, then `cfgOf q left right`
+steps to the configuration with the head one cell to the right. -/
+theorem step_right {q q' : PairSelfState} {wr : Option Bool} {left right : List (Option Bool)}
     (h : pairSelfTM.tr q (right.headD none) = (⟨wr, some Turing.Dir.right⟩, some q')) :
     pairSelfTM.TransitionRelation (cfgOf q left right) (cfgOf q' (wr :: left) right.tail) := by
   unfold cfgOf; simp +decide [ *, SingleTapeTM.TransitionRelation ]
@@ -172,8 +182,9 @@ lemma step_right {q q' : PairSelfState} {wr : Option Bool} {left right : List (O
     exact ⟨rfl, rfl⟩
     rfl
 
-/-- A leftward step. -/
-lemma step_left {q q' : PairSelfState} {wr : Option Bool} {left right : List (Option Bool)}
+/-- If the transition of `pairSelfTM` on the head cell moves left, then `cfgOf q left right`
+steps to the configuration with the head one cell to the left. -/
+theorem step_left {q q' : PairSelfState} {wr : Option Bool} {left right : List (Option Bool)}
     (h : pairSelfTM.tr q (right.headD none) = (⟨wr, some Turing.Dir.left⟩, some q')) :
     pairSelfTM.TransitionRelation (cfgOf q left right)
       (cfgOf q' left.tail (left.headD none :: wr :: right.tail)) := by
@@ -182,8 +193,9 @@ lemma step_left {q q' : PairSelfState} {wr : Option Bool} {left right : List (Op
     simp_all +decide [ BiTape.write, BiTape.optionMove, BiTape.move, BiTape.moveLeft ]
   all_goals first | exact ⟨rfl, rfl⟩ | rfl
 
-/-- Scans rightwards over a block of data cells, preserving their contents. -/
-lemma scan_right {q : PairSelfState}
+/-- If state `q` moves right over every data cell without changing it, then `pairSelfTM` scans
+right over the block `pre`. -/
+theorem scan_right {q : PairSelfState}
     (hq : ∀ b : Bool, pairSelfTM.tr q (some b) = (⟨some b, some Turing.Dir.right⟩, some q))
     (pre : List Bool) (left right : List (Option Bool)) :
     Relation.ReflTransGen pairSelfTM.TransitionRelation
@@ -194,9 +206,9 @@ lemma scan_right {q : PairSelfState}
   · simp only [List.reverse_cons, List.map_append, List.append_assoc]
     exact Relation.ReflTransGen.head (step_right (hq a)) (ih (some a :: left) right)
 
-/-- Scans leftwards over a block of data cells, preserving their contents, stopping one cell
-past the block. -/
-lemma scan_left {q : PairSelfState}
+/-- If state `q` moves left over every data cell without changing it, then `pairSelfTM` scans
+left over the block `pre` and stops one cell past it. -/
+theorem scan_left {q : PairSelfState}
     (hq : ∀ b : Bool, pairSelfTM.tr q (some b) = (⟨some b, some Turing.Dir.left⟩, some q))
     (pre : List Bool) (a : Bool) (left right : List (Option Bool)) :
     Relation.ReflTransGen pairSelfTM.TransitionRelation
@@ -216,8 +228,9 @@ def startLeft (w : List Bool) (i : ℕ) : List (Option Bool) := (w.take i).rever
 def startRight (w : List Bool) (i : ℕ) : List (Option Bool) :=
   (w.drop i).map some ++ [none, none] ++ (w.take i).map some
 
-/-- Writes symbol `c` at the end of the partial copy and scans back left over it to the gap. -/
-lemma run_deposit (c : Bool) (zr : List Bool) (rest : List (Option Bool)) :
+/-- From state `fwd3 c` at the end of the partial copy, `pairSelfTM` writes `c` there and scans
+back left over the copy to the gap. -/
+theorem run_deposit (c : Bool) (zr : List Bool) (rest : List (Option Bool)) :
     Relation.ReflTransGen pairSelfTM.TransitionRelation
       (cfgOf (.fwd3 c) (zr.map some ++ none :: rest) [])
       (cfgOf (.ret1 c) rest (none :: zr.reverse.map some ++ [some c])) := by
@@ -230,9 +243,9 @@ lemma run_deposit (c : Bool) (zr : List Bool) (rest : List (Option Bool)) :
     exact Relation.ReflTransGen.head (step_left rfl)
       (scan_left (fun _ => rfl) zs z (none :: rest) [some c])
 
-/-- Scans back left over the remaining input tail to the hole, restores `c`, and steps right
-to the start of the next iteration. -/
-lemma run_restore (c : Bool) (br : List Bool) (LA M : List (Option Bool)) :
+/-- From state `ret2 c`, `pairSelfTM` scans back left over the remaining input to the hole,
+restores `c`, and steps right to the start of the next iteration. -/
+theorem run_restore (c : Bool) (br : List Bool) (LA M : List (Option Bool)) :
   Relation.ReflTransGen pairSelfTM.TransitionRelation
     (cfgOf (.ret2 c) (br.map some ++ none :: LA) (none :: none :: M))
     (cfgOf .start (some c :: LA) (br.reverse.map some ++ none :: none :: M)) := by
@@ -259,8 +272,8 @@ lemma run_restore (c : Bool) (br : List Bool) (LA M : List (Option Bool)) :
       exact step_right (by cases c <;> rfl)
     simpa using h_step_left.trans (h_scan_left.trans h_step_right)
 
-/-- Advances from the start of iteration `i` to the start of iteration `i+1`. -/
-lemma macro_step (w : List Bool) (i : ℕ) (hi : i < w.length) :
+/-- `pairSelfTM` runs from the start of iteration `i` to the start of iteration `i+1`. -/
+theorem macro_step (w : List Bool) (i : ℕ) (hi : i < w.length) :
     Relation.ReflTransGen pairSelfTM.TransitionRelation
       (cfgOf .start (startLeft w i) (startRight w i))
       (cfgOf .start (startLeft w (i+1)) (startRight w (i+1))) := by
@@ -318,7 +331,7 @@ lemma macro_step (w : List Bool) (i : ℕ) (hi : i < w.length) :
       · aesop
 
 /-- After `i` iterations the machine is at the start of iteration `i`. -/
-lemma loop (w : List Bool) (i : ℕ) (hi : i ≤ w.length) :
+theorem loop (w : List Bool) (i : ℕ) (hi : i ≤ w.length) :
     Relation.ReflTransGen pairSelfTM.TransitionRelation
       (cfgOf .start (startLeft w 0) (startRight w 0))
       (cfgOf .start (startLeft w i) (startRight w i)) := by
@@ -327,7 +340,7 @@ lemma loop (w : List Bool) (i : ℕ) (hi : i ≤ w.length) :
   | succ k ih => exact (ih (by omega)).trans (macro_step w k (by omega))
 
 /-- The initial configuration equals `cfgOf .start (startLeft w 0) (startRight w 0)`. -/
-lemma init_eq (w : List Bool) :
+theorem init_eq (w : List Bool) :
     SingleTapeTM.initCfg pairSelfTM w = cfgOf .start (startLeft w 0) (startRight w 0) := by
   cases w <;> simp +decide [ initCfg ];
   · rfl;
@@ -338,9 +351,9 @@ lemma init_eq (w : List Bool) :
     · congr;
       simp +decide [ ← ‹_› ]
 
-/-- From the end of copying, writes the separator and walks left to produce the halting
+/-- From the end of copying, `pairSelfTM` writes the separator and walks left to the halting
 configuration with output `encodePair w w`. -/
-lemma finalize (w : List Bool) :
+theorem finalize (w : List Bool) :
     Relation.ReflTransGen pairSelfTM.TransitionRelation
       (cfgOf .start (startLeft w w.length) (startRight w w.length))
       (SingleTapeTM.haltCfg pairSelfTM (encodePair w w)) := by
@@ -394,28 +407,8 @@ theorem pairSelfTM_outputs (w : List Bool) : pairSelfTM.Outputs w (encodePair w 
 theorem pairSelfTM_halts (w : List Bool) : Halts pairSelfTM w :=
   ⟨_, pairSelfTM_outputs w⟩
 
-omit [Inhabited Symbol] [Fintype Symbol] in
-/-- `BiTape.mk₁` is injective on lists. -/
-private lemma mk₁_injective {l l' : List Symbol} (h : BiTape.mk₁ l = BiTape.mk₁ l') : l = l' := by
-  cases l with
-  | nil =>
-    cases l' with
-    | nil => rfl
-    | cons b t => simp [BiTape.mk₁, BiTape.nil] at h
-  | cons a s =>
-    cases l' with
-    | nil => simp [BiTape.mk₁, BiTape.nil] at h
-    | cons b t =>
-      simp only [BiTape.mk₁, BiTape.mk.injEq, Option.some.injEq] at h
-      obtain ⟨hab, _, hst⟩ := h
-      subst hab
-      have : s = t := by
-        have := congrArg StackTape.toList hst
-        simpa [StackTape.mapSome, List.map_inj_right] using this
-      subst this; rfl
-
 /-- The transition relation of `pairSelfTM` is deterministic. -/
-lemma pairSelfTM_det {a b c : pairSelfTM.Cfg}
+theorem pairSelfTM_det {a b c : pairSelfTM.Cfg}
     (hab : pairSelfTM.TransitionRelation a b) (hac : pairSelfTM.TransitionRelation a c) :
     b = c := by
   simp only [SingleTapeTM.TransitionRelation] at hab hac
@@ -423,7 +416,7 @@ lemma pairSelfTM_det {a b c : pairSelfTM.Cfg}
   exact Option.some.injEq _ _ |>.mp hac
 
 /-- Any two halting configurations reachable from the same starting configuration are equal. -/
-lemma pairSelfTM_reflTransGen_out_unique {a b c : pairSelfTM.Cfg}
+theorem pairSelfTM_reflTransGen_out_unique {a b c : pairSelfTM.Cfg}
     (hb : b.state = none) (hc : c.state = none)
     (hab : Relation.ReflTransGen pairSelfTM.TransitionRelation a b)
     (hac : Relation.ReflTransGen pairSelfTM.TransitionRelation a c) :

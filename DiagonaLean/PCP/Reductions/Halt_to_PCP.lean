@@ -9,6 +9,8 @@ import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.MPCP.Normalize.Normalize
 import DiagonaLean.PCP.AlphabetLift
 
+@[expose] public section
+
 /-! # Halt ⪯ₘ PCP
 
 The composition `Halt ⪯ₘ MPCP ⪯ₘ PCP`, giving a direct equivalence between halting of a TM
@@ -18,7 +20,15 @@ The composition `Halt ⪯ₘ MPCP ⪯ₘ PCP`, giving a direct equivalence betwe
 `NoBlankWrites` and `NoLeftBoundary` side conditions by simulating an arbitrary TM by a
 normalised one. This shifts the tape alphabet to `Bool × Bool`, landing the reduction in
 `Stack (Ext (Alpha ℕ (Bool × Bool)))`. Finally, `AlphabetLift` transports the resulting
-instance back to the target alphabet via distinct elements `Ext.hash ≠ Ext.rupee`. -/
+instance back to the target alphabet via distinct elements `Ext.hash ≠ Ext.rupee`.
+
+## References
+
+* [J. E. Hopcroft, R. Motwani, J. D. Ullman,
+  *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
+* [Y. Forster, E. Heiter, G. Smolka,
+  *Verification of PCP-Related Computational Reductions in Coq*][ForsterHeiterSmolka2018]
+-/
 
 namespace DiagonaLean.PCP.Reduction
 
@@ -28,7 +38,8 @@ open DiagonaLean.PCP.AlphabetLift
 
 variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
 
-/-- Equivalence between TM halting and PCP under normalization conditions. -/
+/-- Under `NoBlankWrites` and `NoLeftBoundary`, `tm` halts on `w` iff the PCP instance
+`mpcpToPcp (startTile tm w) (haltTiles tm)` is solvable. -/
 theorem halt_iff_pcp (tm : EncodableTM Symbol) (w : List Symbol)
     (h_nbw : NoBlankWrites tm.toSingleTapeTM) (h_nlb : NoLeftBoundary tm.toSingleTapeTM w)
     [Encodable Symbol] :
@@ -58,7 +69,8 @@ theorem τ2_map {α β : Type} (g : α → β) (l : List (Tile α)) :
   | cons l ls ih =>
     simp_all [List.map, Tile.map]
 
-/-- Extract a source stack from a mapped stack given elementwise preimages. -/
+/-- If every tile of `l` is the image under `Tile.map g` of a tile of `S`, then `l` is the image
+of a stack drawn from `S`. -/
 theorem exists_stack_of_mem_mapped (l : Stack β) (g : α → β) (S : Stack α)
     (h : ∀ t ∈ l, ∃ a ∈ S, Tile.map g a = t) :
     ∃ ls : Stack α, ls.map (Tile.map g) = l ∧ (∀ t ∈ ls, t ∈ S) := by
@@ -70,7 +82,7 @@ theorem exists_stack_of_mem_mapped (l : Stack β) (g : α → β) (S : Stack α)
     grind ⟩
 
 /-- Injective map on tiles preserves and reflects PCP solvability. -/
-theorem decisionProblem_map_iff {α β : Type} (g : α → β) (hg : Function.Injective g)
+theorem pcp_map_iff {α β : Type} (g : α → β) (hg : Function.Injective g)
     (S : Stack α) :
     PCP.DecisionProblem S ↔ PCP.DecisionProblem (S.map (Tile.map g)) := by
       constructor
@@ -94,7 +106,8 @@ theorem decisionProblem_map_iff {α β : Type} (g : α → β) (hg : Function.In
       · rintro ⟨l, hne, heq⟩
         simp_all
         unfold DecisionProblem
-        have exists_l': ∃ ls : Stack α, ls.map (Tile.map g) = l ∧ (∀t ∈ ls, t ∈ S) := by apply exists_stack_of_mem_mapped l g S heq.left
+        have exists_l': ∃ ls : Stack α, ls.map (Tile.map g) = l ∧ (∀t ∈ ls, t ∈ S) := by
+          apply exists_stack_of_mem_mapped l g S heq.left
         obtain ⟨ls, hls, hS⟩ := exists_l'
         use ls
         refine ⟨?_, ?_, ?_⟩
@@ -135,7 +148,7 @@ theorem Ext.map_injective {α β : Type} {g : α → β} (hg : Function.Injectiv
   exact hg hxy
 
 /-- Map TM halting instance to a PCP stack via integer state encoding. -/
-def PCPRed (tm : EncodableTM Symbol) (w : List Symbol)
+def pcpRed (tm : EncodableTM Symbol) (w : List Symbol)
     [Encodable Symbol] : Stack (Ext (Alpha ℕ Symbol)) :=
   letI := tm.stateEncodable
   (mpcpToPcp (startTile tm.toSingleTapeTM w) (haltTiles tm)).map
@@ -145,17 +158,17 @@ def PCPRed (tm : EncodableTM Symbol) (w : List Symbol)
 theorem pcpRed_iff (tm : EncodableTM Symbol) (w : List Symbol)
     [Encodable Symbol] :
     PCP.DecisionProblem (mpcpToPcp (startTile tm.toSingleTapeTM w) (haltTiles tm)) ↔
-    PCP.DecisionProblem (PCPRed tm w) := by
+    PCP.DecisionProblem (pcpRed tm w) := by
   let _ := tm.stateEncodable
-  exact decisionProblem_map_iff (Ext.map (Alpha.map Encodable.encode))
+  exact pcp_map_iff (Ext.map (Alpha.map Encodable.encode))
     (Ext.map_injective (Alpha.map_injective Encodable.encode_injective))
     (mpcpToPcp (startTile tm.toSingleTapeTM w) (haltTiles tm))
 
 variable (α : Type*) [Fintype α]
 
-/-- The reduction function witnessing `HaltProblem ⪯ₘ PCP.DecisionProblem`: normalizes the
-machine and input to satisfy `NoBlankWrites`/`NoLeftBoundary`, encodes states via `pcpRed`
-(using `tm.stateEncodable`, composed with the hand-written `Encodable` instance for the
+/-- **The reduction.** The function witnessing `HaltProblem ⪯ₘ PCP.DecisionProblem`: it
+normalizes the machine and input to satisfy `NoBlankWrites`/`NoLeftBoundary`, encodes states via
+`pcpRed` (using `tm.stateEncodable`, composed with the hand-written `Encodable` instance for the
 normalizer's `Ctrl` control states, to stay computable), and lifts the result to the fixed
 alphabet `Ext (Alpha ℕ Bool)`. -/
 def haltToPcp (p : EncodableTM Bool × List Bool) : Stack (Ext (Alpha ℕ Bool)) :=
@@ -163,7 +176,7 @@ def haltToPcp (p : EncodableTM Bool × List Bool) : Stack (Ext (Alpha ℕ Bool))
   letI hEnc : Encodable (MPCP.Normalize.normTM p.1.toSingleTapeTM).State :=
     (inferInstance : Encodable (p.1.State × MPCP.Normalize.Ctrl))
   AlphabetLift.liftInstance Ext.hash Ext.rupee
-    (PCPRed ⟨MPCP.Normalize.normTM p.1.toSingleTapeTM, hEnc⟩
+    (pcpRed ⟨MPCP.Normalize.normTM p.1.toSingleTapeTM, hEnc⟩
       (MPCP.Normalize.encInput p.2))
 
 /-- `haltToPcp` witnesses that the halting problem many-one reduces to PCP over the fixed
@@ -183,11 +196,11 @@ theorem halt_reducesto_pcp_spec :
       (MPCP.Normalize.normTM_noLeftBoundary tm.toSingleTapeTM w),
     pcpRed_iff normTMEnc (MPCP.Normalize.encInput w)]
   exact AlphabetLift.decisionProblem_lifts Ext.hash Ext.rupee
-    (PCPRed normTMEnc (MPCP.Normalize.encInput w))
+    (pcpRed normTMEnc (MPCP.Normalize.encInput w))
     (by decide)
 
 /-- The halting problem many-one reduces to PCP over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/
-def haltReducesToPCP :
+def haltReducesPCP :
     HaltProblem ⪯ₘ (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
   ⟨haltToPcp, halt_reducesto_pcp_spec⟩
 

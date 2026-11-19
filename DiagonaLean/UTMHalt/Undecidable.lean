@@ -12,6 +12,11 @@ import DiagonaLean.UTMHalt.Reductions.Halt_to_UTMHalt
 No Turing machine decides the halting problem of a weakly universal machine
 (`not_exists_haltDeciderFor_of_isWeaklyUniversal`). The statement is about machines: no universal
 machine is constructed, so there is no many-one reduction to `UTMHaltProblem`.
+
+## References
+
+* [J. E. Hopcroft, R. Motwani, J. D. Ullman,
+  *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
 
 namespace DiagonaLean.UTMHalt.Reduction
@@ -19,7 +24,7 @@ namespace DiagonaLean.UTMHalt.Reduction
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding
   DiagonaLean.UTMHalt.UniversalTuringMachine DiagonaLean.Halt.Undecidable
 
-/-- The halting problem of a single weakly universal machine is undecidable. -/
+/-- **The halting problem of a single weakly universal machine is undecidable.** -/
 theorem not_exists_haltDeciderFor_of_isWeaklyUniversal (hU : IsWeaklyUniversal U) :
     ¬ ∃ D : SingleTapeTM Bool, IsHaltDeciderFor U D := by
   rintro ⟨D, hD⟩

@@ -5,17 +5,20 @@ Authors: Aristotle (Harmonic)
 
 import DiagonaLean.Halt.Undecidable
 
-/-! # Universal Turing Machines
+@[expose] public section
 
-A universal Turing machine is a single machine that can simulate every other machine.
+/-! # Universal Turing machines
+
+A universal Turing machine is a single machine that can simulate every other machine. A machine
+`U` is weakly universal (`IsWeaklyUniversal`) if it halts on `instanceEncoding tm w` exactly when
+`tm` halts on `w`, and universal (`IsUniversal`) if it also produces the same output. Both are
+instances of `IsWeaklyUniversalWrt` and `IsUniversalWrt` for an arbitrary `InstanceEncoding`.
 
 ## References
 
 * [J. E. Hopcroft, R. Motwani, J. D. Ullman,
   *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
-
-@[expose] public section
 
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding
      DiagonaLean.Halt.Helpers

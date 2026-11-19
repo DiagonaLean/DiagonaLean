@@ -5,15 +5,21 @@ Authors: Akhilesh Balaji
 
 import DiagonaLean.Halt.Basic
 
+@[expose] public section
+
 /-! # Core synthetic computability definitions
+
+The basic notions of synthetic computability: Boolean deciders (`Decider`, `SDecidable`),
+Turing machine deciders (`TMDeciderFor`, `MachineDecidable`), enumerators (`Enumerator`,
+`SEnumerable`), semi-deciders (`SemiDecider`, `SemiDecidable`), many-one reductions by a fixed
+function (`Reduction`, notation `p ⪯ₘ[f] q`) and many-one reducibility as data
+(`ManyOneReduces`, notation `p ⪯ₘ q`).
 
 ## References
 
 * [Y. Forster, D. Larchey-Wendling, A. Dudenhefner, et al.,
     *A Coq Library of Undecidable Problems*][ForsterEtAl2020]
 -/
-
-@[expose] public section
 
 namespace DiagonaLean.Synthetic.Definitions
 open DiagonaLean.Halt Cslib.Turing
@@ -26,11 +32,11 @@ def Complement (P : X → Prop) : X → Prop := fun x => ¬P x
 /-- `Reflects b p` means provability of `p` coincides with `b = true`. -/
 def Reflects (b : Bool) (p : Prop) : Prop := p ↔ b = true
 
-/-- `Decider f P` means `f` pointwise reflects `P` via `reflects`. -/
+/-- `Decider f P` means `f` pointwise reflects `P` through `Reflects`. -/
 def Decider (f : X → Bool) (P : X → Prop) : Prop :=
   ∀ x, Reflects (f x) (P x)
 
-/-- `decidable P` means there exists a total Boolean decider for `P`. -/
+/-- `SDecidable P` means there exists a total Boolean decider for `P`. -/
 def SDecidable (P : X → Prop) : Prop :=
   ∃ f : X → Bool, Decider f P
 
@@ -42,29 +48,29 @@ def TMDeciderFor (D : SingleTapeTM Bool) (enc : X → List Bool) (P : X → Prop
 
 /-- `P` is machine-decidable under `enc` if some `SingleTapeTM Bool` decides it via
 `TMDeciderFor`. Unlike `SDecidable`, the witness here is an actual Turing machine, so this
-predicate is not classically vacuous: `SDecidable P` holds for every `P` (via
-`Classical.propDecidable`), but `MachineDecidable enc P` genuinely requires `P` to be
-algorithmically decidable. -/
+predicate is not classically vacuous: `SDecidable P` holds for every `P` (through
+`Classical.propDecidable`), but `MachineDecidable enc P` requires `P` to be algorithmically
+decidable. -/
 def MachineDecidable (enc : X → List Bool) (P : X → Prop) : Prop :=
   ∃ D : SingleTapeTM Bool, TMDeciderFor D enc P
 
-/-- `enumerator f P` means `f` surjects onto the positive instances of `P`. -/
+/-- `Enumerator f P` means `f` surjects onto the positive instances of `P`. -/
 def Enumerator (f : ℕ → Option X) (P : X → Prop) : Prop :=
   ∀ x, P x ↔ ∃ n, f n = some x
 
-/-- `enumerable P` means there exists an enumerator for `P`. -/
+/-- `SEnumerable P` means there exists an enumerator for `P`. -/
 def SEnumerable (P : X → Prop) : Prop :=
   ∃ f : ℕ → Option X, Enumerator f P
 
-/-- `semi_decider f P` means `f` semi-decides `P` via Boolean sequences. -/
+/-- `SemiDecider f P` means `f` semi-decides `P` via Boolean sequences. -/
 def SemiDecider (f : X → ℕ → Bool) (P : X → Prop) : Prop :=
   ∀ x, P x ↔ ∃ n, f x n = true
 
-/-- `semi_decidable P` means there exists a semi-decider for `P`. -/
+/-- `SemiDecidable P` means there exists a semi-decider for `P`. -/
 def SemiDecidable (P : X → Prop) : Prop :=
   ∃ f : X → ℕ → Bool, SemiDecider f P
 
-/-- `reduction f P Q` means `f` many-one reduces `P` to `Q`. Unlike `ManyOneReduces`, `f` is a
+/-- `Reduction f P Q` means `f` many-one reduces `P` to `Q`. Unlike `ManyOneReduces`, `f` is a
 plain parameter here rather than existentially/structurally packaged: `Reduction f P Q` is a
 `Prop` (for a *fixed*, already-in-hand `f`), whereas `P ⪯ₘ Q` bundles the choice of `f` itself. -/
 def Reduction (f : X → Y) (P : X → Prop) (Q : Y → Prop) : Prop :=

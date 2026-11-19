@@ -6,7 +6,9 @@ Authors: Aristotle (Harmonic)
 import DiagonaLean.UTMHalt.UniversalTuringMachine.Basic
 import DiagonaLean.Halt.Helpers
 
-/-! # Invariance of Universality Under Machine-Computable Re-Encodings
+@[expose] public section
+
+/-! # Invariance of universality under machine-computable re-encodings
 
 Universality (`DiagonaLean.UTMHalt.UniversalTuringMachine.IsUniversalWrt`) is stated relative to
 a way `pair` of packaging the encoding of a machine and an input into a single string. This file
@@ -26,8 +28,6 @@ machine back into runs of its second component, which yields the equivalences
   *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
 
-@[expose] public section
-
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding
      DiagonaLean.Halt.Helpers DiagonaLean.Halt.Compositions
 
@@ -39,7 +39,7 @@ variable {tm1 tm2 : SingleTapeTM Symbol}
 
 /-- A configuration of the composed machine that is a halted image under `compCfgR`
 comes from a halted configuration of the second component. -/
-lemma eq_of_compCfgR_halted {c : tm2.Cfg} {t : BiTape Symbol}
+theorem eq_of_compCfgR_halted {c : tm2.Cfg} {t : BiTape Symbol}
     (h : compCfgR tm1 tm2 c = ⟨none, t⟩) : c = ⟨none, t⟩ := by
   obtain ⟨st, t'⟩ := c
   cases st with
@@ -53,7 +53,7 @@ lemma eq_of_compCfgR_halted {c : tm2.Cfg} {t : BiTape Symbol}
 
 /-- A step of the composed machine out of the second component's phase is the image of a
 step of the second component. -/
-lemma compCfgR_step_reflect {c : tm2.Cfg} {b : (compComputer tm1 tm2).Cfg}
+theorem compCfgR_step_reflect {c : tm2.Cfg} {b : (compComputer tm1 tm2).Cfg}
     (h : (compComputer tm1 tm2).TransitionRelation (compCfgR tm1 tm2 c) b) :
     ∃ c' : tm2.Cfg, b = compCfgR tm1 tm2 c' ∧ tm2.TransitionRelation c c' := by
   obtain ⟨st, t⟩ := c
@@ -74,7 +74,7 @@ lemma compCfgR_step_reflect {c : tm2.Cfg} {b : (compComputer tm1 tm2).Cfg}
 
 /-- A run of the composed machine started inside the second component's phase is the
 image of a run of the second component. -/
-lemma compCfgR_trace_reflect {c : tm2.Cfg} {b : (compComputer tm1 tm2).Cfg}
+theorem compCfgR_trace_reflect {c : tm2.Cfg} {b : (compComputer tm1 tm2).Cfg}
     (h : Relation.ReflTransGen (compComputer tm1 tm2).TransitionRelation
       (compCfgR tm1 tm2 c) b) :
     ∃ c' : tm2.Cfg, b = compCfgR tm1 tm2 c' ∧
@@ -90,7 +90,7 @@ variable {w mid : List Symbol}
 
 /-- Every halted configuration reachable in the composed machine is reachable from the
 point at which the second component takes over. -/
-private lemma reflTransGen_of_halts (h1 : tm1.Outputs w mid) {t : BiTape Symbol}
+private theorem reflTransGen_of_halts (h1 : tm1.Outputs w mid) {t : BiTape Symbol}
     (h : Relation.ReflTransGen (compComputer tm1 tm2).TransitionRelation
       (SingleTapeTM.initCfg (compComputer tm1 tm2) w) ⟨none, t⟩) :
     Relation.ReflTransGen (compComputer tm1 tm2).TransitionRelation
