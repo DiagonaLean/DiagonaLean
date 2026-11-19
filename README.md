@@ -10,7 +10,7 @@ The project has three goals:
 
 * **A library of undecidable problems.** Each problem is stated once, and the reductions to it are proved correct. The classical problems from automata theory are covered, and so are results from current research, such as the undecidability of Kleene algebra with commutativity conditions (arXiv:2411.15979).
 * **Honest statements.** Lean's logic is classical, so a naive statement of undecidability can be proved by a case split on whether a machine halts. The library rules this out in two ways, described in [Two notions of undecidability](#two-notions-of-undecidability).
-* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. `reduceFromPCP` and `undec from` are the first such tactics.
+* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. `reduce_from_pcp` and `undec from` are the first such tactics.
 
 DiagonaLean continues <https://github.com/aalok-thakkar/undecidability/>.
 
@@ -184,7 +184,7 @@ checks.
 
 | Tactic or command | What it does | Defined in |
 |---|---|---|
-| `reduceFromPCP over_letters b0 b1 via R` | Proves `Undecidable Q` from a reduction `R : PCP ⪯ₘ Q`, over the alphabet of the letters `b0 ≠ b1` | [`Synthetic/Tactics/ReduceFromPCP.lean`](DiagonaLean/Synthetic/Tactics/ReduceFromPCP.lean) |
+| `reduce_from_pcp over_letters b0 b1 via R` | Proves `Undecidable Q` from a reduction `R : PCP ⪯ₘ Q`, over the alphabet of the letters `b0 ≠ b1` | [`Synthetic/Tactics/ReduceFromPCP.lean`](DiagonaLean/Synthetic/Tactics/ReduceFromPCP.lean) |
 | `undec from H` | Reduces `Undecidable Q` to a reduction `P ⪯ₘ Q`, given `H : Undecidable P` | [`Synthetic/Undecidability.lean`](DiagonaLean/Synthetic/Undecidability.lean) |
 | `reduce_chain H` | Proves a reduction by composing with `H` and reflexivity | [`Synthetic/ReductionChain.lean`](DiagonaLean/Synthetic/ReductionChain.lean) |
 | `#check_reductions` / `#check_reductions local` | Checks that every reduction (in the library, or in the current file) is a definition Lean compiles, with no classical escape hatch | [`Synthetic/ReductionCheck.lean`](DiagonaLean/Synthetic/ReductionCheck.lean) |
@@ -193,7 +193,7 @@ For example, the last definition in *Prove a new problem undecidable* above can 
 
 ```lean
 def swappedUndecidable : Undecidable SwappedPCP := by
-  reduceFromPCP over_letters true false via pcpReducesSwapped
+  reduce_from_pcp over_letters true false via pcpReducesSwapped
 ```
 
 **Computability**
@@ -227,6 +227,6 @@ CI runs `lake build`, `lake lint`, `#check_reductions`, `scripts/check_metaprogr
 
 ## Roadmap
 
-* **Core framework** (largely done): the problems above, `Undecidable` and `MachineDecidable`, the reduction check, and the `reduceFromPCP` tactic. String rewriting and Rice's theorem are still to come.
+* **Core framework** (largely done): the problems above, `Undecidable` and `MachineDecidable`, the reduction check, and the `reduce_from_pcp` tactic. String rewriting and Rice's theorem are still to come.
 * **Base theorems:** the acceptance problem, Rice, Rice–Shapiro and Greibach. A reduction graph registered through attributes, and a tactic that searches it.
 * **Standard reduction library:** more models of computation (RAM machines, register machines, μ-recursive functions) and their equivalence with Turing machines, where Cslib does not already have them.
