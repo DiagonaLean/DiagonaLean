@@ -79,6 +79,10 @@ import DiagonaLean.BetaConv.Basic
 import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
 import DiagonaLean.BetaConv.Undecidable
 
+import DiagonaLean.Rice.Basic
+import DiagonaLean.Rice.Reductions.Halt_to_Rice
+import DiagonaLean.Rice.Undecidable
+
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
 import DiagonaLean.Synthetic.Undecidability
