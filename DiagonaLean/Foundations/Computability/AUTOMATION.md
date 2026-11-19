@@ -174,7 +174,7 @@ and close the side goals with the layers above. With layer 2, `c₁` and `c₂` 
 | M9 | 1–3 | Upstream | Theorems A and B, and `fun_prop` for `Primrec` and `Computable`, offered to Mathlib, reviving #36893. |
 | M10 | 4 | Certifying translation, first-order fragment | A tactic proves `Primrec` for definitions using composition and first-order recursors, directly from their kernel terms. |
 | M11 | 4 | Higher-order and well-founded recursion | `Computable` for System T style recursion and `WellFounded.fix`. |
-| M12 | — | Option B feasibility | Decide whether the supports of Mathlib's `PartrecToTM2` chain can be made computable. |
+| M12 | — | Option B feasibility | **Decided** (2026-11-19): Mathlib's chain is not the route to explicit machines or time bounds; see *What's next*. |
 | M13 | 1–3 | Nested and mutual types | **Nested `List T`: done** (2026-11-19, see *What's next*). Mutual families: open. |
 
 **Order:** M1–M8 are done, and M13 for nested `List T`. Next, in *What's next*: getting the PRs merged, then mutual families (the rest of M13), M12, M9. M10 and M11 are long term.
@@ -232,7 +232,15 @@ The many-sorted design that follows is still the plan for mutual families.
 
 ### 3. M12: can Mathlib's compiler give explicit machines?
 
-*Partial finding (2026-11-19, not finished).* Choice enters the pipeline in five places:
+*Decision (2026-11-19): do not pursue Mathlib's chain for explicit machines or time bounds.* Three findings:
+
+* **The supports can be made computable** (items 2–5 below): routine.
+* **The program needs a data-level source.** Mathlib's `ToPartrec.Code.exists_code` (`TuringMachine/Config.lean`) builds the code explicitly in every case (`zero'`, `succ`, `head`, `comp`, `prec`, `rfind`). It recurses on the `Prop` `Nat.Partrec'`, though, so a computable copy needs a data version of those derivations, and something that produces one from a definition: a reifying tactic, which is option B's reification.
+* **No running-time bounds come from it.** `StateTransition.Respects` turns one step into "one or more" steps with no bound, so none of the simulations ToPartrec → TM2 → TM1 → TM1 over `Bool` → TM0 → Cslib counts steps. Time bounds would mean re-proving every layer with step counts, through a chain with a large overhead.
+
+So explicit machines are possible at real cost, and time bounds are not reachable this way. For time bounds, compile directly to Cslib's `MultiTapeTM` (option B), with cost-aware proofs from the start.
+
+The details: Choice enters the pipeline in five places:
 
 1. `Code.exists_code`: `Computable f` is a `Prop`, so the program is only known to exist. This is the real obstacle: an explicit machine needs a data-level program, i.e. the reification half of option B, whatever happens to the compiler.
 2. `exists_blockEnc`, through Mathlib's `exists_enc_dec` (`Finite.exists_equiv_fin`, `invFun`). An explicit encoding of `Γ2` replaces it.
