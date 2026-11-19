@@ -20,9 +20,9 @@ where `IsHaltDecider D` asserts that for every TM `M` and input `w`, `D` outputs
 ### Encodings
 We first define encodings of TMs as Boolean strings as described in [HopcroftMotwaniUllman2006]. TMs over `Bool` are encoded as binary strings via `encodeBoolTM`:
 ```
-encodeBoolTM : (tm : SingleTapeTM Bool) → [DecidableEq tm.State] → List Bool
+encodeBoolTM : EncodableTM Bool → List Bool
 ```
-The encoding records the initial state index and the transition table.
+The encoding records the initial state index and the transition table, with a row for every state and every tape symbol. A halting transition still writes and moves, so it is recorded too, with successor index `0`; states have indices from `1`. So the code determines the machine's behaviour: machines with the same code halt on the same inputs and produce the same outputs (`halts_iff_of_code_eq` and `outputs_iff_of_code_eq` in `Foundations/Computability/CodeSim.lean`).
 
 States, tape symbols, and directions are assigned unary indices separated by
 `true`. A transition `δ(q, x) = (q', sym, dir)` is encoded as five
@@ -84,3 +84,6 @@ The machine `D'` is thus `pairSelfTM` composed with `D`, where `pairSelfTM` maps
 tape `encodeBoolTM M` to `encodePair (encodeBoolTM M) (encodeBoolTM M)` before handing off to `D`.
 
 The contrapositive of this lemma tells us that there is no TM which is a halt-decider. ∎
+
+## Computable inseparability
+`Inseparable.lean` proves a second diagonal fact: no machine decides a set that contains every machine halting on its own code with output `1` (`SelfOut true`) and no machine halting on its own code with output `0` (`SelfOut false`) (`selfOut_inseparable`). It is a proof technique for statements `¬ MachineDecidable enc p` (`not_machineDecidable_of_separation`), used by the Kleene algebra results, not a notion of undecidability: a function that separates the two sets says nothing about machines in neither, so it does not give `Undecidable p`.

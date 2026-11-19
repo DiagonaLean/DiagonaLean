@@ -86,11 +86,10 @@ since the `Decidable (p x)` instance can only come from classical choice. The de
 data carried by its input, such as a machine's `stateEncodable` field (see
 `PCP.Reduction.haltToPcp`).
 
-Proofs are never compiled, so a theorem must not build a reduction itself; it uses one of these
-definitions. It may pass them finite data obtained classically, such as a letter or a program code
-(see `PCP.Reduction.pcp_undecidable`), since one constant cannot hide infinitely many answers. It
-may not pass a function or a decidability instance obtained classically, which would be the same
-case split in another place.
+Proofs are never compiled, so a reduction is never stated as a proposition: an undecidability
+result is a definition whose value is the reduction (`Undecidable` is a type), and composing
+results composes their functions. A theorem may take reductions as hypotheses, but may not conclude
+that one exists, as `Nonempty (p ⪯ₘ q)` would.
 
 `#check_reductions` (`Synthetic/ReductionCheck.lean`), run in CI by `scripts/CheckReductions.lean`,
 checks these rules over the library. A reduction that passes runs as a Lean program; that is not a

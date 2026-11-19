@@ -16,3 +16,17 @@ jobs:
         run: lake env lean scripts/CheckReductions.lean
       - name: Check that the reduction checker rejects classical witnesses
         run: lake env lean scripts/CheckReductionsTest.lean
+      - name: Check that no metaprogram changes the environment
+        run: python3 scripts/check_metaprograms.py
+      - name: Check that the metaprogram check rejects an injected reduction
+        run: |
+          out=$(python3 scripts/check_metaprograms.py scripts/metaprogram-fixture) && exit 1
+          for word in run_cmd addDecl modifyEnv declMapExt debug.; do
+            grep -qF "\`$word\`" <<< "$out" || { echo "not reported: $word"; exit 1; }
+          done
+      - name: Check that Foundations depends on no problem folder
+        run: python3 scripts/check_layering.py
+      - name: Check that the layering check rejects a hidden dependency
+        run: |
+          out=$(python3 scripts/check_layering.py scripts/layering-fixture) && exit 1
+          grep -qF 'DiagonaLean.Synthetic.Tactic -> DiagonaLean.PCP.Basic' <<< "$out"

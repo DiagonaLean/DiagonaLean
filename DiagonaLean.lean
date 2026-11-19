@@ -3,6 +3,7 @@ import DiagonaLean.Halt.Encoding
 import DiagonaLean.Halt.Helpers
 import DiagonaLean.Halt.Compositions
 import DiagonaLean.Halt.Undecidable
+import DiagonaLean.Halt.Inseparable
 
 import DiagonaLean.UTMHalt.Basic
 import DiagonaLean.UTMHalt.Reductions.Halt_to_UTMHalt
@@ -30,21 +31,43 @@ import DiagonaLean.MatMort.Basic
 import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
 import DiagonaLean.MatMort.Undecidable
 
-import DiagonaLean.TermEq.Basic
-import DiagonaLean.TermEq.Reductions.Halt_to_TermEq
-import DiagonaLean.TermEq.Undecidable
+import DiagonaLean.KAComm.TermEq.Basic
+import DiagonaLean.KAComm.TermEq.Reductions.Halt_to_TermEq
+import DiagonaLean.KAComm.TermEq.Undecidable
+import DiagonaLean.KAComm.TermEqBool.Basic
+import DiagonaLean.KAComm.TermEqBool.Reductions.Halt_to_TermEqBool
+import DiagonaLean.KAComm.TermEqBool.Undecidable
+import DiagonaLean.KAComm.KATermEq.Basic
+import DiagonaLean.KAComm.KATermEq.Reductions.Halt_to_KATermEq
+import DiagonaLean.KAComm.KATermEq.Undecidable
+import DiagonaLean.KAComm.KATermEqBool.Basic
+import DiagonaLean.KAComm.KATermEqBool.Reductions.Halt_to_KATermEqBool
+import DiagonaLean.KAComm.KATermEqBool.Undecidable
+import DiagonaLean.KAComm.LangEq.Basic
+import DiagonaLean.KAComm.LangEq.Reductions.Halt_to_LangEq
+import DiagonaLean.KAComm.LangEq.Undecidable
+import DiagonaLean.KAComm.LangEqBool.Basic
+import DiagonaLean.KAComm.LangEqBool.Reductions.Halt_to_LangEqBool
+import DiagonaLean.KAComm.LangEqBool.Undecidable
+import DiagonaLean.KAComm.ModelLe.Basic
+import DiagonaLean.KAComm.ModelLe.Reductions.Halt_to_ModelLe
+import DiagonaLean.KAComm.ModelLe.Undecidable
+import DiagonaLean.KAComm.ModelLeBool.Basic
+import DiagonaLean.KAComm.ModelLeBool.Reductions.Halt_to_ModelLeBool
+import DiagonaLean.KAComm.ModelLeBool.Undecidable
 
-import DiagonaLean.KATermEq.Basic
-import DiagonaLean.KATermEq.Reductions.Halt_to_KATermEq
-import DiagonaLean.KATermEq.Undecidable
+import DiagonaLean.UTMHalt.UniversalTuringMachine.Basic
+import DiagonaLean.UTMHalt.UniversalTuringMachine.Translation
 
-import DiagonaLean.LangEq.Basic
-import DiagonaLean.LangEq.Reductions.Halt_to_LangEq
-import DiagonaLean.LangEq.Undecidable
-
-import DiagonaLean.ModelLe.Basic
-import DiagonaLean.ModelLe.Reductions.Halt_to_ModelLe
-import DiagonaLean.ModelLe.Undecidable
+import DiagonaLean.MPCP.Normalize.Normalize
+import DiagonaLean.MPCP.Normalize.Cell
+import DiagonaLean.MPCP.Normalize.Halting
+import DiagonaLean.MPCP.Normalize.Input
+import DiagonaLean.MPCP.Normalize.Invariant
+import DiagonaLean.MPCP.Normalize.Machine
+import DiagonaLean.MPCP.Normalize.Properties
+import DiagonaLean.MPCP.Normalize.Sim
+import DiagonaLean.MPCP.Normalize.Steps
 
 import DiagonaLean.SKIConv.Basic
 import DiagonaLean.SKIConv.Reductions.Halt_to_SKIConv
@@ -53,19 +76,6 @@ import DiagonaLean.SKIConv.Undecidable
 import DiagonaLean.BetaConv.Basic
 import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
 import DiagonaLean.BetaConv.Undecidable
-
-import DiagonaLean.Foundations.UniversalTuringMachine.Basic
-import DiagonaLean.Foundations.UniversalTuringMachine.Translation
-
-import DiagonaLean.Foundations.Normalize.Normalize
-import DiagonaLean.Foundations.Normalize.Cell
-import DiagonaLean.Foundations.Normalize.Halting
-import DiagonaLean.Foundations.Normalize.Input
-import DiagonaLean.Foundations.Normalize.Invariant
-import DiagonaLean.Foundations.Normalize.Machine
-import DiagonaLean.Foundations.Normalize.Properties
-import DiagonaLean.Foundations.Normalize.Sim
-import DiagonaLean.Foundations.Normalize.Steps
 
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
@@ -84,7 +94,6 @@ import DiagonaLean.Foundations.Computability.Queue
 import DiagonaLean.Foundations.Computability.Compiler
 import DiagonaLean.Foundations.Computability.Computer
 import DiagonaLean.Foundations.Computability.CodeSim
-import DiagonaLean.Foundations.Computability.Inseparable
 import DiagonaLean.Foundations.Computability.ProofRace
 import DiagonaLean.Foundations.Computability.OutputSearch
 
@@ -97,35 +106,36 @@ import DiagonaLean.Foundations.LambdaCalculus.ProofSearch
 import DiagonaLean.Foundations.LambdaCalculus.Translation
 import DiagonaLean.Foundations.LambdaCalculus.Race
 
-import DiagonaLean.Foundations.KleeneAlgebra.PreKleene
-import DiagonaLean.Foundations.KleeneAlgebra.PreKleeneNotKleene
-import DiagonaLean.Foundations.KleeneAlgebra.Free
-import DiagonaLean.Foundations.KleeneAlgebra.FiniteLangCounterexample
-import DiagonaLean.Foundations.KleeneAlgebra.FiniteLangExpansion
-import DiagonaLean.Foundations.KleeneAlgebra.SetStar
-import DiagonaLean.Foundations.KleeneAlgebra.Doubled
-import DiagonaLean.Foundations.KleeneAlgebra.Representable
-import DiagonaLean.Foundations.KleeneAlgebra.Automata
-import DiagonaLean.Foundations.KleeneAlgebra.Expansion
-import DiagonaLean.Foundations.KleeneAlgebra.BoundedOutput
-import DiagonaLean.Foundations.KleeneAlgebra.SingleStep
-import DiagonaLean.Foundations.KleeneAlgebra.Completeness
-import DiagonaLean.Foundations.KleeneAlgebra.Copy
-import DiagonaLean.Foundations.KleeneAlgebra.Syntax
-import DiagonaLean.Foundations.KleeneAlgebra.Soundness
-import DiagonaLean.Foundations.KleeneAlgebra.FreeKA
-import DiagonaLean.Foundations.KleeneAlgebra.Inequality
-import DiagonaLean.Foundations.KleeneAlgebra.Separation
-import DiagonaLean.Foundations.KleeneAlgebra.ExprCode
-import DiagonaLean.Foundations.KleeneAlgebra.ProofSearch
-import DiagonaLean.Foundations.KleeneAlgebra.Instance
-import DiagonaLean.Foundations.KleeneAlgebra.InstanceCode
-import DiagonaLean.Foundations.KleeneAlgebra.BinarySubst
-import DiagonaLean.Foundations.KleeneAlgebra.Race
+import DiagonaLean.KAComm.KleeneAlgebra.PreKleene
+import DiagonaLean.KAComm.KleeneAlgebra.PreKleeneNotKleene
+import DiagonaLean.KAComm.KleeneAlgebra.Free
+import DiagonaLean.KAComm.KleeneAlgebra.FiniteLangCounterexample
+import DiagonaLean.KAComm.KleeneAlgebra.FiniteLangExpansion
+import DiagonaLean.KAComm.KleeneAlgebra.SetStar
+import DiagonaLean.KAComm.KleeneAlgebra.Doubled
+import DiagonaLean.KAComm.KleeneAlgebra.Representable
+import DiagonaLean.KAComm.KleeneAlgebra.Automata
+import DiagonaLean.KAComm.KleeneAlgebra.Expansion
+import DiagonaLean.KAComm.KleeneAlgebra.BoundedOutput
+import DiagonaLean.KAComm.KleeneAlgebra.SingleStep
+import DiagonaLean.KAComm.KleeneAlgebra.Completeness
+import DiagonaLean.KAComm.KleeneAlgebra.Copy
+import DiagonaLean.KAComm.KleeneAlgebra.Syntax
+import DiagonaLean.KAComm.KleeneAlgebra.Soundness
+import DiagonaLean.KAComm.KleeneAlgebra.FreeKA
+import DiagonaLean.KAComm.KleeneAlgebra.Inequality
+import DiagonaLean.KAComm.KleeneAlgebra.Separation
+import DiagonaLean.KAComm.KleeneAlgebra.ExprCode
+import DiagonaLean.KAComm.KleeneAlgebra.ProofSearch
+import DiagonaLean.KAComm.KleeneAlgebra.Instance
+import DiagonaLean.KAComm.KleeneAlgebra.InstanceCode
+import DiagonaLean.KAComm.KleeneAlgebra.BinarySubst
+import DiagonaLean.KAComm.KleeneAlgebra.Race
+import DiagonaLean.KAComm.KleeneAlgebra.Between
 
-import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.Configurations
-import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.Transition
-import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.TraceCompleteness
-import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.LanguageSoundness
-import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.MachineTerms
-import DiagonaLean.Foundations.KleeneAlgebra.MachineEncoding.Halting
+import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Configurations
+import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Transition
+import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.TraceCompleteness
+import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.LanguageSoundness
+import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.MachineTerms
+import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Halting

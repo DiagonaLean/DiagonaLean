@@ -21,26 +21,28 @@ open DiagonaLean.Halt DiagonaLean.Halt.Encoding Cslib.Turing DiagonaLean.Synthet
 
 variable {X Y : Type*}
 
-/-- `p` is undecidable: `HaltProblem` many-one reduces to `p`. `HaltProblem ⪯ₘ p` is data (see
-`ManyOneReduces`), so it is wrapped in `Nonempty` to keep `Undecidable` a `Prop`.
+/-- `p` is undecidable: a many-one reduction from `HaltProblem` to `p`. This is data, not a `Prop`:
+an undecidability result is a definition whose value is the reduction, and composing results
+composes their functions (`undecidabilityFromReducibility`).
 
-As a statement this is weak: Lean's logic is classical, so `HaltProblem ⪯ₘ p` holds for every `p`
-with a positive and a negative instance, through the case split `if HaltProblem x then a else b`.
-The meaning comes from the convention on `ManyOneReduces`, which `#check_reductions`
-(`Synthetic/ReductionCheck.lean`) checks in CI: every reduction behind an `Undecidable` theorem is a
-compiled definition. The statement that a Turing machine computes the reduction is
+Lean's logic is classical, so the bare existence of a term of this type would say nothing: the case
+split `if HaltProblem x then a else b` reduces `HaltProblem` to every `p` with a positive and a
+negative instance. That case split is not a program, and Lean refuses to compile it. So an
+undecidability result means something because it is a definition that Lean compiles, with no escape
+hatch in its dependencies; `#check_reductions` (`Synthetic/ReductionCheck.lean`) checks this in CI.
+The statement that a Turing machine computes the reduction is
 `not_machineDecidable_of_halt_reduces`. -/
-def Undecidable (p : X → Prop) : Prop := Nonempty (HaltProblem ⪯ₘ p)
+abbrev Undecidable (p : X → Prop) : Type _ := HaltProblem ⪯ₘ p
 
-/-- Undecidability propagates upward along many-one reductions. -/
-lemma undecidability_from_reducibility {p : X → Prop} {q : Y → Prop}
-    (hp : Undecidable p) (hpq : p ⪯ₘ q) : Undecidable q := by
-  obtain ⟨r⟩ := hp
-  exact ⟨ReductionChain.ReducesTransitive r hpq⟩
+/-- Undecidability propagates upward along many-one reductions: the reduction from `HaltProblem`
+to `q` is the composition of the two functions. -/
+def undecidabilityFromReducibility {p : X → Prop} {q : Y → Prop}
+    (hp : Undecidable p) (hpq : p ⪯ₘ q) : Undecidable q :=
+  ReductionChain.ReducesTransitive hp hpq
 
 /-- Tactic to prove undecidability by reduction from another undecidable problem.
-Translates `undec from H` to `apply undecidability_from_reducibility H`. -/
+Translates `undec from H` to `apply undecidabilityFromReducibility H`. -/
 macro "undec" "from" H:term : tactic =>
-  `(tactic| apply undecidability_from_reducibility $H)
+  `(tactic| apply undecidabilityFromReducibility $H)
 
 end DiagonaLean.Synthetic.Notation

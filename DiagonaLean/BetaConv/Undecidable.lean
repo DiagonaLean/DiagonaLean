@@ -9,12 +9,14 @@ import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
 
 /-! # Undecidability of β-conversion
 
-β-conversion of λ-terms is `Undecidable` (`undecidable_betaConv`). The reduction's constants are
-the SKI translation of a universal code (`Nat.Partrec.Code.toSKI`) and the race program from the
-recursion theorem. No Turing machine decides it under the encoding of a pair of terms as the
-binary digits of the pair of their codes (`not_machineDecidable_betaConv`); the encoding is
-injective (`encBeta_injective`) and follows `encNat` in `Foundations/KleeneAlgebra/Race.lean`. It
-separates the computably inseparable pair `SelfOut true`, `SelfOut false` (`betaConv_separated`).
+β-conversion of λ-terms is `Undecidable` (`undecidableBetaConv`), given the reduction's constants:
+an SKI term for a universal code (`Nat.Partrec.Code.toSKI`) and the race program from the recursion
+theorem. They are only known to exist, so they are arguments. No Turing machine decides it under the
+encoding of a pair of terms as the binary digits of the pair of their codes
+(`not_machineDecidable_betaConv`); the encoding is injective (`encBeta_injective`) and follows
+`encNat` in `KAComm/KleeneAlgebra/Race.lean`. It separates the computably inseparable
+pair `SelfOut true`, `SelfOut false`, so no machine decides it on the instances `sepRed U c M` given
+the code of `M` (`not_machineDecidable_betaConv_sepRed`).
 
 ## References
 
@@ -27,16 +29,20 @@ namespace DiagonaLean.BetaConv.Reduction
 
 open Cslib SKI LambdaCalculus.LocallyNameless.Untyped Nat.Partrec
   DiagonaLean.Foundations.LambdaCalculus DiagonaLean.Foundations.Computability
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
+  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation DiagonaLean.Halt.Encoding
+  DiagonaLean.Halt.Inseparable
 
-/-- **β-conversion of λ-terms is `Undecidable`.** -/
-theorem undecidable_betaConv : Undecidable BetaConvProblem := by
-  obtain ⟨u, hu⟩ := Foundations.CombinatoryLogic.exists_isUniversal
-  obtain ⟨C, hC⟩ := exists_raceProg u.toSKI
-  exact ⟨haltReducesBetaConv u.toSKI C hu (Code.toSKI_correct u) hC⟩
+/-- **β-conversion of λ-terms is `Undecidable`**, given a universal code `u`
+(`Foundations.CombinatoryLogic.exists_isUniversal`) and the race program `C` for `u.toSKI`
+(`exists_raceProg`). These finite constants are only known to exist, so they are arguments rather
+than computed here. The statement without them is `not_machineDecidable_betaConv`. -/
+def undecidableBetaConv {u : Code} (C : Code) (hu : Foundations.CombinatoryLogic.IsUniversal u)
+    (hC : RaceProg u.toSKI C) : Undecidable BetaConvProblem :=
+  haltReducesBetaConv u.toSKI C hu (Code.toSKI_correct u) hC
 
 /-- A pair of λ-terms, as the binary digits of the pair of their codes. -/
-def encBeta (i : Term ℕ × Term ℕ) : List Bool := bitsPair (tc i.1) (tc i.2)
+def encBeta (i : Term ℕ × Term ℕ) : List Bool :=
+  bitsPair (tc i.1) (tc i.2)
 
 /-- `encBeta` is injective. -/
 theorem encBeta_injective : Function.Injective encBeta := fun i j h => by
@@ -58,10 +64,14 @@ theorem not_machineDecidable_betaConv : ¬ MachineDecidable encBeta BetaConvProb
   exact ProofRace.not_machineDecidable_of_race chk_prim (instCode_prim u.toSKI)
     (fun c n => (linst u.toSKI c n, tr FF)) henc hQ pos neg
 
-/-- `sepRed` separates the inseparable pair by β-conversion. -/
-theorem betaConv_separated : InsepUndecidable BetaConvProblem := by
+/-- **On the instances `sepRed`, no machine decides β-conversion** given the code of the machine:
+they separate the computably inseparable pair `SelfOut true`, `SelfOut false`. -/
+theorem not_machineDecidable_betaConv_sepRed :
+    ∃ (U : SKI) (c : Code),
+      ¬ MachineDecidable encodeBoolTM fun M => BetaConvProblem (sepRed U c M) := by
   obtain ⟨u, hu⟩ := Foundations.CombinatoryLogic.exists_isUniversal
   obtain ⟨c, hc⟩ := exists_isReader
-  exact ⟨sepReducesBetaConv u.toSKI c hu (Code.toSKI_correct u) hc⟩
+  exact ⟨u.toSKI, c,
+    selfOut_inseparable (sepRed_separates u.toSKI c hu (Code.toSKI_correct u) hc)⟩
 
 end DiagonaLean.BetaConv.Reduction

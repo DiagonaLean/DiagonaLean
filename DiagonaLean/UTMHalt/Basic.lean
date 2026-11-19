@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic), Akhilesh Balaji
 -/
 
-import DiagonaLean.Foundations.UniversalTuringMachine.Basic
+import DiagonaLean.UTMHalt.UniversalTuringMachine.Basic
 
 /-! # The Universal Turing Machine Halting Problem: Basic Definitions
 
@@ -20,7 +20,7 @@ The central notions used in the proof that the UTM halting problem is undecidabl
 namespace DiagonaLean.UTMHalt
 
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding
-     DiagonaLean.Halt.Helpers DiagonaLean.Foundations.UniversalTuringMachine
+     DiagonaLean.Halt.Helpers DiagonaLean.UTMHalt.UniversalTuringMachine
 
 /-- `D` decides the halting problem of the fixed machine `U` if, on every input string
   `x`, it outputs `[true]` when `U` halts on `x` and `[false]` when it does not. -/

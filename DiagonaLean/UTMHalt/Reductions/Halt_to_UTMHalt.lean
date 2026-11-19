@@ -16,7 +16,7 @@ on `w`, and produces exactly the output that `tm` produces on `w`.
 namespace DiagonaLean.UTMHalt.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Halt.Helpers
-  DiagonaLean.Foundations.UniversalTuringMachine DiagonaLean.Halt.Undecidable
+  DiagonaLean.UTMHalt.UniversalTuringMachine DiagonaLean.Halt.Undecidable
 
 /-- A weakly universal machine halts on at least one input. -/
 theorem IsWeaklyUniversalWrt.exists_halts (hU : IsWeaklyUniversalWrt pair U) :
