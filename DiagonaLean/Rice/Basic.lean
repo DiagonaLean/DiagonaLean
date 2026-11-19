@@ -1,60 +1,50 @@
 /-
-Copyright (c) 2026 Kshitij Salunke. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Kshitij Salunke
+Authors: Kshitij Salunke, Aalok Thakkar, Claude Opus
 -/
 
-import DiagonaLean.Synthetic.Definitions
-import DiagonaLean.Synthetic.Undecidability
+import Mathlib.Computability.PartrecCode
+
+@[expose] public section
+
+/-! # Rice's problem
+
+An instance is a program `c : Nat.Partrec.Code`. For a set `C` of partial functions `ℕ →. ℕ`,
+`DecisionProblem C` asks whether the function that `c` computes (`c.eval`) is in `C`. The answer
+depends only on `c.eval`, so programs that compute the same function get the same answer.
+`RiceProblem C` names it. `C` is non-trivial (`IsNontrivial`) if some program computes a function
+in `C` and some program computes a function not in `C`; equivalently, `C` contains a partial
+recursive function and misses one (`isNontrivial_iff`).
+
+## References
+
+* H. G. Rice, *Classes of recursively enumerable sets and their decision problems* (1953)
+-/
 
 namespace DiagonaLean.Rice
 
-open DiagonaLean.Synthetic.Notation DiagonaLean.Synthetic.Definitions
-open DiagonaLean.Halt Cslib.Turing
+open Nat.Partrec
 
-/-! ## Core Definitions -/
+/-- `DecisionProblem C c` holds iff the function computed by `c` is in `C`. -/
+def DecisionProblem (C : Set (ℕ →. ℕ)) (c : Code) : Prop := c.eval ∈ C
 
-/-- A TM M accepts input w iff it outputs [true] on w. -/
-def Accepts (M : SingleTapeTM Bool) (w : List Bool) : Prop :=
-  SingleTapeTM.Outputs M w [true]
+/-- Rice's problem for `C`: does a program compute a function in `C`? -/
+abbrev RiceProblem (C : Set (ℕ →. ℕ)) : Code → Prop := DecisionProblem C
 
-/-- The language of a TM: the set of inputs it accepts. -/
-def Lang (M : SingleTapeTM Bool) : List Bool → Prop :=
-  Accepts M
+/-- `C` is non-trivial if some program computes a function in `C` and some program computes a
+function not in `C`. -/
+def IsNontrivial (C : Set (ℕ →. ℕ)) : Prop := (∃ c : Code, c.eval ∈ C) ∧ ∃ c : Code, c.eval ∉ C
 
-/-- A TM has the empty language property iff it accepts no input. -/
-def isEmptyLang (M : SingleTapeTM Bool) : Prop :=
-  ∀ w, ¬ Accepts M w
-
-/-- A TM has the non-empty language property iff it accepts at least one input. -/
-def isNonEmptyLang (M : SingleTapeTM Bool) :=
-  ∃ w, Accepts M w
-
-theorem isEmptyLang_complement :
-    complement (isEmptyLang) = isNonEmptyLang := by
-  funext w
-  simp [isEmptyLang, isNonEmptyLang, complement]
-
-/-! ## Witness TMs -/
-
-/-- A TM that loops forever on every input. Its only state is `()`,
-    and the transition writes nothing, doesn't move, and stays in `()`.
-    Since the state never becomes `none`, this TM never halts. -/
-def neverHaltTM : SingleTapeTM Bool where
-  State := PUnit
-  q₀ := ()
-  tr _ _ := (⟨none, none⟩, some ())
-
-/-- A TM that accepts the empty input `[]`:
-    - In state `true` (initial), on a blank head (`none`), writes `true` and halts.
-    - In state `true`, on a non-blank head (`some _`), enters state `false`.
-    - In state `false`, loops forever regardless of the head symbol. -/
-def acceptsEmptyTM : SingleTapeTM Bool where
-  State := Bool
-  q₀ := true
-  tr
-    | true, none     => (⟨some true, none⟩, none)
-    | true, some _   => (⟨none, none⟩, some false)
-    | false, _       => (⟨none, none⟩, some false)
+/-- `C` is non-trivial iff it contains a partial recursive function and misses one, the
+hypotheses of Mathlib's `ComputablePred.rice`. -/
+theorem isNontrivial_iff {C : Set (ℕ →. ℕ)} :
+    IsNontrivial C ↔ (∃ f, Nat.Partrec f ∧ f ∈ C) ∧ ∃ g, Nat.Partrec g ∧ g ∉ C := by
+  constructor
+  · rintro ⟨⟨c, hc⟩, d, hd⟩
+    exact ⟨⟨_, Code.exists_code.2 ⟨c, rfl⟩, hc⟩, _, Code.exists_code.2 ⟨d, rfl⟩, hd⟩
+  · rintro ⟨⟨f, hf, hfC⟩, g, hg, hgC⟩
+    obtain ⟨c, rfl⟩ := Code.exists_code.1 hf
+    obtain ⟨d, rfl⟩ := Code.exists_code.1 hg
+    exact ⟨⟨c, hfC⟩, d, hgC⟩
 
 end DiagonaLean.Rice

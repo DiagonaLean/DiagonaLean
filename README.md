@@ -27,6 +27,7 @@ graph LR
   HALT --> UTMHalt
   HALT --> SKIConv
   HALT --> BetaConv
+  HALT --> Rice
   HALT --> KA["KAComm: KA with commutativity<br/>(8 problems: T, K, L equality and L inclusion,<br/>over ℕ and over {0, 1})"]
 ```
 
@@ -41,6 +42,7 @@ graph LR
 | Matrix mortality | Given a finite set of $3 \times 3$ integer matrices, does some product of them equal $0$? | `MatMort/` | `Undecidable` |
 | SKI convertibility | Do two SKI terms have a common reduct? | `SKIConv/` | `Undecidable`, `¬ MachineDecidable` |
 | β-conversion | Are two λ-terms β-convertible? | `BetaConv/` | `Undecidable`, `¬ MachineDecidable` |
+| Rice's problem | For a set $C$ of partial functions $\mathbb N \rightharpoonup \mathbb N$, does a program compute a function in $C$? | `Rice/` | `¬ ComputablePred` for every non-trivial $C$; `Undecidable` when $C$ contains some computable function but not the nowhere-defined one; of the complement when $C$ contains the nowhere-defined function and misses some computable function |
 | Kleene algebra with commutativity | Is $e = f$ provable in Kleene algebra (`KATermEq`) or pre-Kleene algebra (`TermEq`) with commutativity conditions on letters? Is $\mathcal L(e) = \mathcal L(f)$ (`LangEq`), or $\mathcal L(e) \subseteq \mathcal L(f)$ (`ModelLe`), in the language model? Each over $\Sigma = \mathbb N$ and over $\Sigma = \{0, 1\}$ (`XBool`). | `KAComm/` | `Undecidable` (for `LangEq`, `ModelLe`: of the complement), `¬ MachineDecidable`; also `¬ MachineDecidable` for every theory between pre-Kleene algebra and the language model (Theorem 18) |
 
 The Kleene algebra folder formalises A. Azevedo de Amorim, C. Zhang and M. Gaboardi, *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979). Its main results hold with no hypotheses. It also finds and repairs an error in the paper's Theorem 6. Its [README](DiagonaLean/KAComm/README.md) states the results mathematically and explains how to audit them, and [STATUS.md](DiagonaLean/KAComm/STATUS.md) records what is open.
