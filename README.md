@@ -145,6 +145,37 @@ def swappedUndecidable : Undecidable SwappedPCP :=
 #print axioms swappedUndecidable  -- propext, Classical.choice, Quot.sound
 ```
 
+### Prove a function primitive recursive, computable, or computed by a Turing machine
+The tactics in `DiagonaLean.Foundations.Computability` do this one definition at a time, with one
+call each:
+
+```lean
+import DiagonaLean
+open DiagonaLean.Foundations.Computability
+
+def fib : ℕ → ℕ
+  | 0 => 0
+  | 1 => 1
+  | n + 2 => fib n + fib (n + 1)
+
+@[fun_prop] theorem fib_primrec : Primrec fib := by primrec_rec   -- recursion
+example : Primrec fun n : ℕ => fib (2 * n) + n := by fun_prop     -- composition
+example : Computable fib := by fun_prop                           -- Primrec ⇒ Computable
+
+inductive Rose where                                               -- your own type
+  | node (label : ℕ) (kids : List Rose)
+derive_primcodable Rose
+
+def Rose.total : Rose → ℕ
+  | .node a cs => a + (cs.map Rose.total).sum
+example : Primrec Rose.total := by primrec_rec
+```
+
+and `tm_computer F` gives a `SingleTapeTM Bool` computing a function `F : List Bool → List Bool`
+that `fun_prop` proves computable. [`examples/Automation.lean`](examples/Automation.lean) is a
+guided tour of all of it (`lake env lean examples/Automation.lean`), and
+[`AUTOMATION.md`](DiagonaLean/Foundations/Computability/AUTOMATION.md) explains how it works.
+
 ### Inspect a result
 `#check @name` shows a statement with all its binders, and `#print axioms name` lists what it depends on. A sound result lists only `propext`, `Classical.choice` and `Quot.sound`. For example:
 

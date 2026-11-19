@@ -2,7 +2,7 @@
 
 A plan for proving `Primrec`, `Computable` and machine-level computability automatically, for functions on arbitrary inductive types. Written on 2026-11-18, last updated 2026-11-19; update it as milestones land. M1–M8 and M13 for nested `List T` are done, and M12 is decided (see *Milestones*); what remains is in *What's next*.
 
-A guided tour of what the automation proves, one tactic call per function, is in `scripts/AutomationDemo.lean` (run it with `lake env lean scripts/AutomationDemo.lean`).
+A guided tour of what the automation proves, one tactic call per function, is in `examples/Automation.lean` at the repository root (run it with `lake env lean examples/Automation.lean`).
 
 ## Why
 

@@ -6,7 +6,7 @@ A guided tour of the automation in `DiagonaLean.Foundations.Computability` (see 
 there). Every proof below is one tactic call, apart from the one-line wrappers that two-argument
 functions need (section 2). Run it with
 
-    lake env lean scripts/AutomationDemo.lean
+    lake env lean examples/Automation.lean
 
 The tactics:
 
