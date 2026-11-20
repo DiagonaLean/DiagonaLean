@@ -1,11 +1,11 @@
+import DiagonaLean.Synthetic.Undecidability
+
 /-! Fixture for `scripts/CheckMetaprograms.lean`, run by CI, which must reject it. Not built.
 
 A classical reduction that `#check_reductions` accepts: `run_cmd` adds it with `addDecl`, which
 the kernel checks, and copies the compiled code of an honest stub to it, so it is safe, not
 `noncomputable` and compiled. `lean4checker` accepts it too. And a theorem the kernel never checks.
 Mentions in comments, such as run_cmd, addDecl or unsafe here, must not be reported. -/
-
-import DiagonaLean.Synthetic.Undecidability
 
 open DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
   DiagonaLean.Synthetic.Notation Lean Elab Command

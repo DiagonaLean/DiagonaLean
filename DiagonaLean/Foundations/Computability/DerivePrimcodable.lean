@@ -39,8 +39,8 @@ these pieces with `chunks`.
 
 The command builds Lean source text and elaborates it with `elabCommand`, so every declaration is
 elaborated, checked by the kernel and compiled as if written by hand. It changes the environment
-in no other way, and `scripts/check_metaprograms.py` permits only the definition of this command
-here. `#print` shows what it generated.
+in no other way, and the metaprogram check (`Synthetic/MetaprogramCheck.lean`) permits only the
+definition of this command here. `#print` shows what it generated.
 -/
 
 namespace DiagonaLean.Foundations.Computability.DerivePrimcodable

@@ -86,6 +86,7 @@ import DiagonaLean.Synthetic.ReductionChain
 import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 import DiagonaLean.Synthetic.ReductionCheck
+import DiagonaLean.Synthetic.MetaprogramCheck
 
 import DiagonaLean.Foundations.Computability.Prim
 import DiagonaLean.Foundations.Computability.PrimrecRec
