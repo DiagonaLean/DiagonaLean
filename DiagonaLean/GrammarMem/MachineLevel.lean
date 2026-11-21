@@ -15,7 +15,8 @@ string such that the machine halts on its own code iff the start string rewrites
 string. A fresh start symbol `0`, with the rule `[0] → start string`, and the other symbols numbered
 from `1` (`gSym`), turn this into a grammar code (`gCode`) whose language contains the empty word
 iff the start string rewrites to the empty string (`emptyWord_gCode_iff`, from
-`Start.derives_start` and `SRS.derives_map_iff`). The grammar codes are of type 0 (`isType0_gCode`) and primitive recursive in
+`Start.derives_start` and `SRS.derives_map_iff`). The grammar codes are of type 0
+(`isType0_gCode`) and primitive recursive in
 the machine code (`gCode_prim`).
 
 ## Main statements
@@ -132,19 +133,9 @@ instance : Primcodable { g : GrammarCode T // IsType0 g } := Primcodable.subtype
 /-- **Whether the empty word belongs to the language of a type 0 grammar code is not a computable
 predicate.** -/
 theorem not_computablePred_emptyWord_type0 :
-    ¬ ComputablePred fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1 := by
-  intro h
-  have hcode : Primrec fun w : List Bool => (⟨gCode w, isType0_gCode w⟩ :
-      { g : GrammarCode T // IsType0 g }) :=
-    Primrec.subtype_mk gCode_prim
-  have h' : ComputablePred fun w : List Bool => EmptyWordProblem (gCode (T := T) w) :=
-    ComputablePred.computable_of_manyOneReducible
-      (ManyOneReducible.mk (fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1)
-        hcode.to_comp) h
-  obtain ⟨D, hD⟩ := machineDecidable_of_computablePred (enc := id) (dec := some)
-    Computable.option_some (fun _ => rfl) h'
-  refine Halt.Undecidable.self_halt_undecidable ⟨D, fun M => ?_⟩
-  simpa only [id, ← selfHalt_iff_emptyWord (T := T)] using hD (encodeBoolTM M)
+    ¬ ComputablePred fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1 :=
+  not_computablePred_of_selfHalt (code := fun w => ⟨gCode w, isType0_gCode w⟩)
+    (Primrec.subtype_mk gCode_prim).to_comp selfHalt_iff_emptyWord
 
 /-- **No Turing machine decides whether the empty word belongs to the language of a type 0 grammar
 code**, under any computable encoding. -/

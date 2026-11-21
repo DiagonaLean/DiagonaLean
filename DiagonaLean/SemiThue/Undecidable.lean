@@ -23,29 +23,23 @@ open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.PCP.Reduction Diagona
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Grammar
   DiagonaLean.Synthetic.Notation
 
-/-- The normalised machine of `M`, with its states encoded as pairs. -/
-abbrev normEncTM (M : EncodableTM Bool) : EncodableTM MPCP.Normalize.Sym2 :=
-  letI := M.stateEncodable
-  ⟨MPCP.Normalize.normTM M.toSingleTapeTM,
-    (inferInstance : Encodable (M.State × MPCP.Normalize.Ctrl))⟩
-
 /-- **The reduction.** The rewriting system of the normalised machine and its start string, with
 states renamed to their codes, and the empty string as target. -/
 def haltToSemiThue (p : EncodableTM Bool × List Bool) :
     SRS (Alpha ℕ MPCP.Normalize.Sym2) × List (Alpha ℕ MPCP.Normalize.Sym2) ×
       List (Alpha ℕ MPCP.Normalize.Sym2) :=
-  letI := (normEncTM p.1).stateEncodable
-  ((tmRules (normEncTM p.1)).mapRules (Alpha.map Encodable.encode),
-    (block (normEncTM p.1).toSingleTapeTM
-      (initCfg (normEncTM p.1).toSingleTapeTM (MPCP.Normalize.encInput p.2))).map
+  letI := (MPCP.Normalize.normEnc p.1).stateEncodable
+  ((tmRules (MPCP.Normalize.normEnc p.1)).mapRules (Alpha.map Encodable.encode),
+    (block (MPCP.Normalize.normEnc p.1).toSingleTapeTM
+      (initCfg (MPCP.Normalize.normEnc p.1).toSingleTapeTM (MPCP.Normalize.encInput p.2))).map
         (Alpha.map Encodable.encode), [])
 
 theorem halt_reducesto_semiThue_spec : HaltProblem ⪯ₘ[haltToSemiThue] DecisionProblem := by
   rintro ⟨M, w⟩
   show Halts M.toSingleTapeTM w ↔ _
-  let := (normEncTM M).stateEncodable
+  let := (MPCP.Normalize.normEnc M).stateEncodable
   rw [MPCP.Normalize.halts_normTM_iff,
-    halt_iff_derives (tm := normEncTM M) (MPCP.Normalize.normTM_noBlankWrites _) _
+    halt_iff_derives (tm := MPCP.Normalize.normEnc M) (MPCP.Normalize.normTM_noBlankWrites _) _
       (MPCP.Normalize.normTM_noLeftBoundary _ _),
     ← SRS.derives_map_iff (f := Alpha.map Encodable.encode)
       (Alpha.map_injective Encodable.encode_injective)]

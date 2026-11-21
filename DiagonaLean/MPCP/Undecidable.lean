@@ -50,10 +50,8 @@ and input to satisfy `NoBlankWrites` and `NoLeftBoundary`, builds the MPCP insta
 for the normalizer's control states. -/
 def haltToMpcpNorm (p : EncodableTM Bool × List Bool) :
     Tile (Alpha ℕ MPCP.Normalize.Sym2) × Stack (Alpha ℕ MPCP.Normalize.Sym2) :=
-  letI := p.1.stateEncodable
-  letI hEnc : Encodable (MPCP.Normalize.normTM p.1.toSingleTapeTM).State :=
-    (inferInstance : Encodable (p.1.State × MPCP.Normalize.Ctrl))
-  let tm : EncodableTM _ := ⟨MPCP.Normalize.normTM p.1.toSingleTapeTM, hEnc⟩
+  let tm := MPCP.Normalize.normEnc p.1
+  letI := tm.stateEncodable
   (Tile.map (Alpha.map Encodable.encode)
       (startTile tm.toSingleTapeTM (MPCP.Normalize.encInput p.2)),
     (haltTiles tm).map (Tile.map (Alpha.map Encodable.encode)))
@@ -66,10 +64,8 @@ theorem halt_reducesto_mpcp_spec :
         Stack (Alpha ℕ MPCP.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 := by
   rintro ⟨tm, w⟩
   show Halts tm.toSingleTapeTM w ↔ _
-  let _ := tm.stateEncodable
-  let hEnc : Encodable (MPCP.Normalize.normTM tm.toSingleTapeTM).State :=
-    (inferInstance : Encodable (tm.State × MPCP.Normalize.Ctrl))
-  let normTMEnc : EncodableTM _ := ⟨MPCP.Normalize.normTM tm.toSingleTapeTM, hEnc⟩
+  let normTMEnc := MPCP.Normalize.normEnc tm
+  let _ := normTMEnc.stateEncodable
   rw [MPCP.Normalize.halts_normTM_iff tm.toSingleTapeTM w,
     halt_iff_mpcp normTMEnc (MPCP.Normalize.normTM_noBlankWrites tm.toSingleTapeTM)
       (MPCP.Normalize.encInput w)

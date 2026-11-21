@@ -35,6 +35,8 @@ So every `¬ ComputablePred` result of Mathlib, such as `ComputablePred.rice` or
 * `not_machineDecidable_of_not_computablePred`: the form used for undecidability.
 * `not_computablePred_of_reduces`: `¬ ComputablePred` transfers along a reduction with a computable
   function.
+* `not_computablePred_of_selfHalt`, `not_machineDecidable_of_selfHalt`: a predicate that a
+  computable map of machine codes reduces self-halting to is not computable.
 * `encUnary`, `machineDecidable_unary_iff`: an encoding of any `Primcodable` type that satisfies
   the hypotheses.
 -/
@@ -149,6 +151,36 @@ theorem not_computablePred_of_reduces {X Y : Type*} [Primcodable X] [Primcodable
     {p : X → Prop} {q : Y → Prop} (r : p ⪯ₘ q) (hr : Computable r.f) (hp : ¬ ComputablePred p) :
     ¬ ComputablePred q :=
   fun hq => hp (ComputablePred.computable_of_manyOneReducible ⟨r.f, hr, r.hf⟩ hq)
+
+/-! ### From self-halting on codes -/
+
+/-- **A predicate that a computable map of codes reduces self-halting to is not computable.**
+If `code` is computable and a machine halts on its own code `encodeBoolTM M` iff
+`P (code (encodeBoolTM M))`, then a computable decision procedure for `P`, composed with `code`,
+would give a machine deciding self-halting (`machineDecidable_of_computablePred` on bit strings),
+which `self_halt_undecidable` rules out. This is the last step of every machine-level result that
+reads its instance off a machine code. -/
+theorem not_computablePred_of_selfHalt {X : Type*} [Primcodable X] {P : X → Prop}
+    {code : List Bool → X} (hcode : Computable code)
+    (hspec : ∀ M : EncodableTM Bool,
+      Halts M.toSingleTapeTM (encodeBoolTM M) ↔ P (code (encodeBoolTM M))) :
+    ¬ ComputablePred P := by
+  intro h
+  have h' : ComputablePred fun w => P (code w) :=
+    ComputablePred.computable_of_manyOneReducible (ManyOneReducible.mk P hcode) h
+  obtain ⟨D, hD⟩ := machineDecidable_of_computablePred (enc := id) (dec := some)
+    Computable.option_some (fun _ => rfl) h'
+  refine Halt.Undecidable.self_halt_undecidable ⟨D, fun M => ?_⟩
+  simpa only [id, ← hspec] using hD (encodeBoolTM M)
+
+/-- **No machine decides a predicate that a computable map of codes reduces self-halting to**,
+under any computable encoding. -/
+theorem not_machineDecidable_of_selfHalt {X : Type*} [Primcodable X] {P : X → Prop}
+    {code : List Bool → X} (hcode : Computable code)
+    (hspec : ∀ M : EncodableTM Bool,
+      Halts M.toSingleTapeTM (encodeBoolTM M) ↔ P (code (encodeBoolTM M)))
+    {enc : X → List Bool} (henc : Computable enc) : ¬ MachineDecidable enc P :=
+  not_machineDecidable_of_not_computablePred henc (not_computablePred_of_selfHalt hcode hspec)
 
 /-! ### A canonical encoding -/
 

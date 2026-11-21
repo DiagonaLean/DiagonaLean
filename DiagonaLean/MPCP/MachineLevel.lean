@@ -190,10 +190,6 @@ theorem transitionTilesFor_ren (s : M.State × Ctrl) (a : Option Normalize.Sym2)
     simp [ren, mvc, Tile.map, Alpha.map, noMoveTile, rightMoveTile, rightMoveBoundaryTile,
       leftMoveTile, markerN, stateMarker, syms2]
 
-/-- The normalised machine, with its states encoded as pairs. -/
-abbrev normEnc : EncodableTM Normalize.Sym2 :=
-  ⟨normTM M.toSingleTapeTM, (inferInstance : Encodable (M.State × Ctrl))⟩
-
 /-- The state numbers read off `rowsE M` are the codes of the states of `M`. -/
 theorem mem_idx (i : ℕ) :
     i ∈ (rowsE M).map (fun r => r.1.unpair.1) ↔ ∃ q : M.State, Encodable.encode q = i := by
@@ -286,15 +282,8 @@ procedure, composed with the primitive recursive `instC`, would give a machine t
 a machine halts on its own code. -/
 theorem not_computablePred_mpcp :
     ¬ ComputablePred fun x : Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) =>
-      MPCP.DecisionProblem x.1 x.2 := by
-  intro h
-  have h' : ComputablePred fun w : List Bool => MPCP.DecisionProblem (instC w).1 (instC w).2 :=
-    ComputablePred.computable_of_manyOneReducible
-      (ManyOneReducible.mk (fun x => MPCP.DecisionProblem x.1 x.2) instC_prim.to_comp) h
-  obtain ⟨D, hD⟩ := machineDecidable_of_computablePred (enc := id) (dec := some)
-    Computable.option_some (fun _ => rfl) h'
-  refine self_halt_undecidable ⟨D, fun M => ?_⟩
-  simpa only [id, ← selfHalt_iff_instC] using hD (encodeBoolTM M)
+      MPCP.DecisionProblem x.1 x.2 :=
+  not_computablePred_of_selfHalt instC_prim.to_comp selfHalt_iff_instC
 
 open DiagonaLean.Synthetic.Definitions in
 /-- **No Turing machine decides MPCP**, over the alphabet `Alpha ℕ Sym2`, under any computable
