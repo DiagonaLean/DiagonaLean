@@ -213,7 +213,10 @@ def allowances : List (String × List String) := [
   ("DiagonaLean/Synthetic/EvalExample.lean", ["eval"]),
   -- defines `derive_primcodable`, which only parses and elaborates generated source text as
   -- ordinary commands; the functions that change the environment directly stay forbidden here
-  ("DiagonaLean/Foundations/Computability/DerivePrimcodable.lean", ["command"])]
+  ("DiagonaLean/Foundations/Computability/DerivePrimcodable.lean", ["command"]),
+  -- defines `derive_primrec`, under the same discipline: it parses and elaborates one generated
+  -- theorem as an ordinary command
+  ("DiagonaLean/Foundations/Computability/PrimDef.lean", ["command"])]
 
 /-- The rules that the file at `rel` may break. -/
 def allowedRules (rel : String) : List String :=

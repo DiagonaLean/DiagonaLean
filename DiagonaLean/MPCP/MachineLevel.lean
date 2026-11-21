@@ -61,37 +61,9 @@ def simN (rows : List (ℕ × ℕ)) (i : ℕ) (right : Bool) (a : Option Normali
     (encSym (hcInv (rowA (lookup rows (Nat.pair i (hc (decSym a)))))), (if right then 1 else 2),
       Nat.pair (rowX (lookup rows (Nat.pair i (hc (decSym a)))) - 1) (if right then 5 else 4) + 1)
 
-section Prim
+derive_primrec hcInv
 
-variable {α : Type*} [Primcodable α]
-
-/-- `hc` of a primitive recursive function is primitive recursive. -/
-@[fun_prop] theorem prim_hc {f : α → Option Bool} (hf : Primrec f) : Primrec fun x => hc (f x) :=
-  (Primrec.dom_finite hc).comp hf
-
-/-- `decSym` of a primitive recursive function is primitive recursive. -/
-@[fun_prop] theorem prim_decSym {f : α → Option Normalize.Sym2} (hf : Primrec f) :
-    Primrec fun x => decSym (f x) := (Primrec.dom_finite decSym).comp hf
-
-/-- `encSym` of a primitive recursive function is primitive recursive. -/
-@[fun_prop] theorem prim_encSym {f : α → Option Bool} (hf : Primrec f) :
-    Primrec fun x => encSym (f x) := (Primrec.dom_finite encSym).comp hf
-
-/-- `preserve` of a primitive recursive function is primitive recursive. -/
-@[fun_prop] theorem prim_preserve {f : α → Option Normalize.Sym2} (hf : Primrec f) :
-    Primrec fun x => preserve (f x) := (Primrec.dom_finite preserve).comp hf
-
-/-- `hcInv` of a primitive recursive function is primitive recursive. -/
-@[fun_prop] theorem prim_hcInv {f : α → ℕ} (hf : Primrec f) : Primrec fun x => hcInv (f x) := by
-  unfold hcInv; fun_prop
-
-end Prim
-
-/-- `simN` is primitive recursive. -/
-theorem simN_prim : Primrec fun x : (List (ℕ × ℕ) × ℕ) × Bool × Option Normalize.Sym2 =>
-    simN x.1.1 x.1.2 x.2.1 x.2.2 := by
-  unfold simN
-  fun_prop
+derive_primrec simN
 
 /-- The transition `normTr` of the normalised machine, numerically, in state number `i` with control
 state number `c` (the `Encodable` code of `Ctrl`), in the format of `simN`. -/
@@ -144,44 +116,21 @@ the start state's code plus one (`headI_tokens_code`). -/
 def instC (w : List Bool) : Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) :=
   (startN ((tokens w).headI - 1) w, stackN (rowsC w))
 
-section Prim
+derive_primrec markerN
 
-variable {α : Type*} [Primcodable α]
+derive_primrec normTrN
 
-/-- `rowsC` of a primitive recursive function is primitive recursive. -/
-@[fun_prop] theorem prim_rowsC {f : α → List Bool} (hf : Primrec f) :
-    Primrec fun x => rowsC (f x) := by
-  unfold rowsC rowTok; fun_prop
+derive_primrec trTilesN
 
-/-- `markerN` of a primitive recursive function is primitive recursive. -/
-@[fun_prop] theorem prim_markerN {f : α → ℕ} (hf : Primrec f) :
-    Primrec fun x => markerN (f x) := by
-  unfold markerN; fun_prop
+derive_primrec transN
 
-end Prim
+derive_primrec stackN
 
-/-- `simN` of primitive recursive functions is primitive recursive. -/
-@[fun_prop] theorem prim_simN {α : Type*} [Primcodable α] {f : α → List (ℕ × ℕ)} {g : α → ℕ}
-    {h : α → Bool} {k : α → Option Normalize.Sym2} (hf : Primrec f) (hg : Primrec g)
-    (hh : Primrec h) (hk : Primrec k) : Primrec fun x => simN (f x) (g x) (h x) (k x) :=
-  (simN_prim.comp ((hf.pair hg).pair (hh.pair hk)) :)
+derive_primrec encInput
 
-/-- `normTrN` is primitive recursive. -/
-theorem normTrN_prim : Primrec fun x : (List (ℕ × ℕ) × ℕ × ℕ) × Option Normalize.Sym2 =>
-    normTrN x.1.1 x.1.2.1 x.1.2.2 x.2 := by
-  unfold normTrN
-  fun_prop
+derive_primrec startN
 
-/-- `normTrN` of primitive recursive functions is primitive recursive. -/
-@[fun_prop] theorem prim_normTrN {α : Type*} [Primcodable α] {f : α → List (ℕ × ℕ)} {g h : α → ℕ}
-    {k : α → Option Normalize.Sym2} (hf : Primrec f) (hg : Primrec g) (hh : Primrec h)
-    (hk : Primrec k) : Primrec fun x => normTrN (f x) (g x) (h x) (k x) :=
-  normTrN_prim.comp ((hf.pair (hg.pair hh)).pair hk)
-
-/-- **The instance of a code is primitive recursive in the code.** -/
-theorem instC_prim : Primrec instC := by
-  unfold instC startN stackN transN trTilesN encInput
-  fun_prop
+derive_primrec instC
 
 /-! ### Correctness -/
 
@@ -196,8 +145,7 @@ variable (M : EncodableTM Bool)
 attribute [local instance] EncodableTM.stateEncodable
 
 /-- The number of a state of the normalised machine: the pair of the codes of its components. -/
-def stIdx (s : (normTM M.toSingleTapeTM).State) : ℕ :=
-  Nat.pair (Encodable.encode (s.1 : M.State)) (Encodable.encode (s.2 : Ctrl))
+def stIdx (s : M.State × Ctrl) : ℕ := Nat.pair (Encodable.encode s.1) (Encodable.encode s.2)
 
 /-- `stIdx` is injective. -/
 theorem stIdx_injective : Function.Injective (stIdx M) := fun s t h => by
@@ -205,7 +153,7 @@ theorem stIdx_injective : Function.Injective (stIdx M) := fun s t h => by
   exact Prod.ext (Encodable.encode_injective h₁) (Encodable.encode_injective h₂)
 
 /-- The numeric form of a transition of the normalised machine, in the format of `simN`. -/
-def codeOf (r : Stmt Normalize.Sym2 × Option (normTM M.toSingleTapeTM).State) :
+def codeOf (r : Stmt Normalize.Sym2 × Option (M.State × Ctrl)) :
     Option Normalize.Sym2 × ℕ × ℕ :=
   (r.1.symbol, mvc r.1.movement, match r.2 with | none => 0 | some s => stIdx M s + 1)
 
@@ -229,13 +177,11 @@ theorem normTrN_eq (q : M.State) (c : Ctrl) (a : Option Normalize.Sym2) :
     split_ifs <;> simp
 
 /-- The renaming of states by `stIdx`, on tiles. -/
-abbrev ren : Tile (Alpha (normTM M.toSingleTapeTM).State Normalize.Sym2) →
-    Tile (Alpha ℕ Normalize.Sym2) :=
+abbrev ren : Tile (Alpha (M.State × Ctrl) Normalize.Sym2) → Tile (Alpha ℕ Normalize.Sym2) :=
   Tile.map (Alpha.map (stIdx M))
 
 /-- The renamed transition tiles of a state are `trTilesN` of its number and numeric transition. -/
-theorem transitionTilesFor_ren (s : (normTM M.toSingleTapeTM).State)
-    (a : Option Normalize.Sym2) :
+theorem transitionTilesFor_ren (s : M.State × Ctrl) (a : Option Normalize.Sym2) :
     (transitionTilesFor (normTM M.toSingleTapeTM) s a).map (ren M) =
       trTilesN (stIdx M s) a (codeOf M ((normTM M.toSingleTapeTM).tr s a)) := by
   unfold transitionTilesFor trTilesN codeOf
@@ -286,16 +232,11 @@ theorem mem_transN (t : Tile (Alpha ℕ Normalize.Sym2)) :
     obtain ⟨x, hx, rfl⟩ := List.mem_map.1 ht
     obtain ⟨⟨q, k⟩, a, hx⟩ := (mem_transitionTiles _ _).1 hx
     refine ⟨_, ⟨q, rfl⟩, _, ⟨k, rfl⟩, a, mem_enumerate a, ?_⟩
-    have h : ren M x ∈ (transitionTilesFor (normTM M.toSingleTapeTM)
-        (show (normTM M.toSingleTapeTM).State from (q, k)) a).map (ren M) :=
-      List.mem_map_of_mem hx
-    rw [transitionTilesFor_ren] at h
     rw [normTrN_eq]
-    exact h
+    exact transitionTilesFor_ren M (q, k) a ▸ List.mem_map_of_mem hx
   · rintro ⟨_, ⟨q, rfl⟩, _, ⟨k, rfl⟩, a, -, ht⟩
     rw [normTrN_eq] at ht
-    have h := transitionTilesFor_ren M (show (normTM M.toSingleTapeTM).State from (q, k)) a
-    obtain ⟨x, hx, rfl⟩ := List.mem_map.1 (h ▸ ht)
+    obtain ⟨x, hx, rfl⟩ := List.mem_map.1 (transitionTilesFor_ren M (q, k) a ▸ ht)
     exact List.mem_map_of_mem ((mem_transitionTiles _ _).2 ⟨(q, k), a, hx⟩)
 
 /-- The renamed tiles of the normalised machine are the tiles of `stackN`. -/
@@ -311,22 +252,13 @@ theorem mem_stackN (t : Tile (Alpha ℕ Normalize.Sym2)) :
   simp only [List.map_append, List.mem_append, h₁, h₂, mem_transN]
   rfl
 
-/-- The renamed encoding of a start configuration. -/
-theorem start_aux {Q : Type} (g : Q → ℕ) (q : Q) (L : List Normalize.Sym2) :
-    List.map (Alpha.map g)
-      (# :: (List.map Alpha.tape ([] : List (Option Normalize.Sym2)).reverse ++
-        ↟ₛq :: List.map Alpha.tape (some Mk :: List.map some L)) ++ [#]) =
-      # :: ↟ₛ(g q) :: List.map (fun s => ↟ₜ(some s)) (Mk :: L) ++ [#] := by
-  simp [Alpha.map, Function.comp_def]
-
 /-- The renamed start tile of the normalised machine is `startN`. -/
 theorem startTile_ren (w : List Bool) :
     ren M (startTile (normTM M.toSingleTapeTM) (encInput w)) =
       startN (Encodable.encode M.q₀) w := by
-  simp only [ren, startTile, startN, encodeCfg, initCfg, encInput, BiTape.mk₁,
-    encodeRunningCfg, liftTape, StackTape.mapSome, Tile.map, normTM]
-  congr 1
-  exact start_aux (stIdx M) _ _
+  simp [ren, startTile, startN, encodeCfg, initCfg, encInput, BiTape.mk₁, encodeRunningCfg,
+    liftTape, StackTape.mapSome, Tile.map, Alpha.map, stIdx, Function.comp_def]
+  rfl
 
 end
 

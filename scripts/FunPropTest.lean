@@ -17,6 +17,31 @@ example : Primrec fun n : ℕ => if n < 5 then n else Nat.pair n (n / 2) := by f
 example : PrimrecPred fun p : ℕ × ℕ => p.1 ≤ p.2 ∧ p.1 ≠ p.2 := by fun_prop
 example (f : ℕ → ℕ) (hf : Primrec f) : Primrec fun n => f (f n + n) := by fun_prop
 
+/-! ### Functions out of finite types (`Primrec.dom_finite`) -/
+
+def finDec : Option (Bool × Bool) → Option Bool
+  | some (b, true) => some b
+  | _ => none
+
+example : Primrec finDec := by fun_prop
+example : Primrec fun x : ℕ × Option (Bool × Bool) =>
+    x.1 + (match finDec x.2 with | none => 0 | some false => 1 | some true => 2) := by fun_prop
+
+/-! ### `derive_primrec` -/
+
+namespace DerivePrimrecTest
+
+def f3 (a : ℕ) (l : List ℕ) (b : Bool) : ℕ := if b then a + l.length else a
+derive_primrec f3
+example : Primrec fun x : ℕ × ℕ => f3 (x.1 + 1) [x.2] (x.1 = 0) := by fun_prop
+
+def gen {α : Type} [DecidableEq α] (a b : α) (l : List α) : List α := if a = b then l else a :: l
+derive_primrec gen [Primcodable α]
+example {β : Type} [Primcodable β] [DecidableEq β] (c : β) :
+    Primrec fun l : List β => gen c c (l ++ l) := by fun_prop
+
+end DerivePrimrecTest
+
 /-! ### `Computable` -/
 
 example : Computable fun n : ℕ => n * n + 3 := by fun_prop

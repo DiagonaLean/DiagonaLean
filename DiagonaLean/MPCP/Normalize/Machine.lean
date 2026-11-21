@@ -195,8 +195,9 @@ def normTr (q : tm.State) (ctrl : Ctrl) (a : Option Sym2) :
   | .simR => simStep tm q true a
   | .simL => simStep tm q false a
 
-/-- The normalised machine simulating `tm`. -/
-def normTM : SingleTapeTM Sym2 where
+/-- The normalised machine simulating `tm`. It is reducible, so that `(normTM tm).State` is
+`tm.State × Ctrl` to `rw`, `simp` and instance search. -/
+@[reducible] def normTM : SingleTapeTM Sym2 where
   State := tm.State × Ctrl
   q₀ := (tm.q₀, .start)
   tr := fun s a => normTr tm s.1 s.2 a

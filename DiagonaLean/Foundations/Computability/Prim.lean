@@ -7,6 +7,9 @@ import Mathlib.Computability.PartrecBasis
 import Mathlib.Computability.Partrec
 import Mathlib.Tactic.FunProp
 import Mathlib.Data.Nat.Log
+import Mathlib.Data.Fintype.Option
+import Mathlib.Data.Fintype.Prod
+import Mathlib.Data.Fintype.Card
 
 @[expose] public section
 
@@ -17,6 +20,10 @@ Registers `Primrec`, `PrimrecPred` and `Computable` with Mathlib's `fun_prop` ta
 `if`. A `Primrec` goal is also a `Computable` goal, through the transition theorem
 `Primrec.to_comp`. Later files tag the lemmas for their own definitions with `@[fun_prop]`, in
 compositional form (`Primrec f → Primrec fun x => g (f x)`) or as `Primrec g`.
+
+A function out of a finite type, including a `match` on a value of a finite type, is primitive
+recursive with no lemma of its own: `Primrec.dom_finite` is a transition theorem, tried when no
+other theorem applies, and it succeeds when instance search finds `Finite` of the domain.
 
 A goal whose function contains codes built with `Nat.pair` from literals can time out, because
 unification evaluates them; `attribute [local irreducible] Nat.pair` prevents this.
@@ -34,6 +41,11 @@ own definitions with `@[fun_prop]`. -/
 attribute [fun_prop] Primrec PrimrecPred
 attribute [fun_prop] Primrec.id Primrec.const Primrec.comp PrimrecPred.comp PrimrecPred.not
   PrimrecPred.or Primrec.ofNat Primrec.encode Primrec.decode₂ Primrec.decode
+
+/- Every function out of a finite type is primitive recursive. As a transition theorem it closes
+goals for functions with no `fun_prop` lemma, such as `match` on `Option Bool`, when instance search
+finds `Finite` of the domain. -/
+attribute [fun_prop] Primrec.dom_finite
 
 section Prim
 

@@ -107,12 +107,12 @@ theorem phase_step {q : tm.State} {t : BiTape Bool} {i : ℤ}
   · subst hs
     obtain ⟨t'', hstep, hinv'⟩ := step_mvRR tm hinv
     refine ⟨_, hstep, Or.inl ⟨q, t, i, ?_, Relation.ReflTransGen.refl⟩⟩
-    exact Or.inr (Or.inl ⟨by rw [sim_of_nonneg hi]; rfl, hinv'⟩)
+    exact Or.inr (Or.inl ⟨by rw [sim_of_nonneg hi], hinv'⟩)
   -- mvRL
   · subst hs
     obtain ⟨t'', hstep, hinv'⟩ := step_mvRL tm hinv
     refine ⟨_, hstep, Or.inl ⟨q, t, i, ?_, Relation.ReflTransGen.refl⟩⟩
-    exact Or.inr (Or.inl ⟨by rw [sim_of_neg hi]; rfl, hinv'⟩)
+    exact Or.inr (Or.inl ⟨by rw [sim_of_neg hi], hinv'⟩)
   -- chkR
   · subst hs
     by_cases hi0 : i = -1
@@ -128,7 +128,7 @@ theorem phase_step {q : tm.State} {t : BiTape Bool} {i : ℤ}
       rw [hz] at hinv
       obtain ⟨t'', hstep, hinv'⟩ := step_chkR_data tm hinv
       refine ⟨_, hstep, Or.inl ⟨q, t, i, ?_, Relation.ReflTransGen.refl⟩⟩
-      exact Or.inr (Or.inl ⟨by rw [sim_of_nonneg hi1]; rfl, hinv'⟩)
+      exact Or.inr (Or.inl ⟨by rw [sim_of_nonneg hi1], hinv'⟩)
   -- chkL1
   · subst hs
     obtain ⟨t'', hstep, hinv'⟩ := step_chkL1 tm hinv
@@ -149,7 +149,7 @@ theorem phase_step {q : tm.State} {t : BiTape Bool} {i : ℤ}
       rw [hz] at hinv
       obtain ⟨t'', hstep, hinv'⟩ := step_chkL2_data tm hinv
       refine ⟨_, hstep, Or.inl ⟨q, t, i, ?_, Relation.ReflTransGen.refl⟩⟩
-      exact Or.inr (Or.inl ⟨by rw [sim_of_neg hineg]; rfl, hinv'⟩)
+      exact Or.inr (Or.inl ⟨by rw [sim_of_neg hineg], hinv'⟩)
 
 variable (tm)
 
