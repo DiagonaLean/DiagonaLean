@@ -4,7 +4,7 @@ Authors: Aristotle (Harmonic)
 -/
 
 import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
-import DiagonaLean.MPCP.Normalize.Cell
+import DiagonaLean.Foundations.Computability.Normalize.Cell
 
 @[expose] public section
 
@@ -44,7 +44,7 @@ control states in `Ctrl`. The transition function is `normTr`, built from `simSt
   *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
 
-namespace DiagonaLean.MPCP.Normalize
+namespace DiagonaLean.Foundations.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -263,4 +263,4 @@ theorem fold_zero : fold 0 = 1 := rfl
 /-- `fold (-1) = 2`. -/
 theorem fold_neg_one : fold (-1) = 2 := rfl
 
-end DiagonaLean.MPCP.Normalize
+end DiagonaLean.Foundations.Normalize

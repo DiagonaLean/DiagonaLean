@@ -17,7 +17,7 @@ entries of a `StackTape`. The lemmas `cellAt_write`, `cellAt_moveRight`, `cellAt
 `cellAt_mk₁` describe how `cellAt` interacts with `write`, the moves and `mk₁`.
 -/
 
-namespace DiagonaLean.MPCP.Normalize
+namespace DiagonaLean.Foundations.Normalize
 
 open Cslib.Turing
 
@@ -183,4 +183,4 @@ theorem cellAt_eq_none_of_left_nil {t : BiTape S} (h : t.left.toList = []) {d : 
 theorem left_toList_ne_nil {t : BiTape S} {d : ℤ} (hd : d < 0) (h : cellAt t d ≠ none) :
     t.left.toList ≠ [] := fun hnil => h (cellAt_eq_none_of_left_nil hnil hd)
 
-end DiagonaLean.MPCP.Normalize
+end DiagonaLean.Foundations.Normalize

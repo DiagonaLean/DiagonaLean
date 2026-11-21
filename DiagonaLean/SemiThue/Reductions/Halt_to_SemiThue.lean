@@ -31,7 +31,8 @@ the left end, `tm` halts on `w` iff `block (initCfg w)` derives the empty string
 namespace DiagonaLean.SemiThue.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Halt
-  DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Grammar Relation
+  DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Normalize
+  Relation
 
 /-! ### Markers -/
 
