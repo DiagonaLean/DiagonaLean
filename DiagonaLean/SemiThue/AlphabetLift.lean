@@ -29,8 +29,8 @@ fixed instance without solution.
 * `undecidableSemiThuePosOf`, `undecidableSemiThueOf`, `undecidableSemiThueBool`.
 * `not_computablePred_semiThuePosOf`, `not_computablePred_semiThueOf`,
   `not_machineDecidable_semiThueOf`: over every nontrivial `Primcodable` alphabet.
-* `semiThuePos_rePred_iff`: the restricted problem is recursively enumerable over any two such
-  alphabets or over neither, by the computable reductions `semiThueFunctor.reduces (bitCode b0 b1)`.
+* `semiThuePos_manyOneEquiv`: the restricted problem is many-one equivalent over any two such
+  alphabets.
 -/
 
 namespace DiagonaLean.SemiThue
@@ -148,11 +148,10 @@ theorem not_machineDecidable_semiThueOf [Primcodable α] [Nontrivial α]
   not_machineDecidable_of_not_computablePred henc not_computablePred_semiThueOf
 
 /-- **Alphabet invariance of the restricted word problem**: over any two nontrivial `Primcodable`
-alphabets, it is recursively enumerable over both or neither, by the computable reductions
-`semiThueFunctor.reduces (bitCode b0 b1)`. -/
-theorem semiThuePos_rePred_iff {β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
-    [Nontrivial β] : REPred (@DecisionProblemPos α) ↔ REPred (@DecisionProblemPos β) :=
-  semiThueFunctor.rePred_iff (fun hne => isSync_bitCode hne) (fun hne => isSync_bitCode hne)
+alphabets, it is many-one equivalent. -/
+theorem semiThuePos_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
+    [Nontrivial β] : ManyOneEquiv (@DecisionProblemPos α) (@DecisionProblemPos β) :=
+  semiThueFunctor.manyOneEquiv (fun hne => isSync_bitCode hne) (fun hne => isSync_bitCode hne)
     (fun b0 b1 => (semiThueFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
     (fun b0 b1 => (semiThueFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
 

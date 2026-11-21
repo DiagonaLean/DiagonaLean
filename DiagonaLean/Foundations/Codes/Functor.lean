@@ -35,13 +35,14 @@ The lifting is proved once for every such problem:
   computable. Instances are built from words by products and lists, so `map c` applies `encode c`
   to each word, and `encode_primrec` (proved once) with `fun_prop` gives its computability.
 
-Over two countable alphabets with two letters each, there are good codes both ways, and their
-actions `F.reduces (bitCode b0 b1)` are computable many-one reductions (`⪯ₘ`) in both directions:
-the problem's many-one degree does not depend on the alphabet. Following the convention on
-`ManyOneReduces`, the reductions are definitions and no theorem claims that one exists; what
-transports along them is stated directly, for instance being a computable predicate
-(`CodeFunctor.computablePred_iff`) or recursively enumerable (`CodeFunctor.rePred_iff`), from
-`computablePred_of_reduces` and `REPred.of_reduces`.
+Over two countable alphabets with two letters each, there are good codes both ways, so the
+problem is many-one equivalent over the two (`CodeFunctor.manyOneEquiv`): its many-one degree does
+not depend on the alphabet. The reductions themselves are data, `F.reduces (bitCode b0 b1)`; with
+a computable action they give Mathlib's `ManyOneReducible` (`ManyOneReduces.toManyOneReducible`).
+Every property closed under computable many-one reductions transports in both directions, for
+instance being a computable predicate (`computablePred_iff_of_equiv`) or recursively enumerable
+(`rePred_iff_of_equiv`). For a single reduction as data, `computablePred_of_reduces` and
+`REPred.of_reduces` take `p ⪯ₘ q` with a computable function directly.
 
 `Inst` is a functor on all codes, good or not (`map_unit`, `map_kcomp`): encoding by the
 one-letter code `unit` changes nothing, and encoding by `c₁` then `c₂` is encoding by their
@@ -123,57 +124,55 @@ theorem CodeFunctor.not_computablePred_lift [Encodable α] [Nontrivial β]
   obtain ⟨b0, b1, hne⟩ := exists_pair_ne β
   exact F.not_computablePred_of (hc hne) (hmap b0 b1) h
 
-/-! ### Transport along computable reductions -/
+/-! ### Alphabet invariance -/
+
+/-- A good code with a computable action is a computable many-one reduction. -/
+theorem CodeFunctor.manyOneReducible [Primcodable (F.Inst α)] [Primcodable (F.Inst β)]
+    {c : α → List β} (hc : Good c) (hmap : Computable (F.map c)) :
+    ManyOneReducible (@F.Prob α) (@F.Prob β) :=
+  (F.reduces c hc).toManyOneReducible hmap
+
+/-- **Alphabet invariance.** Over two countable alphabets with two distinct letters each, the
+problem is many-one equivalent, by `bitCode` both ways. -/
+theorem CodeFunctor.manyOneEquiv [Encodable α] [Encodable β] [Nontrivial α] [Nontrivial β]
+    [Primcodable (F.Inst α)] [Primcodable (F.Inst β)]
+    (hcα : ∀ {b0 b1 : β}, b0 ≠ b1 → Good (bitCode (α := α) b0 b1))
+    (hcβ : ∀ {b0 b1 : α}, b0 ≠ b1 → Good (bitCode (α := β) b0 b1))
+    (hmapα : ∀ b0 b1 : β, Computable (F.map (bitCode (α := α) b0 b1)))
+    (hmapβ : ∀ b0 b1 : α, Computable (F.map (bitCode (α := β) b0 b1))) :
+    ManyOneEquiv (@F.Prob α) (@F.Prob β) := by
+  obtain ⟨a0, a1, ha⟩ := exists_pair_ne α
+  obtain ⟨b0, b1, hb⟩ := exists_pair_ne β
+  exact ⟨F.manyOneReducible (hcα hb) (hmapα b0 b1), F.manyOneReducible (hcβ ha) (hmapβ a0 a1)⟩
 
 section Transport
 
 variable {X Y : Type} [Primcodable X] [Primcodable Y] {p : X → Prop} {q : Y → Prop}
 
-/-- Being a computable predicate transfers back along a reduction with a computable function. -/
+/-- Being a computable predicate transfers back along a reduction (`⪯ₘ`) with a computable
+function. -/
 theorem computablePred_of_reduces (r : p ⪯ₘ q) (hr : Computable r.f) (hq : ComputablePred q) :
     ComputablePred p :=
-  ComputablePred.computable_of_manyOneReducible ⟨r.f, hr, r.hf⟩ hq
+  ComputablePred.computable_of_manyOneReducible (r.toManyOneReducible hr) hq
 
-/-- Recursive enumerability transfers back along a reduction with a computable function. -/
+/-- Recursive enumerability transfers back along a reduction (`⪯ₘ`) with a computable function. -/
 theorem REPred.of_reduces (r : p ⪯ₘ q) (hr : Computable r.f) (hq : REPred q) : REPred p :=
   REPred.of_eq (hq.comp hr) fun x => (r.hf x).symm
 
+/-- Recursive enumerability transfers back along a computable many-one reduction. -/
+theorem REPred.of_manyOneReducible (h : ManyOneReducible p q) (hq : REPred q) : REPred p := by
+  obtain ⟨f, hf, hpq⟩ := h
+  exact REPred.of_reduces (q := q) ⟨f, hpq⟩ hf hq
+
+/-- Many-one equivalent predicates are computable together. -/
+theorem computablePred_iff_of_equiv (h : ManyOneEquiv p q) : ComputablePred p ↔ ComputablePred q :=
+  ⟨fun hp => ComputablePred.computable_of_manyOneReducible h.2 hp,
+    fun hq => ComputablePred.computable_of_manyOneReducible h.1 hq⟩
+
+/-- Many-one equivalent predicates are recursively enumerable together. -/
+theorem rePred_iff_of_equiv (h : ManyOneEquiv p q) : REPred p ↔ REPred q :=
+  ⟨fun hp => REPred.of_manyOneReducible h.2 hp, fun hq => REPred.of_manyOneReducible h.1 hq⟩
+
 end Transport
-
-/-! ### Alphabet invariance -/
-
-section Invariance
-
-variable [Encodable α] [Encodable β] [Nontrivial α] [Nontrivial β]
-  [Primcodable (F.Inst α)] [Primcodable (F.Inst β)]
-
-/-- **Alphabet invariance, computability.** Over two countable alphabets with two distinct letters
-each, the problem is a computable predicate over both or neither: `F.reduces (bitCode …)` are
-computable reductions both ways. -/
-theorem CodeFunctor.computablePred_iff
-    (hcα : ∀ {b0 b1 : β}, b0 ≠ b1 → Good (bitCode (α := α) b0 b1))
-    (hcβ : ∀ {b0 b1 : α}, b0 ≠ b1 → Good (bitCode (α := β) b0 b1))
-    (hmapα : ∀ b0 b1 : β, Computable (F.map (bitCode (α := α) b0 b1)))
-    (hmapβ : ∀ b0 b1 : α, Computable (F.map (bitCode (α := β) b0 b1))) :
-    ComputablePred (@F.Prob α) ↔ ComputablePred (@F.Prob β) := by
-  obtain ⟨a0, a1, ha⟩ := exists_pair_ne α
-  obtain ⟨b0, b1, hb⟩ := exists_pair_ne β
-  exact ⟨computablePred_of_reduces (F.reduces _ (hcβ ha)) (hmapβ a0 a1),
-    computablePred_of_reduces (F.reduces _ (hcα hb)) (hmapα b0 b1)⟩
-
-/-- **Alphabet invariance, recursive enumerability.** Over two countable alphabets with two
-distinct letters each, the problem is recursively enumerable over both or neither. -/
-theorem CodeFunctor.rePred_iff
-    (hcα : ∀ {b0 b1 : β}, b0 ≠ b1 → Good (bitCode (α := α) b0 b1))
-    (hcβ : ∀ {b0 b1 : α}, b0 ≠ b1 → Good (bitCode (α := β) b0 b1))
-    (hmapα : ∀ b0 b1 : β, Computable (F.map (bitCode (α := α) b0 b1)))
-    (hmapβ : ∀ b0 b1 : α, Computable (F.map (bitCode (α := β) b0 b1))) :
-    REPred (@F.Prob α) ↔ REPred (@F.Prob β) := by
-  obtain ⟨a0, a1, ha⟩ := exists_pair_ne α
-  obtain ⟨b0, b1, hb⟩ := exists_pair_ne β
-  exact ⟨REPred.of_reduces (F.reduces _ (hcβ ha)) (hmapβ a0 a1),
-    REPred.of_reduces (F.reduces _ (hcα hb)) (hmapα b0 b1)⟩
-
-end Invariance
 
 end DiagonaLean.Foundations.Codes

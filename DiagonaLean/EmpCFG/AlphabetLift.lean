@@ -119,14 +119,13 @@ theorem not_machineDecidable_empCFGCodeOf [Primcodable α] [Nontrivial α] [Deci
   not_machineDecidable_of_not_computablePred henc not_computablePred_empCFGCodeOf
 
 /-- **Alphabet invariance of CFG intersection on grammar codes**: over any two nontrivial
-`Primcodable` alphabets, non-emptiness of the intersection is recursively enumerable over both or
-neither, by the computable reductions `empCodeFunctor.reduces (bitCode b0 b1)`. -/
-theorem empCFGCode_rePred_iff {β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
+`Primcodable` alphabets, non-emptiness of the intersection is many-one equivalent. -/
+theorem empCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
     [Nontrivial β] [DecidableEq α] [DecidableEq β] :
-    REPred (fun c : CFGCode α × CFGCode α => IntersectionNonempty c.1.toCFG c.2.toCFG) ↔
-      REPred fun c : CFGCode β × CFGCode β => IntersectionNonempty c.1.toCFG c.2.toCFG := by
-  have h : REPred (@CodeProblem α) ↔ REPred (@CodeProblem β) :=
-    empCodeFunctor.rePred_iff (fun hne => (isSync_bitCode hne).isCode)
+    ManyOneEquiv (fun c : CFGCode α × CFGCode α => IntersectionNonempty c.1.toCFG c.2.toCFG)
+      fun c : CFGCode β × CFGCode β => IntersectionNonempty c.1.toCFG c.2.toCFG := by
+  have h : ManyOneEquiv (@CodeProblem α) (@CodeProblem β) :=
+    empCodeFunctor.manyOneEquiv (fun hne => (isSync_bitCode hne).isCode)
       (fun hne => (isSync_bitCode hne).isCode)
       (fun b0 b1 => (empCodeFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
       (fun b0 b1 => (empCodeFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
