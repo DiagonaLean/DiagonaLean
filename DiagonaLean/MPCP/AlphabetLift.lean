@@ -5,7 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.MPCP.Undecidable
 import DiagonaLean.PCP.AlphabetLift
-import DiagonaLean.Foundations.Codes.Unary
+import DiagonaLean.Foundations.Codes.Functor
 import DiagonaLean.Foundations.Computability.DerivePrimcodable
 
 @[expose] public section
@@ -17,9 +17,10 @@ An MPCP instance is a list of pairs of words with a start pair, so
 included, preserves and reflects solvability when `encode c` is injective on the words over the
 letters of the instance (`decisionProblem_encode_iff`), in particular for a code.
 
-`Alpha ℕ Sym2` is countable, so `Codes.bitCode` is a code into any alphabet with two distinct
-letters, and `undecidableMPCP` transfers to every such alphabet
-(`undecidableMPCPOf`), for instance to `Bool` (`undecidableMPCPBool`).
+MPCP is thus a functor on codes (`mpcpFunctor`), and the lifting of `Foundations.Codes.Functor`
+applies: `Alpha ℕ Sym2` is countable, so `undecidableMPCP` transfers to every alphabet with two
+distinct letters (`undecidableMPCPOf`), for instance to `Bool` (`undecidableMPCPBool`). The
+machine-level lifting is in `MachineLevel.lean`.
 -/
 
 derive_primcodable DiagonaLean.MPCP.Reduction.Alpha
@@ -65,19 +66,28 @@ namespace Reduction
 
 open DiagonaLean.Synthetic.Notation
 
+/-- **MPCP as a functor on codes**: an instance is a start tile and a stack, a code encodes every
+tile, and codes preserve and reflect solvability. -/
+abbrev mpcpFunctor : CodeFunctor IsCode where
+  Inst α := Tile α × Stack α
+  map c x := (x.1.encode c, x.2.encode c)
+  Prob x := DecisionProblem x.1 x.2
+  map_unit x := Prod.ext (Tile.encode_unit _) (Stack.encode_unit _)
+  map_kcomp c₁ c₂ x := Prod.ext (Tile.encode_kcomp c₁ c₂ _) (Stack.encode_kcomp c₁ c₂ _)
+  natural hc x := decisionProblem_encode_iff_of_isCode hc x.1 x.2
+
 /-- MPCP over `Alpha ℕ Sym2` many-one reduces to MPCP over any alphabet with two distinct
 letters, by encoding every tile with `bitCode`. -/
 def mpcpAlphabetLift (b0 b1 : α) (hne : b0 ≠ b1) :
     (fun x : Tile (Alpha ℕ Foundations.Normalize.Sym2) ×
       Stack (Alpha ℕ Foundations.Normalize.Sym2) => DecisionProblem x.1 x.2) ⪯ₘ
       fun x : Tile α × Stack α => DecisionProblem x.1 x.2 :=
-  ⟨fun x => (x.1.encode (bitCode b0 b1), x.2.encode (bitCode b0 b1)),
-    fun x => (decisionProblem_encode_iff_of_isCode (isSync_bitCode hne).isCode x.1 x.2).symm⟩
+  mpcpFunctor.reduces (bitCode b0 b1) (isSync_bitCode hne).isCode
 
 /-- **MPCP is `Undecidable` over any alphabet `α` with two distinct letters `b0`, `b1`.** -/
 def undecidableMPCPOf (b0 b1 : α) (hne : b0 ≠ b1) :
     Undecidable fun x : Tile α × Stack α => DecisionProblem x.1 x.2 :=
-  undecidabilityFromReducibility undecidableMPCP (mpcpAlphabetLift b0 b1 hne)
+  mpcpFunctor.undecidableOf undecidableMPCP b0 b1 (isSync_bitCode hne).isCode
 
 /-- **MPCP over `Bool` is `Undecidable`.** -/
 def undecidableMPCPBool : Undecidable MPCProblem :=

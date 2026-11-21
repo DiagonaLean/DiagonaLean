@@ -5,7 +5,6 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.SemiThue.Basic
 import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
-import DiagonaLean.Foundations.Codes.Rewriting
 
 @[expose] public section
 
@@ -18,10 +17,8 @@ reduction from `HaltProblem` (`haltReducesSemiThue`), so the word problem is `Un
 (`undecidableSemiThue`).
 The machine-level statements are in `MachineLevel.lean`.
 
-The systems produced have non-empty left sides (`haltToSemiThue_lhs_ne`), so the synchronizing code
-`Foundations.Codes.bitCode` moves them to any alphabet with two distinct letters
-(`Foundations.Codes.derives_encode_iff`): the word problem is `Undecidable` over every such alphabet
-(`undecidableSemiThueOf`), for instance over `Bool` (`undecidableSemiThueBool`).
+The systems produced have non-empty left sides (`haltToSemiThue_lhs_ne`); the lifting to every
+alphabet with two distinct letters is in `AlphabetLift.lean`.
 -/
 
 namespace DiagonaLean.SemiThue.Reduction
@@ -69,29 +66,5 @@ theorem haltToSemiThue_lhs_ne (p : EncodableTM Bool × List Bool) :
   intro lr hlr
   obtain ⟨lr₀, hlr₀, rfl⟩ := List.mem_map.1 hlr
   simpa using tmRules_lhs_ne lr₀ hlr₀
-
-variable {α : Type}
-
-/-- **The reduction to two letters.** `haltToSemiThue`, with every word encoded by `bitCode`. -/
-def haltToSemiThueOf (b0 b1 : α) (p : EncodableTM Bool × List Bool) :
-    SRS α × List α × List α :=
-  (Foundations.Codes.SRS.encode (Foundations.Codes.bitCode b0 b1) (haltToSemiThue p).1,
-    Foundations.Codes.encode (Foundations.Codes.bitCode b0 b1) (haltToSemiThue p).2.1,
-    Foundations.Codes.encode (Foundations.Codes.bitCode b0 b1) (haltToSemiThue p).2.2)
-
-theorem halt_reducesto_semiThueOf_spec {b0 b1 : α} (hne : b0 ≠ b1) :
-    HaltProblem ⪯ₘ[haltToSemiThueOf b0 b1] @DecisionProblem α := fun p =>
-  (halt_reducesto_semiThue_spec p).trans
-    (Foundations.Codes.derives_encode_iff (Foundations.Codes.isSync_bitCode hne)
-      (haltToSemiThue_lhs_ne p)).symm
-
-/-- **The word problem for string rewriting systems is `Undecidable` over any alphabet `α` with two
-distinct letters `b0`, `b1`.** -/
-def undecidableSemiThueOf (b0 b1 : α) (hne : b0 ≠ b1) : Undecidable (@DecisionProblem α) :=
-  ⟨haltToSemiThueOf b0 b1, halt_reducesto_semiThueOf_spec hne⟩
-
-/-- **The word problem for string rewriting systems over `Bool` is `Undecidable`.** -/
-def undecidableSemiThueBool : Undecidable (@DecisionProblem Bool) :=
-  undecidableSemiThueOf false true Bool.false_ne_true
 
 end DiagonaLean.SemiThue.Reduction

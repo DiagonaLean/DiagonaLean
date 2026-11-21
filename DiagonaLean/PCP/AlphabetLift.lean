@@ -48,6 +48,22 @@ theorem Tile.toPair_encode (c : α → List β) (t : Tile α) :
 /-- Encoding every tile of an instance. -/
 def Stack.encode (c : α → List β) (P : Stack α) : Stack β := P.map (Tile.encode c)
 
+@[simp] theorem Tile.encode_unit (t : Tile α) : t.encode unit = t := by
+  cases t; simp [Tile.encode]
+
+theorem Tile.encode_kcomp {γ : Type} (c₁ : α → List β) (c₂ : β → List γ) (t : Tile α) :
+    (t.encode c₁).encode c₂ = t.encode (kcomp c₂ c₁) := by
+  simp only [Tile.encode, Foundations.Codes.encode_kcomp]
+
+@[simp] theorem Stack.encode_unit (P : Stack α) : P.encode unit = P := by
+  have : Tile.encode (unit (α := α)) = id := funext Tile.encode_unit
+  simp [Stack.encode, this]
+
+theorem Stack.encode_kcomp {γ : Type} (c₁ : α → List β) (c₂ : β → List γ) (P : Stack α) :
+    (P.encode c₁).encode c₂ = P.encode (kcomp c₂ c₁) := by
+  simp only [Stack.encode, List.map_map]
+  exact List.map_congr_left fun t _ => Tile.encode_kcomp c₁ c₂ t
+
 theorem τ1_eq_tops (A : Stack α) : τ1 A = tops (A.map Tile.toPair) := by
   simp [τ1, tops, Function.comp_def, Tile.toPair]
 

@@ -5,6 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.Foundations.Codes.Basic
 import Mathlib.Computability.ContextFreeGrammar
+import DiagonaLean.Foundations.Grammar.Code
 
 @[expose] public section
 
@@ -17,6 +18,10 @@ nonterminal occurs in an encoded sentential form only as the image of a nontermi
 no assumption on `c`; the language of `G.encode c hc` is the image of the language of `G`
 (`mem_language_encode_iff`). When `c` is a code, words of the two languages correspond one to one,
 so non-emptiness of an intersection is preserved and reflected (`intersection_encode_iff`).
+
+Grammar codes (`Foundations.Grammar.GrammarPres`) keep their rules in a list, so encoding them
+(`presEncode`) needs no proof, and the grammar of the encoded code is the encoded grammar
+(`toCFG_presEncode`): on codes, encoding terminals is a total function, as a reduction needs.
 
 The code is needed already to build `G.encode c hc`: Mathlib keeps the rules in a `Finset`, and
 mapping them without decidable equality takes an embedding, so `symCode c` must be a code
@@ -83,7 +88,8 @@ theorem split_nonterminal {c : T → List β} {u : List (Symbol T N)} {p q : Lis
 /-- Every sentential form is a word of terminals, possibly followed by a nonterminal and more. -/
 theorem terminals_or_split (u : List (Symbol T N)) :
     (∃ x : List T, u = x.map .terminal) ∨
-      ∃ (x : List T) (n : N) (u' : List (Symbol T N)), u = x.map .terminal ++ .nonterminal n :: u' := by
+      ∃ (x : List T) (n : N) (u' : List (Symbol T N)),
+        u = x.map .terminal ++ .nonterminal n :: u' := by
   induction u with
   | nil => exact .inl ⟨[], rfl⟩
   | cons a u ih =>
@@ -186,5 +192,69 @@ theorem intersection_encode_iff (G₁ G₂ : ContextFreeGrammar T) :
     exact ⟨v₁, h₁, hc he ▸ h₂⟩
   · rintro ⟨v, h₁, h₂⟩
     exact ⟨_, ⟨v, h₁, rfl⟩, ⟨v, h₂, rfl⟩⟩
+
+/-! ### Grammar codes -/
+
+open DiagonaLean.Foundations.Grammar
+
+/-- The code of the symbols of a grammar code: terminals are encoded by `c`, nonterminals stay. -/
+def sumCode (c : T → List β) : T ⊕ N → List (β ⊕ N) :=
+  Sum.elim (fun t => (c t).map Sum.inl) fun n => [Sum.inr n]
+
+/-- Encoding the terminals of a grammar code. -/
+def presEncode (c : T → List β) (p : GrammarPres N T) : GrammarPres N β :=
+  (p.1, p.2.map fun r => (r.1, encode (sumCode c) r.2))
+
+theorem map_symOf_encode (c : T → List β) (w : List (T ⊕ N)) :
+    (encode (sumCode c) w).map symOf = encode (symCode c) (w.map symOf) := by
+  induction w with
+  | nil => rfl
+  | cons s w ih =>
+    simp only [encode_cons, List.map_cons, List.map_append, ih]
+    rcases s with t | n <;> simp [sumCode, symCode, symOf, Function.comp_def]
+
+theorem encode_sumCode_unit (w : List (T ⊕ N)) : encode (sumCode (unit (α := T))) w = w := by
+  induction w with
+  | nil => rfl
+  | cons s w ih => rcases s with t | n <;> simp_all [sumCode, unit]
+
+theorem encode_sumCode_map_inl (c : T → List β) (l : List T) :
+    encode (sumCode (N := N) c) (l.map Sum.inl) = (encode c l).map Sum.inl := by
+  induction l <;> simp_all [sumCode]
+
+theorem encode_sumCode_kcomp {γ : Type} (c₁ : T → List β) (c₂ : β → List γ) (w : List (T ⊕ N)) :
+    encode (sumCode c₂) (encode (sumCode c₁) w) = encode (sumCode (kcomp c₂ c₁)) w := by
+  induction w with
+  | nil => rfl
+  | cons s w ih =>
+    rw [encode_cons, encode_append, ih, encode_cons]
+    congr 1
+    rcases s with t | n
+    · exact encode_sumCode_map_inl c₂ (c₁ t)
+    · rfl
+
+@[simp] theorem presEncode_unit (p : GrammarPres N T) : presEncode unit p = p := by
+  simp [presEncode, encode_sumCode_unit]
+
+theorem presEncode_kcomp {γ : Type} (c₁ : T → List β) (c₂ : β → List γ) (p : GrammarPres N T) :
+    presEncode c₂ (presEncode c₁ p) = presEncode (kcomp c₂ c₁) p := by
+  simp only [presEncode, List.map_map, Function.comp_def, encode_sumCode_kcomp]
+
+/-- **The grammar of the encoded code is the encoded grammar.** -/
+theorem toCFG_presEncode [DecidableEq T] [DecidableEq β] [DecidableEq N] (hc : IsCode c)
+    (p : GrammarPres N T) : (presEncode c p).toCFG = grammarEncode c hc p.toCFG := by
+  show ContextFreeGrammar.mk N p.1 _ = ContextFreeGrammar.mk N p.1 _
+  congr 1
+  ext r
+  simp only [presEncode, List.map_map, List.mem_toFinset, List.mem_map, Function.comp_def,
+    Finset.mem_map, Function.Embedding.coeFn_mk]
+  have e (x : N × List (T ⊕ N)) :
+      ruleOf (x.1, encode (sumCode c) x.2) = ruleEncode c (ruleOf x) := by
+    simp [ruleOf, ruleEncode, map_symOf_encode]
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    exact ⟨_, ⟨x, hx, rfl⟩, (e x).symm⟩
+  · rintro ⟨_, ⟨x, hx, rfl⟩, rfl⟩
+    exact ⟨x, hx, e x⟩
 
 end DiagonaLean.Foundations.Codes

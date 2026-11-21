@@ -29,6 +29,13 @@ variable {T : Type}
 /-- The word problem: does `u` rewrite to `v` in the system `R`? -/
 def DecisionProblem (x : SRS T × List T × List T) : Prop := x.1.Derives x.2.1 x.2.2
 
+/-- The word problem for systems whose rules all have non-empty left sides: is every left side of
+`R` non-empty, and does `u` rewrite to `v`? Synchronizing codes preserve and reflect it
+(`AlphabetLift.lean`); they do not preserve and reflect `DecisionProblem`, since an empty left
+side matches inside a block. -/
+def DecisionProblemPos (x : SRS T × List T × List T) : Prop :=
+  (∀ lr ∈ x.1, lr.1 ≠ []) ∧ x.1.Derives x.2.1 x.2.2
+
 /-- Does `u` rewrite to the empty string in the system `R`? -/
 def ToEmptyProblem (x : SRS T × List T) : Prop := x.1.Derives x.2 []
 

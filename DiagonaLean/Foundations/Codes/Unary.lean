@@ -34,7 +34,8 @@ def unary (n : ℕ) : List Bool := true :: (replicate (n + 1) false ++ [true])
 `1`s coincide, or `p` extends past the first one. -/
 theorem replicate_false_append_true {m : ℕ} {x p y : List Bool}
     (h : replicate m false ++ true :: x = p ++ true :: y) :
-    (p = replicate m false ∧ x = y) ∨ ∃ r, p = replicate m false ++ true :: r ∧ x = r ++ true :: y := by
+    (p = replicate m false ∧ x = y) ∨
+      ∃ r, p = replicate m false ++ true :: r ∧ x = r ++ true :: y := by
   induction m generalizing p with
   | zero =>
     rcases p with _ | ⟨b, p⟩
@@ -83,7 +84,8 @@ theorem encode_unary_eq_append {w l : List ℕ} {q : List Bool}
 
 /-- The pair `1 0` occurs in an encoded word only at the beginning of a block. -/
 theorem split_of_eq_append_tf {w : List ℕ} {p s : List Bool}
-    (h : encode unary w = p ++ true :: false :: s) : ∃ w₁ w₂, w = w₁ ++ w₂ ∧ p = encode unary w₁ := by
+    (h : encode unary w = p ++ true :: false :: s) :
+    ∃ w₁ w₂, w = w₁ ++ w₂ ∧ p = encode unary w₁ := by
   induction w generalizing p with
   | nil => simp at h
   | cons a w ih =>

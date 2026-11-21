@@ -299,4 +299,28 @@ theorem not_machineDecidable_mpcp
     (henc : Computable enc) : ¬ MachineDecidable enc fun x => MPCP.DecisionProblem x.1 x.2 :=
   not_machineDecidable_of_not_computablePred henc not_computablePred_mpcp
 
+open Foundations.Codes in
+/-- **MPCP is not a computable predicate over any nontrivial alphabet**: the lifting of
+`not_computablePred_mpcp` along `bitCode` (`Foundations.Codes.CodeFunctor.not_computablePred_lift`).
+-/
+theorem not_computablePred_mpcpOf {α : Type} [Primcodable α] [Nontrivial α] :
+    ¬ ComputablePred fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2 :=
+  mpcpFunctor.not_computablePred_lift (α := Alpha ℕ Foundations.Normalize.Sym2)
+    (fun hne => (isSync_bitCode hne).isCode)
+    (fun b0 b1 => by
+      have := bitCode_primrec (α := Alpha ℕ Foundations.Normalize.Sym2) b0 b1
+      refine Primrec.to_comp ?_
+      show Primrec fun x : Tile _ × Stack _ =>
+        (x.1.encode (bitCode b0 b1), x.2.encode (bitCode b0 b1))
+      fun_prop)
+    not_computablePred_mpcp
+
+open DiagonaLean.Synthetic.Definitions in
+/-- **No Turing machine decides MPCP over any nontrivial alphabet**, under any computable
+encoding. -/
+theorem not_machineDecidable_mpcpOf {α : Type} [Primcodable α] [Nontrivial α]
+    {enc : Tile α × Stack α → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc fun x => MPCP.DecisionProblem x.1 x.2 :=
+  not_machineDecidable_of_not_computablePred henc not_computablePred_mpcpOf
+
 end DiagonaLean.MPCP.MachineLevel

@@ -30,6 +30,7 @@ import DiagonaLean.SemiThue.Basic
 import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
 import DiagonaLean.SemiThue.MachineLevel
 import DiagonaLean.SemiThue.Undecidable
+import DiagonaLean.SemiThue.AlphabetLift
 import DiagonaLean.GrammarMem.Basic
 import DiagonaLean.GrammarMem.MachineLevel
 import DiagonaLean.GrammarMem.Undecidable
@@ -110,6 +111,7 @@ import DiagonaLean.Foundations.Codes.Unary
 import DiagonaLean.Foundations.Codes.Correspondence
 import DiagonaLean.Foundations.Codes.Rewriting
 import DiagonaLean.Foundations.Codes.Grammar
+import DiagonaLean.Foundations.Codes.Functor
 import DiagonaLean.Foundations.Computability.StackProof
 import DiagonaLean.Foundations.Computability.PrimrecRec
 import DiagonaLean.Foundations.Computability.PolyTree
