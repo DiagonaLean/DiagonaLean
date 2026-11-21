@@ -35,6 +35,12 @@ The lifting is proved once for every such problem:
   computable. Instances are built from words by products and lists, so `map c` applies `encode c`
   to each word, and `encode_primrec` (proved once) with `fun_prop` gives its computability.
 
+Over two countable alphabets with two letters each, there are good codes both ways, so the
+problem is many-one equivalent over the two (`CodeFunctor.manyOneEquiv`): its many-one degree does
+not depend on the alphabet. Every property closed under computable many-one reductions transports
+in both directions, for instance being a computable predicate (`computablePred_iff_of_equiv`) or
+recursively enumerable (`rePred_iff_of_equiv`).
+
 `Inst` is a functor on all codes, good or not (`map_unit`, `map_kcomp`): encoding by the
 one-letter code `unit` changes nothing, and encoding by `c₁` then `c₂` is encoding by their
 composite `kcomp c₂ c₁`. The lifting theorems do not use the laws; they record that `map` is the
@@ -114,5 +120,46 @@ theorem CodeFunctor.not_computablePred_lift [Encodable α] [Nontrivial β]
     (h : ¬ ComputablePred (@F.Prob α)) : ¬ ComputablePred (@F.Prob β) := by
   obtain ⟨b0, b1, hne⟩ := exists_pair_ne β
   exact F.not_computablePred_of (hc hne) (hmap b0 b1) h
+
+/-! ### Alphabet invariance -/
+
+/-- A good code with a computable action is a computable many-one reduction. -/
+theorem CodeFunctor.manyOneReducible [Primcodable (F.Inst α)] [Primcodable (F.Inst β)]
+    {c : α → List β} (hc : Good c) (hmap : Computable (F.map c)) :
+    ManyOneReducible (@F.Prob α) (@F.Prob β) :=
+  ⟨F.map c, hmap, fun x => (F.natural hc x).symm⟩
+
+/-- **Alphabet invariance.** Over two countable alphabets with two distinct letters each, the
+problem is many-one equivalent, by `bitCode` both ways. -/
+theorem CodeFunctor.manyOneEquiv [Encodable α] [Encodable β] [Nontrivial α] [Nontrivial β]
+    [Primcodable (F.Inst α)] [Primcodable (F.Inst β)]
+    (hcα : ∀ {b0 b1 : β}, b0 ≠ b1 → Good (bitCode (α := α) b0 b1))
+    (hcβ : ∀ {b0 b1 : α}, b0 ≠ b1 → Good (bitCode (α := β) b0 b1))
+    (hmapα : ∀ b0 b1 : β, Computable (F.map (bitCode (α := α) b0 b1)))
+    (hmapβ : ∀ b0 b1 : α, Computable (F.map (bitCode (α := β) b0 b1))) :
+    ManyOneEquiv (@F.Prob α) (@F.Prob β) := by
+  obtain ⟨a0, a1, ha⟩ := exists_pair_ne α
+  obtain ⟨b0, b1, hb⟩ := exists_pair_ne β
+  exact ⟨F.manyOneReducible (hcα hb) (hmapα b0 b1), F.manyOneReducible (hcβ ha) (hmapβ a0 a1)⟩
+
+section Transport
+
+variable {X Y : Type} [Primcodable X] [Primcodable Y] {p : X → Prop} {q : Y → Prop}
+
+/-- Recursive enumerability transfers back along a computable many-one reduction. -/
+theorem REPred.of_manyOneReducible (h : ManyOneReducible p q) (hq : REPred q) : REPred p := by
+  obtain ⟨f, hf, hpq⟩ := h
+  exact REPred.of_eq (hq.comp hf) fun x => (hpq x).symm
+
+/-- Many-one equivalent predicates are computable together. -/
+theorem computablePred_iff_of_equiv (h : ManyOneEquiv p q) : ComputablePred p ↔ ComputablePred q :=
+  ⟨fun hp => ComputablePred.computable_of_manyOneReducible h.2 hp,
+    fun hq => ComputablePred.computable_of_manyOneReducible h.1 hq⟩
+
+/-- Many-one equivalent predicates are recursively enumerable together. -/
+theorem rePred_iff_of_equiv (h : ManyOneEquiv p q) : REPred p ↔ REPred q :=
+  ⟨fun hp => REPred.of_manyOneReducible h.2 hp, fun hq => REPred.of_manyOneReducible h.1 hq⟩
+
+end Transport
 
 end DiagonaLean.Foundations.Codes

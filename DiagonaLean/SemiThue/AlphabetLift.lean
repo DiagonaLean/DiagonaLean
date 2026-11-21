@@ -29,6 +29,8 @@ fixed instance without solution.
 * `undecidableSemiThuePosOf`, `undecidableSemiThueOf`, `undecidableSemiThueBool`.
 * `not_computablePred_semiThuePosOf`, `not_computablePred_semiThueOf`,
   `not_machineDecidable_semiThueOf`: over every nontrivial `Primcodable` alphabet.
+* `semiThuePos_manyOneEquiv`: the restricted problem is many-one equivalent over any two such
+  alphabets.
 -/
 
 namespace DiagonaLean.SemiThue
@@ -111,18 +113,20 @@ theorem not_computablePred_semiThuePos :
     (by have := toEmptyCode_prim; exact Primrec.to_comp (by fun_prop))
     fun M => (selfHalt_iff_toEmpty M).trans (and_iff_right (codeRules_lhs_ne _)).symm
 
+/-- A primitive recursive code acts primitive recursively on rewriting instances. -/
+theorem semiThueFunctor_map_primrec {γ δ : Type} [Primcodable γ] [Primcodable δ]
+    {c : γ → List δ} (hc : Primrec c) : Primrec (semiThueFunctor.map c) := by
+  show Primrec fun x : SRS γ × List γ × List γ =>
+    (SRS.encode c x.1, encode c x.2.1, encode c x.2.2)
+  unfold SRS.encode
+  fun_prop
+
 /-- **The restricted word problem is not a computable predicate over any nontrivial alphabet.** -/
 theorem not_computablePred_semiThuePosOf [Primcodable α] [Nontrivial α] :
     ¬ ComputablePred (@DecisionProblemPos α) :=
   semiThueFunctor.not_computablePred_lift (α := Alpha ℕ Foundations.Normalize.Sym2)
     (fun hne => isSync_bitCode hne)
-    (fun b0 b1 => by
-      have := bitCode_primrec (α := Alpha ℕ Foundations.Normalize.Sym2) b0 b1
-      refine Primrec.to_comp ?_
-      show Primrec fun x : SRS _ × List _ × List _ =>
-        (SRS.encode (bitCode b0 b1) x.1, encode (bitCode b0 b1) x.2.1, encode (bitCode b0 b1) x.2.2)
-      unfold SRS.encode
-      fun_prop)
+    (fun b0 b1 => (semiThueFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
     not_computablePred_semiThuePos
 
 /-- **The word problem for string rewriting systems is not a computable predicate over any
@@ -142,6 +146,14 @@ theorem not_machineDecidable_semiThueOf [Primcodable α] [Nontrivial α]
     {enc : SRS α × List α × List α → List Bool} (henc : Computable enc) :
     ¬ MachineDecidable enc (@DecisionProblem α) :=
   not_machineDecidable_of_not_computablePred henc not_computablePred_semiThueOf
+
+/-- **Alphabet invariance of the restricted word problem**: over any two nontrivial `Primcodable`
+alphabets, it is many-one equivalent. -/
+theorem semiThuePos_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
+    [Nontrivial β] : ManyOneEquiv (@DecisionProblemPos α) (@DecisionProblemPos β) :=
+  semiThueFunctor.manyOneEquiv (fun hne => isSync_bitCode hne) (fun hne => isSync_bitCode hne)
+    (fun b0 b1 => (semiThueFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
+    (fun b0 b1 => (semiThueFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
 
 end MachineLevel
 
