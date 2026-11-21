@@ -23,6 +23,7 @@ import DiagonaLean.MPCP.Normalize.Sim
 import DiagonaLean.MPCP.Normalize.Steps
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.MPCP.Undecidable
+import DiagonaLean.MPCP.MachineLevel
 
 import DiagonaLean.PCP.Basic
 import DiagonaLean.PCP.AlphabetLift

@@ -6,6 +6,7 @@ Authors: Prathamesh TVH, Claude Opus
 import DiagonaLean.Foundations.Computability.OutputSearch
 import DiagonaLean.Foundations.Computability.Computer
 import Mathlib.Computability.RE
+import Mathlib.Computability.Reduce
 
 @[expose] public section
 
@@ -32,6 +33,8 @@ So every `¬ ComputablePred` result of Mathlib, such as `ComputablePred.rice` or
 * `computablePred_of_machineDecidable`, `machineDecidable_of_computablePred`.
 * `machineDecidable_iff`: the equivalence.
 * `not_machineDecidable_of_not_computablePred`: the form used for undecidability.
+* `not_computablePred_of_reduces`: `¬ ComputablePred` transfers along a reduction with a computable
+  function.
 * `encUnary`, `machineDecidable_unary_iff`: an encoding of any `Primcodable` type that satisfies
   the hypotheses.
 -/
@@ -139,6 +142,13 @@ theorem not_machineDecidable_of_not_computablePred {X : Type*} [Primcodable X]
     {enc : X → List Bool} (henc : Computable enc) {P : X → Prop} (h : ¬ ComputablePred P) :
     ¬ MachineDecidable enc P :=
   fun hm => h (computablePred_of_machineDecidable henc hm)
+
+/-- **Undecidability transfers along a computable reduction.** If `p` is not a computable
+predicate and `r : p ⪯ₘ q` has a computable function, then `q` is not one either. -/
+theorem not_computablePred_of_reduces {X Y : Type*} [Primcodable X] [Primcodable Y]
+    {p : X → Prop} {q : Y → Prop} (r : p ⪯ₘ q) (hr : Computable r.f) (hp : ¬ ComputablePred p) :
+    ¬ ComputablePred q :=
+  fun hq => hp (ComputablePred.computable_of_manyOneReducible ⟨r.f, hr, r.hf⟩ hq)
 
 /-! ### A canonical encoding -/
 
