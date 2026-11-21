@@ -327,13 +327,14 @@ theorem not_machineDecidable_mpcpOf {α : Type} [Primcodable α] [Nontrivial α]
 
 open Foundations.Codes in
 /-- **Alphabet invariance of MPCP**: over any two nontrivial `Primcodable` alphabets, MPCP is
-many-one equivalent, so every property closed under computable many-one reductions holds over all
-of them or none (`Foundations.Codes.computablePred_iff_of_equiv`, `rePred_iff_of_equiv`). -/
-theorem mpcp_manyOneEquiv {α β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
+recursively enumerable over both or neither. The computable reductions both ways are
+`mpcpFunctor.reduces (bitCode b0 b1)`; any other property closed under them transports the same
+way (`Foundations.Codes.CodeFunctor.rePred_iff`). -/
+theorem mpcp_rePred_iff {α β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
     [Nontrivial β] :
-    ManyOneEquiv (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2)
-      fun x : Tile β × Stack β => MPCP.DecisionProblem x.1 x.2 :=
-  mpcpFunctor.manyOneEquiv (fun hne => (isSync_bitCode hne).isCode)
+    REPred (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2) ↔
+      REPred fun x : Tile β × Stack β => MPCP.DecisionProblem x.1 x.2 :=
+  mpcpFunctor.rePred_iff (fun hne => (isSync_bitCode hne).isCode)
     (fun hne => (isSync_bitCode hne).isCode)
     (fun b0 b1 => (mpcpFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
     (fun b0 b1 => (mpcpFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
