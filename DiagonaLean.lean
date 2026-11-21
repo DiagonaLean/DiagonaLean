@@ -24,6 +24,13 @@ import DiagonaLean.MPCP.Normalize.Steps
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.MPCP.Undecidable
 import DiagonaLean.MPCP.MachineLevel
+import DiagonaLean.SemiThue.Basic
+import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
+import DiagonaLean.SemiThue.MachineLevel
+import DiagonaLean.SemiThue.Undecidable
+import DiagonaLean.GrammarMem.Basic
+import DiagonaLean.GrammarMem.MachineLevel
+import DiagonaLean.GrammarMem.Undecidable
 
 import DiagonaLean.PCP.Basic
 import DiagonaLean.PCP.AlphabetLift
