@@ -120,3 +120,39 @@ T.lean:3: `run_cmd` runs code at elaboration time -/
 /-- info: DiagonaLean/Synthetic/EvalExample.lean:1: `run_cmd` runs code at elaboration time -/
 #guard_msgs in
 #eval report "run_cmd pure ()" (rel := "DiagonaLean/Synthetic/EvalExample.lean")
+
+/-! ### Commands are allowed per declaration -/
+
+-- The named command of an allowlisted file and its helper are allowed.
+/-- info: clean -/
+#guard_msgs in
+#eval report "def readArgs : CommandElabM Unit := pure ()\n\
+  elab (name := derivePrimrec) \"derive_primrec\" : command => pure ()"
+  (rel := "DiagonaLean/Foundations/Computability/PrimDef.lean")
+
+-- A second command in the same file is reported, named or not.
+/-- info:
+DiagonaLean/Foundations/Computability/PrimDef.lean:2: `: command` defines a command, which can change the environment
+DiagonaLean/Foundations/Computability/PrimDef.lean:3: `: command` defines a command, which can change the environment -/
+#guard_msgs in
+#eval report "elab (name := derivePrimrec) \"derive_primrec\" : command => pure ()\n\
+  elab (name := evil) \"evil\" s:str : command => pure ()\nelab \"evil2\" : command => pure ()"
+  (rel := "DiagonaLean/Foundations/Computability/PrimDef.lean")
+
+-- Reusing an allowed name, here in another namespace, is reported.
+/-- info: DiagonaLean/Foundations/Computability/PrimDef.lean:3: `: command` defines a command, which can change the environment -/
+#guard_msgs in
+#eval report "elab (name := derivePrimrec) \"a\" : command => pure ()\nnamespace X\n\
+  elab (name := derivePrimrec) \"b\" : command => pure ()\nend X"
+  (rel := "DiagonaLean/Foundations/Computability/PrimDef.lean")
+
+-- An allowed declaration may define a command, but the other rules still apply inside it.
+/-- info: DiagonaLean/Foundations/Computability/PrimDef.lean:1: `modifyEnv` changes the environment from a metaprogram -/
+#guard_msgs in
+#eval report "elab (name := derivePrimrec) \"a\" : command => modifyEnv id"
+  (rel := "DiagonaLean/Foundations/Computability/PrimDef.lean")
+
+-- A declaration allowed in one file is not allowed in another.
+/-- info: T.lean:1: `: command` defines a command, which can change the environment -/
+#guard_msgs in
+#eval report "elab (name := derivePrimrec) \"a\" : command => pure ()"
