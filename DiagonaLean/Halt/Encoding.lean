@@ -126,7 +126,7 @@ private theorem foldl_eq (w : List Bool) (k : ℕ) :
   induction w generalizing k with
   | nil => simp
   | cons hd tl ih =>
-    simp [List.foldl]
+    simp only [List.foldl, List.length_cons, zero_mul, zero_add]
     have ih' := ih (if hd then 1 else 0)
     specialize ih (k * 2 + if hd then 1 else 0)
     rw [ih, ih']

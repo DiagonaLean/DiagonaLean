@@ -177,7 +177,7 @@ theorem log2_le_log2_of_lt_pos (m n : ℕ) (h : m < n) (h_neq_zero : m ≠ 0) : 
      (2 ^ (m.log2)) ≤ m := by simp [ha]
      _ < n := h
      _ < (2 ^ (n.log2 + 1)) := by simp [hb]
-  simp at hcon
+  simp only [not_le] at hcon
   apply pow_two_lt n.log2 m.log2
   apply (Nat.pow_lt_pow_iff_right (by simp)).mpr hcon
   exact hc
@@ -299,30 +299,20 @@ open DiagonaLean.PCP
 /-- All symbols in the top projection of a valid sub-stack appear in the original stack. -/
 theorem mem_τ1_symbolsUsed (P A : DiagonaLean.PCP.Stack γ₁) (hA : ∀ t ∈ A, t ∈ P) :
     ∀ a ∈ DiagonaLean.PCP.τ1 A, a ∈ symbolsUsed P := by
-  induction A with
-  | nil => simp
-  | cons t A ih =>
-    intro a ha
-    rcases List.mem_append.mp ha with h | h
-    · simp_all
-      simp [symbolsUsed]
-      use t
-      simp [hA, h]
-    · exact ih (fun t' ht' => hA t' (List.mem_cons_of_mem _ ht')) a h
+  intro a ha
+  obtain ⟨l, hl, hal⟩ := List.mem_flatten.1 (by simpa only [DiagonaLean.PCP.τ1] using ha)
+  obtain ⟨t, ht, rfl⟩ := List.mem_map.1 hl
+  exact List.mem_dedup.2
+    (List.mem_flatMap.2 ⟨t, hA t ht, List.mem_append_left _ hal⟩)
 
 /-- All symbols in the bottom projection of a valid sub-stack appear in the original stack. -/
 theorem mem_τ2_symbolsUsed (P A : Stack γ₁) (hA : ∀ t ∈ A, t ∈ P) :
     ∀ a ∈ τ2 A, a ∈ symbolsUsed P := by
-  induction A with
-  | nil => simp
-  | cons t A ih =>
-    intro a ha
-    rcases List.mem_append.mp ha with h | h
-    · simp_all
-      simp [symbolsUsed]
-      use t
-      simp [hA, h]
-    · exact ih (fun t' ht' => hA t' (List.mem_cons_of_mem _ ht')) a h
+  intro a ha
+  obtain ⟨l, hl, hal⟩ := List.mem_flatten.1 (by simpa only [DiagonaLean.PCP.τ2] using ha)
+  obtain ⟨t, ht, rfl⟩ := List.mem_map.1 hl
+  exact List.mem_dedup.2
+    (List.mem_flatMap.2 ⟨t, hA t ht, List.mem_append_right _ hal⟩)
 
 /-- A PCP instance is solvable if and only if its lifted instance is solvable. -/
 theorem decisionProblem_lifts (P : DiagonaLean.PCP.Stack γ₁) (hne : b0 ≠ b1) :
@@ -349,7 +339,7 @@ theorem decisionProblem_lifts (P : DiagonaLean.PCP.Stack γ₁) (hne : b0 ≠ b1
   -- `f : ∀ t, t ∈ B → Tile γ₁`, `hfP : ∀ t ht, f t ht ∈ P`,
   -- `hfeq : ∀ t ht, t = liftTile b0 b1 P (f t ht)`
       have hBA : B = (B.attach.map (fun x => f x.1 x.2)).map (liftTile b0 b1 P) := by
-        simp [List.map_map]
+        simp only [List.map_map]
         have hval : List.map (fun x : {t // t ∈ B} => (↑x : Tile γ₂)) B.attach = B := by
           simp
         conv_lhs => rw [← hval]
@@ -362,7 +352,8 @@ theorem decisionProblem_lifts (P : DiagonaLean.PCP.Stack γ₁) (hne : b0 ≠ b1
           exact hfP x.1 x.2
       unfold DecisionProblem
       use A
-      simp [A]
+      simp only [ne_eq, List.map_eq_nil_iff, List.attach_eq_nil_iff, List.mem_map, List.mem_attach,
+          true_and, Subtype.exists, forall_exists_index, A]
       constructor
       · exact hBne
       · have hτ1 : τ1 B = liftWord b0 b1 P (τ1 A) := by

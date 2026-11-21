@@ -172,7 +172,8 @@ omit [DecidableEq α] in
 /-- `encodeA` is injective. -/
 theorem encodeA_injective : Function.Injective (encodeA (P := P)) := by
   intro is js h
-  have := congr_arg ( idxOf ( P := P ) ) h; simp +decide [ idxOf_encodeA ] at this; aesop
+  have := congrArg (idxOf (P := P)) h
+  rwa [idxOf_encodeA, idxOf_encodeA] at this
 
 omit [DecidableEq α] in
 /-- If a top-encoding equals a bot-encoding, the index lists coincide and
@@ -180,8 +181,11 @@ the chosen sub-stack is a PCP solution. -/
 theorem encodeA_eq_encodeB_cross {is js : List (Fin P.length)}
     (h : encodeA is = encodeB js) :
     is = js ∧ τ1 (is.map (P[·])) = τ2 (is.map (P[·])) := by
-  convert idxOf_encodeA is;
-  grind +suggestions
+  have hij : is = js := by
+    have := congrArg (idxOf (P := P)) h
+    rwa [idxOf_encodeA, idxOf_encodeB] at this
+  subst hij
+  exact ⟨rfl, encodeA_eq_encodeB_iff.1 h⟩
 
 /-- `baseProd PCPNonterm.A i P[i].top` belongs to `(Stack.toGrammar P).rules`. -/
 private theorem baseA_mem (i : Fin P.length) :
@@ -265,7 +269,9 @@ def liftForestRec (v : PCPNonterm) (i : Fin P.length) (w : List α)
 /-- The yield of `liftForestBase i w` is `w.map Sum.inl ++ [Sum.inr i]`. -/
 theorem liftForestBase_yield (i : Fin P.length) (w : List α) :
     (liftForestBase (P := P) i w).yield = w.map Sum.inl ++ [Sum.inr i] := by
-  induction w <;> simp_all +decide [ liftForestBase, Forest.yield ]
+  induction w <;> simp_all +decide only [liftForestBase, Forest.yield, List.map_nil,
+                      List.nil_append, List.append_eq, List.map_cons, List.cons_append,
+                      List.cons.injEq, true_and]
   expose_names
   exact List.reverse_inj.mp (congrArg List.reverse tail_ih)
 
@@ -273,7 +279,8 @@ theorem liftForestBase_yield (i : Fin P.length) (w : List α) :
 theorem liftForestRec_yield (v : PCPNonterm) (i : Fin P.length) (w : List α)
     (child : ParseTree (Stack.toGrammar P) v) :
     (liftForestRec v i w child).yield = w.map Sum.inl ++ (child.yield ++ [Sum.inr i]) := by
-  induction w <;> simp_all +decide [ liftForestRec, Forest.yield ]
+  induction w <;> simp_all +decide only [liftForestRec, Forest.yield, List.map_nil, List.nil_append,
+                      List.append_eq, List.map_cons, List.cons_append, List.cons.injEq, true_and]
   expose_names
   exact List.reverse_inj.mp (congrArg List.reverse tail_ih)
 
@@ -295,28 +302,27 @@ def buildB : (is : List (Fin P.length)) → is ≠ [] → ParseTree (Stack.toGra
       @.node _ (Stack.toGrammar P) (recProd PCPNonterm.B i P[i].bot) (recB_mem i)
         (liftForestRec PCPNonterm.B i P[i].bot (buildB (j :: rest) (by simp)))
 
-/-- The yield of `buildA is h` is `encodeA is`. -/
+/-- The yield of `buildA is h` is `encodeA is`, by recursion on `is` as in `buildA`. -/
 theorem buildA_yield : ∀ (is : List (Fin P.length)) (h : is ≠ []),
-    (buildA is h).yield = encodeA is := by
-  intro is h
-  induction' n : is.length using Nat.strong_induction_on with n ih generalizing is
-  rcases is with ( _ | ⟨ i, _ | ⟨ j, is ⟩ ⟩ ) <;> simp_all +decide [ encodeA_cons ] ;
-  · contradiction;
-  · convert liftForestBase_yield i P[i].top using 1; exact List.toList_toArray;
-  · convert liftForestRec_yield PCPNonterm.A i P[i].top (
-      buildA ( j :: is ) ( by simp ) ) using 1; exact List.toList_toArray; grind +suggestions
+    (buildA is h).yield = encodeA is
+  | [i], _ => by
+    show (liftForestBase (P := P) i P[i].top).yield = _
+    rw [liftForestBase_yield, encodeA_singleton]
+  | i :: j :: rest, _ => by
+    show (liftForestRec PCPNonterm.A i P[i].top (buildA (j :: rest) (by simp))).yield = _
+    rw [liftForestRec_yield, buildA_yield (j :: rest) (by simp), encodeA_cons i (j :: rest),
+      List.append_assoc]
 
-/-- The yield of `buildB is h` is `encodeB is`. -/
+/-- The yield of `buildB is h` is `encodeB is`, by recursion on `is` as in `buildB`. -/
 theorem buildB_yield : ∀ (is : List (Fin P.length)) (h : is ≠ []),
-    (buildB is h).yield = encodeB is := by
-  intro is;
-  induction' is with i is ih;
-  · tauto;
-  · cases is <;> simp_all +decide [ encodeB_cons ];
-    · convert liftForestBase_yield i P[i].bot using 1; exact List.toList_toArray;
-    · convert liftForestRec_yield PCPNonterm.B i P[i].bot (
-        buildB ( ‹_› :: ‹_› ) ( by simp ) ) using 1; exact List.toList_toArray
-      grind
+    (buildB is h).yield = encodeB is
+  | [i], _ => by
+    show (liftForestBase (P := P) i P[i].bot).yield = _
+    rw [liftForestBase_yield, encodeB_singleton]
+  | i :: j :: rest, _ => by
+    show (liftForestRec PCPNonterm.B i P[i].bot (buildB (j :: rest) (by simp))).yield = _
+    rw [liftForestRec_yield, buildB_yield (j :: rest) (by simp), encodeB_cons i (j :: rest),
+      List.append_assoc]
 
 /-- The unique forest over an empty symbol list is `.nil`. -/
 theorem forest_nil_inv (f : Forest (Stack.toGrammar P) []) :
@@ -348,7 +354,7 @@ theorem forest_base_eq (i : Fin P.length) (w : List α)
   · intro f
     obtain ⟨ rest, hf ⟩ := forest_consT_inv f
     have hrest : rest = .nil := forest_nil_inv rest
-    simp [hrest] at hf; exact hf;
+    simp only [hrest] at hf; exact hf;
   · intro f
     obtain ⟨rest, hrest⟩ := forest_consT_inv f;
     exact hrest.trans ( congr_arg _ ( ih rest ) )
@@ -382,7 +388,7 @@ theorem ptA_inv {n : PCPNonterm} (t : ParseTree (Stack.toGrammar P) n)
   obtain ⟨ r, hr, c ⟩ := t;
   rcases rule_shape hr with ( rfl | rfl | ⟨ i, rfl ⟩ | ⟨ i, rfl ⟩ | ⟨ i, rfl ⟩ | ⟨ i, rfl ⟩ ) <;>
     norm_num at hn;
-  all_goals simp_all +decide [ recProd, baseProd ];
+  all_goals simp_all +decide only [baseProd, Fin.getElem_fin, heq_eq_eq, recProd, reduceCtorEq];
   · obtain ⟨ child, hchild ⟩ := forest_rec_eq PCPNonterm.A i P[i].top c;
     use Or.inr ⟨ i, child, by aesop ⟩ ;
   · exact Or.inl ⟨ i, by congr; exact forest_base_eq i P[i].top c ⟩
@@ -419,7 +425,7 @@ theorem ptS_inv {n : PCPNonterm} (t : ParseTree (Stack.toGrammar P) n)
           (.consN child .nil))) := by
   rcases t with ⟨ r, hr, c ⟩ ;
   rcases rule_shape hr with ( rfl | rfl | ⟨ i, rfl ⟩ | ⟨ i, rfl ⟩ | ⟨ i, rfl ⟩ | ⟨ i, rfl ⟩ ) <;>
-    simp +decide at hn ⊢;
+    simp +decide only [Fin.getElem_fin, heq_eq_eq] at hn ⊢;
   all_goals cases hn;
   · obtain ⟨ child, rest, h ⟩ := forest_consN_inv c;
     use Or.inl ⟨ child, by cases forest_nil_inv rest; aesop ⟩ ;
@@ -446,7 +452,9 @@ theorem ptA_char {n : PCPNonterm} (t : ParseTree (Stack.toGrammar P) n)
         simp +arith +decide [ h_child ];
       obtain ⟨ is, h, hi ⟩ := ih _ ( by linarith ) child rfl;
       use i :: is;
-      cases is <;> simp_all +decide [ buildA ];
+      cases is <;> simp_all +decide only [heq_eq_eq, ne_eq, Fin.getElem_fin, buildA,
+                       List.cons_ne_self, not_false_eq_true, nonempty_prop, exists_const,
+                       reduceCtorEq];
       contradiction; expose_names; grind
   · cases hn
 
@@ -472,7 +480,8 @@ theorem ptB_char {n : PCPNonterm} (t : ParseTree (Stack.toGrammar P) n)
             exact List.toList_toArray
           simp +arith +decide [ h_child ] at ht ⊢ ; linarith;
         obtain ⟨ is, h, h_child_eq ⟩ := ih _ h_child child rfl;
-        rcases is with ( _ | ⟨ j, is ⟩ ) <;> simp_all +decide;
+        rcases is with ( _ | ⟨ j, is ⟩ ) <;> simp_all +decide only [heq_eq_eq, ne_eq,
+                                                 Fin.getElem_fin];
         · contradiction;
         · exact ⟨ i :: j :: is, by simp +decide, eq_of_heq hi ⟩;
     exact h_ind _ _ rfl
@@ -561,7 +570,7 @@ theorem pcp_if_ambiguous (h : AmbigCFG.DecisionProblem (Stack.toGrammar P)) :
             ← eq_of_heq hcB2, h_yield_eq ];
     obtain ⟨h_is1, h_τ⟩ := encodeA_eq_encodeB_cross h_encode_eq;
     exact ⟨ List.map ( fun x => P[x] ) is1, by aesop ⟩;
-  · rcases ptS_inv t2 rfl with ( ⟨ cA2, heq2 ⟩ | ⟨ cB2, heq2 ⟩ ) <;> simp_all +decide;
+  · rcases ptS_inv t2 rfl with ( ⟨ cA2, heq2 ⟩ | ⟨ cB2, heq2 ⟩ ) <;> simp_all +decide only [ne_eq];
     · cases heq1; cases heq2
       erw [ yield_SB, yield_SA ] at hyield;
       obtain ⟨is1, h1, he1⟩ := ptB_char cB1 rfl

@@ -107,6 +107,8 @@ def instCode (U : SKI) (c : Code) (n : ℕ) : ℕ × ℕ := (skc (inst U c n), s
 theorem instCode_prim (U : SKI) : Primrec₂ (instCode U) :=
   (prim_pair (skc_inst_prim U) (Primrec.const _)).to₂
 
+-- Unification would otherwise evaluate the closed code `skc FF`.
+attribute [local irreducible] Nat.pair in
 /-- The instance of `c` on `n` is convertible to `FF` iff some `k` passes the proof test. -/
 theorem conv_inst_iff_chk (U : SKI) (c : Code) (n : ℕ) :
     Conv (inst U c n) FF ↔ ∃ k, chk k (instCode U c n) = true :=

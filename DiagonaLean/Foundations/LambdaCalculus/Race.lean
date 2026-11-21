@@ -92,6 +92,8 @@ def instCode (U : SKI) (c : Code) (n : ℕ) : ℕ × ℕ := (tc (linst U c n), t
 theorem instCode_prim (U : SKI) : Primrec₂ (instCode U) :=
   (prim_pair (tc_linst_prim U) (Primrec.const _)).to₂
 
+-- Unification would otherwise evaluate the closed code `tc (tr FF)` (8 s instead of 0.1 s).
+attribute [local irreducible] Nat.pair in
 /-- The λ-instance of `c` on `n` is β-convertible to `tr FF` iff some `k` passes the proof test. -/
 theorem betaConv_iff_chk (U : SKI) (c : Code) (n : ℕ) :
     BetaConv (linst U c n) (tr FF) ↔ ∃ k, chk k (instCode U c n) = true :=

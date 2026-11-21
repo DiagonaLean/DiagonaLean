@@ -279,7 +279,7 @@ theorem trueTM_outputs (l : List Bool) : SingleTapeTM.Outputs trueTM l [true] :=
 theorem exists_not_halts : ∃ (tm : SingleTapeTM Bool) (w : List Bool), ¬ Halts tm w := by
   by_contra h
   apply halt_undecidable
-  simp at h
+  simp only [not_exists, not_not] at h
   refine ⟨trueTM, fun tm w =>
     ⟨fun _ => trueTM_outputs _, fun hc => absurd (h tm.toSingleTapeTM w) hc⟩⟩
 

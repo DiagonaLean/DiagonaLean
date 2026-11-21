@@ -102,7 +102,11 @@ theorem toCFG_ambPres_abs (P : Stack α) :
     rulesA, rulesB, Finset.mem_biUnion, Finset.mem_univ, Finset.mem_insert, Finset.mem_singleton]
   constructor
   · rintro ⟨s, (rfl | rfl) | ⟨_, ⟨i, rfl⟩, rfl | rfl | rfl | rfl⟩, rfl⟩ <;>
-      (simp [ruleOf, symOf, recProd, baseProd, liftWord, idxSym, Function.comp_def]
+      (simp only [ruleOf, symOf, Fin.getElem_fin, List.map_append, List.map_map, Function.comp_def,
+           Sum.elim_inl, List.map_cons, List.map_nil, ContextFreeRule.mk.injEq, reduceCtorEq,
+           false_and, or_self, recProd, liftWord, idxSym, baseProd, List.append_singleton_inj,
+           Symbol.terminal.injEq, Sum.inr.injEq, exists_false, true_and, false_or, or_false,
+           Sum.elim_inr, List.cons.injEq, Symbol.nonterminal.injEq, and_true, and_false, or_true]
        try exact ⟨i, by simp⟩)
   · rintro (((rfl | rfl) | ⟨i, rfl | rfl⟩) | ⟨i, rfl | rfl⟩)
     · exact ⟨_, Or.inl (Or.inl rfl), by simp [ruleOf, symOf]⟩

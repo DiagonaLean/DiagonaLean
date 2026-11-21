@@ -64,7 +64,9 @@ theorem encode_decode_finset [DecidableEq β] (n : ℕ) : encode (decode (α := 
     have h' : decodeList n = some l := h
     by_cases hn : l.Nodup
     · simp only [h', Option.elim, hn, ite_true]
-      simp [hn]
+      simp only [Option.map_eq_map, Option.map_some, Option.bind_some, Multiset.coe_nodup, hn,
+          ↓reduceDIte, Equiv.symm_mk, Equiv.coe_fn_mk, Function.comp_apply, encode_some,
+          Nat.succ_eq_add_one, Nat.add_right_cancel_iff]
       exact encode_finset_mk l hn
     · simp [h', hn]
 end Enc

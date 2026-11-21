@@ -77,7 +77,8 @@ theorem exists_stack_of_mem_mapped (l : Stack β) (g : α → β) (S : Stack α)
   choose fn hfn using h
   exact ⟨ l.attach.map (fun ⟨t, ht⟩ => fn t ht), by
     rw [List.map_map]
-    simp [hfn]
+    simp only [Function.comp_apply, hfn, List.map_subtype, List.unattach_attach, List.map_id_fun',
+        id_eq, List.mem_map, List.mem_attach, true_and, Subtype.exists, forall_exists_index]
     refine fun t x x_1 h => ?_
     grind ⟩
 
@@ -85,38 +86,18 @@ theorem exists_stack_of_mem_mapped (l : Stack β) (g : α → β) (S : Stack α)
 theorem pcp_map_iff {α β : Type} (g : α → β) (hg : Function.Injective g)
     (S : Stack α) :
     PCP.DecisionProblem S ↔ PCP.DecisionProblem (S.map (Tile.map g)) := by
-      constructor
-      · rintro ⟨l, hne, heq ⟩
-        simp_all
-        unfold DecisionProblem
-        use (l.map (Tile.map g))
-        simp_all
-        constructor
-        · have l_elem: ∃ x, x ∈ l := by
-            exact List.exists_mem_of_ne_nil l hne
-          rcases l_elem with ⟨x, hx⟩
-          have S_elemen: x ∈ S := by
-             obtain ⟨hl, hr⟩ := heq
-             exact hl x hx
-          grind
-        · have hg: τ1 (List.map (Tile.map g) l) = τ1 (l.map (Tile.map g)) := by simp
-          rw [hg]
-          rw [τ1_map, τ2_map]
-          simp_all
-      · rintro ⟨l, hne, heq⟩
-        simp_all
-        unfold DecisionProblem
-        have exists_l': ∃ ls : Stack α, ls.map (Tile.map g) = l ∧ (∀t ∈ ls, t ∈ S) := by
-          apply exists_stack_of_mem_mapped l g S heq.left
-        obtain ⟨ls, hls, hS⟩ := exists_l'
-        use ls
-        refine ⟨?_, ?_, ?_⟩
-        grind
-        exact hS
-        simp [←hls] at heq
-        simp [τ1_map, τ2_map] at heq
-        obtain ⟨heql, heqr⟩ := heq
-        exact (List.map_inj_right hg).mp heqr
+  constructor
+  · rintro ⟨A, hne, hA, heq⟩
+    refine ⟨A.map (Tile.map g), by simpa using hne, fun t ht => ?_, ?_⟩
+    · obtain ⟨a, ha, rfl⟩ := List.mem_map.1 ht
+      exact List.mem_map_of_mem (hA a ha)
+    · rw [τ1_map, τ2_map, heq]
+  · rintro ⟨B, hne, hB, heq⟩
+    obtain ⟨A, rfl, hA⟩ :=
+      exists_stack_of_mem_mapped B g S fun t ht => List.mem_map.1 (hB t ht)
+    refine ⟨A, by simpa using hne, hA, ?_⟩
+    rw [τ1_map, τ2_map] at heq
+    exact List.map_injective_iff.2 hg heq
 
 open Synthetic.Notation
 
@@ -131,8 +112,9 @@ def Alpha.map {Q Q' S : Type} (g : Q → Q') : Alpha Q S → Alpha Q' S
 theorem Alpha.map_injective {Q Q' S : Type} {g : Q → Q'} (hg : Function.Injective g) :
     Function.Injective (Alpha.map g : Alpha Q S → Alpha Q' S) := by
   intro x y hxy
-  cases x <;> cases y <;> simp_all [Alpha.map]
-  exact hg hxy
+  cases x <;> cases y <;>
+    simp only [Alpha.map, reduceCtorEq, Alpha.tape.injEq, Alpha.state.injEq] at hxy ⊢ <;>
+    first | rfl | exact hxy | exact hg hxy
 
 /-- Map symbol types in the PCP boundary extension type `Ext`. -/
 def Ext.map {α β : Type} (g : α → β) : Ext α → Ext β
@@ -144,8 +126,8 @@ def Ext.map {α β : Type} (g : α → β) : Ext α → Ext β
 theorem Ext.map_injective {α β : Type} {g : α → β} (hg : Function.Injective g) :
     Function.Injective (Ext.map g) := by
   intro x y hxy
-  cases x <;> cases y <;> simp_all [Ext.map]
-  exact hg hxy
+  cases x <;> cases y <;> simp only [Ext.map, reduceCtorEq, Ext.sym.injEq] at hxy ⊢ <;>
+    first | rfl | exact hxy | exact hg hxy
 
 /-- Map TM halting instance to a PCP stack via integer state encoding. -/
 def pcpRed (tm : EncodableTM Symbol) (w : List Symbol)
