@@ -5,6 +5,7 @@ Authors: Aalok Thakkar, Claude Opus
 
 import Cslib.Languages.LambdaCalculus.LocallyNameless.Untyped.FullBetaConfluence
 import DiagonaLean.Foundations.LambdaCalculus.Code
+import DiagonaLean.Foundations.Computability.StackProof
 
 @[expose] public section
 
@@ -197,37 +198,47 @@ def results (arg : ℕ) (s : Stk) : List Stk :=
 /-- One instruction: a tag and an argument. Unknown tags do nothing. -/
 def stepS (s : Stk) (n : ℕ) : Stk := (results n.unpair.2 s).getD n.unpair.1 s
 
+/-- `results` is primitive recursive. -/
+theorem results_prim : Primrec fun y : Stk × ℕ => results y.2 y.1 := by
+  unfold results
+  fun_prop
+
+attribute [local irreducible] results in
+/-- `stepS` is primitive recursive. -/
+theorem stepS_prim : Primrec fun y : Stk × ℕ => stepS y.1 y.2 := by
+  have h : Primrec fun y : Stk × ℕ => ((results y.2.unpair.2 y.1)[y.2.unpair.1]?).getD y.1 :=
+    Primrec.option_getD.comp
+      (Primrec.list_getElem?.comp
+        (results_prim.comp (prim_pair Primrec.fst (prim_snd (prim_unpair Primrec.snd))))
+        (prim_fst (prim_unpair Primrec.snd)))
+      Primrec.fst
+  exact h.of_eq fun y => (List.getD_eq_getElem?_getD ..).symm
+
+/-- The stack machine, as a proof system with no instance data. -/
+def sys : StackProof.System Unit Ent := ⟨fun _ s n => stepS s n, stepS_prim.comp Primrec.snd⟩
+
 /-- Run a program from a stack. -/
-def run (p : List ℕ) (s : Stk) : Stk := p.foldl stepS s
+abbrev run (p : List ℕ) (s : Stk) : Stk := StackProof.run sys () p s
 
 /-- Running `p ++ q` runs `p`, then `q`. -/
-theorem run_append (p q : List ℕ) (s : Stk) : run (p ++ q) s = run q (run p s) := by
-  simp [run, List.foldl_append]
+theorem run_append (p q : List ℕ) (s : Stk) : run (p ++ q) s = run q (run p s) :=
+  StackProof.run_append sys () p q s
 
 /-- Every entry is good. -/
-def Inv (s : Stk) : Prop := ∀ e ∈ s, Good e
+abbrev Inv (s : Stk) : Prop := StackProof.Inv Good s
 
 /-- The default entry records nothing, so it is good. -/
 theorem good_default : Good (default : Ent) := by simp [Good]
 
 /-- The head of a good stack is good. -/
-theorem Inv.head {s : Stk} (h : Inv s) : Good s.headI := by
-  cases s with
-  | nil => exact good_default
-  | cons e s => exact h e List.mem_cons_self
+theorem Inv.head {s : Stk} (h : Inv s) : Good s.headI := StackProof.Inv.headI good_default h
 
 /-- The tail of a good stack is good. -/
-theorem Inv.tail {s : Stk} (h : Inv s) : Inv s.tail := by
-  cases s with
-  | nil => exact h
-  | cons e s => exact fun f hf => h f (List.mem_cons_of_mem _ hf)
+theorem Inv.tail {s : Stk} (h : Inv s) : Inv s.tail := StackProof.Inv.tail h
 
 /-- Pushing a good entry onto a good stack gives a good stack. -/
-theorem Inv.cons {s : Stk} {e : Ent} (he : Good e) (h : Inv s) : Inv (e :: s) := by
-  intro f hf
-  rcases List.mem_cons.1 hf with rfl | hf
-  · exact he
-  · exact h f hf
+theorem Inv.cons {s : Stk} {e : Ent} (he : Good e) (h : Inv s) : Inv (e :: s) :=
+  StackProof.Inv.cons he h
 
 /-- Every instruction sends a good stack to a good stack. -/
 theorem results_inv (arg : ℕ) {s : Stk} (hs : Inv s) : ∀ t ∈ results arg s, Inv t := by
@@ -411,14 +422,12 @@ theorem stepS_inv {s : Stk} (hs : Inv s) (n : ℕ) : Inv (stepS s n) := by
   | some t => exact results_inv _ hs t (List.mem_of_getElem? h)
 
 /-- Running a program sends a good stack to a good stack. -/
-theorem run_inv (p : List ℕ) {s : Stk} (hs : Inv s) : Inv (run p s) := by
-  induction p generalizing s with
-  | nil => exact hs
-  | cons n p ih => exact ih (stepS_inv hs n)
+theorem run_inv (p : List ℕ) {s : Stk} (hs : Inv s) : Inv (run p s) :=
+  StackProof.run_inv (fun _ hs n => stepS_inv hs n) p hs
 
 /-- Running a one-instruction program applies that instruction. -/
 theorem run_one (t a : ℕ) (s : Stk) : run [Nat.pair t a] s = (results a s).getD t s := by
-  simp [run, stepS]
+  simp [run, StackProof.run_one, sys, stepS]
 
 /-- `p` pushes the entry `e` onto any stack. -/
 def Pushes (p : List ℕ) (e : Ent) : Prop := ∀ s, run p s = e :: s
@@ -562,7 +571,7 @@ theorem exists_prog {M N : Term ℕ} (hM : LC M) (hN : LC N) (h : BetaConv M N) 
   exact ⟨_, pushes_trans hp (pushes_symm hq)⟩
 
 /-- The program with code `k` ends with the conversion `(a, b)` on top. -/
-def Checks (k a b : ℕ) : Prop := (run (Denumerable.ofNat (List ℕ) k) []).headI = (1, a, b, 0, 0)
+def Checks (k a b : ℕ) : Prop := StackProof.Checks sys () k (1, a, b, 0, 0)
 
 /-- `Checks k a b` is decidable. -/
 instance (k a b : ℕ) : Decidable (Checks k a b) := inferInstanceAs (Decidable (_ = _))
@@ -570,53 +579,19 @@ instance (k a b : ℕ) : Decidable (Checks k a b) := inferInstanceAs (Decidable 
 /-- If a program checks the codes of `M` and `N`, then `M` and `N` are β-convertible. -/
 theorem betaConv_of_checks {k : ℕ} {M N : Term ℕ} (h : Checks k (tc M) (tc N)) :
     BetaConv M N := by
-  have hi : Inv (run (Denumerable.ofNat (List ℕ) k) []) := run_inv _ (by simp [Inv])
-  have hg := hi.head
-  rw [h] at hg
+  have hg := StackProof.good_of_checks sys () good_default (fun _ hs n => stepS_inv hs n) h
   obtain ⟨M', N', hm, hn, -, -, hc⟩ := hg.cv rfl
   rwa [tc_injective hm, tc_injective hn]
 
 /-- Two locally closed terms are β-convertible iff some program checks their codes. -/
 theorem betaConv_iff_checks {M N : Term ℕ} (hM : LC M) (hN : LC N) :
-    BetaConv M N ↔ ∃ k, Checks k (tc M) (tc N) := by
-  constructor
-  · intro h
-    obtain ⟨p, hp⟩ := exists_prog hM hN h
-    exact ⟨Encodable.encode p, by simp [Checks, Denumerable.ofNat_encode, hp []]⟩
-  · rintro ⟨k, hk⟩
-    exact betaConv_of_checks hk
-
-/-- `results` is primitive recursive. -/
-theorem results_prim : Primrec fun y : Stk × ℕ => results y.2 y.1 := by
-  unfold results
-  fun_prop
-
-attribute [local irreducible] results in
-/-- `stepS` is primitive recursive. -/
-theorem stepS_prim : Primrec fun y : Stk × ℕ => stepS y.1 y.2 := by
-  have h : Primrec fun y : Stk × ℕ => ((results y.2.unpair.2 y.1)[y.2.unpair.1]?).getD y.1 :=
-    Primrec.option_getD.comp
-      (Primrec.list_getElem?.comp
-        (results_prim.comp (prim_pair Primrec.fst (prim_snd (prim_unpair Primrec.snd))))
-        (prim_fst (prim_unpair Primrec.snd)))
-      Primrec.fst
-  exact h.of_eq fun y => (List.getD_eq_getElem?_getD ..).symm
-
-attribute [local irreducible] results in
-/-- `stepS` applied to primitive recursive functions is primitive recursive. -/
-@[fun_prop] theorem prim_stepS {α : Type*} [Primcodable α] {f : α → Stk} {g : α → ℕ}
-    (hf : Primrec f) (hg : Primrec g) : Primrec fun x => stepS (f x) (g x) :=
-  stepS_prim.comp (hf.pair hg)
-
-/-- Running the program with code `k` from the empty stack is primitive recursive in `k`. -/
-theorem run_prim : Primrec fun k : ℕ => run (Denumerable.ofNat (List ℕ) k) [] := by
-  unfold run; fun_prop
+    BetaConv M N ↔ ∃ k, Checks k (tc M) (tc N) :=
+  ⟨fun h => (exists_prog hM hN h).elim fun _ hp => StackProof.checks_of_pushes hp,
+    fun ⟨_, hk⟩ => betaConv_of_checks hk⟩
 
 /-- `Checks` is a primitive recursive predicate. -/
-theorem checks_prim : PrimrecPred fun x : ℕ × ℕ × ℕ => Checks x.1 x.2.1 x.2.2 := by
-  unfold Checks
-  exact pred_eq (prim_headI (run_prim.comp Primrec.fst))
-    (prim_pair (Primrec.const 1) (prim_pair (prim_fst Primrec.snd)
-      (prim_pair (prim_snd Primrec.snd) (Primrec.const (0, 0)))))
+theorem checks_prim : PrimrecPred fun x : ℕ × ℕ × ℕ => Checks x.1 x.2.1 x.2.2 :=
+  (StackProof.checks_prim sys).comp (f := fun x : ℕ × ℕ × ℕ => ((), x.1, ((1 : ℕ), x.2.1, x.2.2,
+    (0 : ℕ), (0 : ℕ)))) (by fun_prop)
 
 end DiagonaLean.Foundations.LambdaCalculus

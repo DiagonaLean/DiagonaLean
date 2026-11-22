@@ -172,12 +172,8 @@ normalizes the machine and input to satisfy `NoBlankWrites`/`NoLeftBoundary`, en
 normalizer's `Ctrl` control states, to stay computable), and lifts the result to the fixed
 alphabet `Ext (Alpha ℕ Bool)`. -/
 def haltToPcp (p : EncodableTM Bool × List Bool) : Stack (Ext (Alpha ℕ Bool)) :=
-  letI := p.1.stateEncodable
-  letI hEnc : Encodable (MPCP.Normalize.normTM p.1.toSingleTapeTM).State :=
-    (inferInstance : Encodable (p.1.State × MPCP.Normalize.Ctrl))
   AlphabetLift.liftInstance Ext.hash Ext.rupee
-    (pcpRed ⟨MPCP.Normalize.normTM p.1.toSingleTapeTM, hEnc⟩
-      (MPCP.Normalize.encInput p.2))
+    (pcpRed (MPCP.Normalize.normEnc p.1) (MPCP.Normalize.encInput p.2))
 
 /-- `haltToPcp` witnesses that the halting problem many-one reduces to PCP over the fixed
 alphabet `Ext (Alpha ℕ Bool)`. Combines TM normalization, MPCP reduction, and alphabet
@@ -186,10 +182,7 @@ theorem halt_reducesto_pcp_spec :
     HaltProblem ⪯ₘ[haltToPcp] (@DecisionProblem (Ext (Alpha ℕ Bool))) := by
   rintro ⟨tm, w⟩
   show Halts tm.toSingleTapeTM w ↔ _
-  let _ := tm.stateEncodable
-  let hEnc : Encodable (MPCP.Normalize.normTM tm.toSingleTapeTM).State :=
-    (inferInstance : Encodable (tm.State × MPCP.Normalize.Ctrl))
-  let normTMEnc : EncodableTM _ := ⟨MPCP.Normalize.normTM tm.toSingleTapeTM, hEnc⟩
+  let normTMEnc := MPCP.Normalize.normEnc tm
   rw [MPCP.Normalize.halts_normTM_iff tm.toSingleTapeTM w,
     halt_iff_pcp normTMEnc (MPCP.Normalize.encInput w)
       (MPCP.Normalize.normTM_noBlankWrites tm.toSingleTapeTM)

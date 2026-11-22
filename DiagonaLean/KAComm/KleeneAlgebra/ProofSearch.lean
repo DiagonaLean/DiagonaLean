@@ -4,6 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.KAComm.KleeneAlgebra.ExprCode
+import DiagonaLean.Foundations.Computability.StackProof
 
 @[expose] public section
 
@@ -17,7 +18,11 @@ parsing of expressions. Conversely, every provable equation has a program
 
 The flag `ka` switches on the three rules that Kleene algebra adds to pre-Kleene algebra. `Checks`
 is the primitive recursive test that a code is a program proving a given equation, and provability
-is `∃ k, Checks ..` (`equiv_iff_checks`, `kaEquiv_iff_checks`).
+is `∃ k, Checks ..` (`equiv_iff_checks`, `kaEquiv_iff_checks`). The machine is an instance of
+`Computability.StackProof` with the flag as its instance (`sys`), which supplies running programs,
+the invariant, `Checks` and its primitive recursion; this file supplies the instructions
+(`results`), their soundness (`results_inv`) and completeness (`exists_prog_equiv`,
+`exists_prog_ka`).
 -/
 
 namespace DiagonaLean.KAComm.KleeneAlgebra
@@ -75,13 +80,37 @@ def results (ka : Bool) (arg : ℕ) (s : Stk) : List Stk :=
 /-- One instruction: a tag and an argument. Unknown tags do nothing. -/
 def stepS (ka : Bool) (s : Stk) (n : ℕ) : Stk := (results ka n.unpair.2 s).getD n.unpair.1 s
 
+/-- `results ka` is primitive recursive. -/
+theorem results_prim (ka : Bool) : Primrec fun y : Stk × ℕ => results ka y.2 y.1 := by
+  have hcomm : PrimrecPred fun x : Stk × ℕ => commC x.2.unpair.1 x.2.unpair.2 :=
+    pred_ne (by fun_prop) (by fun_prop)
+  cases ka <;> simp only [results, Bool.false_eq_true, ite_true, ite_false]
+    <;> fun_prop
+
+/-- `stepS ka` is primitive recursive. -/
+theorem stepS_prim (ka : Bool) : Primrec fun y : Stk × ℕ => stepS ka y.1 y.2 := by
+  have h : Primrec fun y : Stk × ℕ => ((results ka y.2.unpair.2 y.1)[y.2.unpair.1]?).getD y.1 :=
+    Primrec.option_getD.comp
+      (Primrec.list_getElem?.comp
+        ((results_prim ka).comp (prim_pair Primrec.fst (prim_snd (prim_unpair Primrec.snd))))
+        (prim_fst (prim_unpair Primrec.snd)))
+      Primrec.fst
+  exact h.of_eq fun y => (List.getD_eq_getElem?_getD ..).symm
+
+/-- The stack machine, as a proof system with the flag as its instance. -/
+def sys : StackProof.System Bool (ℕ × ℕ) where
+  step ka s n := stepS ka s n
+  step_prim := Primrec.of_eq
+    (Primrec.cond Primrec.fst ((stepS_prim true).comp Primrec.snd)
+      ((stepS_prim false).comp Primrec.snd))
+    (by rintro ⟨_ | _, _⟩ <;> rfl)
+
 /-- Run a program from a stack. -/
-def run (ka : Bool) (p : List ℕ) (s : Stk) : Stk := p.foldl (stepS ka) s
+abbrev run (ka : Bool) (p : List ℕ) (s : Stk) : Stk := StackProof.run sys ka p s
 
 /-- Running `p ++ q` runs `p`, then `q`. -/
 theorem run_append (ka : Bool) (p q : List ℕ) (s : Stk) :
-    run ka (p ++ q) s = run ka q (run ka p s) := by
-  simp [run, List.foldl_append]
+    run ka (p ++ q) s = run ka q (run ka p s) := StackProof.run_append sys ka p q s
 
 /-- The rules of pre-Kleene algebra, for a relation. -/
 structure Closed (R : RExp (ℕ ⊕ ℕ) → RExp (ℕ ⊕ ℕ) → Prop) : Prop where
@@ -120,31 +149,22 @@ theorem closed_rel (ka : Bool) : Closed (Rel ka) := by
 def Good (ka : Bool) (x : ℕ × ℕ) : Prop := ∃ e f, x = (rc e, rc f) ∧ Rel ka e f
 
 /-- Every entry is good. -/
-def Inv (ka : Bool) (s : Stk) : Prop := ∀ x ∈ s, Good ka x
+abbrev Inv (ka : Bool) (s : Stk) : Prop := StackProof.Inv (Good ka) s
 
 /-- The default entry is good. -/
 theorem good_default (ka : Bool) : Good ka (default : ℕ × ℕ) :=
   ⟨zero, zero, rfl, (closed_rel ka).ofEquiv (.refl _)⟩
 
 /-- The head of a good stack is good. -/
-theorem Inv.head {ka : Bool} {s : Stk} (h : Inv ka s) : Good ka s.headI := by
-  cases s with
-  | nil => exact good_default ka
-  | cons x s => exact h x List.mem_cons_self
+theorem Inv.head {ka : Bool} {s : Stk} (h : Inv ka s) : Good ka s.headI :=
+  StackProof.Inv.headI (good_default ka) h
 
 /-- The tail of a good stack is good. -/
-theorem Inv.tail {ka : Bool} {s : Stk} (h : Inv ka s) : Inv ka s.tail := by
-  cases s with
-  | nil => exact h
-  | cons x s => exact fun y hy => h y (List.mem_cons_of_mem _ hy)
+theorem Inv.tail {ka : Bool} {s : Stk} (h : Inv ka s) : Inv ka s.tail := StackProof.Inv.tail h
 
 /-- Pushing a good entry onto a good stack gives a good stack. -/
 theorem Inv.cons {ka : Bool} {s : Stk} {x : ℕ × ℕ} (hx : Good ka x) (h : Inv ka s) :
-    Inv ka (x :: s) := by
-  intro y hy
-  rcases List.mem_cons.1 hy with rfl | hy
-  · exact hx
-  · exact h y hy
+    Inv ka (x :: s) := StackProof.Inv.cons hx h
 
 /-- The code of an equation provable in pre-Kleene algebra is good. -/
 theorem good_ax {ka : Bool} {e f : RExp (ℕ ⊕ ℕ)} (h : Equiv DComm e f) :
@@ -245,15 +265,13 @@ theorem stepS_inv {ka : Bool} {s : Stk} (hs : Inv ka s) (n : ℕ) : Inv ka (step
   | some t => exact results_inv ka _ hs t (List.mem_of_getElem? h)
 
 /-- Running a program sends a good stack to a good stack. -/
-theorem run_inv (ka : Bool) (p : List ℕ) {s : Stk} (hs : Inv ka s) : Inv ka (run ka p s) := by
-  induction p generalizing s with
-  | nil => exact hs
-  | cons n p ih => exact ih (stepS_inv hs n)
+theorem run_inv (ka : Bool) (p : List ℕ) {s : Stk} (hs : Inv ka s) : Inv ka (run ka p s) :=
+  StackProof.run_inv (fun _ hs n => stepS_inv hs n) p hs
 
 /-- Running a one-instruction program applies that instruction. -/
 theorem run_one (ka : Bool) (t a : ℕ) (s : Stk) :
     run ka [Nat.pair t a] s = (results ka a s).getD t s := by
-  simp [run, stepS]
+  simp [run, StackProof.run_one, sys, stepS]
 
 /-- `p` pushes the equation `e = f` onto any stack. -/
 def Pushes (ka : Bool) (p : List ℕ) (e f : RExp (ℕ ⊕ ℕ)) : Prop :=
@@ -393,75 +411,39 @@ theorem exists_prog_ka {e f : RExp (ℕ ⊕ ℕ)} (h : KAEquiv DComm e f) :
     rw [run_append, run_append, run_append, hq, hr, hp, run_one]
     simp [results, rc]
 
+/-- Every equation related by `Rel ka` has a program that pushes it. -/
+theorem exists_prog_rel (ka : Bool) {e f : RExp (ℕ ⊕ ℕ)} (h : Rel ka e f) :
+    ∃ p, Pushes ka p e f := by
+  cases ka
+  · exact exists_prog_equiv false (by simpa [Rel] using h)
+  · exact exists_prog_ka (rel_true.1 h)
+
 /-- The program with code `k` ends with the equation `(a, b)` on top. -/
-def Checks (ka : Bool) (k a b : ℕ) : Prop :=
-  (run ka (Denumerable.ofNat (List ℕ) k) []).headI = (a, b)
+def Checks (ka : Bool) (k a b : ℕ) : Prop := StackProof.Checks sys ka k (a, b)
 
-/-- If a program checks the codes of `e` and `f`, then `e` and `f` are related. -/
-theorem rel_of_checks {ka : Bool} {k : ℕ} {e f : RExp (ℕ ⊕ ℕ)} (h : Checks ka k (rc e) (rc f)) :
-    Rel ka e f := by
-  have hi : Inv ka (run ka (Denumerable.ofNat (List ℕ) k) []) :=
-    run_inv ka _ (by simp [Inv])
-  obtain ⟨e', f', hx, hr⟩ := hi.head
-  rw [h] at hx
-  obtain ⟨he, hf⟩ := Prod.mk.inj hx
-  rwa [rc_injective he, rc_injective hf]
-
-/-- If `p` pushes `e = f`, then some code checks the codes of `e` and `f`. -/
-theorem checks_of_pushes {ka : Bool} {p : List ℕ} {e f : RExp (ℕ ⊕ ℕ)} (h : Pushes ka p e f) :
-    ∃ k, Checks ka k (rc e) (rc f) :=
-  ⟨Encodable.encode p, by simp [Checks, Denumerable.ofNat_encode, h []]⟩
+/-- `Rel ka` is checking: two expressions are related iff some program checks their codes. -/
+theorem rel_iff_checks' {ka : Bool} {e f : RExp (ℕ ⊕ ℕ)} :
+    Rel ka e f ↔ ∃ k, Checks ka k (rc e) (rc f) := by
+  rw [show (∃ k, Checks ka k (rc e) (rc f)) ↔ ∃ k, StackProof.Checks sys ka k (rc e, rc f) from
+    Iff.rfl, ← StackProof.good_iff_checks sys ka (good_default ka) (fun _ hs n => stepS_inv hs n)
+      (fun _ ⟨e, f, hj, h⟩ => hj ▸ exists_prog_rel ka h)]
+  exact ⟨fun h => ⟨e, f, rfl, h⟩, fun ⟨e', f', hx, h⟩ => by
+    obtain ⟨h₁, h₂⟩ := Prod.mk.inj hx
+    rwa [rc_injective h₁, rc_injective h₂]⟩
 
 /-- An equation is provable in pre-Kleene algebra iff some program checks its codes. -/
 theorem equiv_iff_checks {e f : RExp (ℕ ⊕ ℕ)} :
     Equiv DComm e f ↔ ∃ k, Checks false k (rc e) (rc f) := by
-  constructor
-  · intro h
-    obtain ⟨p, hp⟩ := exists_prog_equiv false h
-    exact checks_of_pushes hp
-  · rintro ⟨k, hk⟩
-    simpa [Rel] using rel_of_checks hk
+  simpa [Rel] using rel_iff_checks' (ka := false) (e := e) (f := f)
 
 /-- An equation is provable in Kleene algebra iff some program checks its codes. -/
 theorem kaEquiv_iff_checks {e f : RExp (ℕ ⊕ ℕ)} :
-    KAEquiv DComm e f ↔ ∃ k, Checks true k (rc e) (rc f) := by
-  constructor
-  · intro h
-    obtain ⟨p, hp⟩ := exists_prog_ka h
-    exact checks_of_pushes hp
-  · rintro ⟨k, hk⟩
-    exact rel_true.1 (rel_of_checks hk)
-
-/-- `results ka` is primitive recursive. -/
-theorem results_prim (ka : Bool) : Primrec fun y : Stk × ℕ => results ka y.2 y.1 := by
-  have hcomm : PrimrecPred fun x : Stk × ℕ => commC x.2.unpair.1 x.2.unpair.2 :=
-    pred_ne (by fun_prop) (by fun_prop)
-  cases ka <;> simp only [results, Bool.false_eq_true, ite_true, ite_false]
-    <;> fun_prop
-
-/-- `stepS ka` is primitive recursive. -/
-theorem stepS_prim (ka : Bool) : Primrec fun y : Stk × ℕ => stepS ka y.1 y.2 := by
-  have h : Primrec fun y : Stk × ℕ => ((results ka y.2.unpair.2 y.1)[y.2.unpair.1]?).getD y.1 :=
-    Primrec.option_getD.comp
-      (Primrec.list_getElem?.comp
-        ((results_prim ka).comp (prim_pair Primrec.fst (prim_snd (prim_unpair Primrec.snd))))
-        (prim_fst (prim_unpair Primrec.snd)))
-      Primrec.fst
-  exact h.of_eq fun y => (List.getD_eq_getElem?_getD ..).symm
-
-/-- `stepS ka` applied to primitive recursive functions is primitive recursive. -/
-@[fun_prop] theorem prim_stepS {α : Type*} [Primcodable α] (ka : Bool) {f : α → Stk} {g : α → ℕ}
-    (hf : Primrec f) (hg : Primrec g) : Primrec fun x => stepS ka (f x) (g x) :=
-  (stepS_prim ka).comp (hf.pair hg)
-
-/-- Running the program with code `k` from the empty stack is primitive recursive in `k`. -/
-theorem run_prim (ka : Bool) : Primrec fun k : ℕ => run ka (Denumerable.ofNat (List ℕ) k) [] := by
-  unfold run; fun_prop
+    KAEquiv DComm e f ↔ ∃ k, Checks true k (rc e) (rc f) :=
+  rel_true.symm.trans rel_iff_checks'
 
 /-- `Checks ka` is a primitive recursive predicate. -/
-theorem checks_prim (ka : Bool) : PrimrecPred fun x : ℕ × ℕ × ℕ => Checks ka x.1 x.2.1 x.2.2 := by
-  unfold Checks
-  exact pred_eq (prim_headI ((run_prim ka).comp Primrec.fst))
-    (prim_pair (prim_fst Primrec.snd) (prim_snd Primrec.snd))
+theorem checks_prim (ka : Bool) : PrimrecPred fun x : ℕ × ℕ × ℕ => Checks ka x.1 x.2.1 x.2.2 :=
+  (StackProof.checks_prim sys).comp ((Primrec.const ka).pair (Primrec.fst.pair
+    ((Primrec.fst.comp Primrec.snd).pair (Primrec.snd.comp Primrec.snd))))
 
 end DiagonaLean.KAComm.KleeneAlgebra

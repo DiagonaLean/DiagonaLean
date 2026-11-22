@@ -103,15 +103,8 @@ rewriting systems over `Alpha ℕ Sym2`. -/
 theorem not_computablePred_toEmpty :
     ¬ ComputablePred fun x :
       SRS (Alpha ℕ MPCP.Normalize.Sym2) × List (Alpha ℕ MPCP.Normalize.Sym2) =>
-        ToEmptyProblem x := by
-  intro h
-  have h' : ComputablePred fun w : List Bool => ToEmptyProblem (toEmptyCode w) :=
-    ComputablePred.computable_of_manyOneReducible
-      (ManyOneReducible.mk (fun x => ToEmptyProblem x) toEmptyCode_prim.to_comp) h
-  obtain ⟨D, hD⟩ := machineDecidable_of_computablePred (enc := id) (dec := some)
-    Computable.option_some (fun _ => rfl) h'
-  refine Halt.Undecidable.self_halt_undecidable ⟨D, fun M => ?_⟩
-  simpa only [id, ← selfHalt_iff_toEmpty] using hD (encodeBoolTM M)
+        ToEmptyProblem x :=
+  not_computablePred_of_selfHalt toEmptyCode_prim.to_comp selfHalt_iff_toEmpty
 
 /-- **No Turing machine decides whether a string rewrites to the empty string**, under any
 computable encoding. -/

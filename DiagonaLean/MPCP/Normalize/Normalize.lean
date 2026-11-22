@@ -48,4 +48,12 @@ theorem normalize_tm (tm : SingleTapeTM Bool) (w : List Bool) :
   ⟨normTM tm, encInput w, normTM_noBlankWrites tm, normTM_noLeftBoundary tm w,
     halts_normTM_iff tm w⟩
 
+/-- The normalised machine of `M`, with its states `M.State × Ctrl` encoded by `M.stateEncodable`
+and the `Encodable` instance of `Ctrl`, both computable. The reductions from the halting problem
+through MPCP, PCP and string rewriting use it. -/
+abbrev normEnc (M : DiagonaLean.Halt.Encoding.EncodableTM Bool) :
+    DiagonaLean.Halt.Encoding.EncodableTM Sym2 :=
+  letI := M.stateEncodable
+  ⟨normTM M.toSingleTapeTM, (inferInstance : Encodable (M.State × Ctrl))⟩
+
 end DiagonaLean.MPCP.Normalize

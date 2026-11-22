@@ -12,8 +12,8 @@ import Mathlib.Computability.Primrec.List
 
 Mathlib's `ContextFreeGrammar T` has a type of nonterminals as a field and a `Finset` of rules, so
 it is not `Primcodable`, and a statement about machines deciding a property of grammars cannot be
-made about it. A grammar is presented here by its start symbol and a list of rules `lhs → rhs`, with the
-symbols of a right-hand side written `.inl t` for a terminal and `.inr n` for a nonterminal
+made about it. A grammar is presented here by its start symbol and a list of rules `lhs → rhs`,
+with the symbols of a right-hand side written `.inl t` for a terminal and `.inr n` for a nonterminal
 (`GrammarPres N T`). `GrammarPres.toCFG` is the grammar it presents. With natural numbers as
 nonterminals, a presentation is a `CFGCode T`, which is `Primcodable` whenever `T` is.
 

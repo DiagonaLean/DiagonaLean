@@ -19,7 +19,8 @@ stack `s`, for the instance `x`. `run` runs a program, `Checks x k j` says that 
 code `k` ends with `j` on top, and `checks_prim` says that this is a primitive recursive predicate.
 Given a predicate `Good x` of judgements, every instruction of which keeps a good stack good
 (soundness), and a program pushing every good judgement (completeness), `good_iff_checks` gives
-`Good x j ↔ ∃ k, Checks x k j`.
+`Good x j ↔ ∃ k, Checks x k j`. The halves are `good_of_checks` and `checks_of_pushes`, for a system
+whose completeness covers only some of its judgements.
 
 Completeness proofs build programs with `Pushes`: `pushes_append` and `pushes_append₂` combine the
 programs for the premises of a rule with the instruction of the rule.
@@ -45,7 +46,7 @@ def run (p : List ℕ) (s : List J) : List J := p.foldl (S.step x) s
 theorem run_append (p q : List ℕ) (s : List J) : run S x (p ++ q) s = run S x q (run S x p s) := by
   simp [run, List.foldl_append]
 
-@[simp] theorem run_one (n : ℕ) (s : List J) : run S x [n] s = S.step x s n := rfl
+theorem run_one (n : ℕ) (s : List J) : run S x [n] s = S.step x s n := rfl
 
 /-! ### Soundness -/
 
@@ -128,18 +129,26 @@ def Checks (k : ℕ) (j : J) : Prop := (run S x (Denumerable.ofNat (List ℕ) k)
 instance [DecidableEq J] (k : ℕ) (j : J) : Decidable (Checks S x k j) :=
   inferInstanceAs (Decidable (_ = _))
 
+/-- **Soundness of checking.** If every instruction keeps good stacks good, a checked judgement is
+good. -/
+theorem good_of_checks {Good : J → Prop} (hd : Good default)
+    (hstep : ∀ s, Inv Good s → ∀ n, Inv Good (S.step x s n)) {k : ℕ} {j : J}
+    (h : Checks S x k j) : Good j :=
+  h ▸ (run_inv hstep _ Inv.nil).headI hd
+
+variable {S x} in
+/-- **Completeness of checking.** A judgement that some program pushes is checked. -/
+theorem checks_of_pushes {p : List ℕ} {j : J} (h : Pushes S x p j) : ∃ k, Checks S x k j :=
+  ⟨Encodable.encode p, by simp [Checks, Denumerable.ofNat_encode, h []]⟩
+
 /-- **Derivability is checking.** If every instruction keeps good stacks good and every good
 judgement is pushed by some program, then `j` is good iff some program checks it. -/
 theorem good_iff_checks {Good : J → Prop} (hd : Good default)
     (hstep : ∀ s, Inv Good s → ∀ n, Inv Good (S.step x s n))
     (hcomp : ∀ j, Good j → ∃ p, Pushes S x p j) (j : J) :
-    Good j ↔ ∃ k, Checks S x k j := by
-  constructor
-  · intro h
-    obtain ⟨p, hp⟩ := hcomp j h
-    exact ⟨Encodable.encode p, by simp [Checks, Denumerable.ofNat_encode, hp []]⟩
-  · rintro ⟨k, rfl⟩
-    exact (run_inv hstep _ Inv.nil).headI hd
+    Good j ↔ ∃ k, Checks S x k j :=
+  ⟨fun h => (hcomp j h).elim fun _ hp => checks_of_pushes hp,
+    fun ⟨_, hk⟩ => good_of_checks S x hd hstep hk⟩
 
 /-! ### Primitive recursion -/
 
