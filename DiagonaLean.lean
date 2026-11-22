@@ -35,10 +35,13 @@ import DiagonaLean.PCP.Primrec
 import DiagonaLean.AmbigCFG.Basic
 import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFG
 import DiagonaLean.AmbigCFG.Undecidable
+import DiagonaLean.AmbigCFG.MachineLevel
+import DiagonaLean.AmbigCFG.Rename
 
 import DiagonaLean.EmpCFG.Basic
 import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFG
 import DiagonaLean.EmpCFG.Undecidable
+import DiagonaLean.EmpCFG.MachineLevel
 
 import DiagonaLean.MatMort.Basic
 import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
@@ -90,6 +93,7 @@ import DiagonaLean.Synthetic.ReductionCheck
 import DiagonaLean.Synthetic.MetaprogramCheck
 
 import DiagonaLean.Foundations.Computability.Prim
+import DiagonaLean.Foundations.Grammar.Code
 import DiagonaLean.Foundations.Computability.PrimrecRec
 import DiagonaLean.Foundations.Computability.PolyTree
 import DiagonaLean.Foundations.Computability.TaggedCode
