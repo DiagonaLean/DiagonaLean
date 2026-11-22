@@ -117,15 +117,6 @@ theorem decisionProblem_map (H : RulesInj f e p)
 
 end Inj
 
-omit [DecidableEq T] [DecidableEq T'] [DecidableEq N] [DecidableEq M] in
-theorem map_map {T'' M' : Type} (f : T → T') (e : N → M) (f' : T' → T'') (e' : M → M')
-    (p : GrammarPres N T) : (p.map f e).map f' e' = p.map (f' ∘ f) (e' ∘ e) := by
-  simp [GrammarPres.map, List.map_map, Function.comp_def, Sum.map_map]
-
-omit [DecidableEq T] [DecidableEq T'] [DecidableEq N] [DecidableEq M] in
-theorem map_id (p : GrammarPres N T) : p.map id id = p := by
-  simp [GrammarPres.map]
-
 /-- **Injective renamings keep and reflect ambiguity.** -/
 theorem decisionProblem_map_iff [Nonempty T] [Nonempty N] (hf : Function.Injective f)
     (he : Function.Injective e) : DecisionProblem (p.map f e).toCFG ↔ DecisionProblem p.toCFG := by
@@ -137,7 +128,8 @@ theorem decisionProblem_map_iff [Nonempty T] [Nonempty N] (hf : Function.Injecti
   · intro h
     classical
     have hl : (p.map f e).map (Function.invFun f) (Function.invFun e) = p := by
-      rw [map_map, Function.invFun_comp hf, Function.invFun_comp he, map_id]
+      rw [GrammarPres.map_map, Function.invFun_comp hf, Function.invFun_comp he,
+        GrammarPres.map_id]
     have := decisionProblem_map (f := Function.invFun f) (e := Function.invFun e) (p := p.map f e)
       (fun r₁ h₁ r₂ h₂ hr => by
         obtain ⟨s₁, -, rfl⟩ := (mem_rules_map_toCFG f e p r₁).1 h₁

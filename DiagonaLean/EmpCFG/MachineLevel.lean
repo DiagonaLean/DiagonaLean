@@ -4,7 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFG
-import DiagonaLean.PCP.Undecidable
+import DiagonaLean.PCP.MachineLevel
 import DiagonaLean.Foundations.Grammar.Code
 
 @[expose] public section
@@ -18,7 +18,7 @@ presents `genCFG` itself (`toCFG_genPres_unit`); with the name `0` it is a gramm
 renaming of the first (`genPres_zero`), so it has the same language
 (`language_toCFG_genPres_zero`). The codes of a PCP instance are primitive recursive in it
 (`empCode_prim`), so the many-one reduction `pcpReducesEmpCFGCode` from PCP to the problem on
-codes transfers `PCP.Reduction.not_computablePred_pcp`.
+codes (`pcp_reducesto_empCFGCode_spec`) transfers `PCP.MachineLevel.not_computablePred_pcp`.
 
 The statements are about grammar codes (`Foundations.Grammar.CFGCode`): a machine reads a finite
 description, and `CFGCode.toCFG` is the grammar a code describes.
@@ -78,15 +78,22 @@ theorem language_toCFG_genPres_zero (proj : Tile α → List α) (P : Stack α) 
 def empCode (P : Stack α) : CFGCode (Term α) × CFGCode (Term α) :=
   (genPres 0 Tile.top P, genPres 0 Tile.bot P)
 
+/-- `empCode` witnesses the reduction from PCP to the non-emptiness of the intersection of the
+languages of two grammar codes. -/
+theorem pcp_reducesto_empCFGCode_spec :
+    @PCP.DecisionProblem α ⪯ₘ[empCode]
+      fun c : CFGCode (Term α) × CFGCode (Term α) => IntersectionNonempty c.1.toCFG c.2.toCFG := by
+  intro P
+  rw [pcp_reducesto_empCFG_spec P]
+  simp only [EmpCFG.DecisionProblem, IntersectionNonempty, pcpToEmpCFG, empCode,
+    language_toCFG_genPres_zero]
+
 /-- PCP many-one reduces to the non-emptiness of the intersection of the languages of two grammar
 codes, through `empCode`. -/
 def pcpReducesEmpCFGCode :
     @PCP.DecisionProblem α ⪯ₘ
       fun c : CFGCode (Term α) × CFGCode (Term α) => IntersectionNonempty c.1.toCFG c.2.toCFG :=
-  ⟨empCode, fun P => by
-    rw [pcp_reducesto_empCFG_spec P]
-    simp only [EmpCFG.DecisionProblem, IntersectionNonempty, pcpToEmpCFG, empCode,
-      language_toCFG_genPres_zero]⟩
+  ⟨empCode, pcp_reducesto_empCFGCode_spec⟩
 
 variable [Primcodable α]
 
@@ -102,7 +109,7 @@ theorem not_computablePred_empCFGCode [Nontrivial α] :
     ¬ ComputablePred fun c : CFGCode (Term α) × CFGCode (Term α) =>
       IntersectionNonempty c.1.toCFG c.2.toCFG :=
   not_computablePred_of_reduces pcpReducesEmpCFGCode empCode_prim.to_comp
-    PCP.Reduction.not_computablePred_pcp
+    PCP.MachineLevel.not_computablePred_pcp
 
 /-- **Whether the languages of two grammar codes are disjoint is not a computable predicate.** -/
 theorem not_computablePred_empCFGCode_empty [Nontrivial α] :

@@ -19,7 +19,7 @@ current step of `tm` has been simulated. It is closed under the transition relat
 halting equivalence `halts_normTM_iff` and the `NoLeftBoundary` property.
 -/
 
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.Foundations.Computability.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -267,4 +267,4 @@ theorem halts_normTM_iff (w : List Bool) :
     obtain ⟨q, t, i, hp, _⟩ := reach_phase_noHalt tm w hnh hreach
     exact hp.state_ne_none rfl
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.Foundations.Computability.Normalize

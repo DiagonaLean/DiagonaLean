@@ -117,28 +117,14 @@ theorem isSync_unary : IsSync unary where
     obtain ⟨w₃, rfl, rfl⟩ := encode_unary_eq_append (append_cancel_left h)
     exact ⟨w₁, w₃, by simp, rfl, rfl⟩
 
+/-- The identity code is synchronizing. -/
 theorem isSync_unit : IsSync (unit (α := α)) :=
   ⟨isCode_unit, fun w l p q _ h => ⟨p, q, by simpa using h, by simp, by simp⟩⟩
-
-/-- Precomposing a synchronizing code with an injective renaming of letters gives a synchronizing
-code. -/
-theorem IsSync.comp {β γ : Type} {c : β → List γ} (hc : IsSync c) {f : α → β}
-    (hf : Function.Injective f) : IsSync (c ∘ f) := by
-  have e : ∀ w, encode (c ∘ f) w = encode c (w.map f) := fun w => by
-    induction w <;> simp_all
-  refine ⟨fun u v h => ?_, fun w l p q hl h => ?_⟩
-  · rw [e, e] at h
-    exact (map_injective_iff.2 hf) (hc.isCode h)
-  · rw [e, e] at h
-    obtain ⟨w₁, w₂, hw, rfl, rfl⟩ := hc.aligned _ _ p q (by simpa using hl) h
-    obtain ⟨u₁, rest, rfl, rfl, hrest⟩ := map_eq_append_iff.1 (hw.trans (append_assoc ..))
-    obtain ⟨u₂, u₃, rfl, hu₂, rfl⟩ := map_eq_append_iff.1 hrest
-    obtain rfl := map_injective_iff.2 hf hu₂
-    exact ⟨u₁, u₃, by simp, (e u₁).symm, (e u₃).symm⟩
 
 /-- A synchronizing code from any countable alphabet into two letters. -/
 def ofEncodable [Encodable α] (a : α) : List Bool := unary (Encodable.encode a)
 
+/-- `ofEncodable` is synchronizing. -/
 theorem isSync_ofEncodable [Encodable α] : IsSync (ofEncodable (α := α)) :=
   isSync_unary.comp Encodable.encode_injective
 
@@ -147,6 +133,7 @@ variable {β : Type}
 /-- The letter for a bit, in an alphabet with letters `b0` and `b1`. -/
 def bit (b0 b1 : β) (b : Bool) : β := if b then b1 else b0
 
+/-- With distinct letters `b0`, `b1`, `bit b0 b1` is injective. -/
 theorem bit_injective {b0 b1 : β} (hne : b0 ≠ b1) : Function.Injective (bit b0 b1) := by
   intro x y h
   cases x <;> cases y <;> simp_all [bit, eq_comm]
@@ -155,6 +142,7 @@ theorem bit_injective {b0 b1 : β} (hne : b0 ≠ b1) : Function.Injective (bit b
 `b0`, `b1`: `ofEncodable`, with `b0` for `0` and `b1` for `1`. -/
 def bitCode [Encodable α] (b0 b1 : β) (a : α) : List β := (ofEncodable a).map (bit b0 b1)
 
+/-- With distinct letters `b0`, `b1`, `bitCode b0 b1` is synchronizing. -/
 theorem isSync_bitCode [Encodable α] {b0 b1 : β} (hne : b0 ≠ b1) :
     IsSync (bitCode (α := α) b0 b1) :=
   isSync_ofEncodable.map (bit_injective hne)

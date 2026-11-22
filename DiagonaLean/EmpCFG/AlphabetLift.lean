@@ -3,7 +3,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.EmpCFG.Undecidable
 import DiagonaLean.PCP.Primrec
 import DiagonaLean.EmpCFG.MachineLevel
 import DiagonaLean.Foundations.Codes.Grammar
@@ -17,7 +16,8 @@ import DiagonaLean.Foundations.Codes.Tactic
 PCP instance. Encoding the terminals of both grammars by a code preserves and reflects non-emptiness
 of the intersection (`Foundations.Codes.intersection_encode_iff`), and `Term Bool` is countable,
 so `Foundations.Codes.bitCode` moves the problem to any alphabet with two distinct letters
-(`undecidableEmpCFGOf`), for instance to `Bool` (`undecidableEmpCFGBool`).
+(`empCFGAlphabetLift`). `Undecidable.lean` uses it for `undecidableEmpCFGOf` and
+`undecidableEmpCFGBool`.
 
 Mathlib's grammars keep their rules in a `Finset`, so encoding them needs the proof that the code
 is a code, and is not the action of a functor. Grammar codes keep their rules in a list: on pairs
@@ -32,24 +32,24 @@ namespace DiagonaLean.EmpCFG.Reduction
 
 variable {T α : Type}
 
+/-- **The reduction.** Both grammars with their terminals encoded by `bitCode b0 b1`. -/
+def empCFGLift [Encodable T] (b0 b1 : α) (hne : b0 ≠ b1)
+    (G : ContextFreeGrammar T × ContextFreeGrammar T) :
+    ContextFreeGrammar α × ContextFreeGrammar α :=
+  (grammarEncode (bitCode b0 b1) (isSync_bitCode hne).isCode G.1,
+    grammarEncode (bitCode b0 b1) (isSync_bitCode hne).isCode G.2)
+
+/-- `empCFGLift b0 b1 hne` witnesses the reduction from non-emptiness of CFG intersection over a
+countable alphabet to it over `α`. -/
+theorem empCFGLift_spec [Encodable T] (b0 b1 : α) (hne : b0 ≠ b1) :
+    @DecisionProblem T ⪯ₘ[empCFGLift b0 b1 hne] @DecisionProblem α := fun G =>
+  (intersection_encode_iff (hc := (isSync_bitCode hne).isCode) G.1 G.2).symm
+
 /-- Non-emptiness of CFG intersection over a countable alphabet many-one reduces to it over any
 alphabet with two distinct letters, by encoding the terminals of both grammars with `bitCode`. -/
 def empCFGAlphabetLift [Encodable T] (b0 b1 : α) (hne : b0 ≠ b1) :
     @DecisionProblem T ⪯ₘ @DecisionProblem α :=
-  ⟨fun G => (grammarEncode (bitCode b0 b1) (isSync_bitCode hne).isCode G.1,
-      grammarEncode (bitCode b0 b1) (isSync_bitCode hne).isCode G.2),
-    fun G => (intersection_encode_iff (hc := (isSync_bitCode hne).isCode) G.1 G.2).symm⟩
-
-/-- **Non-emptiness of the intersection of two context-free grammars is `Undecidable` over any
-alphabet `α` with two distinct letters `b0`, `b1`.** -/
-def undecidableEmpCFGOf (b0 b1 : α) (hne : b0 ≠ b1) : Undecidable (@DecisionProblem α) :=
-  undecidabilityFromReducibility (undecidableEmpCFG false true Bool.false_ne_true)
-    (empCFGAlphabetLift b0 b1 hne)
-
-/-- **Non-emptiness of the intersection of two context-free grammars over `Bool` is
-`Undecidable`.** -/
-def undecidableEmpCFGBool : Undecidable (@DecisionProblem Bool) :=
-  undecidableEmpCFGOf false true Bool.false_ne_true
+  ⟨empCFGLift b0 b1 hne, empCFGLift_spec b0 b1 hne⟩
 
 end DiagonaLean.EmpCFG.Reduction
 
@@ -66,11 +66,15 @@ decidable equality of terminals, so that it is defined over every alphabet (the 
 depend on the instance, `codeProblem_iff`). -/
 def CodeProblem (x : CFGCode T × CFGCode T) : Prop := IntersectionNonempty x.1.toCFG x.2.toCFG
 
+/-- With any decidable equality of terminals, `CodeProblem x` is non-emptiness of the
+intersection of the languages of the two grammar codes. -/
 theorem codeProblem_iff [DecidableEq T] (x : CFGCode T × CFGCode T) :
     CodeProblem x ↔ IntersectionNonempty x.1.toCFG x.2.toCFG := by
   unfold CodeProblem
   convert Iff.rfl
 
+/-- With any decidable equality of terminals, `CodeProblem` is non-emptiness of the intersection
+of the languages of the two grammar codes. -/
 theorem codeProblem_eq [DecidableEq T] :
     @CodeProblem T = fun x => IntersectionNonempty x.1.toCFG x.2.toCFG :=
   funext fun x => propext (codeProblem_iff x)
@@ -82,7 +86,7 @@ abbrev empCodeFunctor : CodeFunctor IsCode where
   Prob x := CodeProblem x
   map_unit x := by simp
   map_kcomp c₁ c₂ x := by simp [presEncode_kcomp]
-  natural {T β} c hc x := by
+  natural hc x := by
     classical
     rw [codeProblem_iff, codeProblem_iff]
     simp only [IntersectionNonempty, toCFG_presEncode hc]
@@ -124,4 +128,3 @@ theorem empCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [N
   rwa [codeProblem_eq, codeProblem_eq] at h
 
 end DiagonaLean.EmpCFG.MachineLevel
-

@@ -6,7 +6,6 @@ Authors: Prathamesh TVH, Claude Opus
 import DiagonaLean.PCP.AlphabetLift
 import DiagonaLean.PCP.Reductions.MPCP_to_PCP
 import DiagonaLean.Foundations.Computability.DerivePrimcodable
-import DiagonaLean.Foundations.Codes.Functor
 
 @[expose] public section
 
@@ -33,8 +32,10 @@ namespace Reduction
 
 variable {α : Type} [Primcodable α]
 
+/-- `hashL` is primitive recursive. -/
 @[fun_prop] theorem hashL_primrec : Primrec (hashL (α := α)) := by primrec_rec
 
+/-- `hashR` is primitive recursive. -/
 @[fun_prop] theorem hashR_primrec : Primrec (hashR (α := α)) := by primrec_rec
 
 /-- **The reduction from MPCP to PCP is primitive recursive.** -/
@@ -48,6 +49,7 @@ end Reduction
 /- Encoding tiles and stacks is primitive recursive, for a code that may depend on the input. -/
 derive_primrec Tile.encode [Primcodable α] [Primcodable β]
 derive_primrec Stack.encode [Primcodable α] [Primcodable β]
+derive_primrec Tile.toPair [Primcodable α]
 derive_primrec Stack.letters [Primcodable α]
 
 namespace AlphabetLift

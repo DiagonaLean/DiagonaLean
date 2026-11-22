@@ -14,7 +14,7 @@ state by `sim_tm_step_running`, a halting step by `sim_tm_step_halt`. `NSteps` i
 in `normTM tm`.
 -/
 
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.Foundations.Computability.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -137,4 +137,4 @@ theorem sim_tm_step_halt {t₂ : BiTape Bool} (h : InvAt t i t' (fold i))
   obtain ⟨t₂', hs⟩ := step_sim_halt tm (decide (0 ≤ i)) h htr
   exact ⟨t₂', nsteps_single tm hs⟩
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.Foundations.Computability.Normalize

@@ -5,6 +5,7 @@ Authors: Aalok Thakkar
 
 import DiagonaLean.MPCP.Basic
 import DiagonaLean.PCP.Basic
+import DiagonaLean.Synthetic.Definitions
 
 @[expose] public section
 
@@ -20,6 +21,9 @@ satisfy the duality `hashL x ++ [⋕] = ⋕ :: hashR x`, which is what
 allows the end tile to close a solution. The three tile roles are:
 `tileStart` (forces every solution to begin with it), `tileReg` (encodes
 an MPCP card), and `tileEnd` (closes the match).
+
+`mpcp_iff_pcp` proves the equivalence, and `mpcp_reducesto_pcp_spec` and `mpcpReducesPCP` state it
+as a many-one reduction.
 
 ## References
 
@@ -501,5 +505,18 @@ theorem mpcp_iff_pcp (c : Tile α) (R : Stack α) :
   · rintro ⟨B, hne, hB, heq⟩
     obtain ⟨A, hA, heqA⟩ := pcp_to_mpcp_solution c R B hne hB heq
     exact ⟨A, hA, heqA⟩
+
+open DiagonaLean.Synthetic.Definitions
+
+/-- `mpcpToPcp` witnesses that MPCP many-one reduces to PCP over the extended alphabet. -/
+theorem mpcp_reducesto_pcp_spec :
+    (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2) ⪯ₘ[fun x => mpcpToPcp x.1 x.2]
+      (@PCP.DecisionProblem (Ext α)) :=
+  fun x => mpcp_iff_pcp x.1 x.2
+
+/-- MPCP many-one reduces to PCP over the extended alphabet, through `mpcpToPcp`. -/
+def mpcpReducesPCP :
+    (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2) ⪯ₘ (@PCP.DecisionProblem (Ext α)) :=
+  ⟨fun x => mpcpToPcp x.1 x.2, mpcp_reducesto_pcp_spec⟩
 
 end DiagonaLean.PCP.Reduction

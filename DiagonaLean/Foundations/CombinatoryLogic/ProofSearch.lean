@@ -17,7 +17,7 @@ instruction either pushes a valid conversion, using only entries already on the 
 nothing. So every entry of every reachable stack is a conversion (`run_inv`), with no parsing of
 terms. Conversely, every conversion has a program (`exists_prog`).
 
-The stack machine is an instance of `Computability.StackProof` (`sys`), which supplies running
+The stack machine is an instance of `Computability.StackProof` (`skiSys`), which supplies running
 programs, the invariant, `Checks` and its primitive recursion; this file supplies the instructions
 (`results`), their soundness (`results_inv`) and completeness (`exists_prog`). `Checks` is the
 primitive recursive test that a code is a program proving a given conversion, and convertibility
@@ -76,7 +76,7 @@ theorem stepS_prim : Primrec fun y : Stk × ℕ => stepS y.1 y.2 := by
   exact h.of_eq fun y => (List.getD_eq_getElem?_getD ..).symm
 
 /-- The stack machine, as a proof system with no instance data. -/
-def sys : StackProof.System Unit (ℕ × ℕ) where
+def skiSys : StackProof.System Unit (ℕ × ℕ) where
   step _ s n := stepS s n
   step_prim := stepS_prim.comp (Primrec.fst.comp Primrec.snd |>.pair (Primrec.snd.comp Primrec.snd))
 
@@ -126,7 +126,7 @@ theorem stepS_inv (s : Stk) (hs : Inv Good s) (n : ℕ) : Inv Good (stepS s n) :
   | some t => exact results_inv hs t (List.mem_of_getElem? h)
 
 /-- `p` pushes the conversion `t = u` onto any stack. -/
-abbrev Pushes (p : List ℕ) (t u : SKI) : Prop := StackProof.Pushes sys () p (skc t, skc u)
+abbrev Pushes (p : List ℕ) (t u : SKI) : Prop := StackProof.Pushes skiSys () p (skc t, skc u)
 
 open StackProof in
 /-- Some program pushes `t = t`. -/
@@ -170,7 +170,7 @@ open StackProof in
 /-- If `p` pushes `t = u` and `q` pushes `u = v`, then `p ++ q ++ [5]` pushes `t = v`. -/
 theorem pushes_trans {p q : List ℕ} {t u v : SKI} (hp : Pushes p t u) (hq : Pushes q u v) :
     Pushes (p ++ q ++ [5]) t v :=
-  pushes_append₂ 5 hp hq fun _ => by simp [sys, stepS, results]
+  pushes_append₂ 5 hp hq fun _ => by simp [skiSys, stepS, results]
 
 /-- Every reduction has a program that pushes it. -/
 theorem exists_mRed {t u : SKI} (h : t ↠ u) : ∃ p, Pushes p t u := by
@@ -190,11 +190,11 @@ theorem exists_prog {t u : SKI} (h : Conv t u) : ∃ p, Pushes p t u := by
   exact ⟨_, pushes_trans hp (pushes_append 4 hq fun _ => rfl)⟩
 
 /-- The program with code `k` ends with the conversion `(a, b)` on top. -/
-abbrev Checks (k a b : ℕ) : Prop := StackProof.Checks sys () k (a, b)
+abbrev Checks (k a b : ℕ) : Prop := StackProof.Checks skiSys () k (a, b)
 
 /-- Two terms are convertible iff some program checks their codes. -/
 theorem conv_iff_checks {t u : SKI} : Conv t u ↔ ∃ k, Checks k (skc t) (skc u) := by
-  have := StackProof.good_iff_checks sys () good_default (fun s hs n => stepS_inv s hs n)
+  have := StackProof.good_iff_checks skiSys () good_default (fun s hs n => stepS_inv s hs n)
     (fun j ⟨t, u, hj, h⟩ => hj ▸ exists_prog h) (skc t, skc u)
   rw [← this]
   exact ⟨fun h => ⟨t, u, rfl, h⟩, fun ⟨t', u', hx, h⟩ => by
@@ -203,7 +203,7 @@ theorem conv_iff_checks {t u : SKI} : Conv t u ↔ ∃ k, Checks k (skc t) (skc 
 
 /-- `Checks` is a primitive recursive predicate. -/
 theorem checks_prim : PrimrecPred fun x : ℕ × ℕ × ℕ => Checks x.1 x.2.1 x.2.2 :=
-  (StackProof.checks_prim sys).comp ((Primrec.const ()).pair (Primrec.fst.pair
+  (StackProof.checks_prim skiSys).comp ((Primrec.const ()).pair (Primrec.fst.pair
     ((Primrec.fst.comp Primrec.snd).pair (Primrec.snd.comp Primrec.snd))))
 
 end DiagonaLean.Foundations.CombinatoryLogic

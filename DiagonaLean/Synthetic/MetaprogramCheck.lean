@@ -228,7 +228,7 @@ def commandAllowances : List (String × List String) := [
   ("DiagonaLean/Foundations/Computability/DerivePrimcodable.lean",
     ["readCtors", "derivePrimcodable"]),
   -- `derive_primrec`, under the same discipline: it elaborates one generated theorem
-  ("DiagonaLean/Foundations/Computability/PrimDef.lean", ["readArgs", "derivePrimrec"])]
+  ("DiagonaLean/Foundations/Computability/DerivePrimrec.lean", ["readArgs", "derivePrimrec"])]
 
 /-- The rules that the file at `rel` may break anywhere. -/
 def allowedRules (rel : String) : List String :=

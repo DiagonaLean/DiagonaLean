@@ -41,11 +41,14 @@ variable {X J : Type} [Primcodable X] [Primcodable J] (S : System X J) (x : X)
 /-- Run a program from a stack. -/
 def run (p : List ℕ) (s : List J) : List J := p.foldl (S.step x) s
 
+/-- The empty program leaves the stack unchanged. -/
 @[simp] theorem run_nil (s : List J) : run S x [] s = s := rfl
 
+/-- Running `p ++ q` is running `p`, then `q`. -/
 theorem run_append (p q : List ℕ) (s : List J) : run S x (p ++ q) s = run S x q (run S x p s) := by
   simp [run, List.foldl_append]
 
+/-- Running a one-instruction program is one step. -/
 theorem run_one (n : ℕ) (s : List J) : run S x [n] s = S.step x s n := rfl
 
 /-! ### Soundness -/
@@ -60,13 +63,16 @@ def Inv (s : List J) : Prop := ∀ j ∈ s, Good j
 variable {Good}
 
 omit [Primcodable J] in
+/-- The empty stack is good. -/
 theorem Inv.nil : Inv Good ([] : List J) := fun _ h => absurd h List.not_mem_nil
 
 omit [Primcodable J] in
+/-- Pushing a good judgement on a good stack gives a good stack. -/
 theorem Inv.cons {j : J} {s : List J} (hj : Good j) (hs : Inv Good s) : Inv Good (j :: s) :=
   fun y hy => (List.mem_cons.1 hy).elim (· ▸ hj) (hs y)
 
 omit [Primcodable J] in
+/-- The tail of a good stack is good. -/
 theorem Inv.tail {s : List J} (hs : Inv Good s) : Inv Good s.tail := by
   cases s with
   | nil => exact hs
@@ -126,6 +132,7 @@ variable (S x) [Inhabited J]
 /-- The program with code `k` ends with `j` on top. -/
 def Checks (k : ℕ) (j : J) : Prop := (run S x (Denumerable.ofNat (List ℕ) k) []).headI = j
 
+/-- `Checks S x k j` is decidable. -/
 instance [DecidableEq J] (k : ℕ) (j : J) : Decidable (Checks S x k j) :=
   inferInstanceAs (Decidable (_ = _))
 

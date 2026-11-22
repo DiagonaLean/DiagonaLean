@@ -61,6 +61,15 @@ unification. -/
 def GrammarPres.map (f : T → T') (e : N → M) (p : GrammarPres N T) : GrammarPres M T' :=
   (e p.1, p.2.map fun r => (e r.1, r.2.map (Sum.map f e)))
 
+/-- Renaming by `f`, `e`, then by `f'`, `e'`, is renaming by the composites. -/
+theorem GrammarPres.map_map {T'' M' : Type} (f : T → T') (e : N → M) (f' : T' → T'')
+    (e' : M → M') (p : GrammarPres N T) : (p.map f e).map f' e' = p.map (f' ∘ f) (e' ∘ e) := by
+  simp [GrammarPres.map, List.map_map, Function.comp_def, Sum.map_map]
+
+/-- Renaming by the identities is the identity. -/
+theorem GrammarPres.map_id (p : GrammarPres N T) : p.map id id = p := by
+  simp [GrammarPres.map]
+
 /-! ### Renaming symbols -/
 
 /-- Renaming a symbol: terminals by `f`, nonterminals by `e`. -/
@@ -68,6 +77,7 @@ def Symbol.mapBoth (f : T → T') (e : N → M) : Symbol T N → Symbol T' M
   | .terminal t => .terminal (f t)
   | .nonterminal n => .nonterminal (e n)
 
+/-- `Symbol.mapBoth f e` is injective when `f` and `e` are. -/
 theorem Symbol.mapBoth_injective {f : T → T'} {e : N → M} (hf : Function.Injective f)
     (he : Function.Injective e) : Function.Injective (Symbol.mapBoth f e) := by
   rintro (a | a) (b | b) h <;> simp only [Symbol.mapBoth, Symbol.terminal.injEq,
@@ -75,6 +85,7 @@ theorem Symbol.mapBoth_injective {f : T → T'} {e : N → M} (hf : Function.Inj
   · rw [hf h]
   · rw [he h]
 
+/-- The symbol of a renamed entry is the renamed symbol. -/
 theorem symOf_map (f : T → T') (e : N → M) (s : T ⊕ N) :
     symOf (Sum.map f e s) = Symbol.mapBoth f e (symOf s) := by
   rcases s with s | s <;> rfl
@@ -83,15 +94,18 @@ theorem symOf_map (f : T → T') (e : N → M) (s : T ⊕ N) :
 def ruleMap (f : T → T') (e : N → M) (r : ContextFreeRule T N) : ContextFreeRule T' M :=
   ⟨e r.input, r.output.map (Symbol.mapBoth f e)⟩
 
+/-- The rule of a renamed entry is the renamed rule. -/
 theorem ruleOf_map (f : T → T') (e : N → M) (r : N × List (T ⊕ N)) :
     ruleOf (e r.1, r.2.map (Sum.map f e)) = ruleMap f e (ruleOf r) := by
   simp [ruleOf, ruleMap, List.map_map, Function.comp_def, symOf_map]
 
+/-- The rules of the grammar of `p` are the rules written in `p`. -/
 theorem mem_rules_toCFG [DecidableEq T] [DecidableEq N] (p : GrammarPres N T)
     (r : ContextFreeRule T N) : r ∈ p.toCFG.rules ↔ ∃ s ∈ p.2, ruleOf s = r := by
   show r ∈ (p.2.map ruleOf).toFinset ↔ _
   rw [List.mem_toFinset, List.mem_map]
 
+/-- The rules of the grammar of `p.map f e` are the renamed rules of the grammar of `p`. -/
 theorem mem_rules_map_toCFG [DecidableEq T] [DecidableEq T'] [DecidableEq N] [DecidableEq M]
     (f : T → T') (e : N → M) (p : GrammarPres N T) (r : ContextFreeRule T' M) :
     r ∈ (p.map f e).toCFG.rules ↔ ∃ s ∈ p.toCFG.rules, ruleMap f e s = r := by
@@ -108,6 +122,7 @@ theorem mem_rules_map_toCFG [DecidableEq T] [DecidableEq T'] [DecidableEq N] [De
 
 /-! ### Rewriting commutes with renaming -/
 
+/-- A rewrite by `r` renames to a rewrite by the renamed rule. -/
 theorem rewrites_map {f : T → T'} {e : N → M} {r : ContextFreeRule T N}
     {u v : List (Symbol T N)} (h : r.Rewrites u v) :
     (ruleMap f e r).Rewrites (u.map (Symbol.mapBoth f e)) (v.map (Symbol.mapBoth f e)) := by
@@ -162,6 +177,7 @@ section
 variable [DecidableEq T] [DecidableEq T'] [DecidableEq N] [DecidableEq M]
   {f : T → T'} {e : N → M} {p : GrammarPres N T}
 
+/-- A derivation of the grammar of `p` renames to a derivation of the grammar of `p.map f e`. -/
 theorem derives_map {u v : List (Symbol T N)} (h : p.toCFG.Derives u v) :
     (p.map f e).toCFG.Derives (u.map (Symbol.mapBoth f e)) (v.map (Symbol.mapBoth f e)) := by
   induction h with
@@ -171,6 +187,8 @@ theorem derives_map {u v : List (Symbol T N)} (h : p.toCFG.Derives u v) :
     exact ih.trans_produces
       ⟨ruleMap f e r, (mem_rules_map_toCFG f e p _).2 ⟨r, hr, rfl⟩, rewrites_map hrw⟩
 
+/-- A derivation of the grammar of `p.map f e` from a renamed string is the renaming of a
+derivation of the grammar of `p`, when `e` is injective. -/
 theorem derives_of_map (he : Function.Injective e) {u : List (Symbol T N)}
     {v' : List (Symbol T' M)}
     (h : (p.map f e).toCFG.Derives (u.map (Symbol.mapBoth f e)) v') :

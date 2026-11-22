@@ -14,12 +14,13 @@ A string rewriting system (semi-Thue system) over `T` is a list of rules `l → 
 (`SRS T`). A step rewrites one occurrence of a left side in context, `p ++ l ++ q ⇒ p ++ r ++ q`,
 and `Derives R` is the reflexive–transitive closure. Every grammar of the Chomsky hierarchy is a
 string rewriting system over its terminals and nonterminals together, with a start symbol; the
-classes differ only in the shape of the rules.
+classes differ only in the shape of the rules. A start symbol that occurs in no rule, with
+non-empty left sides elsewhere, is used once, at the start of a derivation (`SRS.derives_start`).
 
-`sys` is a stack machine that checks derivations, uniformly in the system
+`srsSys` is a stack machine that checks derivations, uniformly in the system
 (`Computability.StackProof`): its instructions push `[] ⇒ []`, `[a] ⇒ [a]` or a rule of the
 system, concatenate the two top derivations, or chain them. So
-`Derives R u v ↔ ∃ k, Checks sys R k (u, v)` (`derives_iff_checks`), a primitive recursive
+`Derives R u v ↔ ∃ k, Checks srsSys R k (u, v)` (`derives_iff_checks`), a primitive recursive
 predicate of the system, the program code and the two strings (`StackProof.checks_prim`):
 derivability in a string rewriting system is recursively enumerable, uniformly in the system.
 
@@ -49,16 +50,19 @@ namespace SRS
 
 variable {R : SRS T}
 
+/-- A step stays a step with a string added on the left. -/
 theorem Step.append_left {u v : List T} (h : R.Step u v) (w : List T) :
     R.Step (w ++ u) (w ++ v) := by
   obtain ⟨lr, hlr, p, q, rfl, rfl⟩ := h
   exact ⟨lr, hlr, w ++ p, q, by simp, by simp⟩
 
+/-- A step stays a step with a string added on the right. -/
 theorem Step.append_right {u v : List T} (h : R.Step u v) (w : List T) :
     R.Step (u ++ w) (v ++ w) := by
   obtain ⟨lr, hlr, p, q, rfl, rfl⟩ := h
   exact ⟨lr, hlr, p, q ++ w, by simp, by simp⟩
 
+/-- Derivations of two strings concatenate to a derivation of their concatenation. -/
 theorem Derives.append {u v u' v' : List T} (h : R.Derives u v) (h' : R.Derives u' v') :
     R.Derives (u ++ u') (v ++ v') := by
   have h₁ : R.Derives (u ++ u') (v ++ u') := by
@@ -71,16 +75,70 @@ theorem Derives.append {u v u' v' : List T} (h : R.Derives u v) (h' : R.Derives 
     | tail _ hs ih => exact ih.tail (hs.append_left v)
   exact h₁.trans h₂
 
+/-- The left side of a rule derives its right side. -/
 theorem Derives.rule {lr : List T × List T} (h : lr ∈ R) : R.Derives lr.1 lr.2 :=
   .single ⟨lr, h, [], [], by simp, by simp⟩
 
+/-- A derivation stays a derivation in a system with more rules. -/
+theorem derives_mono {R' : SRS T} (h : ∀ lr ∈ R, lr ∈ R') {u v : List T} (hd : R.Derives u v) :
+    R'.Derives u v := by
+  induction hd with
+  | refl => exact .refl
+  | tail _ hs ih =>
+    obtain ⟨lr, hlr, p, q, rfl, rfl⟩ := hs
+    exact ih.tail ⟨lr, h lr hlr, p, q, rfl, rfl⟩
+
 /-- Derivability depends only on the set of rules. -/
 theorem derives_congr {R' : SRS T} (h : ∀ lr, lr ∈ R ↔ lr ∈ R') (u v : List T) :
-    R.Derives u v ↔ R'.Derives u v := by
-  have : R.Step = R'.Step := by
-    funext u v
-    simp only [SRS.Step, h]
-  rw [SRS.Derives, SRS.Derives, this]
+    R.Derives u v ↔ R'.Derives u v :=
+  ⟨derives_mono fun lr => (h lr).1, derives_mono fun lr => (h lr).2⟩
+
+/-- **A fresh start symbol.** If `S` occurs in no rule of `R`, and every left side of `R` is
+non-empty, then `[S]` rewrites under `[S] → rhs` and `R` to a string without `S` iff `rhs` rewrites
+to it under `R`. -/
+theorem derives_start {S : T} (hS : ∀ lr ∈ R, S ∉ lr.1 ∧ S ∉ lr.2) (hne : ∀ lr ∈ R, lr.1 ≠ [])
+    {rhs : List T} (hrhs : S ∉ rhs) {v : List T} (hv : S ∉ v) :
+    SRS.Derives (([S], rhs) :: R) [S] v ↔ R.Derives rhs v := by
+  constructor
+  · intro h
+    -- away from `S`, a step of the larger system is a step of `R`
+    have inv : ∀ {u u'}, S ∉ u → SRS.Step (([S], rhs) :: R) u u' → R.Step u u' ∧ S ∉ u' := by
+      intro u u' hu hs
+      obtain ⟨lr, hlr, p, q, rfl, rfl⟩ := hs
+      rcases List.mem_cons.1 hlr with rfl | hlr
+      · simp at hu
+      · refine ⟨⟨lr, hlr, p, q, rfl, rfl⟩, ?_⟩
+        simp only [List.mem_append, not_or] at hu ⊢
+        exact ⟨⟨hu.1.1, (hS lr hlr).2⟩, hu.2⟩
+    have run : ∀ {u}, S ∉ u → SRS.Derives (([S], rhs) :: R) u v → R.Derives u v := by
+      intro u hu hd
+      induction hd using Relation.ReflTransGen.head_induction_on with
+      | refl => exact .refl
+      | head hstep _ ih =>
+        obtain ⟨hR, hc⟩ := inv hu hstep
+        exact (ih hc).head hR
+    rcases h.cases_head with heq | ⟨s₁, ⟨lr, hlr, p, q, h₁, rfl⟩, hrest⟩
+    · exact absurd (heq ▸ List.mem_singleton_self S) hv
+    · rcases List.mem_cons.1 hlr with rfl | hlr
+      · have : p = [] ∧ q = [] := by
+          have hl := congrArg List.length h₁
+          simp only [List.length_append, List.length_singleton] at hl
+          exact ⟨List.length_eq_zero_iff.1 (by omega), List.length_eq_zero_iff.1 (by omega)⟩
+        obtain ⟨rfl, rfl⟩ := this
+        exact run hrhs (by simpa using hrest)
+      · exfalso
+        have hl := congrArg List.length h₁
+        simp only [List.length_append, List.length_singleton] at hl
+        have hp : p = [] := List.length_eq_zero_iff.1 (by
+          have := List.length_pos_of_ne_nil (hne lr hlr); omega)
+        have hq : q = [] := List.length_eq_zero_iff.1 (by
+          have := List.length_pos_of_ne_nil (hne lr hlr); omega)
+        subst hp hq
+        simp only [List.nil_append, List.append_nil] at h₁
+        exact (hS lr hlr).1 (h₁ ▸ List.mem_singleton_self S)
+  · intro h
+    exact (derives_mono (fun lr hlr => List.mem_cons_of_mem _ hlr) h).head
+      ⟨([S], rhs), List.mem_cons_self, [], [], by simp, by simp⟩
 
 /-- Renaming the letters of the rules by `f`. -/
 def mapRules {T' : Type} (f : T → T') (R : SRS T) : SRS T' :=
@@ -88,6 +146,7 @@ def mapRules {T' : Type} (f : T → T') (R : SRS T) : SRS T' :=
 
 variable {T' : Type} {f : T → T'}
 
+/-- A step renames to a step of the renamed system. -/
 theorem step_map {u v : List T} (h : R.Step u v) : (R.mapRules f).Step (u.map f) (v.map f) := by
   obtain ⟨lr, hlr, p, q, rfl, rfl⟩ := h
   exact ⟨_, List.mem_map_of_mem hlr, p.map f, q.map f, by simp, by simp⟩
@@ -102,6 +161,7 @@ theorem step_of_map (hf : Function.Injective f) {u : List T} {v' : List T'}
   obtain rfl := List.map_injective_iff.2 hf hm
   exact ⟨p ++ lr.2 ++ q, by simp [hp, hq], lr, hlr, p, q, by simp, rfl⟩
 
+/-- A derivation renames to a derivation of the renamed system. -/
 theorem derives_map {u v : List T} (h : R.Derives u v) :
     (R.mapRules f).Derives (u.map f) (v.map f) := by
   induction h with
@@ -148,13 +208,14 @@ def srsStep (R : SRS T) (s : List (Judgement T)) (n : ℕ) : List (Judgement T) 
     if s.tail.headI.2 = s.headI.1 then (s.tail.headI.1, s.headI.2) :: s.tail.tail else s
   else s
 
+/-- `srsStep` is primitive recursive. -/
 theorem srsStep_prim :
     Primrec fun y : SRS T × List (Judgement T) × ℕ => srsStep y.1 y.2.1 y.2.2 := by
   unfold srsStep
   fun_prop
 
 /-- The stack machine checking derivations of string rewriting systems. -/
-def sys : StackProof.System (SRS T) (Judgement T) := ⟨srsStep, srsStep_prim⟩
+def srsSys : StackProof.System (SRS T) (Judgement T) := ⟨srsStep, srsStep_prim⟩
 
 open StackProof
 
@@ -181,31 +242,34 @@ theorem srsStep_inv (R : SRS T) (s : List (Judgement T)) (hs : Inv (fun j => R.D
   · exact hs
 
 /-- A program pushing `u ⇒ u`, letter by letter. -/
-theorem exists_refl (R : SRS T) (u : List T) : ∃ p, Pushes sys R p (u, u) := by
+theorem exists_refl (R : SRS T) (u : List T) : ∃ p, Pushes srsSys R p (u, u) := by
   induction u with
-  | nil => exact ⟨_, pushes_one (Nat.pair 0 0) fun _ => by simp [sys, srsStep]⟩
+  | nil => exact ⟨_, pushes_one (Nat.pair 0 0) fun _ => by simp [srsSys, srsStep]⟩
   | cons a u ih =>
     obtain ⟨p, hp⟩ := ih
-    have ha : Pushes sys R [Nat.pair 1 (Encodable.encode a)] ([a], [a]) :=
-      pushes_one _ fun _ => by simp [sys, srsStep]
-    exact ⟨_, pushes_append₂ (Nat.pair 3 0) ha hp fun _ => by simp [sys, srsStep]⟩
+    have ha : Pushes srsSys R [Nat.pair 1 (Encodable.encode a)] ([a], [a]) :=
+      pushes_one _ fun _ => by simp [srsSys, srsStep]
+    exact ⟨_, pushes_append₂ (Nat.pair 3 0) ha hp fun _ => by simp [srsSys, srsStep]⟩
 
 /-- A program pushing `l ⇒ r` for a rule of the system. -/
-theorem exists_rule {R : SRS T} {lr : Judgement T} (h : lr ∈ R) : ∃ p, Pushes sys R p lr := by
+theorem exists_rule {R : SRS T} {lr : Judgement T} (h : lr ∈ R) : ∃ p, Pushes srsSys R p lr := by
   obtain ⟨i, hi, rfl⟩ := List.mem_iff_getElem.1 h
-  exact ⟨_, pushes_one (Nat.pair 2 i) fun _ => by simp [sys, srsStep, hi]⟩
+  exact ⟨_, pushes_one (Nat.pair 2 i) fun _ => by simp [srsSys, srsStep, hi]⟩
 
-theorem exists_concat {R : SRS T} {a b : Judgement T} {p q : List ℕ} (hp : Pushes sys R p a)
-    (hq : Pushes sys R q b) : Pushes sys R (p ++ q ++ [Nat.pair 3 0]) (a.1 ++ b.1, a.2 ++ b.2) :=
-  pushes_append₂ _ hp hq fun _ => by simp [sys, srsStep]
+/-- Programs pushing `a` and `b` give a program pushing their concatenation. -/
+theorem pushes_concat {R : SRS T} {a b : Judgement T} {p q : List ℕ} (hp : Pushes srsSys R p a)
+    (hq : Pushes srsSys R q b) :
+    Pushes srsSys R (p ++ q ++ [Nat.pair 3 0]) (a.1 ++ b.1, a.2 ++ b.2) :=
+  pushes_append₂ _ hp hq fun _ => by simp [srsSys, srsStep]
 
-theorem exists_chain {R : SRS T} {u v w : List T} {p q : List ℕ} (hp : Pushes sys R p (u, v))
-    (hq : Pushes sys R q (v, w)) : Pushes sys R (p ++ q ++ [Nat.pair 4 0]) (u, w) :=
-  pushes_append₂ _ hp hq fun _ => by simp [sys, srsStep]
+/-- Programs pushing `u ⇒* v` and `v ⇒* w` give a program pushing `u ⇒* w`. -/
+theorem pushes_chain {R : SRS T} {u v w : List T} {p q : List ℕ} (hp : Pushes srsSys R p (u, v))
+    (hq : Pushes srsSys R q (v, w)) : Pushes srsSys R (p ++ q ++ [Nat.pair 4 0]) (u, w) :=
+  pushes_append₂ _ hp hq fun _ => by simp [srsSys, srsStep]
 
 /-- Every derivation has a program that pushes it. -/
 theorem exists_derives {R : SRS T} {u v : List T} (h : R.Derives u v) :
-    ∃ p, Pushes sys R p (u, v) := by
+    ∃ p, Pushes srsSys R p (u, v) := by
   induction h with
   | refl => exact exists_refl R u
   | tail _ hs ih =>
@@ -214,14 +278,14 @@ theorem exists_derives {R : SRS T} {u v : List T} (h : R.Derives u v) :
     obtain ⟨pa, hpa⟩ := exists_refl R a
     obtain ⟨pr, hpr⟩ := exists_rule hlr
     obtain ⟨pb, hpb⟩ := exists_refl R b
-    exact ⟨_, exists_chain hp (exists_concat (exists_concat hpa hpr) hpb)⟩
+    exact ⟨_, pushes_chain hp (pushes_concat (pushes_concat hpa hpr) hpb)⟩
 
 /-- **Derivability is checking**, uniformly in the system: `u ⇒* v` iff some program checks it.
 With `StackProof.checks_prim`, derivability in a string rewriting system is recursively
 enumerable, uniformly in the system. -/
 theorem derives_iff_checks (R : SRS T) (u v : List T) :
-    R.Derives u v ↔ ∃ k, Checks sys R k (u, v) :=
-  good_iff_checks sys R (Good := fun j : Judgement T => R.Derives j.1 j.2) .refl (srsStep_inv R)
+    R.Derives u v ↔ ∃ k, Checks srsSys R k (u, v) :=
+  good_iff_checks srsSys R (Good := fun j : Judgement T => R.Derives j.1 j.2) .refl (srsStep_inv R)
     (fun _ h => exists_derives h) (u, v)
 
 end Machine
@@ -237,6 +301,7 @@ variable [DecidableEq T]
 def CFGCode.toSRS (c : CFGCode T) : SRS (T ⊕ ℕ) := c.2.map fun r => ([.inr r.1], r.2)
 
 omit [DecidableEq T] in
+/-- `symOf` is injective. -/
 theorem symOf_injective {N : Type} : Function.Injective (symOf : T ⊕ N → Symbol T N) := by
   rintro (a | a) (b | b) h <;> simp_all [symOf]
 
@@ -246,10 +311,12 @@ def unSym {N : Type} : Symbol T N → T ⊕ N
   | .nonterminal n => .inr n
 
 omit [DecidableEq T] in
+/-- `unSym` is a right inverse of `symOf`. -/
 theorem symOf_unSym {N : Type} (x : Symbol T N) : symOf (unSym x) = x := by
   cases x <;> rfl
 
 omit [DecidableEq T] in
+/-- Mapping `unSym`, then `symOf`, over a string gives the string back. -/
 theorem map_symOf_unSym {N : Type} (l : List (Symbol T N)) : (l.map unSym).map symOf = l := by
   simp [List.map_map, Function.comp_def, symOf_unSym]
 
@@ -301,7 +368,7 @@ variable [Primcodable T]
 open StackProof in
 /-- **Membership in the language of a grammar code is checking**, uniformly in the code. -/
 theorem mem_language_iff_checks (c : CFGCode T) (w : List T) :
-    w ∈ c.toCFG.language ↔ ∃ k, Checks sys c.toSRS k ([.inr c.1], w.map .inl) := by
+    w ∈ c.toCFG.language ↔ ∃ k, Checks srsSys c.toSRS k ([.inr c.1], w.map .inl) := by
   rw [← derives_iff_checks, ← derives_toCFG_iff]
   simp [ContextFreeGrammar.mem_language_iff, symOf, Function.comp_def]
 

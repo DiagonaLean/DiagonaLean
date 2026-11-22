@@ -44,7 +44,7 @@ control states in `Ctrl`. The transition function is `normTr`, built from `simSt
   *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
 
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.Foundations.Computability.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -263,4 +263,4 @@ theorem fold_zero : fold 0 = 1 := rfl
 /-- `fold (-1) = 2`. -/
 theorem fold_neg_one : fold (-1) = 2 := rfl
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.Foundations.Computability.Normalize

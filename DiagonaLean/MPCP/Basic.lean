@@ -34,6 +34,12 @@ def DecisionProblem (c : Tile α) (P : Stack α) : Prop :=
   ∃ A : Stack α, (∀ t ∈ A, t ∈ c :: P) ∧
     c.top ++ τ1 A = c.bot ++ τ2 A
 
+/-- Solvability of MPCP depends only on the set of tiles. -/
+theorem mpcp_congr (c : Tile α) {P P' : Stack α} (h : ∀ t, t ∈ P ↔ t ∈ P') :
+    DecisionProblem c P ↔ DecisionProblem c P' := by
+  unfold DecisionProblem
+  simp only [List.mem_cons, h]
+
 /-- The MPCP decision problem over `Bool`. -/
 abbrev MPCProblem : Tile Bool × Stack Bool → Prop := fun ⟨c, P⟩ => DecisionProblem c P
 

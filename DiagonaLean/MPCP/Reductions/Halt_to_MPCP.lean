@@ -4,8 +4,8 @@ Authors: Aalok Thakkar
 -/
 
 import DiagonaLean.Halt.Basic
-import DiagonaLean.MPCP.Basic
-import DiagonaLean.Foundations.Computability.Normalize.Conditions
+import DiagonaLean.MPCP.AlphabetLift
+import DiagonaLean.Foundations.Computability.Normalize.Normalize
 
 @[expose] public section
 
@@ -14,6 +14,11 @@ import DiagonaLean.Foundations.Computability.Normalize.Conditions
 Reduction from the halting problem to MPCP following the Hopcroft–Ullman construction. Solutions to
 `DecisionProblem (startTile tm w) (haltTiles tm)` encode halting computation histories of `tm` on
 `w`. The main result is `halt_iff_mpcp`, subject to `NoBlankWrites` and `NoLeftBoundary`.
+
+The reduction `haltToMpcpNorm` first normalizes the machine and its input with
+`Foundations.Computability.Normalize`, so that both conditions hold, then renames states to their
+codes (`Alpha.map`), over the fixed alphabet `Alpha ℕ Sym2` (`halt_reducesto_mpcp_spec`,
+`haltReducesMPCP`).
 
 ## References
 
@@ -26,7 +31,8 @@ Reduction from the halting problem to MPCP following the Hopcroft–Ullman const
 namespace DiagonaLean.MPCP.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP DiagonaLean.Halt
-  DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Normalize
+  DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability.Normalize
+  DiagonaLean.Synthetic.Notation
 
 /-- The alphabet of the reduced MPCP instance, extending the tape alphabet with TM state labels, a
   halt marker, and a configuration separator. -/
@@ -46,6 +52,21 @@ inductive Alpha (Q : Type) (S : Type) where
 @[inherit_doc Alpha.state] prefix:max "↟ₛ" => Alpha.state
 @[inherit_doc Alpha.sep]   notation   "#"  => Alpha.sep
 @[inherit_doc Alpha.halt]  notation   "h⊥" => Alpha.halt
+
+/-- Map state labels inside an extended TM configuration alphabet. -/
+def Alpha.map {Q Q' S : Type} (g : Q → Q') : Alpha Q S → Alpha Q' S
+  | .tape s  => .tape s
+  | .state q => .state (g q)
+  | .halt    => .halt
+  | .sep     => .sep
+
+/-- `Alpha.map` preserves injectivity of state mappings. -/
+theorem Alpha.map_injective {Q Q' S : Type} {g : Q → Q'} (hg : Function.Injective g) :
+    Function.Injective (Alpha.map g : Alpha Q S → Alpha Q' S) := by
+  intro x y hxy
+  cases x <;> cases y <;>
+    simp only [Alpha.map, reduceCtorEq, Alpha.tape.injEq, Alpha.state.injEq] at hxy ⊢ <;>
+    first | exact hxy | exact hg hxy
 
 variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
 
@@ -289,6 +310,14 @@ def transitionTiles (tm : EncodableTM Symbol) [Encodable Symbol] :
   letI := tm.stateEncodable
   (enumerate (tm.State × Option Symbol)).flatMap
     (fun qa => transitionTilesFor tm.toSingleTapeTM qa.1 qa.2)
+
+/-- The transition tiles are those of the pairs of a state and a cell. -/
+theorem mem_transitionTiles [Encodable Symbol] (tm : EncodableTM Symbol)
+    (x : Tile (Alpha tm.State Symbol)) :
+    x ∈ transitionTiles tm ↔ ∃ q a, x ∈ transitionTilesFor tm.toSingleTapeTM q a := by
+  let := tm.stateEncodable
+  simp only [transitionTiles, List.mem_flatMap]
+  exact ⟨fun ⟨qa, _, h⟩ => ⟨qa.1, qa.2, h⟩, fun ⟨q, a, h⟩ => ⟨(q, a), mem_enumerate _, h⟩⟩
 
 /-- The full MPCP tile set for the reduction, excluding the start tile. Consists of copy tiles, the
   separator tile, all transition tiles, all absorb tiles, and the final tile. -/
@@ -3090,5 +3119,37 @@ theorem halt_iff_mpcp (tm : EncodableTM Symbol)
       exact h_nbw
       exact h_nlb
       exact hd
+
+/-- **The reduction.** The function witnessing `HaltProblem ⪯ₘ MPCP`: it normalizes the machine
+and input to satisfy `NoBlankWrites` and `NoLeftBoundary`, builds the MPCP instance of
+`halt_iff_mpcp`, and renames states by `tm.stateEncodable` composed with the `Encodable` instance
+for the normalizer's control states. -/
+def haltToMpcpNorm (p : EncodableTM Bool × List Bool) :
+    Tile (Alpha ℕ Sym2) × Stack (Alpha ℕ Sym2) :=
+  let tm := normEnc p.1
+  letI := tm.stateEncodable
+  (Tile.map (Alpha.map Encodable.encode) (startTile tm.toSingleTapeTM (encInput p.2)),
+    (haltTiles tm).map (Tile.map (Alpha.map Encodable.encode)))
+
+/-- `haltToMpcpNorm` witnesses that the halting problem many-one reduces to MPCP over the fixed
+alphabet `Alpha ℕ Sym2`. -/
+theorem halt_reducesto_mpcp_spec :
+    HaltProblem ⪯ₘ[haltToMpcpNorm]
+      fun x : Tile (Alpha ℕ Sym2) × Stack (Alpha ℕ Sym2) => MPCP.DecisionProblem x.1 x.2 := by
+  rintro ⟨tm, w⟩
+  show Halts tm.toSingleTapeTM w ↔ _
+  let normTMEnc := normEnc tm
+  let _ := normTMEnc.stateEncodable
+  rw [halts_normTM_iff tm.toSingleTapeTM w,
+    halt_iff_mpcp normTMEnc (normTM_noBlankWrites tm.toSingleTapeTM) (encInput w)
+      (normTM_noLeftBoundary tm.toSingleTapeTM w)]
+  exact mpcp_map_iff _ (Alpha.map_injective Encodable.encode_injective) _ _
+
+/-- The halting problem many-one reduces to MPCP over the fixed alphabet `Alpha ℕ Sym2`, through
+`haltToMpcpNorm`. -/
+def haltReducesMPCP :
+    HaltProblem ⪯ₘ fun x : Tile (Alpha ℕ Sym2) × Stack (Alpha ℕ Sym2) =>
+      MPCP.DecisionProblem x.1 x.2 :=
+  ⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩
 
 end DiagonaLean.MPCP.Reduction

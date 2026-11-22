@@ -12,26 +12,17 @@ import DiagonaLean.UTMHalt.Reductions.Halt_to_UTMHalt
 import DiagonaLean.UTMHalt.Undecidable
 
 import DiagonaLean.MPCP.Basic
-import DiagonaLean.Foundations.Computability.Normalize.Conditions
-import DiagonaLean.Foundations.Computability.Normalize.Normalize
-import DiagonaLean.Foundations.Computability.Normalize.Cell
-import DiagonaLean.Foundations.Computability.Normalize.Halting
-import DiagonaLean.Foundations.Computability.Normalize.Input
-import DiagonaLean.Foundations.Computability.Normalize.Invariant
-import DiagonaLean.Foundations.Computability.Normalize.Machine
-import DiagonaLean.Foundations.Computability.Normalize.Properties
-import DiagonaLean.Foundations.Computability.Normalize.Sim
-import DiagonaLean.Foundations.Computability.Normalize.Steps
+import DiagonaLean.MPCP.AlphabetLift
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.MPCP.Undecidable
-import DiagonaLean.MPCP.AlphabetLift
 import DiagonaLean.MPCP.MachineLevel
 import DiagonaLean.SemiThue.Basic
 import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
 import DiagonaLean.SemiThue.MachineLevel
-import DiagonaLean.SemiThue.Undecidable
 import DiagonaLean.SemiThue.AlphabetLift
+import DiagonaLean.SemiThue.Undecidable
 import DiagonaLean.GrammarMem.Basic
+import DiagonaLean.GrammarMem.Reductions.Halt_to_GrammarMem
 import DiagonaLean.GrammarMem.MachineLevel
 import DiagonaLean.GrammarMem.Undecidable
 
@@ -41,6 +32,7 @@ import DiagonaLean.PCP.Reductions.Halt_to_PCP
 import DiagonaLean.PCP.Reductions.MPCP_to_PCP
 import DiagonaLean.PCP.Undecidable
 import DiagonaLean.PCP.Primrec
+import DiagonaLean.PCP.MachineLevel
 
 import DiagonaLean.AmbigCFG.Basic
 import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFG
@@ -58,6 +50,7 @@ import DiagonaLean.MatMort.Basic
 import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
 import DiagonaLean.MatMort.Undecidable
 import DiagonaLean.MatMort.Primrec
+import DiagonaLean.MatMort.MachineLevel
 
 import DiagonaLean.KAComm.TermEq.Basic
 import DiagonaLean.KAComm.TermEq.Reductions.Halt_to_TermEq
@@ -104,15 +97,6 @@ import DiagonaLean.Synthetic.ReductionCheck
 import DiagonaLean.Synthetic.MetaprogramCheck
 
 import DiagonaLean.Foundations.Computability.Prim
-import DiagonaLean.Foundations.Grammar.Code
-import DiagonaLean.Foundations.Grammar.Rewriting
-import DiagonaLean.Foundations.Codes.Basic
-import DiagonaLean.Foundations.Codes.Unary
-import DiagonaLean.Foundations.Codes.Correspondence
-import DiagonaLean.Foundations.Codes.Rewriting
-import DiagonaLean.Foundations.Codes.Grammar
-import DiagonaLean.Foundations.Codes.Functor
-import DiagonaLean.Foundations.Codes.Tactic
 import DiagonaLean.Foundations.Computability.StackProof
 import DiagonaLean.Foundations.Computability.PrimrecRec
 import DiagonaLean.Foundations.Computability.PolyTree
@@ -121,6 +105,7 @@ import DiagonaLean.Foundations.Computability.FinsetPrim
 import DiagonaLean.Foundations.Computability.IntPrim
 import DiagonaLean.Foundations.Computability.MatrixPrim
 import DiagonaLean.Foundations.Computability.DerivePrimcodable
+import DiagonaLean.Foundations.Computability.DerivePrimrec
 import DiagonaLean.Foundations.Computability.ListConfig
 import DiagonaLean.Foundations.Computability.TM0ToCslib
 import DiagonaLean.Foundations.Computability.PartrecToCslib
@@ -134,6 +119,27 @@ import DiagonaLean.Foundations.Computability.CodeSim
 import DiagonaLean.Foundations.Computability.ProofRace
 import DiagonaLean.Foundations.Computability.OutputSearch
 import DiagonaLean.Foundations.Computability.MachineBridge
+import DiagonaLean.Foundations.Computability.Normalize.Conditions
+import DiagonaLean.Foundations.Computability.Normalize.Normalize
+import DiagonaLean.Foundations.Computability.Normalize.Cell
+import DiagonaLean.Foundations.Computability.Normalize.Halting
+import DiagonaLean.Foundations.Computability.Normalize.Input
+import DiagonaLean.Foundations.Computability.Normalize.Invariant
+import DiagonaLean.Foundations.Computability.Normalize.Machine
+import DiagonaLean.Foundations.Computability.Normalize.Properties
+import DiagonaLean.Foundations.Computability.Normalize.Sim
+import DiagonaLean.Foundations.Computability.Normalize.Steps
+
+import DiagonaLean.Foundations.Grammar.Code
+import DiagonaLean.Foundations.Grammar.Rewriting
+
+import DiagonaLean.Foundations.Codes.Basic
+import DiagonaLean.Foundations.Codes.Unary
+import DiagonaLean.Foundations.Codes.Correspondence
+import DiagonaLean.Foundations.Codes.Rewriting
+import DiagonaLean.Foundations.Codes.Grammar
+import DiagonaLean.Foundations.Codes.Functor
+import DiagonaLean.Foundations.Codes.Tactic
 
 import DiagonaLean.Foundations.CombinatoryLogic.Code
 import DiagonaLean.Foundations.CombinatoryLogic.ProofSearch

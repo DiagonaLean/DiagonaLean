@@ -14,10 +14,9 @@ import DiagonaLean.SemiThue.MachineLevel
 string such that the machine halts on its own code iff the start string rewrites to the empty
 string. A fresh start symbol `0`, with the rule `[0] → start string`, and the other symbols numbered
 from `1` (`gSym`), turn this into a grammar code (`gCode`) whose language contains the empty word
-iff the start string rewrites to the empty string (`emptyWord_gCode_iff`, from
-`Start.derives_start` and `SRS.derives_map_iff`). The grammar codes are of type 0
-(`isType0_gCode`) and primitive recursive in
-the machine code (`gCode_prim`).
+iff the start string rewrites to the empty string (`emptyWord_gCode_iff`, from `SRS.derives_start`
+and `SRS.derives_map_iff`). The grammar codes are of type 0 (`isType0_gCode`) and primitive
+recursive in the machine code (`gCode_prim`).
 
 ## Main statements
 
@@ -38,19 +37,21 @@ open DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Halt DiagonaLean.Hal
 variable {T : Type}
 
 /-- The symbols of `Alpha ℕ Sym2` as the nonterminals `1, 2, …`; `0` is the start symbol. -/
-def gSym (a : Alpha ℕ Foundations.Normalize.Sym2) : T ⊕ ℕ := .inr (Encodable.encode a + 1)
+def gSym (a : Alpha ℕ Normalize.Sym2) : T ⊕ ℕ := .inr (Encodable.encode a + 1)
 
+/-- `gSym` is injective. -/
 theorem gSym_injective : Function.Injective (gSym (T := T)) := fun a b h => by
   simp only [gSym, Sum.inr.injEq, Nat.add_right_cancel_iff] at h
   exact Encodable.encode_injective h
 
-theorem gSym_ne_start (a : Alpha ℕ Foundations.Normalize.Sym2) : gSym (T := T) a ≠ .inr 0 := by
+/-- No symbol is sent to the start symbol `0`. -/
+theorem gSym_ne_start (a : Alpha ℕ Normalize.Sym2) : gSym (T := T) a ≠ .inr 0 := by
   simp [gSym]
 
 /-- The grammar code of a rewriting system `R` and a start string `u`: the start rule `[0] → u`
 and the rules of `R`, over the nonterminals `gSym`. -/
-def ofSRS (R : SRS (Alpha ℕ Foundations.Normalize.Sym2))
-    (u : List (Alpha ℕ Foundations.Normalize.Sym2)) :
+def ofSRS (R : SRS (Alpha ℕ Normalize.Sym2))
+    (u : List (Alpha ℕ Normalize.Sym2)) :
     GrammarCode T :=
   (0, ([.inr 0], u.map gSym) :: R.map fun lr => (lr.1.map gSym, lr.2.map gSym))
 
@@ -65,13 +66,13 @@ derive_primrec gCode [Primcodable T]
 
 /-- **The empty word is in the language of `ofSRS R u` iff `u` rewrites to the empty string**, when
 every rule of `R` has a non-empty left side. -/
-theorem emptyWord_ofSRS_iff (R : SRS (Alpha ℕ Foundations.Normalize.Sym2))
-    (u : List (Alpha ℕ Foundations.Normalize.Sym2)) (hne : ∀ lr ∈ R, lr.1 ≠ []) :
+theorem emptyWord_ofSRS_iff (R : SRS (Alpha ℕ Normalize.Sym2))
+    (u : List (Alpha ℕ Normalize.Sym2)) (hne : ∀ lr ∈ R, lr.1 ≠ []) :
     EmptyWordProblem (ofSRS (T := T) R u) ↔ R.Derives u [] := by
   show SRS.Derives (([(Sum.inr 0 : T ⊕ ℕ)], u.map gSym) ::
       R.map fun lr => (lr.1.map gSym, lr.2.map gSym)) [Sum.inr 0]
       (([] : List T).map Sum.inl) ↔ _
-  rw [List.map_nil, Start.derives_start (v := [])]
+  rw [List.map_nil, SRS.derives_start (v := [])]
   · exact SRS.derives_map_iff gSym_injective _ []
   · intro lr hlr
     obtain ⟨lr, -, rfl⟩ := List.mem_map.1 hlr
@@ -108,6 +109,7 @@ theorem selfHalt_iff_emptyWord (M : EncodableTM Bool) :
 
 variable [Primcodable T]
 
+/-- `IsType0` is a primitive recursive predicate. -/
 theorem isType0_prim : PrimrecPred (IsType0 (T := T)) := by
   unfold IsType0 isType0
   fun_prop

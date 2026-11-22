@@ -13,7 +13,7 @@ import DiagonaLean.Foundations.Computability.Normalize.Halting
 moves left at the left end of its tape (`normTM_noLeftBoundary`).
 -/
 
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.Foundations.Computability.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -89,4 +89,4 @@ theorem normTM_noLeftBoundary (w : List Bool) : NoLeftBoundary (normTM tm) (encI
       rw [normTr]
       split <;> simp
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.Foundations.Computability.Normalize
