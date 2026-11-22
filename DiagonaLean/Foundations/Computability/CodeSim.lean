@@ -4,6 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.HaltSearch
+import DiagonaLean.Foundations.Computability.PrimDef
 
 @[expose] public section
 
@@ -353,9 +354,13 @@ theorem tokens_prim : Primrec tokens := by
 end Prim
 
 
+derive_primrec rowTok
+
+derive_primrec rowsC
+
 /-- `dataC` is primitive recursive. -/
 @[fun_prop] theorem dataC_prim : Primrec dataC := by
-  unfold dataC rowsC rowTok
+  unfold dataC
   fun_prop
 
 end DiagonaLean.Foundations.Computability

@@ -165,6 +165,10 @@ def fib : ℕ → ℕ
 example : Primrec fun n : ℕ => fib (2 * n) + n := by fun_prop     -- composition
 example : Computable fib := by fun_prop                           -- Primrec ⇒ Computable
 
+def step (n : ℕ) (l : List ℕ) : List ℕ := if n < l.length then l else n :: l
+derive_primrec step                                                -- registers `step_prim`
+example : Primrec fun n : ℕ => step (fib n) [n] := by fun_prop
+
 inductive Rose where                                               -- your own type
   | node (label : ℕ) (kids : List Rose)
 derive_primcodable Rose
@@ -203,7 +207,8 @@ def swappedUndecidable : Undecidable SwappedPCP := by
 
 | Tactic or command | What it does | Defined in |
 |---|---|---|
-| `fun_prop` (set up for `Primrec`, `PrimrecPred`, `Computable`) | Proves that a function built by composition is primitive recursive or computable | [`Foundations/Computability/Prim.lean`](DiagonaLean/Foundations/Computability/Prim.lean) |
+| `fun_prop` (set up for `Primrec`, `PrimrecPred`, `Computable`) | Proves that a function built by composition is primitive recursive or computable; a function out of a finite type, or a `match` on one, needs no lemma | [`Foundations/Computability/Prim.lean`](DiagonaLean/Foundations/Computability/Prim.lean) |
+| `derive_primrec f` | States, proves (`unfold f; fun_prop`) and registers the `fun_prop` lemma `f_prim` of a non-recursive definition, after which `fun_prop` handles `f` applied to any primitive recursive arguments | [`Foundations/Computability/PrimDef.lean`](DiagonaLean/Foundations/Computability/PrimDef.lean) |
 | `primrec_rec` | Proves `Primrec f` or `Primrec₂ f` for `f` defined by recursion on `ℕ`, lists, or a type from `derive_primcodable`, read off `f`'s equations | [`Foundations/Computability/PrimrecRec.lean`](DiagonaLean/Foundations/Computability/PrimrecRec.lean) |
 | `derive_primcodable T` | Makes an inductive type `Primcodable`, with `fun_prop` lemmas for its constructors and the recursion principle `primrec_rec` uses; nested `List T` and `Option T` fields and universe-polymorphic types are supported | [`Foundations/Computability/DerivePrimcodable.lean`](DiagonaLean/Foundations/Computability/DerivePrimcodable.lean) |
 | `tm_computer F` | Proves `∃ R : SingleTapeTM Bool, ∀ l, R.Outputs l (F l)` for `F : List Bool → List Bool` that `fun_prop` proves computable | [`Foundations/Computability/Computer.lean`](DiagonaLean/Foundations/Computability/Computer.lean) |

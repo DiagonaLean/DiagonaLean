@@ -14,7 +14,9 @@ the kernel never checked (`debug.skipKernelTC`), or copy the compiled code of an
 classical definition (`run_cmd` with `addDecl` and `IR.declMapExt.addEntry`), which the kernel and
 `lean4checker` accept. Such a metaprogram leaves nothing in the environment that tells it apart, so
 this check reads the sources. It forbids the commands that run code at elaboration time and the
-functions that change the environment (`ruleOf`), except where `allowances` permits them.
+functions that change the environment (`ruleOf`), except where `allowances` permits them. A new
+command is permitted only in the declarations that `commandAllowances` names, file by file, so an
+allowlisted file cannot gain a second command unnoticed.
 `scripts/CheckMetaprograms.lean` runs it over the library in CI.
 
 Each file is parsed by Lean's own parser (`parseFile`), not scanned as text, so comments, string
@@ -205,19 +207,49 @@ def parseFile (env : Environment) (fileName src : String) : IO (Array Syntax × 
       s ← elabScopeCommand inputCtx s cmd
   return (cmds, s.messages)
 
-/-- The files, relative to the root, and the rules that they may break. -/
+/-- The files, relative to the root, and the rules that they may break anywhere in the file. The
+`command` rule is never allowed for a whole file; see `commandAllowances`. -/
 def allowances : List (String × List String) := [
   -- defines `#check_reductions`, whose messages name the escape hatches it reports
-  ("DiagonaLean/Synthetic/ReductionCheck.lean", ["command", "unsafe", "implemented_by"]),
+  ("DiagonaLean/Synthetic/ReductionCheck.lean", ["unsafe", "implemented_by"]),
   -- not imported by `DiagonaLean.lean`; evaluates a reduction to show that it runs
-  ("DiagonaLean/Synthetic/EvalExample.lean", ["eval"]),
-  -- defines `derive_primcodable`, which only parses and elaborates generated source text as
-  -- ordinary commands; the functions that change the environment directly stay forbidden here
-  ("DiagonaLean/Foundations/Computability/DerivePrimcodable.lean", ["command"])]
+  ("DiagonaLean/Synthetic/EvalExample.lean", ["eval"])]
 
-/-- The rules that the file at `rel` may break. -/
+/-- The files, relative to the root, and the top-level declarations in each that may break the
+`command` rule: the command itself and the helpers typed in `CommandElabM`. Each name may be
+declared once in its file, so a second declaration with the same name, in another namespace for
+instance, is still reported, and so is a command with no name. What these declarations do is not
+checked; changes to them are reviewed by hand. -/
+def commandAllowances : List (String × List String) := [
+  -- `#check_reductions`
+  ("DiagonaLean/Synthetic/ReductionCheck.lean", ["checkReductions", "elabCheckReductions"]),
+  -- `derive_primcodable`, which only parses and elaborates generated source text as ordinary
+  -- commands
+  ("DiagonaLean/Foundations/Computability/DerivePrimcodable.lean",
+    ["readCtors", "derivePrimcodable"]),
+  -- `derive_primrec`, under the same discipline: it elaborates one generated theorem
+  ("DiagonaLean/Foundations/Computability/PrimDef.lean", ["readArgs", "derivePrimrec"])]
+
+/-- The rules that the file at `rel` may break anywhere. -/
 def allowedRules (rel : String) : List String :=
   ((allowances.find? (·.1 == rel)).map (·.2)).getD []
+
+/-- The declarations of the file at `rel` that may break the `command` rule. -/
+def allowedCommandDecls (rel : String) : List String :=
+  ((commandAllowances.find? (·.1 == rel)).map (·.2)).getD []
+
+/-- The name that the top-level command `stx` declares, if any: the identifier of a declaration
+(`def`, `theorem`, …) or the `(name := …)` of a syntax, `elab` or `macro` command. The first one in
+the tree is taken, since both come before the body. -/
+partial def declName? (stx : Syntax) : Option String :=
+  match stx with
+  | .node _ k args =>
+    if k == ``Parser.Command.declId || k == ``Parser.Command.namedName then
+      args.findSome? fun a => match a with
+        | .ident _ _ n _ => some n.toString
+        | _ => none
+    else args.findSome? declName?
+  | _ => none
 
 /-- The report lines for the file at `rel` with contents `src`, parsed in the environment `env`:
 one line per forbidden use, and one per error from parsing the file. -/
@@ -229,9 +261,18 @@ def violationsInSource (env : Environment) (rel src : String) : IO (Array String
   for msg in msgs.toList do
     if msg.severity == .error then
       out := out.push s!"{rel}:{msg.pos.line}: does not parse: {(← msg.data.toString).trimAscii}"
+  let commandDecls := allowedCommandDecls rel
+  let mut seen : List String := []
   for cmd in cmds do
+    let name? := declName? cmd
+    let commandOk := match name? with
+      | some n => commandDecls.contains n && !seen.contains n
+      | none => false
+    if let some n := name? then seen := n :: seen
     for f in findings cmd do
-      if !allowed.contains f.rule.name then
+      let ok := if f.rule.name == commandRule.name then commandOk
+        else allowed.contains f.rule.name
+      if !ok then
         out := out.push s!"{rel}:{(fileMap.toPosition f.pos).line}: `{f.shown}` {f.rule.why}"
   return out
 
