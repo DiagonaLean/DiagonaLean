@@ -613,8 +613,12 @@ theorem pcp_reducesto_ambigCFG_spec :
   fun P => pcp_iff_ambigcfg P
 
 /-- PCP many-one reduces to CFG ambiguity through `pcpToAmbigCFG`. -/
-def pcpReducesAmbigCFG :
+def _root_.DiagonaLean.AmbigCFG.synthFromPCP :
     @PCP.DecisionProblem α ⪯_s fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2 :=
   ⟨pcpToAmbigCFG, pcp_reducesto_ambigCFG_spec⟩
+
+/-- The former name of `AmbigCFG.synthFromPCP`. -/
+@[deprecated DiagonaLean.AmbigCFG.synthFromPCP (since := "2026-11-23")]
+abbrev pcpReducesAmbigCFG := @DiagonaLean.AmbigCFG.synthFromPCP
 
 end DiagonaLean.AmbigCFG.Reduction

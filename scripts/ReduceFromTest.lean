@@ -60,7 +60,7 @@ example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem Bool)) :
 example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem Bool)) :
     HaltHard (fun c : DiagonaLean.Foundations.Grammar.CFGCode (Bool ⊕ ℕ) =>
       DiagonaLean.AmbigCFG.DecisionProblem c.toCFG) := by
-  reduce_from h via (DiagonaLean.AmbigCFG.MachineLevel.pcpReducesAmbigCFGCode (α := Bool))
+  reduce_from h via (DiagonaLean.AmbigCFG.synthCodeFromPCP (α := Bool))
 
 example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem (Ext Bool))) :
     HaltHard (@DiagonaLean.PCP.DecisionProblem Bool) := by
