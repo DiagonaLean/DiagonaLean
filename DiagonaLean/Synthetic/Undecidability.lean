@@ -11,8 +11,11 @@ import DiagonaLean.Synthetic.ReductionChain
 
 /-! # Core undecidability definitions
 
-`Undecidable p` is a many-one reduction from `HaltProblem` to `p`, kept as data. Undecidability
-propagates along many-one reductions (`undecidabilityFromReducibility`).
+`SynthHaltReduction p` is a synthetic many-one reduction from `HaltProblem` to `p`, kept as data.
+It composes with further synthetic reductions (`SynthHaltReduction.comp`). `Undecidable` and
+`undecidabilityFromReducibility` are their former names, kept as aliases until existing uses are
+renamed. The name `Undecidable` undersold the notion: a reduction from the halting problem is
+halting-hardness, which is stronger than undecidability.
 
 ## References
 
@@ -25,9 +28,9 @@ open DiagonaLean.Halt DiagonaLean.Halt.Encoding Cslib.Turing DiagonaLean.Synthet
 
 variable {X Y : Type*}
 
-/-- `p` is undecidable: a many-one reduction from `HaltProblem` to `p`. This is data, not a `Prop`:
-an undecidability result is a definition whose value is the reduction, and composing results
-composes their functions (`undecidabilityFromReducibility`).
+/-- **A synthetic reduction from the halting problem** to `p`. This is data, not a `Prop`: such a
+result is a definition whose value is the reduction, and composing results composes their functions
+(`SynthHaltReduction.comp`).
 
 Lean's logic is classical, so the bare existence of a term of this type would say nothing: the case
 split `if HaltProblem x then a else b` reduces `HaltProblem` to every `p` with a positive and a
@@ -36,13 +39,19 @@ undecidability result means something because it is a definition that Lean compi
 hatch in its dependencies; `#check_reductions` (`Synthetic/ReductionCheck.lean`) checks this in CI.
 The statement that a Turing machine computes the reduction is
 `not_machineDecidable_of_halt_reduces`. -/
-abbrev Undecidable (p : X → Prop) : Type _ := HaltProblem ⪯ₘ p
+abbrev SynthHaltReduction (p : X → Prop) : Type _ := HaltProblem ⪯ₘ p
 
-/-- Undecidability propagates upward along many-one reductions: the reduction from `HaltProblem`
-to `q` is the composition of the two functions. -/
-def undecidabilityFromReducibility {p : X → Prop} {q : Y → Prop}
-    (hp : Undecidable p) (hpq : p ⪯ₘ q) : Undecidable q :=
-  ReductionChain.reducesTrans hp hpq
+/-- The former name of `SynthHaltReduction`, kept as an alias until existing uses are renamed. -/
+abbrev Undecidable := @SynthHaltReduction
+
+/-- A synthetic halting reduction composes with a further synthetic reduction: the reduction from
+`HaltProblem` to `q` is the composition of the two functions. -/
+def SynthHaltReduction.comp {p : X → Prop} {q : Y → Prop}
+    (hp : SynthHaltReduction p) (hpq : p ⪯ₘ q) : SynthHaltReduction q :=
+  SynthReduction.trans hp hpq
+
+/-- The former name of `SynthHaltReduction.comp`. -/
+abbrev undecidabilityFromReducibility := @SynthHaltReduction.comp
 
 /-- `undec from H` reduces a goal `Undecidable q` to a reduction `p ⪯ₘ q`, given
 `H : Undecidable p`; it applies `undecidabilityFromReducibility H`. -/

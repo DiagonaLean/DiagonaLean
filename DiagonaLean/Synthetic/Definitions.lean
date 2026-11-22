@@ -12,8 +12,9 @@ import DiagonaLean.Halt.Basic
 The basic notions of synthetic computability: Boolean deciders (`Decider`, `SDecidable`),
 Turing machine deciders (`TMDeciderFor`, `MachineDecidable`), enumerators (`Enumerator`,
 `SEnumerable`), semi-deciders (`SemiDecider`, `SemiDecidable`), many-one reductions by a fixed
-function (`Reduction`, notation `p ⪯ₘ[f] q`) and many-one reducibility as data
-(`ManyOneReduces`, notation `p ⪯ₘ q`).
+function (`ReducesVia`, notation `p ⪯ₘ[f] q`) and synthetic many-one reductions as data
+(`SynthReduction`, notation `p ⪯ₘ q`). `Reduction` and `ManyOneReduces` are their former names,
+kept as aliases until existing uses are renamed.
 
 ## References
 
@@ -70,18 +71,24 @@ def SemiDecider (f : X → ℕ → Bool) (P : X → Prop) : Prop :=
 def SemiDecidable (P : X → Prop) : Prop :=
   ∃ f : X → ℕ → Bool, SemiDecider f P
 
-/-- `Reduction f P Q` means `f` many-one reduces `P` to `Q`. Unlike `ManyOneReduces`, `f` is a
-plain parameter here rather than existentially/structurally packaged: `Reduction f P Q` is a
-`Prop` (for a *fixed*, already-in-hand `f`), whereas `P ⪯ₘ Q` bundles the choice of `f` itself. -/
-def Reduction (f : X → Y) (P : X → Prop) (Q : Y → Prop) : Prop :=
+/-- `ReducesVia f P Q` means `f` many-one reduces `P` to `Q`. Unlike `SynthReduction`, `f` is a
+plain parameter here rather than structurally packaged: `ReducesVia f P Q` is a `Prop` (for a
+*fixed*, already-in-hand `f`), whereas `P ⪯ₘ Q` bundles the choice of `f` itself. It is the
+correctness statement shared by synthetic reductions and reductions proved computable. -/
+def ReducesVia (f : X → Y) (P : X → Prop) (Q : Y → Prop) : Prop :=
   ∀ x, P x ↔ Q (f x)
 
-/-- If `f` many-one reduces `p` to `q` then we write `p ⪯ₘ[f] q`. -/
-notation:50 p " ⪯ₘ[" f "] " q => Reduction f p q
+/-- The former name of `ReducesVia`, kept as an alias until existing uses are renamed. -/
+abbrev Reduction := @ReducesVia
 
-/-- Many-one reducibility: `f` witnesses `p ⪯ₘ q` when `p x ↔ q (f x)` for every `x`. Packaged
-as a structure (rather than `∃ f, ...`) so a reduction is data: `.f` projects out the witness
-function directly, without going through `Classical.choose`.
+/-- If `f` many-one reduces `p` to `q` then we write `p ⪯ₘ[f] q`. -/
+notation:50 p " ⪯ₘ[" f "] " q => ReducesVia f p q
+
+/-- **A synthetic many-one reduction**: `f` witnesses `p ⪯ₘ q` when `p x ↔ q (f x)` for every
+`x`. *Synthetic* because its only guarantee of computability is that `f` is compiled Lean code,
+checked by `#check_reductions`, not a proof. Packaged as a structure (rather than `∃ f, ...`) so a
+reduction is data: `.f` projects out the witness function directly, without going through
+`Classical.choose`.
 
 **Convention, checked by `#check_reductions`.** Lean's logic is classical, so a term of this
 structure exists for almost any non-trivial `p` and `q`: the case split `if p x then a else b`,
@@ -101,13 +108,16 @@ that one exists, as `Nonempty (p ⪯ₘ q)` would.
 checks these rules over the library. A reduction that passes runs as a Lean program; that is not a
 proof that a Turing machine computes it on encoded inputs, which is the `ComputesReduction`
 hypothesis of `not_machineDecidable_of_halt_reduces`. -/
-structure ManyOneReduces (p : X → Prop) (q : Y → Prop) where
+structure SynthReduction (p : X → Prop) (q : Y → Prop) where
   /-- The reduction function. -/
   f : X → Y
   /-- `f` witnesses the reduction: `p ⪯ₘ[f] q`, i.e. `p x ↔ q (f x)` for every `x`. -/
   hf : p ⪯ₘ[f] q
 
-/-- If `p` many-one reduces to `q` then we write `p ⪯ₘ q`. -/
-notation:50 p " ⪯ₘ " q => ManyOneReduces p q
+/-- The former name of `SynthReduction`, kept as an alias until existing uses are renamed. -/
+abbrev ManyOneReduces := @SynthReduction
+
+/-- If `p` many-one reduces to `q` (synthetically) then we write `p ⪯ₘ q`. -/
+notation:50 p " ⪯ₘ " q => SynthReduction p q
 
 end DiagonaLean.Synthetic.Definitions
