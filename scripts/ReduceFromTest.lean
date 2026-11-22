@@ -75,16 +75,16 @@ def synthFromProved : SynthHaltReduction PCPA := by
 
 /-- Both synthetic. -/
 def synthFromSynth : SynthHaltReduction PCPA := by
-  reduce_from haltReducesMPCP via (mpcpReducesPCP (α := A))
+  reduce_from DiagonaLean.MPCP.synthFromHalt via (mpcpReducesPCP (α := A))
 
 /-! ### Errors -/
 
 /--
-error: reduce_from: the source `haltReducesMPCP` is a synthetic halting reduction, but the goal needs a proved one. A halting reduction is upgraded at its root, by a reduction from `HaltCanon` proved computable, not by a computability proof of the link.
+error: reduce_from: the source `DiagonaLean.MPCP.synthFromHalt` is a synthetic halting reduction, but the goal needs a proved one. A halting reduction is upgraded at its root, by a reduction from `HaltCanon` proved computable, not by a computability proof of the link.
 -/
 #guard_msgs in
 example : HaltHard PCPA := by
-  reduce_from haltReducesMPCP via (mpcpReducesPCP (α := A))
+  reduce_from DiagonaLean.MPCP.synthFromHalt via (mpcpReducesPCP (α := A))
 
 /--
 error: reduce_from: the goal
