@@ -7,7 +7,7 @@ Authors: Akhilesh Balaji
 2. [`Halt ⪯_s PCP`](#halt-ₘ-pcp)
 
 ## `MPCP ⪯_s PCP`
-Given an MPCP instance `(c, R)` (a distinguished tile `c` and a stack `R`), we construct a PCP instance `mpcpToPcp c R` such that `MPCP.DecisionProblem c R ↔ PCP.DecisionProblem (mpcpToPcp c R)` (`mpcp_iff_pcp`). `mpcp_reducesto_pcp_spec` restates it as the many-one reduction `MPCP.DecisionProblem ⪯_s[fun x => mpcpToPcp x.1 x.2] PCP.DecisionProblem` on pairs `(c, R)`, and `mpcpReducesPCP` packages it.
+Given an MPCP instance `(c, R)` (a distinguished tile `c` and a stack `R`), we construct a PCP instance `mpcpToPcp c R` such that `MPCP.Solvable c R ↔ PCP.DecisionProblem (mpcpToPcp c R)` (`mpcp_iff_pcp`). `mpcp_reducesto_pcp_spec` restates it as the many-one reduction `MPCP.DecisionProblem ⪯_s[fun x => mpcpToPcp x.1 x.2] PCP.DecisionProblem` on pairs `(c, R)`, and `mpcpReducesPCP` packages it.
 
 ### Alphabet Extension
 The alphabet `α` is extended with two fresh markers, `Ext α = α | ⋕ | ₹`, where `{⋕,₹} ∩ α = ∅` by construction. A letter `a : α` is lifted to `↟a : Ext α`.

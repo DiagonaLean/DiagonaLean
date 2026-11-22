@@ -6,7 +6,7 @@ Authors: Claude Sonnet 4.6, Akhilesh Balaji
 1. [`Halt ⪯_s MPCP`](#halt-ₘ-mpcp)
 
 ## `Halt ⪯_s MPCP`
-Given a TM `tm` and input `w`, construct an MPCP instance `(startTile tm w, haltTiles tm)` such that `Halts tm w ↔ MPCP.DecisionProblem (startTile tm w) (haltTiles tm)` (`halt_iff_mpcp`), subject to two side conditions of Hopcroft, Motwani and Ullman: `NoBlankWrites tm` (the transition function never writes a blank) and `NoLeftBoundary tm w` (no reachable configuration invokes a left-move at the left tape boundary).
+Given a TM `tm` and input `w`, construct an MPCP instance `(startTile tm w, haltTiles tm)` such that `Halts tm w ↔ MPCP.Solvable (startTile tm w) (haltTiles tm)` (`halt_iff_mpcp`), subject to two side conditions of Hopcroft, Motwani and Ullman: `NoBlankWrites tm` (the transition function never writes a blank) and `NoLeftBoundary tm w` (no reachable configuration invokes a left-move at the left tape boundary).
 
 ### Proof sketch
 #### Alphabet

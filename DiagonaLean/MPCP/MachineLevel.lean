@@ -251,7 +251,7 @@ end
 /-- **A machine halts on its own code iff the MPCP instance of its code is solvable.** -/
 theorem selfHalt_iff_instC (M : EncodableTM Bool) :
     Halts M.toSingleTapeTM (encodeBoolTM M) ↔
-      MPCP.DecisionProblem (instC (encodeBoolTM M)).1 (instC (encodeBoolTM M)).2 := by
+      MPCP.DecisionProblem (instC (encodeBoolTM M)) := by
   let := M.stateEncodable
   have hq : (tokens (encodeBoolTM M)).headI - 1 = Encodable.encode M.q₀ := by
     rw [headI_tokens_code]; rfl
@@ -265,9 +265,7 @@ open DiagonaLean.Synthetic.Definitions DiagonaLean.Halt.Undecidable in
 procedure, composed with the primitive recursive `instC`, would give a machine that decides whether
 a machine halts on its own code. -/
 theorem not_computablePred_mpcp :
-    ¬ ComputablePred fun x :
-      Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) =>
-      MPCP.DecisionProblem x.1 x.2 :=
+    ¬ ComputablePred (@MPCP.DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
   not_computablePred_of_selfHalt instC_prim.to_comp selfHalt_iff_instC
 
 open DiagonaLean.Synthetic.Definitions in
@@ -276,7 +274,7 @@ encoding of instances as bit strings. -/
 theorem not_machineDecidable_mpcp
     {enc : Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) →
       List Bool}
-    (henc : Computable enc) : ¬ MachineDecidable enc fun x => MPCP.DecisionProblem x.1 x.2 :=
+    (henc : Computable enc) : ¬ MachineDecidable enc MPCP.DecisionProblem :=
   not_machineDecidable_of_not_computablePred henc not_computablePred_mpcp
 
 open Foundations.Codes in
@@ -284,7 +282,7 @@ open Foundations.Codes in
 `not_computablePred_mpcp` (`Foundations.Codes.CodeFunctor.not_computablePred_lift`).
 -/
 theorem not_computablePred_mpcpOf {α : Type} [Primcodable α] [Nontrivial α] :
-    ¬ ComputablePred fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2 := by
+    ¬ ComputablePred (@MPCP.DecisionProblem α) := by
   code_lift mpcpFunctor from not_computablePred_mpcp
 
 open DiagonaLean.Synthetic.Definitions in
@@ -292,7 +290,7 @@ open DiagonaLean.Synthetic.Definitions in
 encoding. -/
 theorem not_machineDecidable_mpcpOf {α : Type} [Primcodable α] [Nontrivial α]
     {enc : Tile α × Stack α → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc fun x => MPCP.DecisionProblem x.1 x.2 := by
+    ¬ MachineDecidable enc MPCP.DecisionProblem := by
   code_lift Reduction.mpcpFunctor from not_computablePred_mpcp
 
 open Foundations.Codes in
@@ -302,8 +300,8 @@ of them or none (`ComputablePred.computable_of_manyOneReducible`,
 `REPred.of_manyOneReducible`). -/
 theorem mpcp_manyOneEquiv {α β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
     [Nontrivial β] :
-    ManyOneEquiv (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2)
-      fun x : Tile β × Stack β => MPCP.DecisionProblem x.1 x.2 := by
+    ManyOneEquiv (@MPCP.DecisionProblem α)
+      (@MPCP.DecisionProblem β) := by
   code_lift mpcpFunctor
 
 end DiagonaLean.MPCP.MachineLevel

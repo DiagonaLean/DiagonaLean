@@ -33,13 +33,14 @@ variable {α : Type}
 
 /-- **MPCP is synthetically halting-hard over the fixed alphabet `Alpha ℕ Sym2`.** -/
 def undecidableMPCP :
-    SynthHaltReduction fun x : Tile (Alpha ℕ Foundations.Computability.Normalize.Sym2) ×
-      Stack (Alpha ℕ Foundations.Computability.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 :=
+    SynthHaltReduction (@MPCP.DecisionProblem (Alpha ℕ Foundations.Computability.Normalize.Sym2)) :=
   haltReducesMPCP
 
 /-- **MPCP is synthetically halting-hard over any alphabet `α` with two distinct letters `b0`,
-`b1`.** -/ def undecidableMPCPOf (b0 b1 : α) (hne : b0 ≠ b1) : SynthHaltReduction fun x : Tile α ×
-Stack α => MPCP.DecisionProblem x.1 x.2 := by code_lift mpcpFunctor from undecidableMPCP
+`b1`.** -/
+def undecidableMPCPOf (b0 b1 : α) (hne : b0 ≠ b1) :
+    SynthHaltReduction (@MPCP.DecisionProblem α) := by
+  code_lift mpcpFunctor from undecidableMPCP
 
 /-- **MPCP over `Bool` is synthetically halting-hard.** -/
 def undecidableMPCPBool : SynthHaltReduction MPCProblem :=

@@ -497,7 +497,7 @@ theorem pcp_to_mpcp_solution (c : Tile α) (R : Stack α)
 /-- MPCP reduces many-one to PCP via `mpcpToPcp`: `(c, R)` has an MPCP solution
 iff `mpcpToPcp c R` has a PCP solution. -/
 theorem mpcp_iff_pcp (c : Tile α) (R : Stack α) :
-    MPCP.DecisionProblem c R ↔ PCP.DecisionProblem (mpcpToPcp c R) := by
+    MPCP.Solvable c R ↔ PCP.DecisionProblem (mpcpToPcp c R) := by
   constructor
   · rintro ⟨A, hA, heq⟩
     obtain ⟨B, hne, hB, heqB⟩ := mpcp_to_pcp_solution c R A hA heq
@@ -510,13 +510,13 @@ open DiagonaLean.Synthetic.Definitions
 
 /-- `mpcpToPcp` witnesses that MPCP many-one reduces to PCP over the extended alphabet. -/
 theorem mpcp_reducesto_pcp_spec :
-    (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2) ⪯_s[fun x => mpcpToPcp x.1 x.2]
+    (@MPCP.DecisionProblem α) ⪯_s[fun x => mpcpToPcp x.1 x.2]
       (@PCP.DecisionProblem (Ext α)) :=
   fun x => mpcp_iff_pcp x.1 x.2
 
 /-- MPCP many-one reduces to PCP over the extended alphabet, through `mpcpToPcp`. -/
 def mpcpReducesPCP :
-    (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2) ⪯_s (@PCP.DecisionProblem (Ext α)) :=
+    (@MPCP.DecisionProblem α) ⪯_s (@PCP.DecisionProblem (Ext α)) :=
   ⟨fun x => mpcpToPcp x.1 x.2, mpcp_reducesto_pcp_spec⟩
 
 end DiagonaLean.PCP.Reduction

@@ -27,20 +27,28 @@ open DiagonaLean.PCP
 
 variable {α : Type}
 
-/-- `DecisionProblem c P` holds iff there exists a stack `A` drawn from `c :: P`
-such that `c.top ++ τ1 A = c.bot ++ τ2 A`. The full solution is `c :: A`;
-`c` is the forced start tile. -/
-def DecisionProblem (c : Tile α) (P : Stack α) : Prop :=
+/-- `Solvable c P` holds iff there exists a stack `A` drawn from `c :: P` such that
+`c.top ++ τ1 A = c.bot ++ τ2 A`. The full solution is `c :: A`; `c` is the forced start tile.
+Proofs use this curried form; the problem itself is `DecisionProblem`, on the pair. -/
+def Solvable (c : Tile α) (P : Stack α) : Prop :=
   ∃ A : Stack α, (∀ t ∈ A, t ∈ c :: P) ∧
     c.top ++ τ1 A = c.bot ++ τ2 A
 
+/-- **MPCP**, as a problem on one argument: is the instance, a start tile and a stack, solvable?
+Like every problem of the library, it is a predicate on a single type, so that it can be the source
+or the target of a reduction. -/
+def DecisionProblem (x : Tile α × Stack α) : Prop := Solvable x.1 x.2
+
+theorem decisionProblem_iff (x : Tile α × Stack α) : DecisionProblem x ↔ Solvable x.1 x.2 :=
+  Iff.rfl
+
 /-- Solvability of MPCP depends only on the set of tiles. -/
 theorem mpcp_congr (c : Tile α) {P P' : Stack α} (h : ∀ t, t ∈ P ↔ t ∈ P') :
-    DecisionProblem c P ↔ DecisionProblem c P' := by
-  unfold DecisionProblem
+    Solvable c P ↔ Solvable c P' := by
+  unfold Solvable
   simp only [List.mem_cons, h]
 
 /-- The MPCP decision problem over `Bool`. -/
-abbrev MPCProblem : Tile Bool × Stack Bool → Prop := fun ⟨c, P⟩ => DecisionProblem c P
+abbrev MPCProblem : Tile Bool × Stack Bool → Prop := DecisionProblem
 
 end DiagonaLean.MPCP

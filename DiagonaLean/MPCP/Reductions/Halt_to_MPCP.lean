@@ -1287,7 +1287,7 @@ theorem forward_aux (tm : EncodableTM Symbol) (h_nbw : NoBlankWrites tm.toSingle
 theorem mHasSolution_if_halt (tm : EncodableTM Symbol)
     (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Symbol)
     (h_nlb : NoLeftBoundary tm.toSingleTapeTM w) (h : Halts tm.toSingleTapeTM w) [Encodable Symbol]:
-    MPCP.DecisionProblem (startTile tm.toSingleTapeTM w) (haltTiles tm) := by
+    MPCP.Solvable (startTile tm.toSingleTapeTM w) (haltTiles tm) := by
   obtain ⟨target_tape, h_chain⟩ := h
   obtain ⟨n, h_chain_n⟩ := h_chain.relatesInSteps
   obtain ⟨A, hA_mem, hA_match⟩ :=
@@ -3068,7 +3068,7 @@ private theorem backward_aux_weak (tm : EncodableTM Symbol)
 theorem halt_if_mHasSolution (tm : EncodableTM Symbol)
     (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Symbol)
     (h_nlb : NoLeftBoundary tm.toSingleTapeTM w) [Encodable Symbol]
-    (h : MPCP.DecisionProblem (startTile tm.toSingleTapeTM w) (haltTiles tm)) :
+    (h : MPCP.Solvable (startTile tm.toSingleTapeTM w) (haltTiles tm)) :
     Halts tm.toSingleTapeTM w := by
   obtain ⟨A, h_mem, h_match⟩ := h
   have h_match_cfg :
@@ -3106,7 +3106,7 @@ theorem halt_iff_mpcp (tm : EncodableTM Symbol)
     (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Symbol)
     (h_nlb : NoLeftBoundary tm.toSingleTapeTM w) [Encodable Symbol]:
     Halts tm.toSingleTapeTM w ↔
-      MPCP.DecisionProblem (startTile tm.toSingleTapeTM w) (haltTiles tm) :=
+      MPCP.Solvable (startTile tm.toSingleTapeTM w) (haltTiles tm) :=
     by
     apply Iff.intro
     · intro h
@@ -3135,7 +3135,7 @@ def haltToMpcpNorm (p : EncodableTM Bool × List Bool) :
 alphabet `Alpha ℕ Sym2`. -/
 theorem halt_reducesto_mpcp_spec :
     HaltProblem ⪯_s[haltToMpcpNorm]
-      fun x : Tile (Alpha ℕ Sym2) × Stack (Alpha ℕ Sym2) => MPCP.DecisionProblem x.1 x.2 := by
+      (@MPCP.DecisionProblem (Alpha ℕ Sym2)) := by
   rintro ⟨tm, w⟩
   show Halts tm.toSingleTapeTM w ↔ _
   let normTMEnc := normEnc tm
@@ -3148,8 +3148,7 @@ theorem halt_reducesto_mpcp_spec :
 /-- The halting problem many-one reduces to MPCP over the fixed alphabet `Alpha ℕ Sym2`, through
 `haltToMpcpNorm`. -/
 def haltReducesMPCP :
-    HaltProblem ⪯_s fun x : Tile (Alpha ℕ Sym2) × Stack (Alpha ℕ Sym2) =>
-      MPCP.DecisionProblem x.1 x.2 :=
+    HaltProblem ⪯_s (@MPCP.DecisionProblem (Alpha ℕ Sym2)) :=
   ⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩
 
 end DiagonaLean.MPCP.Reduction

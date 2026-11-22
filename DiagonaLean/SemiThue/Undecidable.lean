@@ -32,8 +32,10 @@ open DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Codes DiagonaLean.Synthe
 variable {α : Type}
 
 /-- **The word problem for string rewriting systems is synthetically halting-hard**, over
-`Alpha ℕ Sym2`. -/ def undecidableSemiThue : SynthHaltReduction (@DecisionProblem (Alpha ℕ
-Foundations.Computability.Normalize.Sym2)) := haltReducesSemiThue
+`Alpha ℕ Sym2`. -/
+def undecidableSemiThue :
+    SynthHaltReduction (@DecisionProblem (Alpha ℕ Foundations.Computability.Normalize.Sym2)) :=
+  haltReducesSemiThue
 
 /-- **The word problem for systems with non-empty left sides over every alphabet `α` with two
 distinct letters is synthetically halting-hard**: the lifting of

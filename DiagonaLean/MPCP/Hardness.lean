@@ -33,7 +33,7 @@ attribute [local instance] EncodableTM.stateEncodable
 the proof of `selfHalt_iff_instC`, for any input. -/
 theorem halts_iff_mpcpN (M : EncodableTM Bool) (w : List Bool) :
     Halts M.toSingleTapeTM w ↔
-      MPCP.DecisionProblem (startN (Encodable.encode M.q₀) w) (stackN (rowsE M)) := by
+      MPCP.Solvable (startN (Encodable.encode M.q₀) w) (stackN (rowsE M)) := by
   rw [halts_normTM_iff,
     halt_iff_mpcp (normEnc M) (normTM_noBlankWrites _) _ (normTM_noLeftBoundary _ _),
     mpcp_map_iff _ (Alpha.map_injective (stIdx_injective M)), ← startTile_ren]
@@ -72,7 +72,7 @@ theorem canonInst_prim : Primrec canonInst := by
 
 /-- **A canonical machine halts on an input iff its MPCP instance is solvable.** -/
 theorem haltCanon_iff_mpcp (x : CanonTM × List Bool) :
-    HaltCanon x ↔ MPCP.DecisionProblem (canonInst x).1 (canonInst x).2 := by
+    HaltCanon x ↔ MPCP.DecisionProblem (canonInst x) := by
   obtain ⟨c, w⟩ := x
   refine (halts_iff_mpcpN c.toTM w).trans (mpcp_congr _ fun t => mem_stackN_congr ?_ ?_ t)
   · intro k
@@ -90,14 +90,10 @@ open DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Computab
 
 /-- **MPCP is halting-hard**, over the alphabet `Alpha ℕ Sym2`: a reduction from the halting problem
 on canonical machines, proved computable. -/
-def fromHalt : HaltReduction fun x :
-    Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) =>
-    MPCP.DecisionProblem x.1 x.2 :=
+def fromHalt : HaltReduction (@MPCP.DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
   ⟨canonInst, canonInst_prim.to_comp, haltCanon_iff_mpcp⟩
 
-theorem haltHard : HaltHard fun x :
-    Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) =>
-    MPCP.DecisionProblem x.1 x.2 :=
+theorem haltHard : HaltHard (@MPCP.DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
   ⟨fromHalt⟩
 
 end DiagonaLean.MPCP
