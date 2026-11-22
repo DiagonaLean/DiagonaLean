@@ -15,7 +15,7 @@ only on itself and on the base the problem folders share: `Synthetic` (the notio
 undecidability) and `Halt` (the source problem). The check reads the imports of every file under
 `ROOT/DiagonaLean/` with Lean's header parser (`Lean.parseImports`) and follows them transitively,
 so importing a `Synthetic` module that imports `PCP` also fails. Code that only one problem uses
-belongs in that problem's folder, as `MPCP/Normalize/` and `KAComm/KleeneAlgebra/` do.
+belongs in that problem's folder, as `KAComm/KleeneAlgebra/` does.
 
 The source files are read, not the built modules, so the check needs no build and also runs on the
 fixture `scripts/layering-fixture`, which it must reject.

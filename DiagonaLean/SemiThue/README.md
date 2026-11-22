@@ -18,7 +18,7 @@ The transition tiles of the MPCP reduction (`MPCP/Reductions/Halt_to_MPCP.lean`)
 * **Forward** (`derives_of_halts`): each step of the run is one rewrite (`step_block`), from the configuration lemmas of the MPCP reduction; after halting, the absorb rules and the final rule erase the string (`derives_halted`).
 * **Backward** (`halts_of_derives`): a configuration string has exactly one state marker, and the left side of every rule contains a marker, so a rewrite happens at the marker (`split_mark`). By determinism of the machine it is the machine's step (`step_inv`), except for an interior right move at the right end, which leaves the marker before `#`: a string from which nothing can be rewritten (`not_derives_stuck`), or the halting marker, when the machine has halted.
 
-The machine is first normalised (`MPCP/Normalize/`), so that it never writes a blank and never moves left at the left end. At machine level, the system is read off the machine's code, as `MPCP.MachineLevel.instC` reads the tiles (`codeRules`, `toEmptyCode`), and is the renaming of the normalised machine's system (`mem_codeRules`); renaming letters injectively keeps derivability (`SRS.derives_map_iff`).
+The machine is first normalised (`Foundations/Computability/Normalize/`), so that it never writes a blank and never moves left at the left end. At machine level, the system is read off the machine's code, as `MPCP.MachineLevel.instC` reads the tiles (`codeRules`, `toEmptyCode`), and is the renaming of the normalised machine's system (`mem_codeRules`); renaming letters injectively keeps derivability (`SRS.derives_map_iff`).
 
 ## References
 * E. L. Post, *Recursive unsolvability of a problem of Thue* (1947)

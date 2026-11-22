@@ -31,22 +31,22 @@ namespace DiagonaLean.SemiThue.MachineLevel
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.PCP.Reduction DiagonaLean.MPCP.Reduction
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability
-  DiagonaLean.MPCP.Normalize DiagonaLean.MPCP.MachineLevel DiagonaLean.SemiThue.Reduction
+  DiagonaLean.Foundations.Normalize DiagonaLean.MPCP.MachineLevel DiagonaLean.SemiThue.Reduction
   DiagonaLean.Foundations.Grammar DiagonaLean.Synthetic.Definitions
 
 /-- The absorb rules and the final rule, over `Alpha ℕ Sym2`. -/
-def haltRules : SRS (Alpha ℕ MPCP.Normalize.Sym2) :=
+def haltRules : SRS (Alpha ℕ Foundations.Normalize.Sym2) :=
   syms2.flatMap (fun a => [([↟ₜa, h⊥], [h⊥]), ([h⊥, ↟ₜa], [h⊥])]) ++ [([#, h⊥, #], [])]
 
 /-- The rewriting system of a machine code: the transition tiles of `transN` as rules, the absorb
 rules and the final rule. -/
-def codeRules (rows : List (ℕ × ℕ)) : SRS (Alpha ℕ MPCP.Normalize.Sym2) :=
+def codeRules (rows : List (ℕ × ℕ)) : SRS (Alpha ℕ Foundations.Normalize.Sym2) :=
   (transN rows).map tileRule ++ haltRules
 
 /-- **The instance of a machine code** `w`: its rewriting system, and the start string of the
 normalised machine on input `w` itself. -/
 def toEmptyCode (w : List Bool) :
-    SRS (Alpha ℕ MPCP.Normalize.Sym2) × List (Alpha ℕ MPCP.Normalize.Sym2) :=
+    SRS (Alpha ℕ Foundations.Normalize.Sym2) × List (Alpha ℕ Foundations.Normalize.Sym2) :=
   (codeRules (rowsC w), (startN ((tokens w).headI - 1) w).bot)
 
 derive_primrec tileRule [Primcodable α]
@@ -63,7 +63,7 @@ attribute [local instance] EncodableTM.stateEncodable
 
 /-- **The rules of the code are the renamed rules of the normalised machine.** -/
 theorem mem_codeRules
-    (lr : List (Alpha ℕ MPCP.Normalize.Sym2) × List (Alpha ℕ MPCP.Normalize.Sym2)) :
+    (lr : List (Alpha ℕ Foundations.Normalize.Sym2) × List (Alpha ℕ Foundations.Normalize.Sym2)) :
     lr ∈ (tmRules (normEnc M)).mapRules (Alpha.map (stIdx M)) ↔ lr ∈ codeRules (rowsE M) := by
   have hlist : (tmRules (normEnc M)).mapRules (Alpha.map (stIdx M)) =
       ((transitionTiles (normEnc M)).map (ren M)).map tileRule ++ haltRules := by
@@ -102,14 +102,15 @@ theorem selfHalt_iff_toEmpty (M : EncodableTM Bool) :
 rewriting systems over `Alpha ℕ Sym2`. -/
 theorem not_computablePred_toEmpty :
     ¬ ComputablePred fun x :
-      SRS (Alpha ℕ MPCP.Normalize.Sym2) × List (Alpha ℕ MPCP.Normalize.Sym2) =>
+      SRS (Alpha ℕ Foundations.Normalize.Sym2) × List (Alpha ℕ Foundations.Normalize.Sym2) =>
         ToEmptyProblem x :=
   not_computablePred_of_selfHalt toEmptyCode_prim.to_comp selfHalt_iff_toEmpty
 
 /-- **No Turing machine decides whether a string rewrites to the empty string**, under any
 computable encoding. -/
 theorem not_machineDecidable_toEmpty
-    {enc : SRS (Alpha ℕ MPCP.Normalize.Sym2) × List (Alpha ℕ MPCP.Normalize.Sym2) → List Bool}
+    {enc : SRS (Alpha ℕ Foundations.Normalize.Sym2) × List (Alpha ℕ Foundations.Normalize.Sym2) →
+      List Bool}
     (henc : Computable enc) : ¬ MachineDecidable enc ToEmptyProblem :=
   not_machineDecidable_of_not_computablePred henc not_computablePred_toEmpty
 
@@ -120,15 +121,15 @@ def toEmptyReducesSemiThue {T : Type} : @ToEmptyProblem T ⪯ₘ @DecisionProble
 /-- **The word problem for string rewriting systems is not a computable predicate** (Post, Markov
 1947), over `Alpha ℕ Sym2`. -/
 theorem not_computablePred_semiThue :
-    ¬ ComputablePred (@DecisionProblem (Alpha ℕ MPCP.Normalize.Sym2)) :=
+    ¬ ComputablePred (@DecisionProblem (Alpha ℕ Foundations.Normalize.Sym2)) :=
   not_computablePred_of_reduces toEmptyReducesSemiThue
     (Primrec.to_comp (by unfold toEmptyReducesSemiThue; fun_prop)) not_computablePred_toEmpty
 
 /-- **No Turing machine decides the word problem for string rewriting systems**, under any
 computable encoding. -/
 theorem not_machineDecidable_semiThue
-    {enc : SRS (Alpha ℕ MPCP.Normalize.Sym2) × List (Alpha ℕ MPCP.Normalize.Sym2) ×
-      List (Alpha ℕ MPCP.Normalize.Sym2) → List Bool}
+    {enc : SRS (Alpha ℕ Foundations.Normalize.Sym2) × List (Alpha ℕ Foundations.Normalize.Sym2) ×
+      List (Alpha ℕ Foundations.Normalize.Sym2) → List Bool}
     (henc : Computable enc) : ¬ MachineDecidable enc DecisionProblem :=
   not_machineDecidable_of_not_computablePred henc not_computablePred_semiThue
 

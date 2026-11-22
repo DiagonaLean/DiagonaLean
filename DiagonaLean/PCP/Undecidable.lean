@@ -54,9 +54,9 @@ def mpcpReducesPCP {α : Type} :
 
 /-- PCP over the alphabet `Ext (Alpha ℕ Sym2)` is not a computable predicate. -/
 theorem not_computablePred_pcp_ext :
-    ¬ ComputablePred (@DecisionProblem (Ext (Alpha ℕ MPCP.Normalize.Sym2))) :=
+    ¬ ComputablePred (@DecisionProblem (Ext (Alpha ℕ Foundations.Normalize.Sym2))) :=
   not_computablePred_of_reduces mpcpReducesPCP
-    (mpcpToPcp_primrec (α := Alpha ℕ MPCP.Normalize.Sym2)).to_comp
+    (mpcpToPcp_primrec (α := Alpha ℕ Foundations.Normalize.Sym2)).to_comp
     MPCP.MachineLevel.not_computablePred_mpcp
 
 /-- **PCP is not a computable predicate** over any alphabet with two distinct letters. -/
@@ -64,7 +64,7 @@ theorem not_computablePred_pcp {α : Type} [Primcodable α] [Nontrivial α] :
     ¬ ComputablePred (@DecisionProblem α) := by
   obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
   exact not_computablePred_of_reduces
-    (pcpAlphabetLift (γ₁ := Ext (Alpha ℕ MPCP.Normalize.Sym2)) b0 b1 hne)
+    (pcpAlphabetLift (γ₁ := Ext (Alpha ℕ Foundations.Normalize.Sym2)) b0 b1 hne)
     (pcpAlphabetLift_primrec hne).to_comp not_computablePred_pcp_ext
 
 /-- **No Turing machine decides PCP** over any alphabet with two distinct letters, under any

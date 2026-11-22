@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic)
 -/
 
-import DiagonaLean.MPCP.Normalize.Invariant
+import DiagonaLean.Foundations.Computability.Normalize.Invariant
 
 @[expose] public section
 
@@ -14,7 +14,7 @@ simulated machine on `w` (`invAt_init`). `cellAt_encInput_nonneg` and `cellAt_en
 compute the cells of that tape at the positions `fold j`.
 -/
 
-namespace DiagonaLean.MPCP.Normalize
+namespace DiagonaLean.Foundations.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -96,4 +96,4 @@ theorem invAt_init (w : List Bool) :
   left n hn := by
     rw [sub_zero, cellAt_mk₁, ite_eq_right (by omega)]
 
-end DiagonaLean.MPCP.Normalize
+end DiagonaLean.Foundations.Normalize

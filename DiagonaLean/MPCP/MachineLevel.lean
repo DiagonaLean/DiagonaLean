@@ -38,7 +38,7 @@ namespace DiagonaLean.MPCP.MachineLevel
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.PCP.Reduction DiagonaLean.MPCP.Reduction
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability
-  DiagonaLean.MPCP.Normalize
+  DiagonaLean.Foundations.Normalize
 
 /-- The symbol written, as an `Option Bool`, from its code `hc`. -/
 def hcInv (n : ℕ) : Option Bool := if n = 0 then none else if n = 1 then some false else some true
@@ -47,8 +47,8 @@ def hcInv (n : ℕ) : Option Bool := if n = 0 then none else if n = 1 then some 
 `simL` otherwise), from the transition table `rows` of the simulated machine, in state number `i` on
 cell `a`. The result is the symbol written, the movement code `mvc` and the next-state code: `0`
 halts, `Nat.pair j c + 1` is state number `j` with control state number `c`. -/
-def simN (rows : List (ℕ × ℕ)) (i : ℕ) (right : Bool) (a : Option Normalize.Sym2) :
-    Option Normalize.Sym2 × ℕ × ℕ :=
+def simN (rows : List (ℕ × ℕ)) (i : ℕ) (right : Bool) (a : Option Foundations.Normalize.Sym2) :
+    Option Foundations.Normalize.Sym2 × ℕ × ℕ :=
   if rowX (lookup rows (Nat.pair i (hc (decSym a)))) = 0 then
     (encSym (hcInv (rowA (lookup rows (Nat.pair i (hc (decSym a)))))), 0, 0)
   else if rowM (lookup rows (Nat.pair i (hc (decSym a)))) = 0 then
@@ -67,8 +67,8 @@ derive_primrec simN
 
 /-- The transition `normTr` of the normalised machine, numerically, in state number `i` with control
 state number `c` (the `Encodable` code of `Ctrl`), in the format of `simN`. -/
-def normTrN (rows : List (ℕ × ℕ)) (i c : ℕ) (a : Option Normalize.Sym2) :
-    Option Normalize.Sym2 × ℕ × ℕ :=
+def normTrN (rows : List (ℕ × ℕ)) (i c : ℕ) (a : Option Foundations.Normalize.Sym2) :
+    Option Foundations.Normalize.Sym2 × ℕ × ℕ :=
   if c = 0 then (some Mk, 2, Nat.pair i 1 + 1)
   else if c = 1 then simN rows i true a
   else if c = 2 then simN rows i false a
@@ -80,40 +80,43 @@ def normTrN (rows : List (ℕ × ℕ)) (i c : ℕ) (a : Option Normalize.Sym2) :
   else (if a = some Mk then (some Mk, 2, Nat.pair i 1 + 1) else (preserve a, 0, Nat.pair i 2 + 1))
 
 /-- The cell symbols of the normalised machine. -/
-def syms2 : List (Option Normalize.Sym2) := enumerate (Option Normalize.Sym2)
+def syms2 : List (Option Foundations.Normalize.Sym2) :=
+  enumerate (Option Foundations.Normalize.Sym2)
 
 /-- The state marker of a next-state code. -/
-def markerN (n : ℕ) : Alpha ℕ Normalize.Sym2 := if n = 0 then h⊥ else ↟ₛ(n - 1)
+def markerN (n : ℕ) : Alpha ℕ Foundations.Normalize.Sym2 := if n = 0 then h⊥ else ↟ₛ(n - 1)
 
 /-- The transition tiles of state number `s` on cell `a`, from its numeric transition `r`: the
 numeric form of `transitionTilesFor`. -/
-def trTilesN (s : ℕ) (a : Option Normalize.Sym2) (r : Option Normalize.Sym2 × ℕ × ℕ) :
-    List (Tile (Alpha ℕ Normalize.Sym2)) :=
+def trTilesN (s : ℕ) (a : Option Foundations.Normalize.Sym2)
+    (r : Option Foundations.Normalize.Sym2 × ℕ × ℕ) :
+    List (Tile (Alpha ℕ Foundations.Normalize.Sym2)) :=
   if r.2.1 = 0 then [⟨[↟ₛs, ↟ₜa], [markerN r.2.2, ↟ₜr.1]⟩]
   else if r.2.1 = 2 then
     [⟨[↟ₛs, ↟ₜa], [↟ₜr.1, markerN r.2.2]⟩,
-      ⟨[↟ₛs, ↟ₜa, #], [↟ₜr.1, markerN r.2.2, ↟ₜ(none : Option Normalize.Sym2), #]⟩]
+      ⟨[↟ₛs, ↟ₜa, #], [↟ₜr.1, markerN r.2.2, ↟ₜ(none : Option Foundations.Normalize.Sym2), #]⟩]
   else syms2.map fun b => ⟨[↟ₜb, ↟ₛs, ↟ₜa], [markerN r.2.2, ↟ₜb, ↟ₜr.1]⟩
 
 /-- All transition tiles of the normalised machine, from the transition table `rows` of the
 simulated machine. The state numbers are the first components of the keys of `rows`. -/
-def transN (rows : List (ℕ × ℕ)) : List (Tile (Alpha ℕ Normalize.Sym2)) :=
+def transN (rows : List (ℕ × ℕ)) : List (Tile (Alpha ℕ Foundations.Normalize.Sym2)) :=
   (rows.map fun r => r.1.unpair.1).flatMap fun i => (List.range 8).flatMap fun c =>
     syms2.flatMap fun a => trTilesN (Nat.pair i c) a (normTrN rows i c a)
 
 /-- The tiles of the instance, from the transition table `rows`: the numeric form of `haltTiles`. -/
-def stackN (rows : List (ℕ × ℕ)) : Stack (Alpha ℕ Normalize.Sym2) :=
+def stackN (rows : List (ℕ × ℕ)) : Stack (Alpha ℕ Foundations.Normalize.Sym2) :=
   syms2.map (fun a => ⟨[↟ₜa], [↟ₜa]⟩) ++ [⟨[#], [#]⟩] ++ transN rows ++
     syms2.flatMap (fun a => [⟨[↟ₜa, h⊥], [h⊥]⟩, ⟨[h⊥, ↟ₜa], [h⊥]⟩]) ++ [⟨[h⊥, #, #], [#]⟩]
 
 /-- The start tile, for start state number `q` and input `w`: the numeric form of `startTile` for
 the normalised machine on `encInput w`. -/
-def startN (q : ℕ) (w : List Bool) : Tile (Alpha ℕ Normalize.Sym2) :=
+def startN (q : ℕ) (w : List Bool) : Tile (Alpha ℕ Foundations.Normalize.Sym2) :=
   ⟨[#], # :: ↟ₛ(Nat.pair q 0) :: (encInput w).map (fun s => ↟ₜ(some s)) ++ [#]⟩
 
 /-- **The MPCP instance of a machine code `w`**, on input `w` itself. The first token of a code is
 the start state's code plus one (`headI_tokens_code`). -/
-def instC (w : List Bool) : Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) :=
+def instC (w : List Bool) :
+    Tile (Alpha ℕ Foundations.Normalize.Sym2) × Stack (Alpha ℕ Foundations.Normalize.Sym2) :=
   (startN ((tokens w).headI - 1) w, stackN (rowsC w))
 
 derive_primrec markerN
@@ -153,12 +156,12 @@ theorem stIdx_injective : Function.Injective (stIdx M) := fun s t h => by
   exact Prod.ext (Encodable.encode_injective h₁) (Encodable.encode_injective h₂)
 
 /-- The numeric form of a transition of the normalised machine, in the format of `simN`. -/
-def codeOf (r : Stmt Normalize.Sym2 × Option (M.State × Ctrl)) :
-    Option Normalize.Sym2 × ℕ × ℕ :=
+def codeOf (r : Stmt Foundations.Normalize.Sym2 × Option (M.State × Ctrl)) :
+    Option Foundations.Normalize.Sym2 × ℕ × ℕ :=
   (r.1.symbol, mvc r.1.movement, match r.2 with | none => 0 | some s => stIdx M s + 1)
 
 /-- `simN` computes `simStep` from the transition table `rowsE M`. -/
-theorem simN_eq (q : M.State) (right : Bool) (a : Option Normalize.Sym2) :
+theorem simN_eq (q : M.State) (right : Bool) (a : Option Foundations.Normalize.Sym2) :
     simN (rowsE M) (Encodable.encode q) right a =
       codeOf M (simStep M.toSingleTapeTM q right a) := by
   unfold simN simStep
@@ -170,18 +173,20 @@ theorem simN_eq (q : M.State) (right : Bool) (a : Option Normalize.Sym2) :
       simp [rowT, codeOf, qc, mvc, hcInv_hc, stIdx, Ctrl.sim, Encodable.encode]
 
 /-- `normTrN` computes `normTr` from the transition table `rowsE M`. -/
-theorem normTrN_eq (q : M.State) (c : Ctrl) (a : Option Normalize.Sym2) :
+theorem normTrN_eq (q : M.State) (c : Ctrl) (a : Option Foundations.Normalize.Sym2) :
     normTrN (rowsE M) (Encodable.encode q) (Encodable.encode c) a =
       codeOf M (normTr M.toSingleTapeTM q c a) := by
   cases c <;> simp [normTrN, normTr, simN_eq, codeOf, stIdx, mvc, Encodable.encode] <;>
     split_ifs <;> simp
 
 /-- The renaming of states by `stIdx`, on tiles. -/
-abbrev ren : Tile (Alpha (M.State × Ctrl) Normalize.Sym2) → Tile (Alpha ℕ Normalize.Sym2) :=
+abbrev ren :
+    Tile (Alpha (M.State × Ctrl) Foundations.Normalize.Sym2) →
+      Tile (Alpha ℕ Foundations.Normalize.Sym2) :=
   Tile.map (Alpha.map (stIdx M))
 
 /-- The renamed transition tiles of a state are `trTilesN` of its number and numeric transition. -/
-theorem transitionTilesFor_ren (s : M.State × Ctrl) (a : Option Normalize.Sym2) :
+theorem transitionTilesFor_ren (s : M.State × Ctrl) (a : Option Foundations.Normalize.Sym2) :
     (transitionTilesFor (normTM M.toSingleTapeTM) s a).map (ren M) =
       trTilesN (stIdx M s) a (codeOf M ((normTM M.toSingleTapeTM).tr s a)) := by
   unfold transitionTilesFor trTilesN codeOf
@@ -220,7 +225,7 @@ theorem mem_transitionTiles {S : Type} [Inhabited S] [Fintype S] [Encodable S]
   exact ⟨fun ⟨qa, _, h⟩ => ⟨qa.1, qa.2, h⟩, fun ⟨q, a, h⟩ => ⟨(q, a), mem_enumerate _, h⟩⟩
 
 /-- The renamed transition tiles of the normalised machine are the tiles of `transN`. -/
-theorem mem_transN (t : Tile (Alpha ℕ Normalize.Sym2)) :
+theorem mem_transN (t : Tile (Alpha ℕ Foundations.Normalize.Sym2)) :
     t ∈ (transitionTiles (normEnc M)).map (ren M) ↔ t ∈ transN (rowsE M) := by
   simp only [transN, List.mem_flatMap, mem_idx, mem_range_eight]
   constructor
@@ -236,7 +241,7 @@ theorem mem_transN (t : Tile (Alpha ℕ Normalize.Sym2)) :
     exact List.mem_map_of_mem ((mem_transitionTiles _ _).2 ⟨(q, k), a, hx⟩)
 
 /-- The renamed tiles of the normalised machine are the tiles of `stackN`. -/
-theorem mem_stackN (t : Tile (Alpha ℕ Normalize.Sym2)) :
+theorem mem_stackN (t : Tile (Alpha ℕ Foundations.Normalize.Sym2)) :
     t ∈ (haltTiles (normEnc M)).map (ren M) ↔ t ∈ stackN (rowsE M) := by
   have h₁ : (copyTiles (normTM M.toSingleTapeTM)).map (ren M) =
       syms2.map (fun a => ⟨[↟ₜa], [↟ₜa]⟩) := by
@@ -281,7 +286,8 @@ open DiagonaLean.Synthetic.Definitions DiagonaLean.Halt.Undecidable in
 procedure, composed with the primitive recursive `instC`, would give a machine that decides whether
 a machine halts on its own code. -/
 theorem not_computablePred_mpcp :
-    ¬ ComputablePred fun x : Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) =>
+    ¬ ComputablePred fun x :
+      Tile (Alpha ℕ Foundations.Normalize.Sym2) × Stack (Alpha ℕ Foundations.Normalize.Sym2) =>
       MPCP.DecisionProblem x.1 x.2 :=
   not_computablePred_of_selfHalt instC_prim.to_comp selfHalt_iff_instC
 
@@ -289,7 +295,8 @@ open DiagonaLean.Synthetic.Definitions in
 /-- **No Turing machine decides MPCP**, over the alphabet `Alpha ℕ Sym2`, under any computable
 encoding of instances as bit strings. -/
 theorem not_machineDecidable_mpcp
-    {enc : Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) → List Bool}
+    {enc : Tile (Alpha ℕ Foundations.Normalize.Sym2) × Stack (Alpha ℕ Foundations.Normalize.Sym2) →
+      List Bool}
     (henc : Computable enc) : ¬ MachineDecidable enc fun x => MPCP.DecisionProblem x.1 x.2 :=
   not_machineDecidable_of_not_computablePred henc not_computablePred_mpcp
 

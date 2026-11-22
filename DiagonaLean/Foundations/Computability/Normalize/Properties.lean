@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic)
 -/
 
-import DiagonaLean.MPCP.Normalize.Halting
+import DiagonaLean.Foundations.Computability.Normalize.Halting
 
 @[expose] public section
 
@@ -13,9 +13,9 @@ import DiagonaLean.MPCP.Normalize.Halting
 moves left at the left end of its tape (`normTM_noLeftBoundary`).
 -/
 
-namespace DiagonaLean.MPCP.Normalize
+namespace DiagonaLean.Foundations.Normalize
 
-open Cslib.Turing SingleTapeTM DiagonaLean.MPCP.Reduction
+open Cslib.Turing SingleTapeTM
 
 variable (tm : SingleTapeTM Bool)
 
@@ -89,4 +89,4 @@ theorem normTM_noLeftBoundary (w : List Bool) : NoLeftBoundary (normTM tm) (encI
       rw [normTr]
       split <;> simp
 
-end DiagonaLean.MPCP.Normalize
+end DiagonaLean.Foundations.Normalize

@@ -5,6 +5,7 @@ Authors: Aalok Thakkar
 
 import DiagonaLean.Halt.Basic
 import DiagonaLean.MPCP.Basic
+import DiagonaLean.Foundations.Computability.Normalize.Conditions
 
 @[expose] public section
 
@@ -25,7 +26,7 @@ Reduction from the halting problem to MPCP following the Hopcroft–Ullman const
 namespace DiagonaLean.MPCP.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP DiagonaLean.Halt
-  DiagonaLean.Halt.Encoding
+  DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Normalize
 
 /-- The alphabet of the reduced MPCP instance, extending the tape alphabet with TM state labels, a
   halt marker, and a configuration separator. -/
@@ -1055,20 +1056,6 @@ theorem absorbAndFinish_subset_haltTiles (tm : EncodableTM Symbol)
     rcases htile with hL | hR
     · exact stepTilesAbsorbLeft_subset_haltTiles tm l rest right tile hL
     · exact ih hR
-
-/-- `tm.toSingleTapeTM` is blank-write free: the transition function never writes the blank
-symbol. -/
-def NoBlankWrites (tm : SingleTapeTM Symbol) : Prop :=
-  ∀ q : tm.State, ∀ a : Option Symbol, ((tm.tr q a).1).symbol ≠ none
-
-/-- `tm` satisfies the no-left-boundary condition on input `w`: no reachable configuration invokes a
-  left-move at the left tape boundary. -/
-def NoLeftBoundary (tm : SingleTapeTM Symbol) (w : List Symbol) : Prop :=
-  ∀ (cfg : tm.Cfg), Relation.ReflTransGen tm.TransitionRelation
-      (SingleTapeTM.initCfg tm w) cfg →
-    ∀ (q : tm.State) (t : BiTape Symbol),
-      cfg = ⟨some q, t⟩ → t.left.toList = [] →
-      (tm.tr q t.head).1.movement ≠ some Turing.Dir.left
 
 /-- The configuration reached by a single TM step from `⟨some q, t⟩`. -/
 def stepResult (tm : SingleTapeTM Symbol) (q : tm.State) (t : BiTape Symbol) :

@@ -6,16 +6,17 @@ Authors: Prathamesh Turaga
 import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
 import Cslib.Foundations.Data.BiTape
 import DiagonaLean.Halt.Basic
-import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
-import DiagonaLean.MPCP.Normalize.Properties
+import DiagonaLean.Foundations.Computability.Normalize.Properties
 
 @[expose] public section
 
 /-! # Normalisation of Turing machines
 
-The reduction from the halting problem to MPCP in
-`DiagonaLean.MPCP.Reductions.Halt_to_MPCP` assumes that the machine never writes a blank
-(`NoBlankWrites`) and never moves left at the left end of its tape (`NoLeftBoundary`).
+Reductions that encode configurations as strings, such as the reductions from the halting problem
+to MPCP (`MPCP/Reductions/Halt_to_MPCP.lean`) and to string rewriting
+(`SemiThue/Reductions/Halt_to_SemiThue.lean`), assume that the machine never writes a blank
+(`NoBlankWrites`) and never moves left at the left end of its tape (`NoLeftBoundary`), both in
+`Conditions.lean`.
 
 `normalize_tm` removes both assumptions: every machine over the alphabet `Bool` can be
 replaced, together with its input, by a machine over the alphabet `Bool × Bool` satisfying
@@ -34,9 +35,9 @@ by `tm` represented by a dedicated non-blank symbol.
 
 open Cslib.Turing SingleTapeTM
 
-namespace DiagonaLean.MPCP.Normalize
+namespace DiagonaLean.Foundations.Normalize
 
-open MPCP.Reduction DiagonaLean.Halt
+open DiagonaLean.Halt
 
 /-- Every Turing machine `tm` over `Bool` and input `w` can be normalised: there are a
 machine `tm'` over `Bool × Bool` and an input `w'` such that `tm'` never writes a blank,
@@ -56,4 +57,4 @@ abbrev normEnc (M : DiagonaLean.Halt.Encoding.EncodableTM Bool) :
   letI := M.stateEncodable
   ⟨normTM M.toSingleTapeTM, (inferInstance : Encodable (M.State × Ctrl))⟩
 
-end DiagonaLean.MPCP.Normalize
+end DiagonaLean.Foundations.Normalize

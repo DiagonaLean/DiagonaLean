@@ -12,15 +12,16 @@ import DiagonaLean.UTMHalt.Reductions.Halt_to_UTMHalt
 import DiagonaLean.UTMHalt.Undecidable
 
 import DiagonaLean.MPCP.Basic
-import DiagonaLean.MPCP.Normalize.Normalize
-import DiagonaLean.MPCP.Normalize.Cell
-import DiagonaLean.MPCP.Normalize.Halting
-import DiagonaLean.MPCP.Normalize.Input
-import DiagonaLean.MPCP.Normalize.Invariant
-import DiagonaLean.MPCP.Normalize.Machine
-import DiagonaLean.MPCP.Normalize.Properties
-import DiagonaLean.MPCP.Normalize.Sim
-import DiagonaLean.MPCP.Normalize.Steps
+import DiagonaLean.Foundations.Computability.Normalize.Conditions
+import DiagonaLean.Foundations.Computability.Normalize.Normalize
+import DiagonaLean.Foundations.Computability.Normalize.Cell
+import DiagonaLean.Foundations.Computability.Normalize.Halting
+import DiagonaLean.Foundations.Computability.Normalize.Input
+import DiagonaLean.Foundations.Computability.Normalize.Invariant
+import DiagonaLean.Foundations.Computability.Normalize.Machine
+import DiagonaLean.Foundations.Computability.Normalize.Properties
+import DiagonaLean.Foundations.Computability.Normalize.Sim
+import DiagonaLean.Foundations.Computability.Normalize.Steps
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.MPCP.Undecidable
 import DiagonaLean.MPCP.MachineLevel

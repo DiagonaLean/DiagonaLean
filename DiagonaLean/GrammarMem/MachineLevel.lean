@@ -38,18 +38,19 @@ open DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Halt DiagonaLean.Hal
 variable {T : Type}
 
 /-- The symbols of `Alpha ℕ Sym2` as the nonterminals `1, 2, …`; `0` is the start symbol. -/
-def gSym (a : Alpha ℕ MPCP.Normalize.Sym2) : T ⊕ ℕ := .inr (Encodable.encode a + 1)
+def gSym (a : Alpha ℕ Foundations.Normalize.Sym2) : T ⊕ ℕ := .inr (Encodable.encode a + 1)
 
 theorem gSym_injective : Function.Injective (gSym (T := T)) := fun a b h => by
   simp only [gSym, Sum.inr.injEq, Nat.add_right_cancel_iff] at h
   exact Encodable.encode_injective h
 
-theorem gSym_ne_start (a : Alpha ℕ MPCP.Normalize.Sym2) : gSym (T := T) a ≠ .inr 0 := by
+theorem gSym_ne_start (a : Alpha ℕ Foundations.Normalize.Sym2) : gSym (T := T) a ≠ .inr 0 := by
   simp [gSym]
 
 /-- The grammar code of a rewriting system `R` and a start string `u`: the start rule `[0] → u`
 and the rules of `R`, over the nonterminals `gSym`. -/
-def ofSRS (R : SRS (Alpha ℕ MPCP.Normalize.Sym2)) (u : List (Alpha ℕ MPCP.Normalize.Sym2)) :
+def ofSRS (R : SRS (Alpha ℕ Foundations.Normalize.Sym2))
+    (u : List (Alpha ℕ Foundations.Normalize.Sym2)) :
     GrammarCode T :=
   (0, ([.inr 0], u.map gSym) :: R.map fun lr => (lr.1.map gSym, lr.2.map gSym))
 
@@ -64,8 +65,8 @@ derive_primrec gCode [Primcodable T]
 
 /-- **The empty word is in the language of `ofSRS R u` iff `u` rewrites to the empty string**, when
 every rule of `R` has a non-empty left side. -/
-theorem emptyWord_ofSRS_iff (R : SRS (Alpha ℕ MPCP.Normalize.Sym2))
-    (u : List (Alpha ℕ MPCP.Normalize.Sym2)) (hne : ∀ lr ∈ R, lr.1 ≠ []) :
+theorem emptyWord_ofSRS_iff (R : SRS (Alpha ℕ Foundations.Normalize.Sym2))
+    (u : List (Alpha ℕ Foundations.Normalize.Sym2)) (hne : ∀ lr ∈ R, lr.1 ≠ []) :
     EmptyWordProblem (ofSRS (T := T) R u) ↔ R.Derives u [] := by
   show SRS.Derives (([(Sum.inr 0 : T ⊕ ℕ)], u.map gSym) ::
       R.map fun lr => (lr.1.map gSym, lr.2.map gSym)) [Sum.inr 0]

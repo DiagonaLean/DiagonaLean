@@ -3,10 +3,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic)
 -/
 
-import DiagonaLean.MPCP.Normalize.Sim
-import DiagonaLean.MPCP.Normalize.Input
+import DiagonaLean.Foundations.Computability.Normalize.Sim
+import DiagonaLean.Foundations.Computability.Normalize.Input
 import DiagonaLean.Halt.Basic
-import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
+import DiagonaLean.Foundations.Computability.Normalize.Conditions
 
 @[expose] public section
 
@@ -19,7 +19,7 @@ current step of `tm` has been simulated. It is closed under the transition relat
 halting equivalence `halts_normTM_iff` and the `NoLeftBoundary` property.
 -/
 
-namespace DiagonaLean.MPCP.Normalize
+namespace DiagonaLean.Foundations.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -267,4 +267,4 @@ theorem halts_normTM_iff (w : List Bool) :
     obtain ⟨q, t, i, hp, _⟩ := reach_phase_noHalt tm w hnh hreach
     exact hp.state_ne_none rfl
 
-end DiagonaLean.MPCP.Normalize
+end DiagonaLean.Foundations.Normalize

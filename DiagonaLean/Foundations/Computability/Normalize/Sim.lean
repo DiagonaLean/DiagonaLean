@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aristotle (Harmonic)
 -/
 
-import DiagonaLean.MPCP.Normalize.Steps
+import DiagonaLean.Foundations.Computability.Normalize.Steps
 
 @[expose] public section
 
@@ -14,7 +14,7 @@ state by `sim_tm_step_running`, a halting step by `sim_tm_step_halt`. `NSteps` i
 in `normTM tm`.
 -/
 
-namespace DiagonaLean.MPCP.Normalize
+namespace DiagonaLean.Foundations.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -137,4 +137,4 @@ theorem sim_tm_step_halt {t₂ : BiTape Bool} (h : InvAt t i t' (fold i))
   obtain ⟨t₂', hs⟩ := step_sim_halt tm (decide (0 ≤ i)) h htr
   exact ⟨t₂', nsteps_single tm hs⟩
 
-end DiagonaLean.MPCP.Normalize
+end DiagonaLean.Foundations.Normalize

@@ -6,7 +6,7 @@ Authors: Aalok Thakkar, Prathamesh Turaga
 import DiagonaLean.PCP.Reductions.MPCP_to_PCP
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.Synthetic.Undecidability
-import DiagonaLean.MPCP.Normalize.Normalize
+import DiagonaLean.Foundations.Computability.Normalize.Normalize
 import DiagonaLean.PCP.AlphabetLift
 
 @[expose] public section
@@ -16,7 +16,7 @@ import DiagonaLean.PCP.AlphabetLift
 The composition `Halt ⪯ₘ MPCP ⪯ₘ PCP`, giving a direct equivalence between halting of a TM
 `tm` on input `w` and solvability of the PCP instance `mpcpToPcp (startTile tm w) (haltTiles tm)`.
 
-`MPCP_to_PCP` supplies the intermediate step; `MPCP.Normalize` removes the
+`MPCP_to_PCP` supplies the intermediate step; `Foundations.Normalize` removes the
 `NoBlankWrites` and `NoLeftBoundary` side conditions by simulating an arbitrary TM by a
 normalised one. This shifts the tape alphabet to `Bool × Bool`, landing the reduction in
 `Stack (Ext (Alpha ℕ (Bool × Bool)))`. Finally, `AlphabetLift` transports the resulting
@@ -33,7 +33,7 @@ instance back to the target alphabet via distinct elements `Ext.hash ≠ Ext.rup
 namespace DiagonaLean.PCP.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.MPCP.Reduction DiagonaLean.Halt
-  DiagonaLean.Halt.Encoding
+  DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Normalize
 open DiagonaLean.PCP.AlphabetLift
 
 variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
@@ -173,7 +173,7 @@ normalizer's `Ctrl` control states, to stay computable), and lifts the result to
 alphabet `Ext (Alpha ℕ Bool)`. -/
 def haltToPcp (p : EncodableTM Bool × List Bool) : Stack (Ext (Alpha ℕ Bool)) :=
   AlphabetLift.liftInstance Ext.hash Ext.rupee
-    (pcpRed (MPCP.Normalize.normEnc p.1) (MPCP.Normalize.encInput p.2))
+    (pcpRed (Foundations.Normalize.normEnc p.1) (Foundations.Normalize.encInput p.2))
 
 /-- `haltToPcp` witnesses that the halting problem many-one reduces to PCP over the fixed
 alphabet `Ext (Alpha ℕ Bool)`. Combines TM normalization, MPCP reduction, and alphabet
@@ -182,14 +182,14 @@ theorem halt_reducesto_pcp_spec :
     HaltProblem ⪯ₘ[haltToPcp] (@DecisionProblem (Ext (Alpha ℕ Bool))) := by
   rintro ⟨tm, w⟩
   show Halts tm.toSingleTapeTM w ↔ _
-  let normTMEnc := MPCP.Normalize.normEnc tm
-  rw [MPCP.Normalize.halts_normTM_iff tm.toSingleTapeTM w,
-    halt_iff_pcp normTMEnc (MPCP.Normalize.encInput w)
-      (MPCP.Normalize.normTM_noBlankWrites tm.toSingleTapeTM)
-      (MPCP.Normalize.normTM_noLeftBoundary tm.toSingleTapeTM w),
-    pcpRed_iff normTMEnc (MPCP.Normalize.encInput w)]
+  let normTMEnc := Foundations.Normalize.normEnc tm
+  rw [Foundations.Normalize.halts_normTM_iff tm.toSingleTapeTM w,
+    halt_iff_pcp normTMEnc (Foundations.Normalize.encInput w)
+      (Foundations.Normalize.normTM_noBlankWrites tm.toSingleTapeTM)
+      (Foundations.Normalize.normTM_noLeftBoundary tm.toSingleTapeTM w),
+    pcpRed_iff normTMEnc (Foundations.Normalize.encInput w)]
   exact AlphabetLift.decisionProblem_lifts Ext.hash Ext.rupee
-    (pcpRed normTMEnc (MPCP.Normalize.encInput w))
+    (pcpRed normTMEnc (Foundations.Normalize.encInput w))
     (by decide)
 
 /-- The halting problem many-one reduces to PCP over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/
