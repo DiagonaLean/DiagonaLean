@@ -515,13 +515,13 @@ theorem pcode_sigNeN : pcode ((sigNeN K l).map phi) = sigNeP (NN K l) := by
   rfl
 
 /-- The code of the right-hand side. -/
-abbrev instB : ℕ :=
+def instB : ℕ :=
   cp (cm (ct (sigP (NN K l)).1) (cp (crunP K l).1 haltP.1))
     (cm (ct (sigP (NN K l)).1) (cm (sigNeP (NN K l)).1
       (cm (cm (ct (sigAllP (NN K l)).1) (rmP K l).2) (ct (rmP K l).1))))
 
 /-- The code of the left-hand side. -/
-abbrev instA : ℕ := cm (rw' [lendC, headC 1 0, rendC]).1 (ct (rmP K l).1)
+def instA : ℕ := cm (rw' [lendC, headC 1 0, rendC]).1 (ct (rmP K l).1)
 
 /-- The codes of `rInst K l`. -/
 abbrev instCode : ℕ × ℕ := (cp (instA K l) (instB K l), instB K l)
@@ -537,6 +537,7 @@ theorem rc_redB : rc (redB K l) = instB K l := by
   rw [h, map_bnd]
   have h₂ : rc (bnd ((rmS (NM K l)).map phi)) = (pcode ((rmS (NM K l)).map phi)).2 := rfl
   rw [h₂, pcode_sigN, pcode_crunS, pcode_haltS, pcode_sigNeN, pcode_sigAllN, pcode_rmS]
+  rfl
 
 /-- The code of `redA K l` is `instA K l`. -/
 theorem rc_redA : rc (redA K l) = instA K l := by
@@ -636,9 +637,28 @@ theorem ruleOf_prim : Primrec fun y : ℕ × ℕ × ℕ × ℕ × ℕ =>
 end Prim
 
 
+section Prim
+
+variable {α : Type*} [Primcodable α]
+
+/-- `instA K` is primitive recursive. Proved once, so that `fun_prop` does not unfold `instA`
+again at each use. -/
+@[fun_prop] theorem prim_instA (K : UConst) {f : α → List Bool} (hf : Primrec f) :
+    Primrec fun x => instA K (f x) := by
+  have h : Primrec fun l : List Bool => instA K l := by unfold instA; fun_prop
+  exact h.comp hf
+
+/-- `instB K` is primitive recursive. Proved once, so that `fun_prop` does not unfold `instB`
+again at each use. -/
+@[fun_prop] theorem prim_instB (K : UConst) {f : α → List Bool} (hf : Primrec f) :
+    Primrec fun x => instB K (f x) := by
+  have h : Primrec fun l : List Bool => instB K l := by unfold instB; fun_prop
+  exact h.comp hf
+
+end Prim
+
 /-- `instCode K l` is primitive recursive in `l`. -/
 theorem instCode_prim (K : UConst) : Primrec fun l : List Bool => instCode K l := by
-  show Primrec fun l : List Bool => (cp (instA K l) (instB K l), instB K l)
   fun_prop
 
 end DiagonaLean.KAComm.KleeneAlgebra
