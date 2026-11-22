@@ -11,9 +11,9 @@ import DiagonaLean.KAComm.KleeneAlgebra.Separation
 /-! # Undecidability of equality on `K Σ̈`
 
 Provable equality in Kleene algebra with commutativity over `ℕ` is synthetically halting-hard
-(`undecidableKATermEq`), given finite constants that are only known to exist. No Turing machine
-decides it under the encoding `encNat` of a pair of expressions as the binary digits of its code
-(`not_machineDecidable_kaTermEq`), or under any encoding that a machine computes from `encNat`
+(`KAComm.KATermEq.synthFromHalt`), given finite constants that are only known to exist. No Turing
+machine decides it under the encoding `encNat` of a pair of expressions as the binary digits of its
+code (`not_machineDecidable_kaTermEq`), or under any encoding that a machine computes from `encNat`
 (`not_machineDecidable_kaTermEq_of_conv`). Nor does any machine decide it on the instances `eqRed M`
 given the code of `M` (`not_machineDecidable_kaTermEq_eqRed`), by computable inseparability.
 
@@ -28,15 +28,9 @@ open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing Nat.Partrec DiagonaLean.Found
   DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
   DiagonaLean.Halt.Undecidable
 
-/-- **Provable equality in Kleene algebra with commutativity over `ℕ` is synthetically
-halting-hard**, given the interpreter constants `B` (`exists_base`) and the race program `C`
-(`exists_raceProg`). These finite constants are only known to exist, since Mathlib's construction of
-a program from a `Partrec` function is not executable, so they are arguments rather than computed
-here. The statement without
-them is `not_machineDecidable_kaTermEq`. -/
-def undecidableKATermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg true B C) :
-    SynthHaltReduction KATermEqProblem :=
-  haltReducesKATermEq B C hB hC
+/-- The former name of `KAComm.KATermEq.synthFromHalt`. -/
+@[deprecated DiagonaLean.KAComm.KATermEq.synthFromHalt (since := "2026-11-23")]
+abbrev undecidableKATermEq := @DiagonaLean.KAComm.KATermEq.synthFromHalt
 
 /-- **No Turing machine decides provable equality in Kleene algebra over `ℕ`.** -/
 theorem not_machineDecidable_kaTermEq : ¬ MachineDecidable encNat KATermEqProblem :=

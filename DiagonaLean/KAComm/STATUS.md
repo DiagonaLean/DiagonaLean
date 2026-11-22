@@ -16,7 +16,7 @@ The paper's main result, from its abstract: *"the equational theory of Kleene al
 | …even for weaker theories without the induction axioms | `TermEq.Reduction.not_machineDecidable_termEq`, `TermEqBool.Reduction.not_machineDecidable_termEqBool` (pre-Kleene algebra) | **Done, no hypotheses** |
 | Any theory between pre-Kleene algebra and the language model (Theorem 18, general form) | `not_machineDecidable_between` (inequalities), `not_machineDecidable_eq_between` (equations), `not_machineDecidable_eqVia` (any `X` the language map factors through), all in `KleeneAlgebra/Between.lean` | **Done, no hypotheses**, over `ℕ` (`encNat`); the first two also over `{0, 1}` (`…_bool`, `encBool`) |
 | Theorem 18 on `X` itself | `not_machineDecidable_eqOn` | Given a machine computing `l'` on expression codes, which is the paper's hypothesis that `l'` is computable |
-| Equality and inclusion of languages, `L Σ̈` | `not_machineDecidable_langEq`, `…_langEqBool`, `…_modelLe`, `…_modelLeBool`; `undecidableNotLangEq`, `undecidableNotModelLe` and their `Bool` versions (`SynthHaltReduction`, for the complement) | **Done, no hypotheses** |
+| Equality and inclusion of languages, `L Σ̈` | `not_machineDecidable_langEq`, `…_langEqBool`, `…_modelLe`, `…_modelLeBool`; `KAComm.LangEq.synthComplFromHalt`, `KAComm.ModelLe.synthComplFromHalt` and their `Bool` versions (`SynthHaltReduction`, for the complement) | **Done, no hypotheses** |
 | Theorem 6, Corollary 7 | `FiniteLangCounterexample.lean`, `FiniteLangExpansion.lean` | False as stated (counterexample at `e = 1∗`); a repaired version is proved |
 
 The headline statement:
@@ -33,7 +33,7 @@ theorem not_machineDecidable_kaTermEqBool : ¬ MachineDecidable encBool KATermEq
 
 ## Caveats
 
-1. **The `SynthHaltReduction` forms take arguments.** `undecidableTermEq B C hB hC`, `undecidableKATermEq B C hB hC` and their `Bool` versions `undecidableTermEqBool B C hB hC` and `undecidableKATermEqBool B C hB hC` need the interpreter's constants `B` and the race program `C`, which are only known to exist, so a compiled definition cannot obtain them itself. Outside `KAComm/`, `undecidableSKIConv C hu hC` and `undecidableBetaConv C hu hC` take a race program `C` and a proof `hu` that the program code `u` is universal, for the same reason. The statements without them are the machine-level theorems above.
+1. **The `SynthHaltReduction` forms take arguments.** `KAComm.TermEq.synthFromHalt B C hB hC`, `KAComm.KATermEq.synthFromHalt B C hB hC` and their `Bool` versions `KAComm.TermEqBool.synthFromHalt B C hB hC` and `KAComm.KATermEqBool.synthFromHalt B C hB hC` need the interpreter's constants `B` and the race program `C`, which are only known to exist, so a compiled definition cannot obtain them itself. Outside `KAComm/`, `undecidableSKIConv C hu hC` and `undecidableBetaConv C hu hC` take a race program `C` and a proof `hu` that the program code `u` is universal, for the same reason. The statements without them are the machine-level theorems above.
 
 ## Resolved
 

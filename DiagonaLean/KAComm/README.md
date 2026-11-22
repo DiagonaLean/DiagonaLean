@@ -31,7 +31,7 @@ An instance is a pair of expressions `e₁ e₂ : RExp (Σ ⊕ Σ)` over the dou
 | Equality on `L Σ̈`: do `e₁` and `e₂` have the same language in the model `TD.pl`? | `LangEq` | `LangEqBool` |
 | Inclusion in `L Σ̈`: is the language of `e₁` contained in that of `e₂`? | `ModelLe` | `ModelLeBool` |
 
-The problem `X` is `KAComm.X.DecisionProblem`, named `XProblem`, and its results are in the namespace `DiagonaLean.KAComm.X.Reduction`, for example `KAComm.TermEq.Reduction.undecidableTermEq`.
+The problem `X` is `KAComm.X.DecisionProblem`, named `XProblem`, and its results are in the namespace `DiagonaLean.KAComm.X.Reduction`, for example `KAComm.TermEq.synthFromHalt`.
 
 ## Layout
 * `X/`, for each of the eight problems: `Basic.lean` (the problem), `Reductions/Halt_to_X.lean` (a reduction from `HaltProblem`, to the complement for the four language-model problems) and `Undecidable.lean` (the results).
@@ -98,7 +98,7 @@ This is the paper's form of Theorem 18. Taking $X = T\ddot\Sigma$, $K\ddot\Sigma
 > and $\{(e, f) : \mathcal L(e) \not\subseteq \mathcal L(f)\}$, for $\Sigma = \{0, 1\}$ and for $\Sigma = \mathbb N$. Each reduction is given as an explicit program.
 
 For the provability problems, the reduction depends on two finite constants that are known to exist only classically: a table for a fixed program interpreter and a "race" program, from the paper's Theorem 19. They are therefore parameters of the reduction. Theorems 1 and 2 do not need them.
-*Lean:* `undecidableKATermEq`, `undecidableTermEq`, `undecidableNotLangEq`, `undecidableNotModelLe` and their `Bool` versions.
+*Lean:* `KAComm.KATermEq.synthFromHalt`, `KAComm.TermEq.synthFromHalt`, `KAComm.LangEq.synthComplFromHalt`, `KAComm.ModelLe.synthComplFromHalt` and their `Bool` versions.
 
 > **Proposition 7** (the axioms are the paper's). Let $\mathsf{KA}'$ be Kleene algebra in Mathlib's formulation: $\mathsf{PKA}$ plus right unfolding $x^* x \le x^*$ and both induction axioms. Then for all $e, f$,
 > $$\mathsf{KA}' + H_\Sigma \vdash e = f \iff \mathsf{KA} + H_\Sigma \vdash e = f.$$

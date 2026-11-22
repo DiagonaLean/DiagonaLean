@@ -33,8 +33,13 @@ theorem halt_reducesto_termEq_spec {B : Base} {C : Code} (hB : B.Good)
 
 /-- **The reduction.** `HaltProblem` many-one reduces to provable equality in pre-Kleene algebra
 with commutativity. -/
-def haltReducesTermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg false B C) :
+def _root_.DiagonaLean.KAComm.TermEq.synthFromHalt (B : Base) (C : Code) (hB : B.Good)
+    (hC : RaceProg false B C) :
     HaltProblem ⪯_s TermEqProblem :=
   ⟨reduction B C, halt_reducesto_termEq_spec hB hC⟩
+
+/-- The former name of `KAComm.TermEq.synthFromHalt`. -/
+@[deprecated DiagonaLean.KAComm.TermEq.synthFromHalt (since := "2026-11-23")]
+abbrev haltReducesTermEq := @DiagonaLean.KAComm.TermEq.synthFromHalt
 
 end DiagonaLean.KAComm.TermEq.Reduction

@@ -36,7 +36,12 @@ theorem halt_reducesto_not_langEqBool_spec :
 
 /-- **The reduction.** `HaltProblem` many-one reduces to the failure of language equality over
 `{0, 1}`. -/
-def haltReducesNotLangEqBool : HaltProblem ⪯_s Complement LangEqBoolProblem :=
+def _root_.DiagonaLean.KAComm.LangEqBool.synthComplFromHalt :
+    HaltProblem ⪯_s Complement LangEqBoolProblem :=
   ⟨haltEqRedB, halt_reducesto_not_langEqBool_spec⟩
+
+/-- The former name of `KAComm.LangEqBool.synthComplFromHalt`. -/
+@[deprecated DiagonaLean.KAComm.LangEqBool.synthComplFromHalt (since := "2026-11-23")]
+abbrev haltReducesNotLangEqBool := @DiagonaLean.KAComm.LangEqBool.synthComplFromHalt
 
 end DiagonaLean.KAComm.LangEqBool.Reduction

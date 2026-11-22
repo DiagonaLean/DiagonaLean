@@ -30,7 +30,12 @@ theorem halt_reducesto_not_langEq_spec :
 
 /-- **The reduction.** `HaltProblem` many-one reduces to the failure of language equality over
 `ℕ`. -/
-def haltReducesNotLangEq : HaltProblem ⪯_s Complement LangEqProblem :=
+def _root_.DiagonaLean.KAComm.LangEq.synthComplFromHalt :
+    HaltProblem ⪯_s Complement LangEqProblem :=
   ⟨haltEqRed, halt_reducesto_not_langEq_spec⟩
+
+/-- The former name of `KAComm.LangEq.synthComplFromHalt`. -/
+@[deprecated DiagonaLean.KAComm.LangEq.synthComplFromHalt (since := "2026-11-23")]
+abbrev haltReducesNotLangEq := @DiagonaLean.KAComm.LangEq.synthComplFromHalt
 
 end DiagonaLean.KAComm.LangEq.Reduction

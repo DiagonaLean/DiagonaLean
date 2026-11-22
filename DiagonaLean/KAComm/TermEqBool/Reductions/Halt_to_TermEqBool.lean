@@ -34,8 +34,13 @@ theorem halt_reducesto_termEqBool_spec {B : Base} {C : Code} (hB : B.Good)
 
 /-- **The reduction.** `HaltProblem` many-one reduces to provable equality in pre-Kleene algebra
 over `{0, 1}`. -/
-def haltReducesTermEqBool (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB false B C) :
+def _root_.DiagonaLean.KAComm.TermEqBool.synthFromHalt (B : Base) (C : Code) (hB : B.Good)
+    (hC : RaceProgB false B C) :
     HaltProblem ⪯_s TermEqBoolProblem :=
   ⟨reductionB B C, halt_reducesto_termEqBool_spec hB hC⟩
+
+/-- The former name of `KAComm.TermEqBool.synthFromHalt`. -/
+@[deprecated DiagonaLean.KAComm.TermEqBool.synthFromHalt (since := "2026-11-23")]
+abbrev haltReducesTermEqBool := @DiagonaLean.KAComm.TermEqBool.synthFromHalt
 
 end DiagonaLean.KAComm.TermEqBool.Reduction

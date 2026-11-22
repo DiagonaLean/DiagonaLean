@@ -33,8 +33,13 @@ theorem halt_reducesto_kaTermEq_spec {B : Base} {C : Code} (hB : B.Good)
 
 /-- **The reduction.** `HaltProblem` many-one reduces to provable equality in Kleene algebra with
 commutativity. -/
-def haltReducesKATermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg true B C) :
+def _root_.DiagonaLean.KAComm.KATermEq.synthFromHalt (B : Base) (C : Code) (hB : B.Good)
+    (hC : RaceProg true B C) :
     HaltProblem ⪯_s KATermEqProblem :=
   ⟨reduction B C, halt_reducesto_kaTermEq_spec hB hC⟩
+
+/-- The former name of `KAComm.KATermEq.synthFromHalt`. -/
+@[deprecated DiagonaLean.KAComm.KATermEq.synthFromHalt (since := "2026-11-23")]
+abbrev haltReducesKATermEq := @DiagonaLean.KAComm.KATermEq.synthFromHalt
 
 end DiagonaLean.KAComm.KATermEq.Reduction

@@ -30,7 +30,12 @@ theorem halt_reducesto_not_modelLe_spec :
 
 /-- **The reduction.** `HaltProblem` many-one reduces to the failure of inclusion in the language
 model. -/
-def haltReducesNotModelLe : HaltProblem ⪯_s Complement ModelLeProblem :=
+def _root_.DiagonaLean.KAComm.ModelLe.synthComplFromHalt :
+    HaltProblem ⪯_s Complement ModelLeProblem :=
   ⟨haltRed, halt_reducesto_not_modelLe_spec⟩
+
+/-- The former name of `KAComm.ModelLe.synthComplFromHalt`. -/
+@[deprecated DiagonaLean.KAComm.ModelLe.synthComplFromHalt (since := "2026-11-23")]
+abbrev haltReducesNotModelLe := @DiagonaLean.KAComm.ModelLe.synthComplFromHalt
 
 end DiagonaLean.KAComm.ModelLe.Reduction
