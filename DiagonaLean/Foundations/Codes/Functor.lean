@@ -49,6 +49,9 @@ problem, from any alphabet with decidable equality to any alphabet with two dist
   (`computablePred_iff_of_equiv`) or recursively enumerable (`rePred_iff_of_equiv`); for a single
   reduction as data, `computablePred_of_reduces` and `REPred.of_reduces` take `p ⪯ₘ q` directly.
 
+The tactic `code_lift` (`Codes/Tactic.lean`) applies the matching theorem and closes its side
+goals, leaving what it cannot prove as named goals.
+
 The unary code is synchronizing (`isSync_unary`), so one lift serves problems that need only
 injectivity (`IsCode`: correspondence problems, grammars) and those that need synchronization
 (`IsSync`: rewriting). A class of good codes provides the three facts the lift uses

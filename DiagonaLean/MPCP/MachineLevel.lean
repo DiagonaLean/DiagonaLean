@@ -300,32 +300,20 @@ theorem not_machineDecidable_mpcp
   not_machineDecidable_of_not_computablePred henc not_computablePred_mpcp
 
 open Foundations.Codes in
-/-- The lift of MPCP instances is primitive recursive. -/
-theorem mpcpFunctor_liftMap_primrec {γ δ : Type} [Primcodable γ] [Primcodable δ] [DecidableEq γ]
-    (b0 b1 : δ) : Primrec (mpcpFunctor.liftMap (α := γ) b0 b1) := by
-  show Primrec fun x : Tile γ × Stack γ =>
-    (x.1.encode (localCode b0 b1 ((x.1.top ++ x.1.bot) ++ x.2.letters)),
-      x.2.encode (localCode b0 b1 ((x.1.top ++ x.1.bot) ++ x.2.letters)))
-  unfold Stack.letters
-  fun_prop
-
-open Foundations.Codes in
 /-- **MPCP is not a computable predicate over any nontrivial alphabet**: the lifting of
 `not_computablePred_mpcp` (`Foundations.Codes.CodeFunctor.not_computablePred_lift`).
 -/
 theorem not_computablePred_mpcpOf {α : Type} [Primcodable α] [Nontrivial α] :
-    ¬ ComputablePred fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2 :=
-  mpcpFunctor.not_computablePred_lift (α := Alpha ℕ Foundations.Normalize.Sym2)
-    (fun b0 b1 => (mpcpFunctor_liftMap_primrec b0 b1).to_comp)
-    not_computablePred_mpcp
+    ¬ ComputablePred fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2 := by
+  code_lift mpcpFunctor from not_computablePred_mpcp
 
 open DiagonaLean.Synthetic.Definitions in
 /-- **No Turing machine decides MPCP over any nontrivial alphabet**, under any computable
 encoding. -/
 theorem not_machineDecidable_mpcpOf {α : Type} [Primcodable α] [Nontrivial α]
     {enc : Tile α × Stack α → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc fun x => MPCP.DecisionProblem x.1 x.2 :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_mpcpOf
+    ¬ MachineDecidable enc fun x => MPCP.DecisionProblem x.1 x.2 := by
+  code_lift Reduction.mpcpFunctor from not_computablePred_mpcp
 
 open Foundations.Codes in
 /-- **Alphabet invariance of MPCP**: over any two nontrivial `Primcodable` alphabets, MPCP is
@@ -334,8 +322,7 @@ of them or none (`Foundations.Codes.computablePred_iff_of_equiv`, `rePred_iff_of
 theorem mpcp_manyOneEquiv {α β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
     [Nontrivial β] :
     ManyOneEquiv (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2)
-      fun x : Tile β × Stack β => MPCP.DecisionProblem x.1 x.2 :=
-  mpcpFunctor.manyOneEquiv (fun b0 b1 => (mpcpFunctor_liftMap_primrec b0 b1).to_comp)
-    (fun b0 b1 => (mpcpFunctor_liftMap_primrec b0 b1).to_comp)
+      fun x : Tile β × Stack β => MPCP.DecisionProblem x.1 x.2 := by
+  code_lift mpcpFunctor
 
 end DiagonaLean.MPCP.MachineLevel

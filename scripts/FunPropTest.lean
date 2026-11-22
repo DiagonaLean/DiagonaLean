@@ -48,6 +48,39 @@ example (h : ℕ → ℕ) (hh : Primrec h) : Primrec fun l : List ℕ => mapAdd 
 
 end DerivePrimrecTest
 
+/-! ### `code_lift` leaves the computability of the lift as a named goal when `fun_prop` fails -/
+
+namespace CodeLiftTest
+
+open DiagonaLean.Foundations.Codes
+
+/-- An encoding with no `fun_prop` lemma. -/
+def myEnc {α β : Type} (c : α → List β) (w : List α) : List β := encode c w
+
+abbrev toy : CodeFunctor IsCode where
+  Inst α := List α
+  map c w := myEnc c w
+  Prob w := w = []
+  map_unit w := by simp [myEnc]
+  map_kcomp c₁ c₂ w := by simp [myEnc, encode_kcomp]
+  natural hc w := by
+    simp only [myEnc]
+    exact ⟨fun h => hc (h.trans (encode_nil _).symm), by rintro rfl; rfl⟩
+  supp w := w
+  map_congr _ h := encode_congr h
+
+example {β : Type} [Primcodable β] [Nontrivial β] (h : ¬ ComputablePred (toy.Prob (α := ℕ))) :
+    ¬ ComputablePred (toy.Prob (α := β)) := by
+  code_lift toy from h
+  case map_computable =>
+    intros
+    refine Primrec.to_comp ?_
+    unfold CodeFunctor.liftMap
+    dsimp only [toy, myEnc]
+    fun_prop
+
+end CodeLiftTest
+
 /-! ### `Computable` -/
 
 example : Computable fun n : ℕ => n * n + 3 := by fun_prop

@@ -7,7 +7,7 @@ import DiagonaLean.EmpCFG.Undecidable
 import DiagonaLean.PCP.Primrec
 import DiagonaLean.EmpCFG.MachineLevel
 import DiagonaLean.Foundations.Codes.Grammar
-import DiagonaLean.Foundations.Codes.Functor
+import DiagonaLean.Foundations.Codes.Tactic
 
 @[expose] public section
 
@@ -95,15 +95,7 @@ abbrev empCodeFunctor : CodeFunctor IsCode where
 the input. -/
 derive_primrec sumCode [Primcodable T] [Primcodable β] [Primcodable N]
 derive_primrec presEncode [Primcodable T] [Primcodable β] [Primcodable N]
-
-/-- The lift of pairs of grammar codes is primitive recursive. -/
-theorem empCodeFunctor_liftMap_primrec {γ δ : Type} [Primcodable γ] [Primcodable δ]
-    [DecidableEq γ] (b0 b1 : δ) : Primrec (empCodeFunctor.liftMap (α := γ) b0 b1) := by
-  show Primrec fun x : CFGCode γ × CFGCode γ =>
-    (presEncode (localCode b0 b1 (presTerminals x.1 ++ presTerminals x.2)) x.1,
-      presEncode (localCode b0 b1 (presTerminals x.1 ++ presTerminals x.2)) x.2)
-  unfold presTerminals
-  fun_prop
+derive_primrec presTerminals [Primcodable T] [Primcodable N]
 
 /-- **Non-emptiness of the intersection of two grammar codes is not a computable predicate over
 any nontrivial alphabet**: the lifting of `not_computablePred_empCFGCode` from `Term Bool`. -/
@@ -112,10 +104,8 @@ theorem not_computablePred_empCFGCodeOf [Primcodable α] [Nontrivial α] [Decida
   have h₀ : ¬ ComputablePred (@CodeProblem (Reduction.Term Bool)) := by
     rw [codeProblem_eq]
     exact not_computablePred_empCFGCode (α := Bool)
-  have h := empCodeFunctor.not_computablePred_lift (β := α)
-    (fun b0 b1 => (empCodeFunctor_liftMap_primrec b0 b1).to_comp) h₀
-  have h' : ¬ ComputablePred (@CodeProblem α) := h
-  rwa [codeProblem_eq] at h'
+  have h : ¬ ComputablePred (@CodeProblem α) := by code_lift empCodeFunctor from h₀
+  rwa [codeProblem_eq] at h
 
 /-- **No Turing machine decides non-emptiness of the intersection of two grammar codes over any
 nontrivial alphabet**, under any computable encoding. -/
@@ -130,9 +120,7 @@ theorem empCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [N
     [Nontrivial β] [DecidableEq α] [DecidableEq β] :
     ManyOneEquiv (fun c : CFGCode α × CFGCode α => IntersectionNonempty c.1.toCFG c.2.toCFG)
       fun c : CFGCode β × CFGCode β => IntersectionNonempty c.1.toCFG c.2.toCFG := by
-  have h : ManyOneEquiv (@CodeProblem α) (@CodeProblem β) :=
-    empCodeFunctor.manyOneEquiv (fun b0 b1 => (empCodeFunctor_liftMap_primrec b0 b1).to_comp)
-      (fun b0 b1 => (empCodeFunctor_liftMap_primrec b0 b1).to_comp)
+  have h : ManyOneEquiv (@CodeProblem α) (@CodeProblem β) := by code_lift empCodeFunctor
   rwa [codeProblem_eq, codeProblem_eq] at h
 
 end DiagonaLean.EmpCFG.MachineLevel

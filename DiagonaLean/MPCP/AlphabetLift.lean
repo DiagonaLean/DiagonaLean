@@ -5,7 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.MPCP.Undecidable
 import DiagonaLean.PCP.AlphabetLift
-import DiagonaLean.Foundations.Codes.Functor
+import DiagonaLean.Foundations.Codes.Tactic
 import DiagonaLean.Foundations.Computability.DerivePrimcodable
 
 @[expose] public section
@@ -90,8 +90,8 @@ def mpcpAlphabetLift (b0 b1 : α) (hne : b0 ≠ b1) :
 
 /-- **MPCP is `Undecidable` over any alphabet `α` with two distinct letters `b0`, `b1`.** -/
 def undecidableMPCPOf (b0 b1 : α) (hne : b0 ≠ b1) :
-    Undecidable fun x : Tile α × Stack α => DecisionProblem x.1 x.2 :=
-  mpcpFunctor.undecidableOf undecidableMPCP b0 b1 hne
+    Undecidable fun x : Tile α × Stack α => DecisionProblem x.1 x.2 := by
+  code_lift mpcpFunctor from undecidableMPCP
 
 /-- **MPCP over `Bool` is `Undecidable`.** -/
 def undecidableMPCPBool : Undecidable MPCProblem :=

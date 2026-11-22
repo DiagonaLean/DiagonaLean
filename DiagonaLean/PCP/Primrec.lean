@@ -48,6 +48,7 @@ end Reduction
 /- Encoding tiles and stacks is primitive recursive, for a code that may depend on the input. -/
 derive_primrec Tile.encode [Primcodable α] [Primcodable β]
 derive_primrec Stack.encode [Primcodable α] [Primcodable β]
+derive_primrec Stack.letters [Primcodable α]
 
 namespace AlphabetLift
 
@@ -56,7 +57,7 @@ variable {γ₁ γ₂ : Type} [DecidableEq γ₁] [Primcodable γ₁] [Primcodab
 /-- **The change of alphabet is primitive recursive**, for fixed target letters `b0`, `b1`. -/
 theorem liftInstance_primrec (b0 b1 : γ₂) :
     Primrec (liftInstance (γ₁ := γ₁) b0 b1) := by
-  unfold liftInstance Stack.letters
+  unfold liftInstance
   fun_prop
 
 /-- The function of the reduction `pcpAlphabetLift` is primitive recursive. -/

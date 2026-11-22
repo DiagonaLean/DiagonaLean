@@ -112,6 +112,7 @@ import DiagonaLean.Foundations.Codes.Correspondence
 import DiagonaLean.Foundations.Codes.Rewriting
 import DiagonaLean.Foundations.Codes.Grammar
 import DiagonaLean.Foundations.Codes.Functor
+import DiagonaLean.Foundations.Codes.Tactic
 import DiagonaLean.Foundations.Computability.StackProof
 import DiagonaLean.Foundations.Computability.PrimrecRec
 import DiagonaLean.Foundations.Computability.PolyTree
