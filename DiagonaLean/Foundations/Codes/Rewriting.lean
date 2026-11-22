@@ -32,6 +32,16 @@ variable {α β : Type}
 def SRS.encode (c : α → List β) (R : SRS α) : SRS β :=
   R.map fun lr => (Codes.encode c lr.1, Codes.encode c lr.2)
 
+/-- The letters of a system. -/
+def SRS.letters (R : SRS α) : List α := R.flatMap fun lr => lr.1 ++ lr.2
+
+/-- Codes that agree on the letters of a system encode it alike. -/
+theorem SRS.encode_congr {c c' : α → List β} {R : SRS α} (h : ∀ a ∈ SRS.letters R, c a = c' a) :
+    SRS.encode c R = SRS.encode c' R :=
+  List.map_congr_left fun lr hlr => Prod.ext
+    (Codes.encode_congr fun a ha => h a (List.mem_flatMap.2 ⟨lr, hlr, List.mem_append_left _ ha⟩))
+    (Codes.encode_congr fun a ha => h a (List.mem_flatMap.2 ⟨lr, hlr, List.mem_append_right _ ha⟩))
+
 @[simp] theorem SRS.encode_unit (R : SRS α) : SRS.encode unit R = R := by
   simp [SRS.encode]
 

@@ -18,10 +18,10 @@ encoding every tile by a code `c` (`Stack.encode`) preserves and reflects solvab
 `encode c` is injective on the words over the letters of the instance
 (`decisionProblem_encode_iff`).
 
-PCP is a functor on codes (`pcpFunctor`) with the letters of an instance as its support
-(`pcpSupport`), so the lift from the letters used (`Foundations.Codes.CodeFunctor.Support.reduces`)
-applies: each symbol of the instance is encoded by the unary code of its position among the symbols
-of the instance, over two distinct letters of any target alphabet. The source alphabet needs only
+PCP is a functor on codes (`pcpFunctor`), with the letters of an instance as its support, so the
+lift of `Foundations.Codes.Functor` (`Foundations.Codes.CodeFunctor.lift`) applies: each symbol
+of the instance is encoded by the unary code of its position among the symbols of the instance,
+over two distinct letters of any target alphabet. The source alphabet needs only
 decidable equality, countable or not. `AlphabetLift.liftInstance` is this encoding,
 `decisionProblem_lifts` its correctness and `pcpAlphabetLift` the many-one reduction; downstream
 reductions use them to build the encoded instance and transport equivalences.
@@ -141,9 +141,8 @@ abbrev pcpFunctor : CodeFunctor IsCode where
   map_unit := Stack.encode_unit
   map_kcomp := Stack.encode_kcomp
   natural hc P := decisionProblem_encode_iff_of_isCode hc P
-
-/-- The letters of an instance are the support of PCP. -/
-def pcpSupport : pcpFunctor.Support := ⟨Stack.letters, fun _ h => Stack.encode_congr h⟩
+  supp := Stack.letters
+  map_congr _ h := Stack.encode_congr h
 
 end DiagonaLean.PCP
 
@@ -160,7 +159,7 @@ def liftInstance (P : Stack γ₁) : Stack γ₂ := P.encode (localCode b0 b1 P.
 /-- A PCP instance is solvable if and only if its lifted instance is solvable. -/
 theorem decisionProblem_lifts (P : Stack γ₁) (hne : b0 ≠ b1) :
     DecisionProblem P ↔ DecisionProblem (liftInstance b0 b1 P) :=
-  (pcpSupport.natural_on goodClass_isCode P (good_localCode goodClass_isCode hne _)).symm
+  (pcpFunctor.natural_on P (good_localCode hne _)).symm
 
 /-- `liftInstance b0 b1` witnesses the many-one reduction from PCP over an arbitrary alphabet
 to PCP over a target alphabet. -/
@@ -170,9 +169,9 @@ theorem pcp_alphabet_lift_spec (hne : b0 ≠ b1) :
   fun P => decisionProblem_lifts b0 b1 P hne
 
 /-- Many-one reduction from PCP over an arbitrary alphabet to PCP over a target alphabet:
-`pcpSupport.reduces`. -/
+`pcpFunctor.lift`. -/
 def pcpAlphabetLift (hne : b0 ≠ b1) :
     (@DiagonaLean.PCP.DecisionProblem γ₁) ⪯ₘ (@DiagonaLean.PCP.DecisionProblem γ₂) :=
-  pcpSupport.reduces goodClass_isCode b0 b1 hne
+  pcpFunctor.lift b0 b1 hne
 
 end DiagonaLean.PCP.AlphabetLift

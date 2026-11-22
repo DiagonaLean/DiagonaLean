@@ -205,6 +205,21 @@ def sumCode (c : T → List β) : T ⊕ N → List (β ⊕ N) :=
 def presEncode (c : T → List β) (p : GrammarPres N T) : GrammarPres N β :=
   (p.1, p.2.map fun r => (r.1, encode (sumCode c) r.2))
 
+/-- The terminals of a grammar code. -/
+def presTerminals (p : GrammarPres N T) : List T :=
+  p.2.flatMap fun r => r.2.flatMap (Sum.elim (fun t => [t]) fun _ => [])
+
+/-- Codes that agree on the terminals of a grammar code encode it alike. -/
+theorem presEncode_congr {c c' : T → List β} {p : GrammarPres N T}
+    (h : ∀ t ∈ presTerminals p, c t = c' t) : presEncode c p = presEncode c' p := by
+  refine Prod.ext rfl (List.map_congr_left fun r hr => Prod.ext rfl
+    (Codes.encode_congr fun s hs => ?_))
+  cases s with
+  | inl t =>
+    simp only [sumCode, Sum.elim_inl]
+    rw [h t (List.mem_flatMap.2 ⟨r, hr, List.mem_flatMap.2 ⟨.inl t, hs, by simp⟩⟩)]
+  | inr n => rfl
+
 theorem map_symOf_encode (c : T → List β) (w : List (T ⊕ N)) :
     (encode (sumCode c) w).map symOf = encode (symCode c) (w.map symOf) := by
   induction w with

@@ -56,9 +56,7 @@ variable {γ₁ γ₂ : Type} [DecidableEq γ₁] [Primcodable γ₁] [Primcodab
 /-- **The change of alphabet is primitive recursive**, for fixed target letters `b0`, `b1`. -/
 theorem liftInstance_primrec (b0 b1 : γ₂) :
     Primrec (liftInstance (γ₁ := γ₁) b0 b1) := by
-  have := Foundations.Codes.unary_primrec
-  unfold liftInstance Foundations.Codes.localCode Foundations.Codes.bitCode
-    Foundations.Codes.ofEncodable Foundations.Codes.bit Stack.letters
+  unfold liftInstance Stack.letters
   fun_prop
 
 /-- The function of the reduction `pcpAlphabetLift` is primitive recursive. -/

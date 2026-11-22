@@ -300,21 +300,23 @@ theorem not_machineDecidable_mpcp
   not_machineDecidable_of_not_computablePred henc not_computablePred_mpcp
 
 open Foundations.Codes in
-/-- A primitive recursive code acts primitive recursively on MPCP instances. -/
-theorem mpcpFunctor_map_primrec {γ δ : Type} [Primcodable γ] [Primcodable δ] {c : γ → List δ}
-    (hc : Primrec c) : Primrec (mpcpFunctor.map c) := by
-  show Primrec fun x : Tile γ × Stack γ => (x.1.encode c, x.2.encode c)
+/-- The lift of MPCP instances is primitive recursive. -/
+theorem mpcpFunctor_liftMap_primrec {γ δ : Type} [Primcodable γ] [Primcodable δ] [DecidableEq γ]
+    (b0 b1 : δ) : Primrec (mpcpFunctor.liftMap (α := γ) b0 b1) := by
+  show Primrec fun x : Tile γ × Stack γ =>
+    (x.1.encode (localCode b0 b1 ((x.1.top ++ x.1.bot) ++ x.2.letters)),
+      x.2.encode (localCode b0 b1 ((x.1.top ++ x.1.bot) ++ x.2.letters)))
+  unfold Stack.letters
   fun_prop
 
 open Foundations.Codes in
 /-- **MPCP is not a computable predicate over any nontrivial alphabet**: the lifting of
-`not_computablePred_mpcp` along `bitCode` (`Foundations.Codes.CodeFunctor.not_computablePred_lift`).
+`not_computablePred_mpcp` (`Foundations.Codes.CodeFunctor.not_computablePred_lift`).
 -/
 theorem not_computablePred_mpcpOf {α : Type} [Primcodable α] [Nontrivial α] :
     ¬ ComputablePred fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2 :=
   mpcpFunctor.not_computablePred_lift (α := Alpha ℕ Foundations.Normalize.Sym2)
-    (fun hne => (isSync_bitCode hne).isCode)
-    (fun b0 b1 => (mpcpFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
+    (fun b0 b1 => (mpcpFunctor_liftMap_primrec b0 b1).to_comp)
     not_computablePred_mpcp
 
 open DiagonaLean.Synthetic.Definitions in
@@ -333,9 +335,7 @@ theorem mpcp_manyOneEquiv {α β : Type} [Primcodable α] [Primcodable β] [Nont
     [Nontrivial β] :
     ManyOneEquiv (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2)
       fun x : Tile β × Stack β => MPCP.DecisionProblem x.1 x.2 :=
-  mpcpFunctor.manyOneEquiv (fun hne => (isSync_bitCode hne).isCode)
-    (fun hne => (isSync_bitCode hne).isCode)
-    (fun b0 b1 => (mpcpFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
-    (fun b0 b1 => (mpcpFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
+  mpcpFunctor.manyOneEquiv (fun b0 b1 => (mpcpFunctor_liftMap_primrec b0 b1).to_comp)
+    (fun b0 b1 => (mpcpFunctor_liftMap_primrec b0 b1).to_comp)
 
 end DiagonaLean.MPCP.MachineLevel
