@@ -66,17 +66,14 @@ end Codes
 
 namespace AlphabetLift
 
-theorem natToBits_primrec : Primrec₂ natToBits := by primrec_rec
-
-@[fun_prop] theorem prim_natToBits {β : Type} [Primcodable β] {f g : β → ℕ} (hf : Primrec f)
-    (hg : Primrec g) : Primrec fun x => natToBits (f x) (g x) := natToBits_primrec.comp hf hg
-
 variable {γ₁ γ₂ : Type} [DecidableEq γ₁] [Primcodable γ₁] [Primcodable γ₂]
 
 /-- **The change of alphabet is primitive recursive**, for fixed target letters `b0`, `b1`. -/
 theorem liftInstance_primrec (b0 b1 : γ₂) :
     Primrec (liftInstance (γ₁ := γ₁) b0 b1) := by
-  unfold liftInstance liftTile liftWord symbolWord symbolBits widthFor symbolsUsed bitTo
+  have := Foundations.Codes.unary_primrec
+  unfold liftInstance Stack.encode Tile.encode Foundations.Codes.localCode Foundations.Codes.bitCode
+    Foundations.Codes.ofEncodable Foundations.Codes.bit Foundations.Codes.encode Stack.letters
   fun_prop
 
 /-- The function of the reduction `pcpAlphabetLift` is primitive recursive. -/

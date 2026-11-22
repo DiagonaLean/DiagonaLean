@@ -297,7 +297,7 @@ Offer `fun_prop` for `Primrec` and `Computable`, and Theorems A and B, to Mathli
 | Reduction | Result | Status |
 |---|---|---|
 | MPCP → PCP | `mpcpToPcp_primrec` (`PCP/Primrec.lean`) | **Done** (`252d2da`) |
-| PCP alphabet lift | `liftInstance_primrec`, `pcpAlphabetLift_primrec` | **Done** (`252d2da`, `376ac50`). Since 2026-11-19 `hashL`, `hashR` and `natToBits` are proved by a bare `primrec_rec`, with no hand-written rewrite lemmas |
+| PCP alphabet lift | `liftInstance_primrec`, `pcpAlphabetLift_primrec` | **Done** (`252d2da`, `376ac50`). Since 2026-11-19 `hashL` and `hashR` are proved by a bare `primrec_rec`, with no hand-written rewrite lemmas; since 2026-11-22 the lift is the unary code of the letters used (`localCode`), and `natToBits` is gone |
 | PCP → MatMort | `matImage_primrec`, `pcpReducesMatMort_primrec` (`MatMort/Primrec.lean`), with `Finset.primcodable` (`FinsetPrim.lean`) | **Done** (`376ac50`). Since 2026-11-19 the matrix of a pair of words is `unfold …; fun_prop`, through `IntPrim` and `MatrixPrim`; no `ℕ` detour, no split into entries |
 | PCP → EmpCFG, AmbigCFG | — | Blocked: `ContextFreeGrammar` has a field `NT : Type`, so grammars are not `Primcodable`; needs a concrete code for grammars (rules over numbered nonterminals). For AmbigCFG the output type also depends on the input (`Fin P.length`) |
 | Halt → MPCP / PCP | — | A machine is not a `Primcodable` value; the route is the KA one: build the tiles from the machine's code (as `dataC` does) and use `tm_computes`. Largest of these, and the one that gives the PCP chain machine-level results |

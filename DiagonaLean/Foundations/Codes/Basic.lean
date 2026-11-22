@@ -41,6 +41,13 @@ def encode (c : α → List β) (w : List α) : List β := w.flatMap c
     encode c (u ++ v) = encode c u ++ encode c v := by
   simp [encode]
 
+/-- Codes that agree on the letters of a word encode it alike. -/
+theorem encode_congr {c c' : α → List β} {w : List α} (h : ∀ a ∈ w, c a = c' a) :
+    encode c w = encode c' w := by
+  induction w with
+  | nil => rfl
+  | cons a w ih => simp [h a (by simp), ih fun b hb => h b (by simp [hb])]
+
 /-! ### The category of codes
 
 The identity of an alphabet is the code of one-letter words (`unit`), and codes compose by
@@ -71,6 +78,16 @@ structure IsSync (c : α → List β) : Prop where
   /-- Occurrences of encoded non-empty words are aligned. -/
   aligned : ∀ (w l : List α) (p q : List β), l ≠ [] → encode c w = p ++ encode c l ++ q →
     ∃ w₁ w₂, w = w₁ ++ l ++ w₂ ∧ p = encode c w₁ ∧ q = encode c w₂
+
+theorem isCode_unit : IsCode (unit (α := α)) := fun u v h => by simpa using h
+
+/-- Precomposing a code with an injective renaming of letters gives a code. -/
+theorem IsCode.comp {c : β → List γ} (hc : IsCode c) {f : α → β} (hf : Function.Injective f) :
+    IsCode (c ∘ f) := fun u v h => by
+  have e : ∀ w, encode (c ∘ f) w = encode c (w.map f) := fun w => by
+    induction w <;> simp_all
+  rw [e, e] at h
+  exact List.map_injective_iff.2 hf (hc h)
 
 /-- Following a code by an injective renaming of letters gives a code. -/
 theorem IsCode.map {c : α → List β} (hc : IsCode c) {g : β → γ} (hg : Function.Injective g) :

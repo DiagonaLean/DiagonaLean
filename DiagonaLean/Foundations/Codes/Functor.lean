@@ -124,6 +124,82 @@ theorem CodeFunctor.not_computablePred_lift [Encodable α] [Nontrivial β]
   obtain ⟨b0, b1, hne⟩ := exists_pair_ne β
   exact F.not_computablePred_of (hc hne) (hmap b0 b1) h
 
+/-! ### The lift from the letters an instance uses
+
+The lifting above needs a code good on the whole source alphabet, so the alphabet must be
+countable. An instance uses finitely many letters, so a code built for each instance from the
+letters it uses (`localCode`: the unary code of a letter's position among them) lifts from any
+alphabet with decidable equality. Such a code is good only on those letters, which is enough when
+codes that agree on them act alike on the instance (`Support.map_congr`): naturality for codes
+good on the letters of an instance follows from naturality for good codes and the functor laws
+(`Support.natural_on`). -/
+
+/-- The closure properties of a class of good codes that the lift from the letters used needs. -/
+structure GoodClass (Good : ∀ {α β : Type}, (α → List β) → Prop) : Prop where
+  /-- Precomposing with an injective renaming of letters keeps a code good. -/
+  comp_inj : ∀ {α β γ : Type} {c : β → List γ} {f : α → β}, Good c → Function.Injective f →
+    Good (c ∘ f)
+  /-- The identity code is good. -/
+  unit_good : ∀ {α : Type}, Good (unit (α := α))
+  /-- The unary code of the natural numbers, in two distinct letters, is good. -/
+  bitCode_good : ∀ {β : Type} {b0 b1 : β}, b0 ≠ b1 → Good (bitCode (α := ℕ) b0 b1)
+
+theorem goodClass_isCode : GoodClass IsCode :=
+  ⟨fun hc hf => hc.comp hf, @fun _ => isCode_unit, fun hne => (isSync_bitCode hne).isCode⟩
+
+theorem goodClass_isSync : GoodClass IsSync :=
+  ⟨fun hc hf => hc.comp hf, isSync_unit, fun hne => isSync_bitCode hne⟩
+
+/-- The letters an instance uses: codes that agree on them act alike on it. -/
+structure CodeFunctor.Support where
+  /-- The letters of an instance. -/
+  supp : ∀ {α : Type}, F.Inst α → List α
+  /-- Codes that agree on the letters of an instance act alike on it. -/
+  map_congr : ∀ {α β : Type} {c c' : α → List β} (x : F.Inst α),
+    (∀ a ∈ supp x, c a = c' a) → F.map c x = F.map c' x
+
+/-- **Naturality on the letters used.** A code whose restriction to the letters of an instance is
+good preserves and reflects the problem on that instance. The instance is moved to the subtype of
+its letters by a code (`a ↦ [⟨a, h⟩]` on its letters), where the global naturality applies. -/
+theorem CodeFunctor.Support.natural_on {F : CodeFunctor Good} (σ : F.Support) (G : GoodClass Good)
+    [DecidableEq α] {c : α → List β} (x : F.Inst α)
+    (hc : Good fun a : {a // a ∈ σ.supp x} => c a.1) : F.Prob (F.map c x) ↔ F.Prob x := by
+  let ρ : α → List {a // a ∈ σ.supp x} := fun a => if h : a ∈ σ.supp x then [⟨a, h⟩] else []
+  have hval : Good fun a : {a // a ∈ σ.supp x} => unit a.1 :=
+    G.comp_inj G.unit_good Subtype.val_injective
+  have e₁ : F.map (fun a : {a // a ∈ σ.supp x} => unit a.1) (F.map ρ x) = x :=
+    calc _ = F.map (kcomp _ ρ) x := F.map_kcomp _ _ _
+      _ = F.map unit x := σ.map_congr x fun a ha => by simp [kcomp, ρ, ha, unit]
+      _ = x := F.map_unit x
+  have e₂ : F.map (fun a : {a // a ∈ σ.supp x} => c a.1) (F.map ρ x) = F.map c x :=
+    (F.map_kcomp _ _ _).trans (σ.map_congr x fun a ha => by simp [kcomp, ρ, ha])
+  rw [← e₂, F.natural hc, ← F.natural hval (F.map ρ x), e₁]
+
+/-- The code of a letter from its position among the letters `S`: the unary code of the position,
+in the letters `b0`, `b1`. -/
+def localCode [DecidableEq α] (b0 b1 : β) (S : List α) (a : α) : List β :=
+  bitCode (α := ℕ) b0 b1 (S.idxOf a)
+
+/-- `localCode` is good on the letters `S`: positions of distinct members of `S` differ. -/
+theorem good_localCode (G : GoodClass Good) [DecidableEq α] {b0 b1 : β} (hne : b0 ≠ b1)
+    (S : List α) : Good fun a : {a // a ∈ S} => localCode b0 b1 S a.1 :=
+  G.comp_inj (f := fun a : {a // a ∈ S} => S.idxOf a.1) (G.bitCode_good hne)
+    fun a _ h => Subtype.ext ((List.idxOf_inj a.2).1 h)
+
+/-- **The lift from the letters used.** The problem over an alphabet with decidable equality
+many-one reduces to it over any alphabet with two distinct letters, by encoding each instance with
+the code of its own letters. -/
+def CodeFunctor.Support.reduces {F : CodeFunctor Good} (σ : F.Support) (G : GoodClass Good)
+    [DecidableEq α] (b0 b1 : β) (hne : b0 ≠ b1) : @F.Prob α ⪯ₘ @F.Prob β :=
+  ⟨fun x => F.map (localCode b0 b1 (σ.supp x)) x,
+    fun x => (σ.natural_on G x (good_localCode G hne _)).symm⟩
+
+/-- **The lifting, from any alphabet with decidable equality.** -/
+def CodeFunctor.Support.undecidableOf {F : CodeFunctor Good} (σ : F.Support) (G : GoodClass Good)
+    [DecidableEq α] (u : Undecidable (@F.Prob α)) (b0 b1 : β) (hne : b0 ≠ b1) :
+    Undecidable (@F.Prob β) :=
+  undecidabilityFromReducibility u (σ.reduces G b0 b1 hne)
+
 /-! ### Alphabet invariance -/
 
 /-- A good code with a computable action is a computable many-one reduction. -/
