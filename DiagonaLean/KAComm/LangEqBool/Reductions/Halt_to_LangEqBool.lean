@@ -9,7 +9,7 @@ import DiagonaLean.KAComm.KleeneAlgebra.Separation
 
 @[expose] public section
 
-/-! # `HaltProblem ⪯ₘ` the failure of equality on `L Σ̈` over `{0, 1}`
+/-! # `HaltProblem ⪯_s` the failure of equality on `L Σ̈` over `{0, 1}`
 
 `haltEqRedB` sends `(M, w)` to the equality of `haltEqRed` with each letter `n` replaced by the word
 `1ⁿ0`. An injective substitution preserves and reflects language equality (`pl_sb_eq_iff`), so the
@@ -30,13 +30,13 @@ def haltEqRedB (p : EncodableTM Bool × List Bool) : InstB := sbI (haltEqRed p)
 
 /-- `haltEqRedB` reduces `HaltProblem` to the failure of language equality over `{0, 1}`. -/
 theorem halt_reducesto_not_langEqBool_spec :
-    HaltProblem ⪯ₘ[haltEqRedB] Complement LangEqBoolProblem :=
+    HaltProblem ⪯_s[haltEqRedB] Complement LangEqBoolProblem :=
   fun p => (halt_iff_not_modelLe p).trans (not_congr
     ((modelLe_iff_langEq _).trans (pl_sb_eq_iff cd_injective).symm))
 
 /-- **The reduction.** `HaltProblem` many-one reduces to the failure of language equality over
 `{0, 1}`. -/
-def haltReducesNotLangEqBool : HaltProblem ⪯ₘ Complement LangEqBoolProblem :=
+def haltReducesNotLangEqBool : HaltProblem ⪯_s Complement LangEqBoolProblem :=
   ⟨haltEqRedB, halt_reducesto_not_langEqBool_spec⟩
 
 end DiagonaLean.KAComm.LangEqBool.Reduction

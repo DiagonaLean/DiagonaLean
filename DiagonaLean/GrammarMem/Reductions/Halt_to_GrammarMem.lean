@@ -38,12 +38,12 @@ def haltToGrammarMem (p : EncodableTM Bool × List Bool) : GrammarCode T × List
 /-- `haltToGrammarMem` witnesses the reduction from the halting problem to membership for grammar
 codes. -/
 theorem halt_reducesto_grammarMem_spec :
-    HaltProblem ⪯ₘ[haltToGrammarMem] @DecisionProblem T := fun p =>
+    HaltProblem ⪯_s[haltToGrammarMem] @DecisionProblem T := fun p =>
   (halt_reducesto_semiThue_spec p).trans (emptyWord_ofSRS_iff _ _ (haltToSemiThue_lhs_ne p)).symm
 
 /-- The halting problem many-one reduces to membership for grammar codes, through
 `haltToGrammarMem`. -/
-def haltReducesGrammarMem : HaltProblem ⪯ₘ @DecisionProblem T :=
+def haltReducesGrammarMem : HaltProblem ⪯_s @DecisionProblem T :=
   ⟨haltToGrammarMem, halt_reducesto_grammarMem_spec⟩
 
 end DiagonaLean.GrammarMem.Reduction

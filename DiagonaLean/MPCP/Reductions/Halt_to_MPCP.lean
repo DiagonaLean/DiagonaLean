@@ -9,7 +9,7 @@ import DiagonaLean.Foundations.Computability.Normalize.Normalize
 
 @[expose] public section
 
-/-! # Halt ⪯ₘ MPCP
+/-! # Halt ⪯_s MPCP
 
 Reduction from the halting problem to MPCP following the Hopcroft–Ullman construction. Solutions to
 `DecisionProblem (startTile tm w) (haltTiles tm)` encode halting computation histories of `tm` on
@@ -3120,7 +3120,7 @@ theorem halt_iff_mpcp (tm : EncodableTM Symbol)
       exact h_nlb
       exact hd
 
-/-- **The reduction.** The function witnessing `HaltProblem ⪯ₘ MPCP`: it normalizes the machine
+/-- **The reduction.** The function witnessing `HaltProblem ⪯_s MPCP`: it normalizes the machine
 and input to satisfy `NoBlankWrites` and `NoLeftBoundary`, builds the MPCP instance of
 `halt_iff_mpcp`, and renames states by `tm.stateEncodable` composed with the `Encodable` instance
 for the normalizer's control states. -/
@@ -3134,7 +3134,7 @@ def haltToMpcpNorm (p : EncodableTM Bool × List Bool) :
 /-- `haltToMpcpNorm` witnesses that the halting problem many-one reduces to MPCP over the fixed
 alphabet `Alpha ℕ Sym2`. -/
 theorem halt_reducesto_mpcp_spec :
-    HaltProblem ⪯ₘ[haltToMpcpNorm]
+    HaltProblem ⪯_s[haltToMpcpNorm]
       fun x : Tile (Alpha ℕ Sym2) × Stack (Alpha ℕ Sym2) => MPCP.DecisionProblem x.1 x.2 := by
   rintro ⟨tm, w⟩
   show Halts tm.toSingleTapeTM w ↔ _
@@ -3148,7 +3148,7 @@ theorem halt_reducesto_mpcp_spec :
 /-- The halting problem many-one reduces to MPCP over the fixed alphabet `Alpha ℕ Sym2`, through
 `haltToMpcpNorm`. -/
 def haltReducesMPCP :
-    HaltProblem ⪯ₘ fun x : Tile (Alpha ℕ Sym2) × Stack (Alpha ℕ Sym2) =>
+    HaltProblem ⪯_s fun x : Tile (Alpha ℕ Sym2) × Stack (Alpha ℕ Sym2) =>
       MPCP.DecisionProblem x.1 x.2 :=
   ⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩
 

@@ -71,7 +71,7 @@ def layerOfTerm (stx : Term) (role : String) : TacticM Layer := do
   match ← layerOf? (← inferType e) with
   | some l => return l
   | none => throwError "reduce_from: the {role} `{stx}` is not a reduction: its type is{indentExpr
-      (← inferType e)}\nexpected a `SynthReduction` (`⪯ₘ`, `SynthHaltReduction`) or a \
+      (← inferType e)}\nexpected a `SynthReduction` (`⪯_s`, `SynthHaltReduction`) or a \
       `ComputableReduction` (`HaltReduction`)"
 
 /-- Run `tac` on each of `gs`, keeping the goals it does not close. -/

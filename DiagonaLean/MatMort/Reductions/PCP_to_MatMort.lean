@@ -15,7 +15,7 @@ import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
 @[expose] public section
 
-/-! # PCP ⪯ₘ MatMort
+/-! # PCP ⪯_s MatMort
 
 Reduction from the Post Correspondence Problem (PCP) to the Matrix Mortality Problem (MatMort),
 following [Paterson1970]. The Matrix Mortality Problem asks whether a finite set of `3 × 3` integer
@@ -523,11 +523,11 @@ theorem pcp_iff_matmort (K : Stack S23) :
 /-- `matImage` reduces PCP over `S23` to matrix mortality: `K` has a solution iff `matImage K` is
   mortal. -/
 theorem pcp_reducesto_matMort_spec :
-    @PCP.DecisionProblem S23 ⪯ₘ[matImage] fun Ws => MatMort.DecisionProblem Ws :=
+    @PCP.DecisionProblem S23 ⪯_s[matImage] fun Ws => MatMort.DecisionProblem Ws :=
   pcp_iff_matmort
 
 /-- **The reduction.** PCP over `S23` many-one reduces to matrix mortality through `matImage`. -/
-def pcpReducesMatMort : @PCP.DecisionProblem S23 ⪯ₘ fun Ws => MatMort.DecisionProblem Ws :=
+def pcpReducesMatMort : @PCP.DecisionProblem S23 ⪯_s fun Ws => MatMort.DecisionProblem Ws :=
   ⟨matImage, pcp_reducesto_matMort_spec⟩
 
 end DiagonaLean.MatMort.Reduction

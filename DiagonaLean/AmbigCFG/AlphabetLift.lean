@@ -64,12 +64,12 @@ abbrev ambCodeFunctor : CodeFunctor IsCode where
 
 /-- The two forms of the problem reduce to each other by the identity. -/
 def codeProblemReduces [DecidableEq T] :
-    (fun p : CFGCode T => AmbigCFG.DecisionProblem p.toCFG) ⪯ₘ @CodeProblem T :=
+    (fun p : CFGCode T => AmbigCFG.DecisionProblem p.toCFG) ⪯_s @CodeProblem T :=
   ⟨id, fun p => (codeProblem_iff p).symm⟩
 
 /-- The two forms of the problem reduce to each other by the identity. -/
 def codeProblemReduces' [DecidableEq T] :
-    @CodeProblem T ⪯ₘ fun p : CFGCode T => AmbigCFG.DecisionProblem p.toCFG :=
+    @CodeProblem T ⪯_s fun p : CFGCode T => AmbigCFG.DecisionProblem p.toCFG :=
   ⟨id, fun p => codeProblem_iff p⟩
 
 /-- **Ambiguity of grammar codes is `Undecidable` over any alphabet `α` with two distinct letters

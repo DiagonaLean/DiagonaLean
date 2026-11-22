@@ -5,15 +5,15 @@ Authors: Kshitij Salunke, Aalok Thakkar, Claude Opus
 
 # `Rice.Reductions`: Rice's Problem Reductions
 
-1. [`Halt ⪯ₘ Rice`](#halt-ₘ-rice)
+1. [`Halt ⪯_s Rice`](#halt-ₘ-rice)
 
-## `Halt ⪯ₘ Rice`
+## `Halt ⪯_s Rice`
 
 `HaltProblem` is a search: a machine `M` halts on `w` iff a primitive recursive test of the numeric data of `(M, w)` succeeds for some number of steps (`halt_iff_test` in `Foundations/Computability/HaltSearch.lean`). So `wait n x`, which searches for such a step for the data with code `n` and then returns `x`, is partial recursive (`wait_part`), and some program `w` computes it on `⟪n, x⟫` (`IsWaiter`, `exists_isWaiter`).
 
 Assume that the program `cT` computes a function in `C` and that the nowhere-defined function is not in `C`. The reduction `reduction w cT` sends a `HaltProblem` instance `p` to the program `cT ∘ curry w d`, where `d` is the code of the data of `p`. On input `x` it waits for `p` to halt and then runs `cT` on `x`. If `p` halts, it computes `cT.eval`, which is in `C` (`eval_reduction_of_halts`). If not, it computes the nowhere-defined function, which is not (`eval_reduction_of_not_halts`). The reduction only builds a program from the data of `p`. Its classical ingredients are the finite constants `w` and `cT`.
 
-`halt_reducesto_rice_spec` gives `HaltProblem ⪯ₘ[reduction w cT] RiceProblem C`, packaged as `haltReducesRice`.
+`halt_reducesto_rice_spec` gives `HaltProblem ⪯_s[reduction w cT] RiceProblem C`, packaged as `haltReducesRice`.
 
 ### Undecidability
 

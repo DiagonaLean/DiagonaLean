@@ -3,9 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude Sonnet 4.6, Akhilesh Balaji
 ```
 # `AmbigCFG.Reductions`: Deciding the ambiguity of CFGs
-1. [`PCP ⪯ₘ AmbigCFG`](#pcp-ₘ-ambigcfg)
+1. [`PCP ⪯_s AmbigCFG`](#pcp-ₘ-ambigcfg)
 
-## `PCP ⪯ₘ AmbigCFG`
+## `PCP ⪯_s AmbigCFG`
 Given a PCP instance `P : Stack α`, construct a context-free grammar `P.toGrammar` such that `PCP.DecisionProblem P ↔ AmbigCFG.DecisionProblem P.toGrammar` (`pcp_iff_ambigcfg`).
 
 The grammar `P.toGrammar` has three nonterminals:
@@ -60,7 +60,7 @@ So one tree goes via `S → A` (child yielding `encodeA is₁`) and the other vi
 | `ptA_yield_inj` / `ptB_yield_inj` | `A`/`B`-trees determined by yield |
 | `rule_shape` | every rule has one of six explicit shapes |
 
-An instance bundles the grammar with the number of tiles of the PCP instance (`AmbigCFGInstance`), so that all instances share one type. The reduction `pcpToAmbigCFG` sends `P` to `⟨P.length, Stack.toGrammar P⟩`, `pcp_reducesto_ambigCFG_spec` states `PCP.DecisionProblem ⪯ₘ[pcpToAmbigCFG] (fun G => AmbigCFG.DecisionProblem G.2)`, and `pcpReducesAmbigCFG` packages the two.
+An instance bundles the grammar with the number of tiles of the PCP instance (`AmbigCFGInstance`), so that all instances share one type. The reduction `pcpToAmbigCFG` sends `P` to `⟨P.length, Stack.toGrammar P⟩`, `pcp_reducesto_ambigCFG_spec` states `PCP.DecisionProblem ⪯_s[pcpToAmbigCFG] (fun G => AmbigCFG.DecisionProblem G.2)`, and `pcpReducesAmbigCFG` packages the two.
 
 ### Undecidability
 `Undecidable.lean` collects `undecidableAmbigCFG b0 b1 hne`: CFG ambiguity is `Undecidable` over any alphabet with two distinct letters `b0` and `b1`. It is obtained with `reduce_from_pcp` from `pcpReducesAmbigCFG`.

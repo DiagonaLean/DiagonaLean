@@ -11,7 +11,7 @@ import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
 @[expose] public section
 
-/-! # PCP ⪯ₘ AmbigCFG
+/-! # PCP ⪯_s AmbigCFG
 
 Reduction from PCP to CFG ambiguity. Given a PCP instance `P`, the grammar `P.toGrammar` is
 ambiguous iff `P` has a solution. The main result is `pcp_iff_ambigcfg`.
@@ -608,13 +608,13 @@ def pcpToAmbigCFG (P : Stack α) : AmbigCFGInstance α := ⟨P.length, Stack.toG
 /-- `pcpToAmbigCFG` reduces PCP to CFG ambiguity: `P` has a solution iff its grammar is
   ambiguous. -/
 theorem pcp_reducesto_ambigCFG_spec :
-    @PCP.DecisionProblem α ⪯ₘ[pcpToAmbigCFG]
+    @PCP.DecisionProblem α ⪯_s[pcpToAmbigCFG]
       fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2 :=
   fun P => pcp_iff_ambigcfg P
 
 /-- PCP many-one reduces to CFG ambiguity through `pcpToAmbigCFG`. -/
 def pcpReducesAmbigCFG :
-    @PCP.DecisionProblem α ⪯ₘ fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2 :=
+    @PCP.DecisionProblem α ⪯_s fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2 :=
   ⟨pcpToAmbigCFG, pcp_reducesto_ambigCFG_spec⟩
 
 end DiagonaLean.AmbigCFG.Reduction

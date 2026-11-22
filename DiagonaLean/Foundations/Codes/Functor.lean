@@ -49,7 +49,7 @@ problem, from any alphabet with decidable equality to any alphabet with two dist
   computable many-one reductions transports, for instance being a computable predicate
   (`ComputablePred.computable_of_manyOneReducible`) or recursively enumerable
   (`REPred.of_manyOneReducible`); for a single reduction as data, `not_computablePred_of_reduces`
-  and `REPred.of_reduces` take `p ⪯ₘ q` directly.
+  and `REPred.of_reduces` take `p ⪯_s q` directly.
 
 The tactic `code_lift` (`Codes/Tactic.lean`) applies the matching theorem and closes its side
 goals, leaving what it cannot prove as named goals.
@@ -167,7 +167,7 @@ def CodeFunctor.liftMap [DecidableEq α] (b0 b1 : β) (x : F.Inst α) : F.Inst �
 /-- **The lift.** The problem over an alphabet with decidable equality many-one reduces to it
 over any alphabet with two distinct letters. -/
 def CodeFunctor.lift [LiftableCodes Good] [DecidableEq α] (b0 b1 : β) (hne : b0 ≠ b1) :
-    @F.Prob α ⪯ₘ @F.Prob β :=
+    @F.Prob α ⪯_s @F.Prob β :=
   ⟨F.liftMap b0 b1, fun x => (F.natural_on x (good_localCode hne _)).symm⟩
 
 /-- **The lifting.** Undecidability over an alphabet with decidable equality transfers to every

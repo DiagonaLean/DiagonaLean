@@ -176,14 +176,14 @@ theorem decisionProblem_lifts (P : Stack γ₁) (hne : b0 ≠ b1) :
 /-- `liftInstance b0 b1` witnesses the many-one reduction from PCP over an arbitrary alphabet
 to PCP over a target alphabet. -/
 theorem pcp_alphabet_lift_spec (hne : b0 ≠ b1) :
-    (@DiagonaLean.PCP.DecisionProblem γ₁) ⪯ₘ[liftInstance b0 b1]
+    (@DiagonaLean.PCP.DecisionProblem γ₁) ⪯_s[liftInstance b0 b1]
       (@DiagonaLean.PCP.DecisionProblem γ₂) :=
   fun P => decisionProblem_lifts b0 b1 P hne
 
 /-- Many-one reduction from PCP over an arbitrary alphabet to PCP over a target alphabet:
 `pcpFunctor.lift`. -/
 def pcpAlphabetLift (hne : b0 ≠ b1) :
-    (@DiagonaLean.PCP.DecisionProblem γ₁) ⪯ₘ (@DiagonaLean.PCP.DecisionProblem γ₂) :=
+    (@DiagonaLean.PCP.DecisionProblem γ₁) ⪯_s (@DiagonaLean.PCP.DecisionProblem γ₂) :=
   pcpFunctor.lift b0 b1 hne
 
 end DiagonaLean.PCP.AlphabetLift

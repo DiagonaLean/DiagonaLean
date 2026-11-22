@@ -8,7 +8,7 @@ Given a string rewriting system (semi-Thue system) `R : SRS T`, a list of rules 
 
 ## Layout
 * `Basic.lean`: the problem, and its restriction to systems whose left sides are all non-empty (`DecisionProblemPos`).
-* `Reductions/Halt_to_SemiThue.lean`: a machine halts iff its configuration string rewrites to the empty string (`halt_iff_derives`), so `HaltProblem ⪯ₘ` the word problem over `Alpha ℕ Sym2` (`haltReducesSemiThue`) and its restriction (`haltReducesSemiThuePos`). See `Reductions/README.md`.
+* `Reductions/Halt_to_SemiThue.lean`: a machine halts iff its configuration string rewrites to the empty string (`halt_iff_derives`), so `HaltProblem ⪯_s` the word problem over `Alpha ℕ Sym2` (`haltReducesSemiThue`) and its restriction (`haltReducesSemiThuePos`). See `Reductions/README.md`.
 * `MachineLevel.lean`: no Turing machine decides it over `Alpha ℕ Sym2` under any computable encoding (`not_machineDecidable_semiThue`, `not_machineDecidable_toEmpty`).
 * `AlphabetLift.lean`: the restricted problem is a functor on synchronizing codes (`semiThueFunctor`), and `posReduces` returns to the plain word problem; no Turing machine decides the word problem over any nontrivial `Primcodable` alphabet (`not_machineDecidable_semiThueOf`).
 * `Undecidable.lean`: the word problem is `Undecidable` over `Alpha ℕ Sym2` (`undecidableSemiThue`), and over every alphabet with two distinct letters (`undecidableSemiThueOf`), for instance over `Bool` (`undecidableSemiThueBool`).

@@ -60,7 +60,7 @@ def posToWord (a : T) (x : SRS T × List T × List T) : SRS T × List T × List 
   bif x.1.all (fun lr => !(lr.1.length == 0)) then x else ([], [a], [])
 
 /-- `posToWord a` witnesses the reduction from the restricted word problem to the plain one. -/
-theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯ₘ[posToWord a] @DecisionProblem T := by
+theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯_s[posToWord a] @DecisionProblem T := by
   intro x
   have hall : x.1.all (fun lr => !(lr.1.length == 0)) = true ↔ ∀ lr ∈ x.1, lr.1 ≠ [] := by
     simp [List.all_eq_true]
@@ -73,7 +73,7 @@ theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯ₘ[posToWord a] @Deci
   · exact and_iff_right (hall.1 h)
 
 /-- The restricted word problem many-one reduces to the plain one, given a letter. -/
-def posReduces (a : T) : @DecisionProblemPos T ⪯ₘ @DecisionProblem T :=
+def posReduces (a : T) : @DecisionProblemPos T ⪯_s @DecisionProblem T :=
   ⟨posToWord a, posToWord_spec a⟩
 
 namespace MachineLevel

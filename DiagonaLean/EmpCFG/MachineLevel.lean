@@ -81,7 +81,7 @@ def empCode (P : Stack α) : CFGCode (Term α) × CFGCode (Term α) :=
 /-- `empCode` witnesses the reduction from PCP to the non-emptiness of the intersection of the
 languages of two grammar codes. -/
 theorem pcp_reducesto_empCFGCode_spec :
-    @PCP.DecisionProblem α ⪯ₘ[empCode]
+    @PCP.DecisionProblem α ⪯_s[empCode]
       fun c : CFGCode (Term α) × CFGCode (Term α) => IntersectionNonempty c.1.toCFG c.2.toCFG := by
   intro P
   rw [pcp_reducesto_empCFG_spec P]
@@ -91,7 +91,7 @@ theorem pcp_reducesto_empCFGCode_spec :
 /-- PCP many-one reduces to the non-emptiness of the intersection of the languages of two grammar
 codes, through `empCode`. -/
 def pcpReducesEmpCFGCode :
-    @PCP.DecisionProblem α ⪯ₘ
+    @PCP.DecisionProblem α ⪯_s
       fun c : CFGCode (Term α) × CFGCode (Term α) => IntersectionNonempty c.1.toCFG c.2.toCFG :=
   ⟨empCode, pcp_reducesto_empCFGCode_spec⟩
 

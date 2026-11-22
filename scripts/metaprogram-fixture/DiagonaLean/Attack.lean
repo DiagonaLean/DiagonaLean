@@ -10,7 +10,8 @@ Mentions in comments, such as run_cmd, addDecl or unsafe here, must not be repor
 open DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
   DiagonaLean.Synthetic.Notation Lean Elab Command
 
-theorem classicalFn : ∃ f : EncodableTM Bool × List Bool → ℕ, HaltProblem ⪯ₘ[f] fun n => Even n := by
+theorem classicalFn :
+    ∃ f : EncodableTM Bool × List Bool → ℕ, HaltProblem ⪯_s[f] fun n => Even n := by
   classical
   exact ⟨fun p => if HaltProblem p then 0 else 1, fun p => by
     by_cases h : HaltProblem p <;> simp [h, Nat.not_even_one]⟩

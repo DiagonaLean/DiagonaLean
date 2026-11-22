@@ -29,12 +29,12 @@ open DiagonaLean.Halt Cslib.Turing DiagonaLean.Synthetic.Definitions
 variable {X Y Z : Type*}
 
 /-- `id` witnesses that many-one reducibility is reflexive. -/
-theorem reduces_reflexive_spec (P : X → Prop) : P ⪯ₘ[id] P :=
+theorem reduces_reflexive_spec (P : X → Prop) : P ⪯_s[id] P :=
   fun _ => Iff.rfl
 
-/-- Many-one reducibility is reflexive. `⪯ₘ` is data (see `SynthReduction`), so building one is
+/-- Many-one reducibility is reflexive. `⪯_s` is data (see `SynthReduction`), so building one is
 a `def`, not a `theorem`. -/
-def _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.refl (P : X → Prop) : P ⪯ₘ P :=
+def _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.refl (P : X → Prop) : P ⪯_s P :=
   ⟨id, reduces_reflexive_spec P⟩
 
 /-- The former name of `SynthReduction.refl`. -/
@@ -43,26 +43,26 @@ abbrev reducesRefl := @SynthReduction.refl
 /-- The composition `hQR.f ∘ hPQ.f` of the two witness functions witnesses that many-one
 reducibility is transitive. -/
 theorem reduces_transitive_spec {P : X → Prop} {Q : Y → Prop} {R : Z → Prop}
-    (hPQ : P ⪯ₘ Q) (hQR : Q ⪯ₘ R) : P ⪯ₘ[hQR.f ∘ hPQ.f] R :=
+    (hPQ : P ⪯_s Q) (hQR : Q ⪯_s R) : P ⪯_s[hQR.f ∘ hPQ.f] R :=
   fun x => (hPQ.hf x).trans (hQR.hf (hPQ.f x))
 
 /-- Many-one reducibility is transitive: compose the two witness functions. -/
 def _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.trans {P : X → Prop} {Q : Y → Prop}
-    {R : Z → Prop} (hPQ : P ⪯ₘ Q) (hQR : Q ⪯ₘ R) : P ⪯ₘ R :=
+    {R : Z → Prop} (hPQ : P ⪯_s Q) (hQR : Q ⪯_s R) : P ⪯_s R :=
   ⟨hQR.f ∘ hPQ.f, reduces_transitive_spec hPQ hQR⟩
 
 /-- The former name of `SynthReduction.trans`. -/
 abbrev reducesTrans := @SynthReduction.trans
 
-/-- The witness function `h.f` of `P ⪯ₘ Q` also witnesses that the complement of `P` reduces to
+/-- The witness function `h.f` of `P ⪯_s Q` also witnesses that the complement of `P` reduces to
 the complement of `Q`. -/
 theorem reduces_complement_spec {P : X → Prop} {Q : Y → Prop}
-    (h : P ⪯ₘ Q) : Complement P ⪯ₘ[h.f] Complement Q :=
+    (h : P ⪯_s Q) : Complement P ⪯_s[h.f] Complement Q :=
   fun x => not_congr (h.hf x)
 
 /-- If `P` reduces to `Q`, then the complement of `P` reduces to the complement of `Q`. -/
 def _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.compl {P : X → Prop} {Q : Y → Prop}
-    (h : P ⪯ₘ Q) : Complement P ⪯ₘ Complement Q :=
+    (h : P ⪯_s Q) : Complement P ⪯_s Complement Q :=
   ⟨h.f, reduces_complement_spec h⟩
 
 /-- The former name of `SynthReduction.compl`. -/

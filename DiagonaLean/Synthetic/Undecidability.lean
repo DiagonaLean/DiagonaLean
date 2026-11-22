@@ -39,7 +39,7 @@ undecidability result means something because it is a definition that Lean compi
 hatch in its dependencies; `#check_reductions` (`Synthetic/ReductionCheck.lean`) checks this in CI.
 The statement that a Turing machine computes the reduction is
 `not_machineDecidable_of_halt_reduces`. -/
-abbrev SynthHaltReduction (p : X → Prop) : Type _ := HaltProblem ⪯ₘ p
+abbrev SynthHaltReduction (p : X → Prop) : Type _ := HaltProblem ⪯_s p
 
 /-- The former name of `SynthHaltReduction`, kept as an alias until existing uses are renamed. -/
 abbrev Undecidable := @SynthHaltReduction
@@ -47,13 +47,13 @@ abbrev Undecidable := @SynthHaltReduction
 /-- A synthetic halting reduction composes with a further synthetic reduction: the reduction from
 `HaltProblem` to `q` is the composition of the two functions. -/
 def SynthHaltReduction.comp {p : X → Prop} {q : Y → Prop}
-    (hp : SynthHaltReduction p) (hpq : p ⪯ₘ q) : SynthHaltReduction q :=
+    (hp : SynthHaltReduction p) (hpq : p ⪯_s q) : SynthHaltReduction q :=
   SynthReduction.trans hp hpq
 
 /-- The former name of `SynthHaltReduction.comp`. -/
 abbrev undecidabilityFromReducibility := @SynthHaltReduction.comp
 
-/-- `undec from H` reduces a goal `Undecidable q` to a reduction `p ⪯ₘ q`, given
+/-- `undec from H` reduces a goal `Undecidable q` to a reduction `p ⪯_s q`, given
 `H : Undecidable p`; it applies `undecidabilityFromReducibility H`. -/
 macro "undec" "from" H:term : tactic =>
   `(tactic| apply undecidabilityFromReducibility $H)

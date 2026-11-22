@@ -12,7 +12,7 @@ import DiagonaLean.PCP.Basic
 /-! # The `reduce_from_pcp` tactic
 
 Every "target problem `Q` is undecidable by reduction from PCP" result in this development composes
-`undecidablePCP` with a reduction `R : PCP.DecisionProblem ⪯ₘ Q`, through
+`undecidablePCP` with a reduction `R : PCP.DecisionProblem ⪯_s Q`, through
 `undecidabilityFromReducibility`. `R` must be a named definition that Lean compiles (see the
 convention on `ManyOneReduces`), so the reduction function and its correctness proof live in the
 target's `Reductions/PCP_to_Q.lean`, and the tactic only composes. The result is a definition, so

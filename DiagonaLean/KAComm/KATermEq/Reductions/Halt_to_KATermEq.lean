@@ -8,7 +8,7 @@ import DiagonaLean.KAComm.KleeneAlgebra.Race
 
 @[expose] public section
 
-/-! # `HaltProblem ⪯ₘ` equality on `K Σ̈`
+/-! # `HaltProblem ⪯_s` equality on `K Σ̈`
 
 `reduction B C` sends a `HaltProblem` instance `p` to the instance (`rInst`) of the race program of
 `p` over `ℕ`. By Smullyan's argument, `p` halts iff the two sides are provably equal in Kleene
@@ -28,13 +28,13 @@ open DiagonaLean.KAComm.KleeneAlgebra Nat.Partrec DiagonaLean.Foundations.Comput
 /-- `reduction B C` reduces `HaltProblem` to provable equality in Kleene algebra with
 commutativity. -/
 theorem halt_reducesto_kaTermEq_spec {B : Base} {C : Code} (hB : B.Good)
-    (hC : RaceProg true B C) : HaltProblem ⪯ₘ[reduction B C] KATermEqProblem := fun p => by
+    (hC : RaceProg true B C) : HaltProblem ⪯_s[reduction B C] KATermEqProblem := fun p => by
   simpa [KAComm.KleeneAlgebra.Rel, DecisionProblem] using halt_iff_rel hB hC p
 
 /-- **The reduction.** `HaltProblem` many-one reduces to provable equality in Kleene algebra with
 commutativity. -/
 def haltReducesKATermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg true B C) :
-    HaltProblem ⪯ₘ KATermEqProblem :=
+    HaltProblem ⪯_s KATermEqProblem :=
   ⟨reduction B C, halt_reducesto_kaTermEq_spec hB hC⟩
 
 end DiagonaLean.KAComm.KATermEq.Reduction

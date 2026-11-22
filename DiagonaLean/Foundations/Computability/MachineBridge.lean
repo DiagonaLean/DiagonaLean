@@ -146,12 +146,12 @@ theorem not_machineDecidable_of_not_computablePred {X : Type*} [Primcodable X]
     ¬ MachineDecidable enc P :=
   fun hm => h (computablePred_of_machineDecidable henc hm)
 
-/-- **From synthetic to Mathlib's reductions.** A reduction `r : p ⪯ₘ q` (data) whose function is
-computable gives Mathlib's `ManyOneReducible p q`. Unlike a bare `⪯ₘ`, which exists classically for
+/-- **From synthetic to Mathlib's reductions.** A reduction `r : p ⪯_s q` (data) whose function is
+computable gives Mathlib's `ManyOneReducible p q`. Unlike a bare `⪯_s`, which exists classically for
 almost any `p` and `q`, `ManyOneReducible` asks for a computable function, so the proposition has
 content and may be stated as a conclusion. -/
 theorem _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.toManyOneReducible
-    {X Y : Type*} [Primcodable X] [Primcodable Y] {p : X → Prop} {q : Y → Prop} (r : p ⪯ₘ q)
+    {X Y : Type*} [Primcodable X] [Primcodable Y] {p : X → Prop} {q : Y → Prop} (r : p ⪯_s q)
     (hr : Computable r.f) : ManyOneReducible p q :=
   ⟨r.f, hr, r.hf⟩
 
@@ -164,15 +164,15 @@ theorem _root_.DiagonaLean.Synthetic.Definitions.ManyOneReduces.toManyOneReducib
   DiagonaLean.Synthetic.Definitions.SynthReduction.toManyOneReducible r hr
 
 /-- **Undecidability transfers along a computable reduction.** If `p` is not a computable
-predicate and `r : p ⪯ₘ q` has a computable function, then `q` is not one either. -/
+predicate and `r : p ⪯_s q` has a computable function, then `q` is not one either. -/
 theorem not_computablePred_of_reduces {X Y : Type*} [Primcodable X] [Primcodable Y]
-    {p : X → Prop} {q : Y → Prop} (r : p ⪯ₘ q) (hr : Computable r.f) (hp : ¬ ComputablePred p) :
+    {p : X → Prop} {q : Y → Prop} (r : p ⪯_s q) (hr : Computable r.f) (hp : ¬ ComputablePred p) :
     ¬ ComputablePred q :=
   fun hq => hp (ComputablePred.computable_of_manyOneReducible (r.toManyOneReducible hr) hq)
 
-/-- Recursive enumerability transfers back along a reduction (`⪯ₘ`) with a computable function. -/
+/-- Recursive enumerability transfers back along a reduction (`⪯_s`) with a computable function. -/
 theorem _root_.REPred.of_reduces {X Y : Type*} [Primcodable X] [Primcodable Y] {p : X → Prop}
-    {q : Y → Prop} (r : p ⪯ₘ q) (hr : Computable r.f) (hq : REPred q) : REPred p :=
+    {q : Y → Prop} (r : p ⪯_s q) (hr : Computable r.f) (hq : REPred q) : REPred p :=
   REPred.of_eq (hq.comp hr) fun x => (r.hf x).symm
 
 /-- Recursive enumerability transfers back along a computable many-one reduction. -/

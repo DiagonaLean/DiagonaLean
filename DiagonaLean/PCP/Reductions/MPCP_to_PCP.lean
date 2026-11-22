@@ -9,7 +9,7 @@ import DiagonaLean.Synthetic.Definitions
 
 @[expose] public section
 
-/-! # MPCP ⪯ₘ PCP
+/-! # MPCP ⪯_s PCP
 
 Many-one reduction from the Modified Post Correspondence Problem to PCP,
 following the Hopcroft–Ullman construction and the Coq formalisation of
@@ -510,13 +510,13 @@ open DiagonaLean.Synthetic.Definitions
 
 /-- `mpcpToPcp` witnesses that MPCP many-one reduces to PCP over the extended alphabet. -/
 theorem mpcp_reducesto_pcp_spec :
-    (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2) ⪯ₘ[fun x => mpcpToPcp x.1 x.2]
+    (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2) ⪯_s[fun x => mpcpToPcp x.1 x.2]
       (@PCP.DecisionProblem (Ext α)) :=
   fun x => mpcp_iff_pcp x.1 x.2
 
 /-- MPCP many-one reduces to PCP over the extended alphabet, through `mpcpToPcp`. -/
 def mpcpReducesPCP :
-    (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2) ⪯ₘ (@PCP.DecisionProblem (Ext α)) :=
+    (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2) ⪯_s (@PCP.DecisionProblem (Ext α)) :=
   ⟨fun x => mpcpToPcp x.1 x.2, mpcp_reducesto_pcp_spec⟩
 
 end DiagonaLean.PCP.Reduction

@@ -11,7 +11,7 @@ import DiagonaLean.PCP.Basic
 
 The solvability predicate `DecisionProblem` for the Modified Post Correspondence Problem.
 MPCP is PCP with a designated start tile: every solution must begin with it.
-MPCP serves as the intermediate step in the reduction chain `Halt ⪯ₘ MPCP ⪯ₘ PCP`.
+MPCP serves as the intermediate step in the reduction chain `Halt ⪯_s MPCP ⪯_s PCP`.
 
 ## References
 

@@ -322,14 +322,14 @@ def ComputesReduction (R : SingleTapeTM Bool)
     (enc1 : X → List Bool) (enc2 : Y → List Bool) (f : X → Y) : Prop :=
   ∀ x, SingleTapeTM.Outputs R (enc1 x) (enc2 (f x))
 
-/-- If a TM `R` computes a many-one reduction `f : P ⪯ₘ[f] Q` at the level of encodings, then
+/-- If a TM `R` computes a many-one reduction `f : P ⪯_s[f] Q` at the level of encodings, then
 a machine decider for `Q` yields one for `P`: preprocess the input with `R`, then run the
 `Q`-decider. This is the general shape of `self_halt_decider_if_halt_decider` (there,
 `R = pairSelfTM`), stated for an arbitrary computable reduction rather than that one instance. -/
 theorem machineDecidable_of_computes_reduction
     {enc1 : X → List Bool} {enc2 : Y → List Bool} {P : X → Prop} {Q : Y → Prop}
     {R : SingleTapeTM Bool} {f : X → Y}
-    (hR : ComputesReduction R enc1 enc2 f) (hf : P ⪯ₘ[f] Q)
+    (hR : ComputesReduction R enc1 enc2 f) (hf : P ⪯_s[f] Q)
     (hQ : MachineDecidable enc2 Q) :
     MachineDecidable enc1 P := by
   obtain ⟨D, hD⟩ := hQ
@@ -341,23 +341,23 @@ theorem machineDecidable_of_computes_reduction
 
 /-- Contrapositive of `machineDecidable_of_computes_reduction`: undecidability transports
 *forward* along a computable reduction. If `P` has no machine decider and `R` computes
-`f : P ⪯ₘ[f] Q`, then `Q` has none either: a decider for `Q` would, via `R`, yield one for
+`f : P ⪯_s[f] Q`, then `Q` has none either: a decider for `Q` would, via `R`, yield one for
 `P`. -/
 theorem not_machineDecidable_of_computes_reduction
     {enc1 : X → List Bool} {enc2 : Y → List Bool} {P : X → Prop} {Q : Y → Prop}
     {R : SingleTapeTM Bool} {f : X → Y}
-    (hR : ComputesReduction R enc1 enc2 f) (hf : P ⪯ₘ[f] Q)
+    (hR : ComputesReduction R enc1 enc2 f) (hf : P ⪯_s[f] Q)
     (hP : ¬ MachineDecidable enc1 P) :
     ¬ MachineDecidable enc2 Q :=
   fun hQ => hP (machineDecidable_of_computes_reduction hR hf hQ)
 
-/-- If a TM `R` computes `f : HaltProblem ⪯ₘ[f] Q` (from `haltInputEncoding` to `enc`), then `Q`
+/-- If a TM `R` computes `f : HaltProblem ⪯_s[f] Q` (from `haltInputEncoding` to `enc`), then `Q`
 is not machine-decidable. Combines `not_machineDecidable_of_computes_reduction` with
 `halt_not_machinedecidable`. -/
 theorem not_machineDecidable_of_halt_reduces
     {enc : Y → List Bool} {Q : Y → Prop}
     {R : SingleTapeTM Bool} {f : EncodableTM Bool × List Bool → Y}
-    (hR : ComputesReduction R haltInputEncoding enc f) (hf : HaltProblem ⪯ₘ[f] Q) :
+    (hR : ComputesReduction R haltInputEncoding enc f) (hf : HaltProblem ⪯_s[f] Q) :
     ¬ MachineDecidable enc Q :=
   not_machineDecidable_of_computes_reduction hR hf halt_not_machinedecidable
 

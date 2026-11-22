@@ -27,7 +27,7 @@ is `Primcodable`, and every value is a real machine (`CanonTM.toTM`), so the hal
   the simulator's lookup does on a missing key.
 * **Undecidable.** Self-halting reduces to `HaltCanon` through `parse`
   (`not_computablePred_haltCanon`).
-* **The bridge.** `synthHaltToCanon : HaltProblem ⪯ₘ HaltCanon` is the synthetic reduction that
+* **The bridge.** `synthHaltToCanon : HaltProblem ⪯_s HaltCanon` is the synthetic reduction that
   connects the two layers.
 
 `HaltReduction P` is a reduction from `HaltCanon` proved computable, and `HaltHard P` says one
@@ -426,7 +426,7 @@ theorem not_computablePred_haltCanon : ¬ ComputablePred HaltCanon :=
 
 /-- **The bridge between the layers**: the synthetic reduction from `HaltProblem` to `HaltCanon`,
 reading the canonical machine off the machine's code. -/
-def synthHaltToCanon : HaltProblem ⪯ₘ HaltCanon :=
+def synthHaltToCanon : HaltProblem ⪯_s HaltCanon :=
   ⟨fun p => (parse (encodeBoolTM p.1), p.2), fun p => (halts_parse_code p.1 p.2).symm⟩
 
 /-! ### Reductions from the halting problem, proved computable -/
@@ -434,7 +434,7 @@ def synthHaltToCanon : HaltProblem ⪯ₘ HaltCanon :=
 variable {β : Type*} [Primcodable β]
 
 /-- **A reduction from the halting problem, proved computable.** -/
-abbrev HaltReduction (P : β → Prop) := ComputableReduction HaltCanon P
+abbrev HaltReduction (P : β → Prop) := HaltCanon ⪯ P
 
 /-- **Halting-hardness**: a proved reduction from the halting problem exists. The proposition has
 content because the computability of the reduction is proved. -/
@@ -446,7 +446,7 @@ theorem haltHard_iff {P : β → Prop} : HaltHard P ↔ ManyOneReducible HaltCan
 
 /-- A halting reduction composes with a proved link. -/
 def HaltReduction.trans {γ : Type*} [Primcodable γ] {p : β → Prop} {q : γ → Prop}
-    (h : HaltReduction p) (r : ComputableReduction p q) : HaltReduction q :=
+    (h : HaltReduction p) (r : p ⪯ q) : HaltReduction q :=
   ComputableReduction.trans h r
 
 /-- A proved halting reduction gives a synthetic one, through the bridge. -/

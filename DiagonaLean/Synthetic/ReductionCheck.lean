@@ -9,7 +9,7 @@ import Lean
 
 /-! # Checking that reductions are computed by compiled definitions
 
-`SynthHaltReduction p` (former name `Undecidable p`) is the type `HaltProblem ⪯ₘ p`, and Lean's
+`SynthHaltReduction p` (former name `Undecidable p`) is the type `HaltProblem ⪯_s p`, and Lean's
 logic is classical, so a term of it exists for every `p` with a positive and a negative instance:
 the reduction can be the case split `fun x => if HaltProblem x then a else b`. A reduction carries
 algorithmic content only when its function is a program. Lean refuses to compile that case split, so
@@ -18,7 +18,7 @@ that the definition compiles and that its compiled code is its logical meaning. 
 checks this over every declaration of a `DiagonaLean` module (with `local`, over the declarations of
 the current file instead), private ones included.
 
-A reduction is a term of `SynthReduction` (`⪯ₘ`; former name `ManyOneReduces`): a term whose type,
+A reduction is a term of `SynthReduction` (`⪯_s`; former name `ManyOneReduces`): a term whose type,
 after its parameters and after unfolding every definition, is a reduction structure, listed in
 `reductionStructs`. Unfolding matters, since a type can reach a reduction structure through an alias
 whose own type is not syntactically a sort, such as `def T : (fun _ => Type 1) () := Undecidable p`,
@@ -39,10 +39,10 @@ body mentions a carrier, such as `Undecidable`, `T` or `box`.
    value that rule 1 does not see.
 3. **No proposition claims that a reduction exists.** A carrier may occur in the statement of a
    theorem only negatively: in a hypothesis, but not in a hypothesis of a hypothesis, since
-   `(Nonempty (p ⪯ₘ q) → False) → False` and `∀ c, (p ⪯ₘ q → c) → c` claim a reduction as much as
-   `Nonempty (p ⪯ₘ q)`, which holds classically and says nothing. Likewise `∃ f, p ⪯ₘ[f] q`, the
-   relation `⪯ₘ[f]` with a quantified `f`. So `¬ Nonempty (p ⪯ₘ q)` may be stated, and
-   `¬¬ Nonempty (p ⪯ₘ q)` may not. No axiom or `opaque` declaration mentions a carrier at all.
+   `(Nonempty (p ⪯_s q) → False) → False` and `∀ c, (p ⪯_s q → c) → c` claim a reduction as much as
+   `Nonempty (p ⪯_s q)`, which holds classically and says nothing. Likewise `∃ f, p ⪯_s[f] q`, the
+   relation `⪯_s[f]` with a quantified `f`. So `¬ Nonempty (p ⪯_s q)` may be stated, and
+   `¬¬ Nonempty (p ⪯_s q)` may not. No axiom or `opaque` declaration mentions a carrier at all.
 
 Rule 3 is a lint against stating a result the wrong way, not a guarantee: the statement
 `∃ f, ∀ x, HaltProblem x ↔ q (f x)`, which writes the relation out, mentions no carrier.
@@ -98,7 +98,7 @@ def reductionStructs : List Name :=
 def reductionStructSet : NameSet :=
   reductionStructs.foldl (fun s n => s.insert n) {}
 
-/-- The relations `p ⪯ₘ[f] q` that say a given function is a reduction, with the index of the
+/-- The relations `p ⪯_s[f] q` that say a given function is a reduction, with the index of the
 function among their arguments. With `f` quantified, they say that a reduction exists. -/
 def reductionRelations : List (Name × Nat) :=
   [(`DiagonaLean.Synthetic.Definitions.ReducesVia, 2),
@@ -300,15 +300,15 @@ def isPropType (ty : Expr) : MetaM Bool := do
   try forallTelescopeReducing ty fun _ body => isProp body catch _ => pure false
 
 /-- `e` applies a relation of `reductionRelations` to a function that depends on a variable bound
-inside `e`, as in `∃ f, p ⪯ₘ[f] q` or `Nonempty {f // p ⪯ₘ[f] q}`. -/
+inside `e`, as in `∃ f, p ⪯_s[f] q` or `Nonempty {f // p ⪯_s[f] q}`. -/
 def quantifiesReductionFn (e : Expr) : Bool :=
   (e.find? fun t => reductionRelations.any fun (rel, i) =>
     t.getAppFn.isConstOf rel && t.getAppNumArgs > i && (t.getArg! i).hasLooseBVars).isSome
 
 /-- `ty` claims that a reduction exists when it occurs with polarity `pos` (true for a statement,
 false for a hypothesis): after unfolding its head, a carrier, or a relation of `reductionRelations`
-on a quantified function, occurs positively. A hypothesis flips the polarity, so `p ⪯ₘ q → c` is
-fine and `(p ⪯ₘ q → c) → c` is not. Inside a statement that is not a `∀` or `→`, such as `A ∧ B`,
+on a quantified function, occurs positively. A hypothesis flips the polarity, so `p ⪯_s q → c` is
+fine and `(p ⪯_s q → c) → c` is not. Inside a statement that is not a `∀` or `→`, such as `A ∧ B`,
 every occurrence counts as positive. -/
 partial def claimsReduction (carriers : NameSet) (ty : Expr) (pos : Bool) : MetaM Bool :=
   forallTelescopeReducing ty fun xs body => do
@@ -360,7 +360,7 @@ def declViolations (env : Environment) (tainted carriers : NameSet) (c : Name) (
 mentions one of them, directly or through another such definition: aliases such as `Undecidable`,
 whatever their declared type, and values that store such a type, such as
 `box` in `def box : Box := ⟨Undecidable p⟩`. Only the body after the parameters counts, so a
-predicate on reductions, such as `fun r : p ⪯ₘ q => Computable r.f`, is not a carrier, and neither
+predicate on reductions, such as `fun r : p ⪯_s q => Computable r.f`, is not a carrier, and neither
 are the definitions Lean generates (`isAuxiliary`), such as the projection `SynthReduction.f`. A
 reduction is not a carrier, so that a theorem may state facts about a named one. Computed by
 searching backwards from the reduction structures, as `taintedConstants` does. -/

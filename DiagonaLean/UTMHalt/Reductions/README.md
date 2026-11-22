@@ -3,9 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude Sonnet 4.6, Akhilesh Balaji
 ```
 # `UTMHalt.Reductions`: Universal Turing Machine Halting Problem Reductions
-1. [`Halt ⪯ₘ UTMHalt`](#halt-ₘ-utmhalt)
+1. [`Halt ⪯_s UTMHalt`](#halt-ₘ-utmhalt)
 
-## `Halt ⪯ₘ UTMHalt`
+## `Halt ⪯_s UTMHalt`
 The reduction follows from the definition of universality. For a weakly universal machine `U` (`IsWeaklyUniversal U`), `halt_iff_weakutmhalt` uses `hU M w` to show that `M` halts on `w` exactly when `WeakUTMHalts U hU M w`. For a universal machine `U` (`IsUniversal U`), `halt_iff_utmhalt` uses `(hU M w).left` to show that `M` halts on `w` exactly when `UTMHalts U hU M w`.
 
 If a machine `D` satisfies `IsHaltDeciderFor U D` for a weakly universal `U`, then `isHaltDecider_of_isHaltDeciderFor` shows that `D` is a general halt decider: on input `encodePair (encodeBoolTM M) w`, the universality of `U` transfers the answer of `D` to `Halts M w`.

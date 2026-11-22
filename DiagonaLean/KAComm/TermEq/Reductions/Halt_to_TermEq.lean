@@ -8,7 +8,7 @@ import DiagonaLean.KAComm.KleeneAlgebra.Race
 
 @[expose] public section
 
-/-! # `HaltProblem ⪯ₘ` equality on `T Σ̈`
+/-! # `HaltProblem ⪯_s` equality on `T Σ̈`
 
 `reduction B C` sends a `HaltProblem` instance `p` to the instance (`rInst`) of the race program of
 `p` over `ℕ`. By Smullyan's argument, `p` halts iff the two sides are provably equal in pre-Kleene
@@ -28,13 +28,13 @@ open DiagonaLean.KAComm.KleeneAlgebra Nat.Partrec DiagonaLean.Foundations.Comput
 /-- `reduction B C` reduces `HaltProblem` to provable equality in pre-Kleene algebra with
 commutativity. -/
 theorem halt_reducesto_termEq_spec {B : Base} {C : Code} (hB : B.Good)
-    (hC : RaceProg false B C) : HaltProblem ⪯ₘ[reduction B C] TermEqProblem := fun p => by
+    (hC : RaceProg false B C) : HaltProblem ⪯_s[reduction B C] TermEqProblem := fun p => by
   simpa [KAComm.KleeneAlgebra.Rel, DecisionProblem] using halt_iff_rel hB hC p
 
 /-- **The reduction.** `HaltProblem` many-one reduces to provable equality in pre-Kleene algebra
 with commutativity. -/
 def haltReducesTermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg false B C) :
-    HaltProblem ⪯ₘ TermEqProblem :=
+    HaltProblem ⪯_s TermEqProblem :=
   ⟨reduction B C, halt_reducesto_termEq_spec hB hC⟩
 
 end DiagonaLean.KAComm.TermEq.Reduction

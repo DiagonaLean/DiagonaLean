@@ -11,7 +11,7 @@ import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
 @[expose] public section
 
-/-! # PCP ⪯ₘ EmpCFG
+/-! # PCP ⪯_s EmpCFG
 
 Reduction from PCP to EmpCFG following the Hopcroft–Ullman construction. Strings in the intersection
 of `topCFG P` and `botCFG P` encode valid solution tile sequences for the PCP instance `P`. The main
@@ -537,12 +537,12 @@ def pcpToEmpCFG (P : Stack α) : ContextFreeGrammar (Term α) × ContextFreeGram
 /-- `pcpToEmpCFG` reduces PCP to the non-emptiness of the intersection of two context-free
 grammars: `P` has a solution iff `topCFG P` and `botCFG P` share a word. -/
 theorem pcp_reducesto_empCFG_spec :
-    @PCP.DecisionProblem α ⪯ₘ[pcpToEmpCFG] @EmpCFG.DecisionProblem (Term α) :=
+    @PCP.DecisionProblem α ⪯_s[pcpToEmpCFG] @EmpCFG.DecisionProblem (Term α) :=
   pcp_iff_nempcfg
 
 /-- PCP many-one reduces to the non-emptiness of the intersection of two context-free grammars,
 through `pcpToEmpCFG`. -/
-def pcpReducesEmpCFG : @PCP.DecisionProblem α ⪯ₘ @EmpCFG.DecisionProblem (Term α) :=
+def pcpReducesEmpCFG : @PCP.DecisionProblem α ⪯_s @EmpCFG.DecisionProblem (Term α) :=
   ⟨pcpToEmpCFG, pcp_reducesto_empCFG_spec⟩
 
 end DiagonaLean.EmpCFG.Reduction

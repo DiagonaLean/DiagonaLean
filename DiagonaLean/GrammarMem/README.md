@@ -11,7 +11,7 @@ Every context-free grammar code is a grammar code of type 0 with the same langua
 ## Layout
 * `Basic.lean`: the problem, type 0, and context-free codes as grammar codes.
 * `MachineLevel.lean`: no Turing machine decides whether the empty word is in the language of a type 0 grammar code (`not_machineDecidable_emptyWord_type0`), nor membership for grammar codes (`not_machineDecidable_grammarMem`), under any computable encoding.
-* `Reductions/Halt_to_GrammarMem.lean`: `HaltProblem ⪯ₘ` membership for grammar codes (`haltReducesGrammarMem`). See `Reductions/README.md`.
+* `Reductions/Halt_to_GrammarMem.lean`: `HaltProblem ⪯_s` membership for grammar codes (`haltReducesGrammarMem`). See `Reductions/README.md`.
 * `Undecidable.lean`: membership for grammar codes is `Undecidable` (`undecidableGrammarMem`).
 
 ## Proof sketch

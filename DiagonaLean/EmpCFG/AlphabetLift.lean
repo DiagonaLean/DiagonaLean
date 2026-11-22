@@ -42,13 +42,13 @@ def empCFGLift [Encodable T] (b0 b1 : α) (hne : b0 ≠ b1)
 /-- `empCFGLift b0 b1 hne` witnesses the reduction from non-emptiness of CFG intersection over a
 countable alphabet to it over `α`. -/
 theorem empCFGLift_spec [Encodable T] (b0 b1 : α) (hne : b0 ≠ b1) :
-    @DecisionProblem T ⪯ₘ[empCFGLift b0 b1 hne] @DecisionProblem α := fun G =>
+    @DecisionProblem T ⪯_s[empCFGLift b0 b1 hne] @DecisionProblem α := fun G =>
   (intersection_encode_iff (hc := (isSync_bitCode hne).isCode) G.1 G.2).symm
 
 /-- Non-emptiness of CFG intersection over a countable alphabet many-one reduces to it over any
 alphabet with two distinct letters, by encoding the terminals of both grammars with `bitCode`. -/
 def empCFGAlphabetLift [Encodable T] (b0 b1 : α) (hne : b0 ≠ b1) :
-    @DecisionProblem T ⪯ₘ @DecisionProblem α :=
+    @DecisionProblem T ⪯_s @DecisionProblem α :=
   ⟨empCFGLift b0 b1 hne, empCFGLift_spec b0 b1 hne⟩
 
 end DiagonaLean.EmpCFG.Reduction

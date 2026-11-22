@@ -14,7 +14,7 @@ with two distinct letters. `code_lift F from h` applies the lifting theorem that
 with `h` the result over the source alphabet:
 
 * `Undecidable P`: `CodeFunctor.undecidableOf`, with `h : Undecidable` over the source. Since
-  `Undecidable P` is an abbreviation of `HaltProblem ⪯ₘ P`, `h` may be any reduction from
+  `Undecidable P` is an abbreviation of `HaltProblem ⪯_s P`, `h` may be any reduction from
   `HaltProblem`.
 * `¬ ComputablePred P`: `CodeFunctor.not_computablePred_lift`, with `h : ¬ ComputablePred` over
   the source.

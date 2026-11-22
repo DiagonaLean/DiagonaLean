@@ -79,7 +79,7 @@ abbrev mpcpFunctor : CodeFunctor IsCode where
 with two distinct letters, by encoding every tile with the code of the letters of the instance
 (`Foundations.Codes.CodeFunctor.lift`). -/
 def mpcpAlphabetLift {γ : Type} [DecidableEq γ] (b0 b1 : α) (hne : b0 ≠ b1) :
-    (fun x : Tile γ × Stack γ => DecisionProblem x.1 x.2) ⪯ₘ
+    (fun x : Tile γ × Stack γ => DecisionProblem x.1 x.2) ⪯_s
       fun x : Tile α × Stack α => DecisionProblem x.1 x.2 :=
   mpcpFunctor.lift b0 b1 hne
 

@@ -171,7 +171,7 @@ def haltEqRed (p : EncodableTM Bool × List Bool) : Inst :=
 /-- **The reduction.** `HaltProblem` many-one reduces to the failure of equality on `X`, for any
 `X` whose equality agrees with language equality. -/
 def haltReducesNotEqVia (F : LangFactor X)
-    (hF : ∀ a b : TD ℕ, pl a = pl b → F.l' a = F.l' b) : HaltProblem ⪯ₘ Complement (EqVia F) :=
+    (hF : ∀ a b : TD ℕ, pl a = pl b → F.l' a = F.l' b) : HaltProblem ⪯_s Complement (EqVia F) :=
   ⟨haltEqRed, fun p => (halt_iff_not_modelLe p).trans
     (not_congr ((modelLe_iff_langEq _).trans (eqVia_iff_langEq F hF (haltEqRed p)).symm))⟩
 
@@ -185,7 +185,7 @@ def undecidableNotEqVia (F : LangFactor X)
 def SelfEq (F : LangFactor X) (M : EncodableTM Bool) : Prop := EqVia F (eqRed M)
 
 /-- `SelfEq F` many-one reduces to equality on `X`, through the concrete `eqRed`. -/
-def selfEqReduces (F : LangFactor X) : SelfEq F ⪯ₘ EqVia F := ⟨eqRed, fun _ => Iff.rfl⟩
+def selfEqReduces (F : LangFactor X) : SelfEq F ⪯_s EqVia F := ⟨eqRed, fun _ => Iff.rfl⟩
 
 /-- **No Turing machine decides `SelfEq F`.** There is no computability hypothesis: `SelfEq F`
 separates the inseparable pair, and its input is the machine's own code. -/

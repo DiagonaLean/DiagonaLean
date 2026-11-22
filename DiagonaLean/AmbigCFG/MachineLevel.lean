@@ -126,7 +126,7 @@ theorem toCFG_ambPres_abs (P : Stack α) :
 
 /-- `ambCode` witnesses the reduction from PCP to the ambiguity of grammar codes. -/
 theorem pcp_reducesto_ambigCFGCode_spec [Nonempty α] :
-    @PCP.DecisionProblem α ⪯ₘ[ambCode]
+    @PCP.DecisionProblem α ⪯_s[ambCode]
       fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG := by
   intro P
   beta_reduce
@@ -135,7 +135,7 @@ theorem pcp_reducesto_ambigCFGCode_spec [Nonempty α] :
 
 /-- PCP many-one reduces to the ambiguity of grammar codes, through `ambCode`. -/
 def pcpReducesAmbigCFGCode [Nonempty α] :
-    @PCP.DecisionProblem α ⪯ₘ fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG :=
+    @PCP.DecisionProblem α ⪯_s fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG :=
   ⟨ambCode, pcp_reducesto_ambigCFGCode_spec⟩
 
 variable [Primcodable α]

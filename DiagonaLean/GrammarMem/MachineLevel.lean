@@ -133,7 +133,7 @@ theorem not_machineDecidable_emptyWord_type0
 
 /-- Membership of the empty word in a type 0 grammar is membership in a grammar. -/
 def emptyWordReducesGrammarMem :
-    (fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1) ⪯ₘ
+    (fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1) ⪯_s
       @DecisionProblem T :=
   ⟨fun g => (g.1, []), fun _ => Iff.rfl⟩
 

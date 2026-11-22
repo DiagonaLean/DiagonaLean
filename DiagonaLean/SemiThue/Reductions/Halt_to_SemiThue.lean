@@ -486,7 +486,7 @@ def haltToSemiThue (p : EncodableTM Bool × List Bool) :
     [])
 
 /-- `haltToSemiThue` witnesses the reduction from the halting problem to the word problem. -/
-theorem halt_reducesto_semiThue_spec : HaltProblem ⪯ₘ[haltToSemiThue] DecisionProblem := by
+theorem halt_reducesto_semiThue_spec : HaltProblem ⪯_s[haltToSemiThue] DecisionProblem := by
   rintro ⟨M, w⟩
   show Halts M.toSingleTapeTM w ↔ _
   let := (normEnc M).stateEncodable
@@ -498,7 +498,7 @@ theorem halt_reducesto_semiThue_spec : HaltProblem ⪯ₘ[haltToSemiThue] Decisi
 
 /-- The halting problem many-one reduces to the word problem for string rewriting systems over
 `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
-def haltReducesSemiThue : HaltProblem ⪯ₘ @DecisionProblem (Alpha ℕ Sym2) :=
+def haltReducesSemiThue : HaltProblem ⪯_s @DecisionProblem (Alpha ℕ Sym2) :=
   ⟨haltToSemiThue, halt_reducesto_semiThue_spec⟩
 
 /-- Every rule of a system produced by the reduction has a non-empty left side. -/
@@ -511,13 +511,13 @@ theorem haltToSemiThue_lhs_ne (p : EncodableTM Bool × List Bool) :
 /-- `haltToSemiThue` witnesses the reduction from the halting problem to the word problem for
 systems with non-empty left sides. -/
 theorem halt_reducesto_semiThuePos_spec :
-    HaltProblem ⪯ₘ[haltToSemiThue] DecisionProblemPos := fun p =>
+    HaltProblem ⪯_s[haltToSemiThue] DecisionProblemPos := fun p =>
   (halt_reducesto_semiThue_spec p).trans (and_iff_right (haltToSemiThue_lhs_ne p)).symm
 
 /-- The halting problem many-one reduces to the word problem for systems with non-empty left sides
 over `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
 def haltReducesSemiThuePos :
-    HaltProblem ⪯ₘ @DecisionProblemPos (Alpha ℕ Sym2) :=
+    HaltProblem ⪯_s @DecisionProblemPos (Alpha ℕ Sym2) :=
   ⟨haltToSemiThue, halt_reducesto_semiThuePos_spec⟩
 
 end Reduction

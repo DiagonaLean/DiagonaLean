@@ -3,9 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude Sonnet 4.6, Akhilesh Balaji
 ```
 # `MPCP.Reductions`: Modified Post's Correspondence Problem Reductions
-1. [`Halt ⪯ₘ MPCP`](#halt-ₘ-mpcp)
+1. [`Halt ⪯_s MPCP`](#halt-ₘ-mpcp)
 
-## `Halt ⪯ₘ MPCP`
+## `Halt ⪯_s MPCP`
 Given a TM `tm` and input `w`, construct an MPCP instance `(startTile tm w, haltTiles tm)` such that `Halts tm w ↔ MPCP.DecisionProblem (startTile tm w) (haltTiles tm)` (`halt_iff_mpcp`), subject to two side conditions of Hopcroft, Motwani and Ullman: `NoBlankWrites tm` (the transition function never writes a blank) and `NoLeftBoundary tm w` (no reachable configuration invokes a left-move at the left tape boundary).
 
 ### Proof sketch
@@ -80,7 +80,7 @@ The right-boundary alternative (`rightMoveTile` vs `rightMoveBoundaryTile`) is r
 Layer 2 (Queue-based extras) (`backward_aux_weak`): generalises Layer 1 to admit `A ⊆ startTile :: haltTiles tm`. A chain-tracked cfg queue threads reachability proofs `initCfg →* c` for each pending configuration `c`. When `startTile` appears mid-stream, it pushes both `stepResult` and a fresh `initCfg` (with `refl` chain) onto the queue. The structural property `τ1_no_state_marker_then_sharp` (`τ1 A` never contains `↟ₛq :: # :: …` as a sub-list) discharges the alternative `rightMoveTile` path in the boundary case even with a nonempty queue.
 
 ### Undecidability
-`Halt_to_MPCP.lean` ends with `haltToMpcpNorm`, which normalizes the machine and input (`Foundations/Computability/Normalize/`) so that they meet the two side conditions, encodes the states as natural numbers (`Alpha.map`) and builds the MPCP instance; `halt_reducesto_mpcp_spec`, which gives `HaltProblem ⪯ₘ[haltToMpcpNorm]` the MPCP decision problem over the alphabet `Alpha ℕ Foundations.Computability.Normalize.Sym2`; and `haltReducesMPCP`, which packages it. Renaming the states uses `mpcp_map_iff` (`AlphabetLift.lean`): an injective map on letters preserves and reflects MPCP solvability.
+`Halt_to_MPCP.lean` ends with `haltToMpcpNorm`, which normalizes the machine and input (`Foundations/Computability/Normalize/`) so that they meet the two side conditions, encodes the states as natural numbers (`Alpha.map`) and builds the MPCP instance; `halt_reducesto_mpcp_spec`, which gives `HaltProblem ⪯_s[haltToMpcpNorm]` the MPCP decision problem over the alphabet `Alpha ℕ Foundations.Computability.Normalize.Sym2`; and `haltReducesMPCP`, which packages it. Renaming the states uses `mpcp_map_iff` (`AlphabetLift.lean`): an injective map on letters preserves and reflects MPCP solvability.
 
 `Undecidable.lean` collects `undecidableMPCP`, the `Undecidable` statement over `Alpha ℕ Sym2`, and `undecidableMPCPOf b0 b1 hne` and `undecidableMPCPBool`, its lifting along `mpcpFunctor` to any alphabet with two distinct letters `b0` and `b1`, and to `Bool`.
 

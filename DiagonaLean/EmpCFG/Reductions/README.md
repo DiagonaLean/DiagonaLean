@@ -3,9 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude Sonnet 4.6, Akhilesh Balaji
 ```
 # `EmpCFG.Reductions`: Deciding the Emptiness of the Intersection of CFGs
-1. [`PCP ⪯ₘ EmpCFG`](#pcp-ₘ-empcfg)
+1. [`PCP ⪯_s EmpCFG`](#pcp-ₘ-empcfg)
 
-## `PCP ⪯ₘ EmpCFG`
+## `PCP ⪯_s EmpCFG`
 Given a PCP instance `P : Stack α`, construct two single-nonterminal grammars `topCFG P` and `botCFG P` over the terminal alphabet `α ⊕ Tile α`, where `α`-symbols sit on the `.inl` side and tile markers on the `.inr` side.
 
 Each grammar has two rules per tile `t ∈ P`:
@@ -33,7 +33,7 @@ or the terminal form `embedA (τProj proj A) ++ embedT A.reverse`. The invariant
 
 Given a word `w` in both languages, we get stacks `A_top` and `A_bot` with `canonString Tile.top A_top = canonString Tile.bot A_bot`. The `.inl`/`.inr` split lemma (`list_inl_inr_split`) uniquely decomposes the shared word, forcing `τ1 A_top = τ2 A_bot` and `A_top = A_bot`; hence, a PCP solution.
 
-Both directions together are `pcp_iff_nempcfg`: `PCP.DecisionProblem P ↔ IntersectionNonempty (topCFG P) (botCFG P)`. Its negation, with `IntersectionEmpty`, is `npcp_iff_empcfg`. The reduction `pcpToEmpCFG` sends `P` to `(topCFG P, botCFG P)`, `pcp_reducesto_empCFG_spec` states `PCP.DecisionProblem ⪯ₘ[pcpToEmpCFG] EmpCFG.DecisionProblem`, and `pcpReducesEmpCFG` packages the two.
+Both directions together are `pcp_iff_nempcfg`: `PCP.DecisionProblem P ↔ IntersectionNonempty (topCFG P) (botCFG P)`. Its negation, with `IntersectionEmpty`, is `npcp_iff_empcfg`. The reduction `pcpToEmpCFG` sends `P` to `(topCFG P, botCFG P)`, `pcp_reducesto_empCFG_spec` states `PCP.DecisionProblem ⪯_s[pcpToEmpCFG] EmpCFG.DecisionProblem`, and `pcpReducesEmpCFG` packages the two.
 
 ### Undecidability
 `Undecidable.lean` collects `undecidableEmpCFG b0 b1 hne`: the nonemptiness of the intersection of two CFGs (`EmpCFG.DecisionProblem`) is `Undecidable` over the alphabet `Term α` for any `α` with two distinct letters `b0` and `b1`. It is obtained with `reduce_from_pcp` from `pcpReducesEmpCFG`. Encoding the terminals of both grammars by a synchronizing code preserves and reflects non-emptiness of the intersection (`Foundations.Codes.intersection_encode_iff`), so `AlphabetLift.lean` reduces the problem over any countable alphabet to the problem over any alphabet `α` with two distinct letters (`empCFGLift`, `empCFGLift_spec`, `empCFGAlphabetLift`). Starting from the countable alphabet `Term Bool`, `Undecidable.lean` also collects `undecidableEmpCFGOf b0 b1 hne`, undecidability over `α` itself, and `undecidableEmpCFGBool`, over `Bool`.

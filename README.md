@@ -71,9 +71,9 @@ Lean is classical, so every proposition is "decidable" in the sense of `Classica
 -- simplified from Synthetic/Definitions.lean and Synthetic/Undecidability.lean
 structure ManyOneReduces (p : X → Prop) (q : Y → Prop) where
   f  : X → Y
-  hf : ∀ x, p x ↔ q (f x)          -- written p ⪯ₘ[f] q
+  hf : ∀ x, p x ↔ q (f x)          -- written p ⪯_s[f] q
 
-abbrev Undecidable (p : X → Prop) : Type := HaltProblem ⪯ₘ p
+abbrev Undecidable (p : X → Prop) : Type := HaltProblem ⪯_s p
 ```
 
 `Undecidable p` is a **type**, not a proposition. An undecidability result is a **definition** whose value is the reduction, and composing results composes their functions (`undecidabilityFromReducibility`). The point is that **Lean must compile the reduction**. The cheating "reduction" `fun x => if HaltProblem x then a else b` is classical, and Lean refuses to compile it. So a result means something because it is a definition that Lean compiles. `#check_reductions` enforces this in CI over every declaration in the library. It checks that the reduction is a compiled definition, that nothing in its dependencies is `sorry`, an axiom or `native_decide`, that no reduction is wrapped in a way that hides it, and that no `Prop` statement concludes that a reduction exists. The conventions it relies on are listed in [CONTRIBUTING.md](CONTRIBUTING.md#reductions).
@@ -141,11 +141,11 @@ def SwappedPCP (A : Stack Bool) : Prop := DecisionProblem (A.map fun t => ⟨t.b
 def swap (A : Stack Bool) : Stack Bool := A.map fun t => ⟨t.bot, t.top⟩
 
 /-- Correctness of the reduction. -/
-theorem swap_spec : (@DecisionProblem Bool) ⪯ₘ[swap] SwappedPCP := fun A => by
+theorem swap_spec : (@DecisionProblem Bool) ⪯_s[swap] SwappedPCP := fun A => by
   simp [SwappedPCP, swap, List.map_map, Function.comp_def]
 
 /-- The reduction, as data. -/
-def pcpReducesSwapped : (@DecisionProblem Bool) ⪯ₘ SwappedPCP := ⟨swap, swap_spec⟩
+def pcpReducesSwapped : (@DecisionProblem Bool) ⪯_s SwappedPCP := ⟨swap, swap_spec⟩
 
 /-- `SwappedPCP` is undecidable. -/
 def swappedUndecidable : Undecidable SwappedPCP :=
@@ -198,8 +198,8 @@ checks.
 
 | Tactic or command | What it does | Defined in |
 |---|---|---|
-| `reduce_from_pcp over_letters b0 b1 via R` | Proves `Undecidable Q` from a reduction `R : PCP ⪯ₘ Q`, over the alphabet of the letters `b0 ≠ b1` | [`Synthetic/Tactics/ReduceFromPCP.lean`](DiagonaLean/Synthetic/Tactics/ReduceFromPCP.lean) |
-| `undec from H` | Reduces `Undecidable Q` to a reduction `P ⪯ₘ Q`, given `H : Undecidable P` | [`Synthetic/Undecidability.lean`](DiagonaLean/Synthetic/Undecidability.lean) |
+| `reduce_from_pcp over_letters b0 b1 via R` | Proves `Undecidable Q` from a reduction `R : PCP ⪯_s Q`, over the alphabet of the letters `b0 ≠ b1` | [`Synthetic/Tactics/ReduceFromPCP.lean`](DiagonaLean/Synthetic/Tactics/ReduceFromPCP.lean) |
+| `undec from H` | Reduces `Undecidable Q` to a reduction `P ⪯_s Q`, given `H : Undecidable P` | [`Synthetic/Undecidability.lean`](DiagonaLean/Synthetic/Undecidability.lean) |
 | `reduce_chain H` | Proves a reduction by composing with `H` and reflexivity | [`Synthetic/ReductionChain.lean`](DiagonaLean/Synthetic/ReductionChain.lean) |
 | `#check_reductions` / `#check_reductions local` | Checks that every reduction (in the library, or in the current file) is a definition Lean compiles, with no classical escape hatch | [`Synthetic/ReductionCheck.lean`](DiagonaLean/Synthetic/ReductionCheck.lean) |
 
