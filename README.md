@@ -242,6 +242,6 @@ CI runs `lake build`, `lake lint`, `#check_reductions`, `scripts/CheckMetaprogra
 
 ## Roadmap
 
-* **Core framework:** the problems above, `Undecidable` and `MachineDecidable`, the reduction check, and the `reduce_from_pcp` tactic. String rewriting is still to come.
-* **Base theorems:** the acceptance problem, Rice, Rice–Shapiro and Greibach. A reduction graph registered through attributes, and a tactic that searches it.
+* **Core framework:** the problems above, `Undecidable` and `MachineDecidable`, the reduction check, and the `reduce_from_pcp` tactic. Done, string rewriting included (`SemiThue/`, `GrammarMem/`).
+* **Base theorems:** Rice's theorem is done (`Rice/`). Still to come: the acceptance problem, Rice–Shapiro and Greibach; a reduction graph registered through attributes, and a tactic that searches it.
 * **Standard reduction library:** more models of computation (RAM machines, register machines, μ-recursive functions) and their equivalence with Turing machines, where Cslib does not already have them.
