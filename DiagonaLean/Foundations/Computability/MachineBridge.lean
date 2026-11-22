@@ -150,10 +150,18 @@ theorem not_machineDecidable_of_not_computablePred {X : Type*} [Primcodable X]
 computable gives Mathlib's `ManyOneReducible p q`. Unlike a bare `⪯ₘ`, which exists classically for
 almost any `p` and `q`, `ManyOneReducible` asks for a computable function, so the proposition has
 content and may be stated as a conclusion. -/
-theorem _root_.DiagonaLean.Synthetic.Definitions.ManyOneReduces.toManyOneReducible
+theorem _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.toManyOneReducible
     {X Y : Type*} [Primcodable X] [Primcodable Y] {p : X → Prop} {q : Y → Prop} (r : p ⪯ₘ q)
     (hr : Computable r.f) : ManyOneReducible p q :=
   ⟨r.f, hr, r.hf⟩
+
+/-- The former name of `SynthReduction.toManyOneReducible`. Its parameter is typed with the former
+name `ManyOneReduces`, so that field notation finds it on terms whose type uses that name. -/
+theorem _root_.DiagonaLean.Synthetic.Definitions.ManyOneReduces.toManyOneReducible
+    {X Y : Type*} [Primcodable X] [Primcodable Y] {p : X → Prop} {q : Y → Prop}
+    (r : DiagonaLean.Synthetic.Definitions.ManyOneReduces p q)
+    (hr : Computable r.f) : ManyOneReducible p q :=
+  DiagonaLean.Synthetic.Definitions.SynthReduction.toManyOneReducible r hr
 
 /-- **Undecidability transfers along a computable reduction.** If `p` is not a computable
 predicate and `r : p ⪯ₘ q` has a computable function, then `q` is not one either. -/

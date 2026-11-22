@@ -263,6 +263,37 @@ axiom DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad29 :
 structure DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30 where
   r : HaltProblem ⪯ₘ fun n : ℕ => Even n
 
+/-! ### The renamed structure and relation, and the former names kept as aliases
+
+`SynthReduction` is the reduction structure; `ManyOneReduces`, `Undecidable` and `Reduction` are
+its former names and those of `SynthHaltReduction` and `ReducesVia`, kept as aliases. The cases
+above use `ManyOneReduces.*` names, now the namespace of an alias; these use the structure's own
+namespace, and reach the structure and the relation through each alias. -/
+
+/-- A definition inside the structure's namespace. -/
+noncomputable def DiagonaLean.Synthetic.Definitions.SynthReduction.bad50 :
+    SynthHaltReduction fun n : ℕ => Even n := ⟨classicalF, classicalF_spec⟩
+
+/-- A theorem inside the structure's namespace. -/
+theorem DiagonaLean.Synthetic.Definitions.SynthReduction.bad51 :
+    Nonempty (SynthHaltReduction fun n : ℕ => Even n) := ⟨⟨classicalF, classicalF_spec⟩⟩
+
+/-- A structure inside the structure's namespace, whose constructor stores a reduction. -/
+structure DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52 where
+  r : HaltProblem ⪯ₘ fun n : ℕ => Even n
+
+/-- A reduction typed through the alias `ManyOneReduces`. -/
+noncomputable def bad53 : ManyOneReduces HaltProblem fun n : ℕ => Even n :=
+  ⟨classicalF, classicalF_spec⟩
+
+/-- A reduction typed through `SynthHaltReduction` directly. -/
+noncomputable def bad54 : SynthHaltReduction fun n : ℕ => Even n := ⟨classicalF, classicalF_spec⟩
+
+/-- A claim that a reduction exists, through the former relation name `Reduction`. -/
+theorem bad55 :
+    ∃ f : EncodableTM Bool × List Bool → ℕ, Reduction f HaltProblem fun n => Even n :=
+  ⟨classicalF, classicalF_spec⟩
+
 /-! ### Aliases that are not literally types -/
 
 /-- An alias whose declared type is a sort only after β-reduction. -/
@@ -394,6 +425,12 @@ error: `bad4` builds a reduction but is marked `noncomputable`
 ---
 error: `bad5` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
+error: `bad53` builds a reduction but is marked `noncomputable`
+---
+error: `bad54` builds a reduction but is marked `noncomputable`
+---
+error: `bad55` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
 error: `bad6` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `bad7` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
@@ -442,13 +479,25 @@ error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad28` states a proposi
 ---
 error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad29` is an axiom about reductions
 ---
+error: `DiagonaLean.Synthetic.Definitions.SynthReduction.bad50` builds a reduction but is marked `noncomputable`
+---
+error: `DiagonaLean.Synthetic.Definitions.SynthReduction.bad51` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
 error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30.mk` stores a reduction inside another type
+---
+error: `DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52.mk` stores a reduction inside another type
 ---
 error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30.mk.inj` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30.mk.injEq` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30.mk.sizeOf_spec` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52.mk.inj` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52.mk.injEq` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
+---
+error: `DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52.mk.sizeOf_spec` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `classicalF_eq` is a `@[csimp]` lemma that depends on `sorry`, so the compiled code of `classicalF` may differ from its meaning
 -/

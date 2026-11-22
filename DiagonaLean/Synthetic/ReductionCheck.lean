@@ -9,22 +9,22 @@ import Lean
 
 /-! # Checking that reductions are computed by compiled definitions
 
-`Undecidable p` is the type `HaltProblem ⪯ₘ p`, and Lean's logic is classical, so a term of it
-exists for every `p` with a positive and a negative instance: the reduction can be the case split
-`fun x => if HaltProblem x then a else b`. A reduction carries algorithmic content only when its
-function is a program. Lean refuses to compile that case split, so an undecidability result is a
-definition whose value is the reduction, and what has to be checked is that the definition
-compiles and that its compiled code is its logical meaning. `#check_reductions` checks this over
-every declaration of a `DiagonaLean` module (with `local`, over the declarations of the current
-file instead), private ones included.
+`SynthHaltReduction p` (former name `Undecidable p`) is the type `HaltProblem ⪯ₘ p`, and Lean's
+logic is classical, so a term of it exists for every `p` with a positive and a negative instance:
+the reduction can be the case split `fun x => if HaltProblem x then a else b`. A reduction carries
+algorithmic content only when its function is a program. Lean refuses to compile that case split, so
+an undecidability result is a definition whose value is the reduction, and what has to be checked is
+that the definition compiles and that its compiled code is its logical meaning. `#check_reductions`
+checks this over every declaration of a `DiagonaLean` module (with `local`, over the declarations of
+the current file instead), private ones included.
 
-A reduction is a term of `ManyOneReduces` (`⪯ₘ`): a term whose type, after its parameters and after
-unfolding every definition, is a reduction structure, listed in `reductionStructs`. Unfolding
-matters, since a type can reach a reduction structure through an alias whose own type is not
-syntactically a sort, such as `def T : (fun _ => Type 1) () := Undecidable p`, or through a field
-of a structure, such as `box.T` for `def box : Box := ⟨Undecidable p⟩`. A *carrier* is a reduction
-structure or an untrusted definition, other than a reduction itself, whose body mentions a
-carrier, such as `Undecidable`, `T` or `box`.
+A reduction is a term of `SynthReduction` (`⪯ₘ`; former name `ManyOneReduces`): a term whose type,
+after its parameters and after unfolding every definition, is a reduction structure, listed in
+`reductionStructs`. Unfolding matters, since a type can reach a reduction structure through an alias
+whose own type is not syntactically a sort, such as `def T : (fun _ => Type 1) () := Undecidable p`,
+or through a field of a structure, such as `box.T` for `def box : Box := ⟨Undecidable p⟩`. A
+*carrier* is a reduction structure or an untrusted definition, other than a reduction itself, whose
+body mentions a carrier, such as `Undecidable`, `T` or `box`.
 
 1. **Every reduction is a compiled definition with honest proofs.** A definition whose type ends in
    a reduction is safe, not `noncomputable`, without `implemented_by` or `extern`, and has compiled
@@ -92,7 +92,7 @@ open Lean Meta Elab Command
 /-- The structures whose terms are reductions. A new kind of reduction, a structure that bundles a
 function with a property it must have, is added here. -/
 def reductionStructs : List Name :=
-  [`DiagonaLean.Synthetic.Definitions.ManyOneReduces]
+  [`DiagonaLean.Synthetic.Definitions.SynthReduction]
 
 /-- The reduction structures, as a set. -/
 def reductionStructSet : NameSet :=
@@ -101,7 +101,9 @@ def reductionStructSet : NameSet :=
 /-- The relations `p ⪯ₘ[f] q` that say a given function is a reduction, with the index of the
 function among their arguments. With `f` quantified, they say that a reduction exists. -/
 def reductionRelations : List (Name × Nat) :=
-  [(`DiagonaLean.Synthetic.Definitions.Reduction, 2)]
+  [(`DiagonaLean.Synthetic.Definitions.ReducesVia, 2),
+   -- the former name, an alias of `ReducesVia`, until existing uses are renamed
+   (`DiagonaLean.Synthetic.Definitions.Reduction, 2)]
 
 /-- `e` mentions a constant in `s`. -/
 def mentionsAny (s : NameSet) (e : Expr) : Bool :=
@@ -176,7 +178,7 @@ def isReductionCtor (env : Environment) (K : Name) : Bool :=
 
 /-- `c` is part of the generated API of a reduction structure that mentions it: the constructor,
 and the theorems `mk.injEq`, `mk.inj` and `mk.sizeOf_spec`. Anything else in the structure's
-namespace, such as a user's `theorem ManyOneReduces.foo` or `structure ManyOneReduces.Bag`, is
+namespace, such as a user's `theorem SynthReduction.foo` or `structure SynthReduction.Bag`, is
 checked like any other declaration. -/
 def isStructureAPI (env : Environment) (c : Name) (ci : ConstantInfo) : Bool :=
   match c, ci with
@@ -359,7 +361,7 @@ mentions one of them, directly or through another such definition: aliases such 
 whatever their declared type, and values that store such a type, such as
 `box` in `def box : Box := ⟨Undecidable p⟩`. Only the body after the parameters counts, so a
 predicate on reductions, such as `fun r : p ⪯ₘ q => Computable r.f`, is not a carrier, and neither
-are the definitions Lean generates (`isAuxiliary`), such as the projection `ManyOneReduces.f`. A
+are the definitions Lean generates (`isAuxiliary`), such as the projection `SynthReduction.f`. A
 reduction is not a carrier, so that a theorem may state facts about a named one. Computed by
 searching backwards from the reduction structures, as `taintedConstants` does. -/
 def reductionCarriers : MetaM NameSet := do
