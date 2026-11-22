@@ -46,6 +46,26 @@ derive_primrec mapAdd
 example : Primrec fun l : List ℕ => mapAdd (fun n => n * l.length) l (l.length + 1) := by fun_prop
 example (h : ℕ → ℕ) (hh : Primrec h) : Primrec fun l : List ℕ => mapAdd h l 0 := by fun_prop
 
+-- rejected
+
+def hoArg (c : (ℕ → ℕ) → ℕ) (n : ℕ) : ℕ := c id + n
+/-- error: derive_primrec: the function argument `c` of `DerivePrimrecTest.hoArg` must
+have a type `A → B` with `A` not a function type -/
+#guard_msgs (whitespace := lax) in
+derive_primrec hoArg
+
+def curArg (c : ℕ → ℕ → ℕ) (n : ℕ) : ℕ := c n n
+/-- error: derive_primrec: the function argument `c` of `DerivePrimrecTest.curArg` must
+have a type `A → B` with `B` not a function type -/
+#guard_msgs (whitespace := lax) in
+derive_primrec curArg
+
+def clashArg {X_dp : Type} [Primcodable X_dp] (c : ℕ → ℕ) (n : ℕ) : ℕ := c n
+/-- error: derive_primrec: rename the argument `X_dp` of `DerivePrimrecTest.clashArg`; the
+generated code uses that name -/
+#guard_msgs (whitespace := lax) in
+derive_primrec clashArg
+
 end DerivePrimrecTest
 
 /-! ### `code_lift` leaves the computability of the lift as a named goal when `fun_prop` fails -/
