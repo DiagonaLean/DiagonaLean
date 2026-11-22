@@ -346,7 +346,7 @@ theorem transitionTilesFor_subset_transitionTiles (tm : EncodableTM Symbol)
     (ht : t ∈ transitionTilesFor tm.toSingleTapeTM q a) :
     t ∈ transitionTiles tm := by
       unfold transitionTiles
-      simp
+      simp only [List.mem_flatMap, mem_enumerate, true_and, Prod.exists]
       use q, a
 
 /-- Every transition tile belongs to `haltTiles tm`. -/
@@ -1348,7 +1348,7 @@ private theorem copy_prefix_forced (tm : EncodableTM Symbol) :
   | nil =>
     intro A tail h_eq hx hy hz q
     use A
-    simp[hy]
+    simp only [List.map_nil, List.nil_append, hy, liftTape_nil, and_self, and_true, true_and]
     exact hx
   | cons a L ih =>
     intro A tail h_eq h_not_halt h_not_state hx q
@@ -1359,7 +1359,7 @@ private theorem copy_prefix_forced (tm : EncodableTM Symbol) :
        simp at h_not_halt
        simp[h_not_halt]
       have h_rest_mem : ∀ s ∈ A_rest, s ∈ haltTiles tm := by
-        simp at h_not_halt
+        simp only [List.mem_cons, forall_eq_or_imp] at h_not_halt
         exact h_not_halt.2
       rw [τ1_cons, liftTape_cons, List.cons_append] at h_not_state
       rcases mem_haltTiles_top tm t h_t_mem with

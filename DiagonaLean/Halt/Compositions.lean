@@ -43,7 +43,7 @@ theorem compCfgL_step {tm1 tm2 : SingleTapeTM Symbol} {a b : tm1.Cfg}
     (h : tm1.TransitionRelation a b) :
     (compComputer tm1 tm2).TransitionRelation (compCfgL tm1 tm2 a) (compCfgL tm1 tm2 b) := by
   rcases a with ⟨ _ | q, t ⟩ <;> rcases b with ⟨ _ | q', t' ⟩ <;>
-    simp_all +decide [ SingleTapeTM.TransitionRelation ];
+    simp_all +decide only [TransitionRelation, step, Option.some.injEq, Cfg.mk.injEq, reduceCtorEq];
   · unfold compCfgL compComputer; aesop;
   · unfold compCfgL;
     unfold SingleTapeTM.compComputer; aesop;
@@ -173,12 +173,21 @@ steps to the configuration with the head one cell to the right. -/
 theorem step_right {q q' : PairSelfState} {wr : Option Bool} {left right : List (Option Bool)}
     (h : pairSelfTM.tr q (right.headD none) = (⟨wr, some Turing.Dir.right⟩, some q')) :
     pairSelfTM.TransitionRelation (cfgOf q left right) (cfgOf q' (wr :: left) right.tail) := by
-  unfold cfgOf; simp +decide [ *, SingleTapeTM.TransitionRelation ]
-  cases right <;> simp_all +decide
-  · cases q <;> cases wr <;> cases h; all_goals simp [StackTape.nil]; exact ⟨rfl, rfl⟩
-  · cases ‹List ( Option Bool )› <;>
-    simp_all +decide [ BiTape.write, BiTape.optionMove, BiTape.move, BiTape.moveRight ]
-    simp [StackTape.nil]
+  unfold cfgOf; simp +decide only [TransitionRelation, step, List.headD_eq_head?_getD,
+                    List.head?_tail, ofList_cons, Option.some.injEq, Cfg.mk.injEq]
+  cases right
+  · simp_all +decide only [List.headD_eq_head?_getD, List.head?_nil, Option.getD_none,
+      List.tail_nil, ofList_nil, not_false_eq_true, getElem?_neg]
+    cases q <;> cases wr <;> cases h; all_goals simp only [StackTape.nil]; exact ⟨rfl, rfl⟩
+  · simp_all +decide only [List.headD_eq_head?_getD, List.head?_cons, Option.getD_some,
+      List.tail_cons, List.getElem?_cons_succ]
+    cases ‹List ( Option Bool )› <;>
+    simp_all +decide only [BiTape.optionMove, BiTape.move, BiTape.moveRight, BiTape.write,
+        ofList_cons, StackTape.head_cons, StackTape.tail_cons, List.length_cons,
+        lt_add_iff_pos_left, Order.lt_add_one_iff, zero_le, getElem?_pos, List.getElem_cons_zero,
+        Option.getD_some, List.tail_cons, and_true, ofList_nil, not_false_eq_true, getElem?_neg,
+        Option.getD_none, List.tail_nil, BiTape.mk.injEq, true_and]
+    simp only [StackTape.nil]
     exact ⟨rfl, rfl⟩
     rfl
 
@@ -188,9 +197,14 @@ theorem step_left {q q' : PairSelfState} {wr : Option Bool} {left right : List (
     (h : pairSelfTM.tr q (right.headD none) = (⟨wr, some Turing.Dir.left⟩, some q')) :
     pairSelfTM.TransitionRelation (cfgOf q left right)
       (cfgOf q' left.tail (left.headD none :: wr :: right.tail)) := by
-  unfold cfgOf; simp +decide [ *, SingleTapeTM.TransitionRelation ]
+  unfold cfgOf; simp +decide only [TransitionRelation, step, List.headD_eq_head?_getD,
+                    List.head?_cons, Option.getD_some, List.tail_cons, ofList_cons,
+                    Option.some.injEq, Cfg.mk.injEq]
   cases left <;> cases right <;>
-    simp_all +decide [ BiTape.write, BiTape.optionMove, BiTape.move, BiTape.moveLeft ]
+    simp_all +decide only [List.headD_eq_head?_getD, List.head?_cons, Option.getD_some,
+        BiTape.optionMove, BiTape.write, ofList_cons, List.tail_cons, BiTape.move, BiTape.moveLeft,
+        StackTape.head_cons, StackTape.tail_cons, and_true, ofList_nil, List.head?_nil,
+        Option.getD_none, List.tail_nil, BiTape.mk.injEq, true_and]
   all_goals first | exact ⟨rfl, rfl⟩ | rfl
 
 /-- If state `q` moves right over every data cell without changing it, then `pairSelfTM` scans
@@ -342,7 +356,7 @@ theorem loop (w : List Bool) (i : ℕ) (hi : i ≤ w.length) :
 /-- The initial configuration equals `cfgOf .start (startLeft w 0) (startRight w 0)`. -/
 theorem init_eq (w : List Bool) :
     SingleTapeTM.initCfg pairSelfTM w = cfgOf .start (startLeft w 0) (startRight w 0) := by
-  cases w <;> simp +decide [ initCfg ];
+  cases w <;> simp +decide only [initCfg];
   · rfl;
   · rename_i h t; simp [BiTape.mk₁, BiTape.mk₁, startLeft, startRight];
     congr;
@@ -384,15 +398,22 @@ theorem finalize (w : List Bool) :
     fun h => Relation.ReflTransGen.head h <| h_scan_left.trans <|
       Relation.ReflTransGen.single _ using 1;
   unfold SingleTapeTM.haltCfg;
-  unfold cfgOf; simp +decide [ BiTape.mk₁ ] ;
-  cases h : encodePair w w <;> simp_all +decide;
+  unfold cfgOf; simp +decide only [List.headD_eq_head?_getD, List.head?_cons, Option.getD_some,
+                    ofList_nil, List.tail_cons, BiTape.mk₁, BiTape.empty_eq_nil,
+                    StackTape.empty_eq_nil] ;
+  cases h : encodePair w w <;> simp_all +decide only [List.map_cons, ofList_cons, List.map_nil,
+                                   ofList_nil];
   · unfold encodePair at h; aesop;
-  · unfold pairSelfTM; simp +decide [ SingleTapeTM.TransitionRelation ] ;
-    unfold BiTape.write; simp +decide [ BiTape.optionMove ] ;
-    unfold BiTape.move; simp +decide [ BiTape.moveRight ] ;
+  · unfold pairSelfTM; simp +decide only [TransitionRelation, step, Option.some.injEq, Cfg.mk.injEq,
+                           true_and] ;
+    unfold BiTape.write; simp +decide only [BiTape.optionMove] ;
+    unfold BiTape.move; simp +decide only [BiTape.moveRight, StackTape.head_cons,
+                            StackTape.tail_cons, BiTape.mk.injEq, true_and] ;
     exact ⟨ rfl, by
-      unfold ofList; simp +decide [ StackTape.mapSome ] ;
-      induction ‹List Bool› <;> simp +decide [ *, StackTape.cons ];
+      unfold ofList; simp +decide only [StackTape.mapSome] ;
+      induction ‹List Bool› <;> simp +decide only [List.map_cons, List.foldr_cons, StackTape.cons,
+                                    StackTape.mk.injEq, List.cons.injEq, true_and, List.map_nil,
+                                    List.foldr_nil];
       · rfl;
       · rename_i k hk ih; exact (by
         exact List.recOn hk rfl fun _ _ ih => by simp +decide [ *, StackTape.cons ] ;); ⟩

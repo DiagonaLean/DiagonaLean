@@ -43,11 +43,13 @@ theorem tc_injective : Function.Injective tc := by
   | fvar x => intro N h; cases N <;> simp_all [tc, cb, cf, cl, cp, Nat.pair_eq_pair]
   | abs M ih =>
     intro N h
-    cases N <;> simp [tc, cb, cf, cl, cp, Nat.pair_eq_pair] at h
+    cases N <;> simp only [tc, cl, Nat.pair_eq_pair, true_and, cb, OfNat.ofNat_ne_zero, false_and,
+                    cf, OfNat.ofNat_ne_one, cp, Nat.reduceEqDiff] at h
     rw [ih h]
   | app M M' ih ih' =>
     intro N h
-    cases N <;> simp [tc, cb, cf, cl, cp, Nat.pair_eq_pair] at h
+    cases N <;> simp only [tc, cp, Nat.pair_eq_pair, true_and, cb, OfNat.ofNat_ne_zero, false_and,
+                    cf, OfNat.ofNat_ne_one, cl, Nat.succ_ne_self] at h
     rw [ih h.1, ih' h.2]
 
 section Prim

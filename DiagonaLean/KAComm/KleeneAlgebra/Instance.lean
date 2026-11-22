@@ -41,7 +41,10 @@ def letC : Letter Bool St → ℕ
 /-- `letC` is injective. -/
 theorem letC_injective : Function.Injective (letC : Letter Bool St → ℕ) := by
   rintro (_ | _ | a | ⟨q, a⟩) (_ | _ | b | ⟨r, b⟩) h <;>
-    simp [letC, Nat.pair_eq_pair] at h ⊢
+    simp only [letC, Nat.pair_eq_pair, Nat.reduceEqDiff, false_and, Nat.succ_ne_self,
+        OfNat.ofNat_ne_one, OfNat.ofNat_ne_zero, OfNat.one_ne_ofNat, OfNat.zero_ne_ofNat,
+        _root_.zero_ne_one, and_true, one_ne_zero, true_and, Letter.cell.injEq,
+        Letter.head.injEq] at h ⊢
   · exact hc_injective h
   · exact ⟨qc_injective h.1, hc_injective h.2⟩
 

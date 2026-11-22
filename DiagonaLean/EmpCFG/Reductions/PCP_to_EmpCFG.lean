@@ -363,7 +363,7 @@ private theorem form_step (proj : Tile α → List α) (P : Stack α)
         intros t' ht'
         rcases List.mem_append.mp ht' with h | h
         · exact h_mem t' h
-        · simp at h; rw [h]; exact ht
+        · simp only [List.mem_cons, List.not_mem_nil, or_false] at h; rw [h]; exact ht
       have h_form_new :
           embedA (τProj proj (A ++ [t])) ++ [Symbol.nonterminal ()]
             ++ embedT (A ++ [t]).reverse =
@@ -386,7 +386,7 @@ private theorem form_step (proj : Tile α → List α) (P : Stack α)
         intros t' ht'
         rcases List.mem_append.mp ht' with h | h
         · exact h_mem t' h
-        · simp at h; rw [h]; exact ht
+        · simp only [List.mem_cons, List.not_mem_nil, or_false] at h; rw [h]; exact ht
       have h_ne_new : A ++ [t] ≠ [] := by simp
       have h_form_new :
           embedA (τProj proj (A ++ [t])) ++ embedT (A ++ [t]).reverse =

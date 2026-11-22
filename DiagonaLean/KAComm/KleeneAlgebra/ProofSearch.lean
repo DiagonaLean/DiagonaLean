@@ -365,7 +365,10 @@ theorem exists_prog_equiv (ka : Bool) {e f : RExp (ℕ ⊕ ℕ)} (h : Equiv DCom
     refine ⟨[Nat.pair 20 (Nat.pair (symC x) (symC y))], fun s => ?_⟩
     rw [run_one]
     have hc := commC_of_dComm hxy
-    simp [results, hc]
+    simp only [results, Nat.unpair_pair, hc, ↓reduceIte, List.getD_eq_getElem?_getD,
+        List.length_cons, List.length_nil, zero_add, Nat.reduceAdd, Nat.reduceLT, getElem?_pos,
+        List.getElem_cons_succ, List.getElem_cons_zero, Option.getD_some, List.cons.injEq,
+        Prod.mk.injEq, and_true]
     exact ⟨rfl, rfl⟩
 
 /-- Every equation provable in Kleene algebra has a program that pushes it, with the flag set. -/

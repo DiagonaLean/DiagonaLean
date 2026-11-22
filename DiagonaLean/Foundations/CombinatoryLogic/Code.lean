@@ -42,7 +42,8 @@ theorem skc_injective : Function.Injective skc := by
   | S | K | I => intro y h; cases y <;> simp_all [skc, cS, cK, cI, ca, Nat.pair_eq_pair]
   | app x y ihx ihy =>
     intro z h
-    cases z <;> simp [skc, cS, cK, cI, ca, Nat.pair_eq_pair] at h
+    cases z <;> simp only [skc, ca, Nat.pair_eq_pair, true_and, cI, Nat.succ_ne_self, false_and, cK,
+                    OfNat.ofNat_ne_one, cS, OfNat.ofNat_ne_zero] at h
     rw [ihx h.1, ihy h.2]
 
 section Prim

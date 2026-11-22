@@ -64,19 +64,23 @@ theorem rc_injective : Function.Injective rc := by
   | one => intro f h; cases f <;> simp_all [rc, cz, co, cs, cp, cm, ct, Nat.pair_eq_pair]
   | sym x =>
     intro f h
-    cases f <;> simp [rc, cz, co, cs, cp, cm, ct, Nat.pair_eq_pair] at h
+    cases f <;> simp only [rc, cs, Nat.pair_eq_pair, true_and, cm, Nat.reduceEqDiff, false_and, co,
+                    OfNat.ofNat_ne_one, cp, ct, cz, OfNat.ofNat_ne_zero] at h
     rw [symC_injective h]
   | plus e f ihe ihf =>
     intro g h
-    cases g <;> simp [rc, cz, co, cs, cp, cm, ct, Nat.pair_eq_pair] at h
+    cases g <;> simp only [rc, cp, Nat.pair_eq_pair, true_and, cm, Nat.reduceEqDiff, false_and, co,
+                    OfNat.ofNat_ne_one, cs, Nat.succ_ne_self, ct, cz, OfNat.ofNat_ne_zero] at h
     rw [ihe h.1, ihf h.2]
   | mul e f ihe ihf =>
     intro g h
-    cases g <;> simp [rc, cz, co, cs, cp, cm, ct, Nat.pair_eq_pair] at h
+    cases g <;> simp only [rc, cm, Nat.pair_eq_pair, true_and, co, OfNat.ofNat_ne_one, false_and,
+                    cp, Nat.succ_ne_self, cs, Nat.reduceEqDiff, ct, cz, OfNat.ofNat_ne_zero] at h
     rw [ihe h.1, ihf h.2]
   | star e ih =>
     intro g h
-    cases g <;> simp [rc, cz, co, cs, cp, cm, ct, Nat.pair_eq_pair] at h
+    cases g <;> simp only [rc, ct, Nat.pair_eq_pair, true_and, cm, Nat.succ_ne_self, false_and, co,
+                    OfNat.ofNat_ne_one, cp, Nat.reduceEqDiff, cs, cz, OfNat.ofNat_ne_zero] at h
     rw [ih h]
 
 section Prim

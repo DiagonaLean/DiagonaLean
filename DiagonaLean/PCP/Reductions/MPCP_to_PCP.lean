@@ -111,7 +111,7 @@ theorem hashL_ne_hash_hashR (x y : List α) :
   induction x generalizing y with
   | nil => simp
   | cons a x ih =>
-    simp
+    simp only [hashL_cons, ne_eq, List.cons.injEq, true_and]
     intro h
     cases y with
     | nil => simp at h
@@ -397,7 +397,8 @@ theorem hashL_append_rupee_ne (x y : List α) (w₁ w₂ : List (Ext α)) :
     | nil => intro h; simp at h
     | cons b y =>
       intro h
-      simp at h
+      simp only [hashL_cons, List.cons_append, hashR_cons, List.cons.injEq, Ext.sym.injEq,
+          true_and] at h
       exact ih y h.2
 
 /-- `hashR x ++ ₹ :: w₁ = hashR y ++ ₹ :: w₂` implies `x = y`.
@@ -413,7 +414,7 @@ theorem hashR_append_rupee_inj (x y : List α) (w₁ w₂ : List (Ext α))
     cases y with
     | nil => simp at h
     | cons b y =>
-      simp at h
+      simp only [hashR_cons, List.cons_append, List.cons.injEq, Ext.sym.injEq, true_and] at h
       obtain ⟨h1, h2⟩ := h
       rw [h1, ih y h2]
 
