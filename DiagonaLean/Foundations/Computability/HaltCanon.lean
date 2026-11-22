@@ -69,11 +69,12 @@ theorem canonValid_prim : Primrec canonValid := by
 end Prim
 
 /-- **A canonical machine**: valid raw data. -/
-def CanonTM := {x : CanonRaw // canonValid x = true}
+abbrev CanonTM := {x : CanonRaw // canonValid x = true}
 
-instance : Primcodable CanonTM :=
-  Primcodable.subtype
-    (PrimrecPred.of_eq (Primrec.eq.comp canonValid_prim (Primrec.const true)) fun _ => Iff.rfl)
+theorem canonValid_primrecPred : PrimrecPred fun x : CanonRaw => canonValid x = true :=
+  PrimrecPred.of_eq (Primrec.eq.comp canonValid_prim (Primrec.const true)) fun _ => Iff.rfl
+
+instance : Primcodable CanonTM := Primcodable.subtype canonValid_primrecPred
 
 namespace CanonTM
 
@@ -228,6 +229,87 @@ theorem CanonTM.halts_toTM_iff (c : CanonTM) {M : EncodableTM Bool}
     (hq : c.start = Encodable.encode M.q₀) (hl : ∀ k, c.lookupC k = lookup (rowsE M) k)
     (w : List Bool) : Halts c.toTM.toSingleTapeTM w ↔ Halts M.toSingleTapeTM w :=
   halts_iff_of_lookup hq (fun k => (c.lookup_rowsE_toTM k).trans (hl k)) w
+
+/-! ### A simple table of a canonical machine -/
+
+section TablePrim
+
+variable {α : Type*} [Primcodable α]
+
+@[fun_prop] theorem prim_canon_val {f : α → CanonTM} (hf : Primrec f) : Primrec fun x => (f x).1 :=
+  (Primrec.subtype_val (hp := canonValid_primrecPred)).comp hf
+
+@[fun_prop] theorem prim_canon_n {f : α → CanonTM} (hf : Primrec f) : Primrec fun x => (f x).n :=
+  Primrec.fst.comp (prim_canon_val hf)
+
+@[fun_prop] theorem prim_canon_start {f : α → CanonTM} (hf : Primrec f) :
+    Primrec fun x => (f x).start :=
+  Primrec.fst.comp (Primrec.snd.comp (prim_canon_val hf))
+
+@[fun_prop] theorem prim_canon_rows {f : α → CanonTM} (hf : Primrec f) :
+    Primrec fun x => (f x).rows :=
+  Primrec.snd.comp (Primrec.snd.comp (prim_canon_val hf))
+
+end TablePrim
+
+namespace CanonTM
+
+variable (c : CanonTM)
+
+/-- The table of `c` in the simulator's format, one entry per state and symbol: the same lookup
+as the table of `c.toTM` (`lookup_table`), but primitive recursive in `c` (`table_prim`). -/
+def table : List (ℕ × ℕ) :=
+  (List.range c.n).flatMap fun q => syms.map fun o => (Nat.pair q (hc o), c.rowAt q o)
+
+theorem table_prim : Primrec table := by
+  unfold table rowAt; fun_prop
+
+end CanonTM
+
+@[fun_prop] theorem prim_canon_table {α : Type*} [Primcodable α] {f : α → CanonTM}
+    (hf : Primrec f) : Primrec fun x => (f x).table :=
+  CanonTM.table_prim.comp hf
+
+namespace CanonTM
+
+variable (c : CanonTM)
+
+/-- `c.table` looks up like `c`'s rows. -/
+theorem lookup_table (k : ℕ) : lookup c.table k = c.lookupC k := by
+  unfold lookupC
+  split
+  · rename_i hk
+    have hkey : k = Nat.pair k.unpair.1 (hc (optOf k.unpair.2)) := by
+      rw [hc_optOf_of_lt hk.2, Nat.pair_unpair]
+    rw [hkey]
+    refine (lookup_eq (List.mem_flatMap.2 ⟨k.unpair.1, List.mem_range.2 hk.1,
+      List.mem_map.2 ⟨optOf k.unpair.2, mem_syms _, rfl⟩⟩) ?_).trans ?_
+    · intro kv hkv heq
+      obtain ⟨q, -, hkv⟩ := List.mem_flatMap.1 hkv
+      obtain ⟨o, -, rfl⟩ := List.mem_map.1 hkv
+      obtain ⟨h₁, h₂⟩ := Nat.pair_eq_pair.1 heq
+      obtain rfl := h₁
+      obtain rfl := hc_injective h₂
+      rfl
+    · simp only [rowAt, Nat.unpair_pair, hc_optOf_of_lt hk.2]
+  · rename_i hk
+    refine lookup_eq_zero fun kv hkv heq => hk ?_
+    obtain ⟨q, hq, hkv⟩ := List.mem_flatMap.1 hkv
+    obtain ⟨o, -, rfl⟩ := List.mem_map.1 hkv
+    rw [← heq, Nat.unpair_pair]
+    exact ⟨List.mem_range.1 hq, hc_lt o⟩
+
+/-- The state numbers of `c.table` are the states of `c`. -/
+theorem mem_idx_table (i : ℕ) : i ∈ c.table.map (fun r => r.1.unpair.1) ↔ i < c.n := by
+  simp only [table, List.map_flatMap, List.map_map, List.mem_flatMap, List.mem_map, List.mem_range,
+    Function.comp_def, Nat.unpair_pair]
+  constructor
+  · rintro ⟨q, hq, -, -, rfl⟩
+    exact hq
+  · intro h
+    exact ⟨i, h, none, mem_syms none, rfl⟩
+
+end CanonTM
 
 /-! ### Reading a canonical machine off a bit string -/
 

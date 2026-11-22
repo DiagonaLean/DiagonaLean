@@ -13,6 +13,7 @@ import DiagonaLean.UTMHalt.Undecidable
 
 import DiagonaLean.MPCP.Basic
 import DiagonaLean.MPCP.AlphabetLift
+import DiagonaLean.MPCP.Hardness
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.MPCP.Undecidable
 import DiagonaLean.MPCP.MachineLevel
