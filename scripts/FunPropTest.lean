@@ -40,6 +40,12 @@ derive_primrec gen [Primcodable α]
 example {β : Type} [Primcodable β] [DecidableEq β] (c : β) :
     Primrec fun l : List β => gen c c (l ++ l) := by fun_prop
 
+/-- A function argument: the lemma is compositional, with the function depending on the input. -/
+def mapAdd (g : ℕ → ℕ) (l : List ℕ) (k : ℕ) : List ℕ := l.map fun n => g n + k
+derive_primrec mapAdd
+example : Primrec fun l : List ℕ => mapAdd (fun n => n * l.length) l (l.length + 1) := by fun_prop
+example (h : ℕ → ℕ) (hh : Primrec h) : Primrec fun l : List ℕ => mapAdd h l 0 := by fun_prop
+
 end DerivePrimrecTest
 
 /-! ### `Computable` -/

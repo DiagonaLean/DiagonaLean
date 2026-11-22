@@ -113,12 +113,14 @@ theorem not_computablePred_semiThuePos :
     (by have := toEmptyCode_prim; exact Primrec.to_comp (by fun_prop))
     fun M => (selfHalt_iff_toEmpty M).trans (and_iff_right (codeRules_lhs_ne _)).symm
 
+/- Encoding a system is primitive recursive, for a code that may depend on the input. -/
+derive_primrec SRS.encode [Primcodable α] [Primcodable β]
+
 /-- A primitive recursive code acts primitive recursively on rewriting instances. -/
 theorem semiThueFunctor_map_primrec {γ δ : Type} [Primcodable γ] [Primcodable δ]
     {c : γ → List δ} (hc : Primrec c) : Primrec (semiThueFunctor.map c) := by
   show Primrec fun x : SRS γ × List γ × List γ =>
     (SRS.encode c x.1, encode c x.2.1, encode c x.2.2)
-  unfold SRS.encode
   fun_prop
 
 /-- **The restricted word problem is not a computable predicate over any nontrivial alphabet.** -/

@@ -6,6 +6,7 @@ Authors: Prathamesh TVH, Claude Opus
 import DiagonaLean.Foundations.Codes.Unary
 import DiagonaLean.Foundations.Computability.MachineBridge
 import DiagonaLean.Foundations.Computability.Prim
+import DiagonaLean.Foundations.Computability.PrimDef
 import DiagonaLean.Synthetic.Undecidability
 
 @[expose] public section
@@ -33,7 +34,8 @@ The lifting is proved once for every such problem:
   alphabet with two distinct letters, along `bitCode`.
 * `CodeFunctor.not_computablePred_of`: so does `¬ ComputablePred`, once `map (bitCode b0 b1)` is
   computable. Instances are built from words by products and lists, so `map c` applies `encode c`
-  to each word, and `encode_primrec` (proved once) with `fun_prop` gives its computability.
+  to each word, and `encode_prim` (generated once by `derive_primrec`) with `fun_prop` gives its
+  computability.
 
 Over two countable alphabets with two letters each, there are good codes both ways, so the
 problem is many-one equivalent over the two (`CodeFunctor.manyOneEquiv`): its many-one degree does
@@ -56,16 +58,12 @@ open DiagonaLean.Synthetic.Notation DiagonaLean.Foundations.Computability
 
 /-! ### The shared computability proof -/
 
+/- `encode_prim`: encoding is primitive recursive, for a code that may depend on the input. -/
+derive_primrec encode [Primcodable α] [Primcodable β]
+
 section Prim
 
-variable {α β γ : Type} [Primcodable α] [Primcodable β] [Primcodable γ]
-
-theorem encode_primrec {c : α → List β} (hc : Primrec c) : Primrec (encode c) :=
-  Primrec.list_flatMap Primrec.id (hc.comp Primrec.snd).to₂
-
-@[fun_prop] theorem prim_encode {c : α → List β} (hc : Primrec c) {f : γ → List α}
-    (hf : Primrec f) : Primrec fun x => encode c (f x) :=
-  (encode_primrec hc).comp hf
+variable {α β : Type} [Primcodable α] [Primcodable β]
 
 theorem unary_primrec : Primrec unary := by
   unfold unary

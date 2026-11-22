@@ -45,24 +45,9 @@ theorem mpcpToPcp_primrec : Primrec₂ (mpcpToPcp (α := α)) := by
 
 end Reduction
 
-section Codes
-
-variable {α β γ : Type} [Primcodable α] [Primcodable β] [Primcodable γ] {c : α → List β}
-
-/-- Encoding a tile is primitive recursive in it, for a primitive recursive code. -/
-@[fun_prop] theorem prim_tileEncode (hc : Primrec c) {f : γ → Tile α} (hf : Primrec f) :
-    Primrec fun x => (f x).encode c := by
-  unfold Tile.encode
-  fun_prop
-
-/-- Encoding a stack is primitive recursive in it, for a primitive recursive code. -/
-@[fun_prop] theorem prim_stackEncode (hc : Primrec c) {f : γ → Stack α} (hf : Primrec f) :
-    Primrec fun x => (f x).encode c := by
-  unfold Stack.encode
-  have : Primrec (Tile.encode c) := prim_tileEncode hc Primrec.id
-  fun_prop
-
-end Codes
+/- Encoding tiles and stacks is primitive recursive, for a code that may depend on the input. -/
+derive_primrec Tile.encode [Primcodable α] [Primcodable β]
+derive_primrec Stack.encode [Primcodable α] [Primcodable β]
 
 namespace AlphabetLift
 
@@ -72,8 +57,8 @@ variable {γ₁ γ₂ : Type} [DecidableEq γ₁] [Primcodable γ₁] [Primcodab
 theorem liftInstance_primrec (b0 b1 : γ₂) :
     Primrec (liftInstance (γ₁ := γ₁) b0 b1) := by
   have := Foundations.Codes.unary_primrec
-  unfold liftInstance Stack.encode Tile.encode Foundations.Codes.localCode Foundations.Codes.bitCode
-    Foundations.Codes.ofEncodable Foundations.Codes.bit Foundations.Codes.encode Stack.letters
+  unfold liftInstance Foundations.Codes.localCode Foundations.Codes.bitCode
+    Foundations.Codes.ofEncodable Foundations.Codes.bit Stack.letters
   fun_prop
 
 /-- The function of the reduction `pcpAlphabetLift` is primitive recursive. -/

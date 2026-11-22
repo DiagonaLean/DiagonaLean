@@ -88,14 +88,15 @@ abbrev empCodeFunctor : CodeFunctor IsCode where
     simp only [IntersectionNonempty, toCFG_presEncode hc]
     exact intersection_encode_iff (hc := hc) _ _
 
+/- Encoding the terminals of a grammar code is primitive recursive, for a code that may depend on
+the input. -/
+derive_primrec sumCode [Primcodable T] [Primcodable β] [Primcodable N]
+derive_primrec presEncode [Primcodable T] [Primcodable β] [Primcodable N]
+
 /-- A primitive recursive code acts primitive recursively on pairs of grammar codes. -/
 theorem empCodeFunctor_map_primrec {γ δ : Type} [Primcodable γ] [Primcodable δ] {c : γ → List δ}
     (hc : Primrec c) : Primrec (empCodeFunctor.map c) := by
-  have hs : Primrec (sumCode (N := ℕ) c) := by
-    unfold sumCode
-    fun_prop
   show Primrec fun x : CFGCode γ × CFGCode γ => (presEncode c x.1, presEncode c x.2)
-  unfold presEncode
   fun_prop
 
 /-- **Non-emptiness of the intersection of two grammar codes is not a computable predicate over
