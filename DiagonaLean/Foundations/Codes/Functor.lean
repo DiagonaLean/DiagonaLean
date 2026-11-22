@@ -52,7 +52,7 @@ problem, from any alphabet with decidable equality to any alphabet with two dist
 The unary code is synchronizing (`isSync_unary`), so one lift serves problems that need only
 injectivity (`IsCode`: correspondence problems, grammars) and those that need synchronization
 (`IsSync`: rewriting). A class of good codes provides the three facts the lift uses
-(`GoodClass`).
+(`LiftableCodes`).
 -/
 
 namespace DiagonaLean.Foundations.Codes
@@ -86,7 +86,7 @@ def localCode {α β : Type} [DecidableEq α] (b0 b1 : β) (S : List α) (a : α
 /-- The facts about a class of good codes that the lift uses: it is closed under precomposing
 with injective renamings, and contains the identity code and the unary code of the natural
 numbers. -/
-class GoodClass (Good : ∀ {α β : Type}, (α → List β) → Prop) : Prop where
+class LiftableCodes (Good : ∀ {α β : Type}, (α → List β) → Prop) : Prop where
   /-- Precomposing with an injective renaming of letters keeps a code good. -/
   comp_inj : ∀ {α β γ : Type} {c : β → List γ} {f : α → β}, Good c → Function.Injective f →
     Good (c ∘ f)
@@ -95,17 +95,17 @@ class GoodClass (Good : ∀ {α β : Type}, (α → List β) → Prop) : Prop wh
   /-- The unary code of the natural numbers, in two distinct letters, is good. -/
   bitCode_good : ∀ {β : Type} {b0 b1 : β}, b0 ≠ b1 → Good (bitCode (α := ℕ) b0 b1)
 
-instance goodClass_isCode : GoodClass IsCode :=
+instance liftableCodes_isCode : LiftableCodes IsCode :=
   ⟨fun hc hf => hc.comp hf, @fun _ => isCode_unit, fun hne => (isSync_bitCode hne).isCode⟩
 
-instance goodClass_isSync : GoodClass IsSync :=
+instance liftableCodes_isSync : LiftableCodes IsSync :=
   ⟨fun hc hf => hc.comp hf, isSync_unit, fun hne => isSync_bitCode hne⟩
 
 /-- `localCode` is good on the letters `S`: positions of distinct members of `S` differ. -/
-theorem good_localCode {Good : ∀ {α β : Type}, (α → List β) → Prop} [GoodClass Good] {α β : Type}
-    [DecidableEq α] {b0 b1 : β} (hne : b0 ≠ b1) (S : List α) :
+theorem good_localCode {Good : ∀ {α β : Type}, (α → List β) → Prop} [LiftableCodes Good]
+    {α β : Type} [DecidableEq α] {b0 b1 : β} (hne : b0 ≠ b1) (S : List α) :
     Good fun a : {a // a ∈ S} => localCode b0 b1 S a.1 :=
-  GoodClass.comp_inj (f := fun a : {a // a ∈ S} => S.idxOf a.1) (GoodClass.bitCode_good hne)
+  LiftableCodes.comp_inj (f := fun a : {a // a ∈ S} => S.idxOf a.1) (LiftableCodes.bitCode_good hne)
     fun a _ h => Subtype.ext ((List.idxOf_inj a.2).1 h)
 
 /-! ### Problems as functors -/
@@ -136,11 +136,11 @@ variable {Good : ∀ {α β : Type}, (α → List β) → Prop} (F : CodeFunctor
 /-- **Naturality on the letters used.** A code whose restriction to the letters of an instance is
 good preserves and reflects the problem on that instance. The instance is moved to the subtype of
 its letters by a code (`a ↦ [⟨a, h⟩]` on its letters), where `natural` applies. -/
-theorem CodeFunctor.natural_on [GoodClass Good] [DecidableEq α] {c : α → List β} (x : F.Inst α)
+theorem CodeFunctor.natural_on [LiftableCodes Good] [DecidableEq α] {c : α → List β} (x : F.Inst α)
     (hc : Good fun a : {a // a ∈ F.supp x} => c a.1) : F.Prob (F.map c x) ↔ F.Prob x := by
   let ρ : α → List {a // a ∈ F.supp x} := fun a => if h : a ∈ F.supp x then [⟨a, h⟩] else []
   have hval : Good fun a : {a // a ∈ F.supp x} => unit a.1 :=
-    GoodClass.comp_inj GoodClass.unit_good Subtype.val_injective
+    LiftableCodes.comp_inj LiftableCodes.unit_good Subtype.val_injective
   have e₁ : F.map (fun a : {a // a ∈ F.supp x} => unit a.1) (F.map ρ x) = x :=
     calc _ = F.map (kcomp _ ρ) x := F.map_kcomp _ _ _
       _ = F.map unit x := F.map_congr x fun a ha => by simp [kcomp, ρ, ha, unit]
@@ -157,19 +157,19 @@ def CodeFunctor.liftMap [DecidableEq α] (b0 b1 : β) (x : F.Inst α) : F.Inst �
 
 /-- **The lift.** The problem over an alphabet with decidable equality many-one reduces to it
 over any alphabet with two distinct letters. -/
-def CodeFunctor.lift [GoodClass Good] [DecidableEq α] (b0 b1 : β) (hne : b0 ≠ b1) :
+def CodeFunctor.lift [LiftableCodes Good] [DecidableEq α] (b0 b1 : β) (hne : b0 ≠ b1) :
     @F.Prob α ⪯ₘ @F.Prob β :=
   ⟨F.liftMap b0 b1, fun x => (F.natural_on x (good_localCode hne _)).symm⟩
 
 /-- **The lifting.** Undecidability over an alphabet with decidable equality transfers to every
 alphabet with two distinct letters. -/
-def CodeFunctor.undecidableOf [GoodClass Good] [DecidableEq α] (u : Undecidable (@F.Prob α))
+def CodeFunctor.undecidableOf [LiftableCodes Good] [DecidableEq α] (u : Undecidable (@F.Prob α))
     (b0 b1 : β) (hne : b0 ≠ b1) : Undecidable (@F.Prob β) :=
   undecidabilityFromReducibility u (F.lift b0 b1 hne)
 
 /-- **The lifting at machine level, to every nontrivial alphabet**, once the lift's function is
 computable. -/
-theorem CodeFunctor.not_computablePred_lift [GoodClass Good] [Nontrivial β]
+theorem CodeFunctor.not_computablePred_lift [LiftableCodes Good] [Nontrivial β]
     [Primcodable (F.Inst α)] [Primcodable (F.Inst β)]
     (hmap : ∀ [DecidableEq α] (b0 b1 : β), Computable (F.liftMap (α := α) b0 b1))
     (h : ¬ ComputablePred (@F.Prob α)) : ¬ ComputablePred (@F.Prob β) := by
@@ -180,7 +180,7 @@ theorem CodeFunctor.not_computablePred_lift [GoodClass Good] [Nontrivial β]
 /-! ### Alphabet invariance -/
 
 /-- The lift with a computable function is a computable many-one reduction. -/
-theorem CodeFunctor.manyOneReducible [GoodClass Good] [DecidableEq α] [Primcodable (F.Inst α)]
+theorem CodeFunctor.manyOneReducible [LiftableCodes Good] [DecidableEq α] [Primcodable (F.Inst α)]
     [Primcodable (F.Inst β)] {b0 b1 : β} (hne : b0 ≠ b1)
     (hmap : Computable (F.liftMap (α := α) b0 b1)) :
     ManyOneReducible (@F.Prob α) (@F.Prob β) :=
@@ -188,7 +188,7 @@ theorem CodeFunctor.manyOneReducible [GoodClass Good] [DecidableEq α] [Primcoda
 
 /-- **Alphabet invariance.** Over two alphabets with two distinct letters each, the problem is
 many-one equivalent, by the lift both ways. -/
-theorem CodeFunctor.manyOneEquiv [GoodClass Good] [Nontrivial α] [Nontrivial β]
+theorem CodeFunctor.manyOneEquiv [LiftableCodes Good] [Nontrivial α] [Nontrivial β]
     [Primcodable (F.Inst α)] [Primcodable (F.Inst β)]
     (hmapα : ∀ [DecidableEq α] (b0 b1 : β), Computable (F.liftMap (α := α) b0 b1))
     (hmapβ : ∀ [DecidableEq β] (a0 a1 : α), Computable (F.liftMap (α := β) a0 a1)) :
