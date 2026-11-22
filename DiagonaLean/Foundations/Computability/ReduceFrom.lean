@@ -69,9 +69,11 @@ def goalOf? (tgt : Expr) : MetaM (Option Goal) := do
     if (← whnfR t.appArg!).isAppOf ``ComputableReduction then return some .hard
   return none
 
-/-- The layer of the term `stx`, or an error naming it. -/
-def layerOfTerm (stx : Term) (role : String) : TacticM Layer := do
-  let e ← elabTerm stx none
+/-- The layer of the term `stx`, or an error naming it. Only the head of its type matters, so the
+term is elaborated with its instances postponed (a link's source alphabet may be implicit, fixed
+only by the goal) and the elaboration is discarded. -/
+def layerOfTerm (stx : Term) (role : String) : TacticM Layer := withoutModifyingState do
+  let e ← elabTerm stx none (mayPostpone := true)
   match ← layerOf? (← inferType e) with
   | some l => return l
   | none => throwError "reduce_from: the {role} `{stx}` is not a reduction: its type is{indentExpr

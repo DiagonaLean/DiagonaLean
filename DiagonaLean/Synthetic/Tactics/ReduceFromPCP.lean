@@ -6,6 +6,7 @@ Authors: Prathamesh Turaga
 import DiagonaLean.Synthetic.HaltReduction
 import DiagonaLean.PCP.Undecidable
 import DiagonaLean.PCP.Basic
+import DiagonaLean.Foundations.Computability.ReduceFrom
 
 @[expose] public section
 
@@ -20,10 +21,10 @@ the tactic is used in `def … := by reduce_from_pcp …`.
 
 ## Form
 
-`reduce_from_pcp over_letters b0 b1 via R` closes the goal with
-`SynthHaltReduction.comp (PCP.synthFromHaltOver b0 b1 _) R`. The alphabet is the type of `b0`
-and `b1`. The proof of `b0 ≠ b1` is found by `assumption` or `decide`, with a targeted error on
-failure.
+`reduce_from_pcp over_letters b0 b1 via R` is `reduce_from (PCP.synthFromHaltOver b0 b1 _) via R`
+(`Foundations/Computability/ReduceFrom.lean`), kept until the older call sites move. The alphabet is
+the type of `b0` and `b1`. The proof of `b0 ≠ b1` is found by `assumption` or `decide`, with a
+targeted error on failure.
 
 The letters are given explicitly, rather than taken from a `Nontrivial` instance, because a
 definition cannot extract data from a proof.
@@ -46,11 +47,9 @@ macro_rules
 macro_rules
   | `(tactic| reduce_from_pcp over_letters $b0 $b1 via $r) =>
     `(tactic|
-        (refine DiagonaLean.Synthetic.Definitions.SynthHaltReduction.comp
-          (DiagonaLean.PCP.synthFromHaltOver $b0 $b1 ?hne) $r
-         case hne =>
-           first
-           | assumption
-           | decide
-           | fail "reduce_from_pcp: could not prove that the two letters are distinct. \
-               Add a hypothesis `h : b0 ≠ b1` before calling `reduce_from_pcp`."))
+        reduce_from (DiagonaLean.PCP.synthFromHaltOver $b0 $b1 (by
+          first
+          | assumption
+          | decide
+          | fail "reduce_from_pcp: could not prove that the two letters are distinct. \
+              Add a hypothesis `h : b0 ≠ b1` before calling `reduce_from_pcp`.")) via $r)

@@ -78,9 +78,12 @@ extract them from `Nontrivial α` (a `Prop`).
   `@[fun_prop]` lemma on that function is all it needs. `h` and `r` are arbitrary terms (applied
   definitions, hypotheses, `.trans` chains), not only names. The bare correctness theorem is not a
   reduction; pass `⟨_, spec⟩`.
-* **`code_lift F from h`** picks the lifting theorem from the goal's head; `code_lift F` alone
-  proves `ManyOneEquiv`. A data goal needs `hne : b0 ≠ b1` in the context. Its side goal
-  `map_computable` is closed by unfolding `F.liftMap` and `fun_prop`.
+* **`code_lift F from h`**: a halting reduction `h` is composed with the lift by `reduce_from`
+  (synthetic `F.lift` or proved `F.computableLift`, chosen by the goal), so it proves every goal
+  `reduce_from` does, over any alphabet with two letters (`hne : b0 ≠ b1` in the context); a source
+  `h : ¬ ComputablePred` gives `¬ ComputablePred` / `¬ MachineDecidable`; `code_lift F` alone
+  proves `ManyOneEquiv`. Its side goal `map_computable` is closed by unfolding `F.liftMap` and
+  `fun_prop`.
 * **`fun_prop`** proves `Primrec`, `PrimrecPred` and `Computable`. It decomposes an application
   before trying a lemma, and it unfolds reducible definitions. Coverage: `Prim.lean` (lists,
   options, `ℕ`, `Bool`, folds, `Nat.iterate`), `IntPrim.lean`, `MatrixPrim.lean`, `FinsetPrim.lean`.

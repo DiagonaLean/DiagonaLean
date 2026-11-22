@@ -5,6 +5,7 @@ import DiagonaLean.PCP.Undecidable
 import DiagonaLean.MatMort.Primrec
 import DiagonaLean.EmpCFG.MachineLevel
 import DiagonaLean.AmbigCFG.MachineLevel
+import DiagonaLean.Foundations.Codes.Tactic
 
 /-! Tests for `reduce_from`, run by CI: one case per goal shape, the link upgrade, and the errors. -/
 
@@ -66,6 +67,23 @@ example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem (Ext Bool))) :
     HaltHard (@DiagonaLean.PCP.DecisionProblem Bool) := by
   reduce_from h via
     (DiagonaLean.PCP.synthAlphabetLift (γ₁ := Ext Bool) false true (by decide))
+
+/-! ### `code_lift` on `reduce_from`
+
+A halting reduction is composed with the lift of a functor on codes; the goal picks the synthetic
+lift or the proved one, whose computability `code_lift_computable` closes. -/
+
+example {α : Type} [Primcodable α] (b0 b1 : α) (hne : b0 ≠ b1) :
+    HaltReduction (@DiagonaLean.MPCP.DecisionProblem α) := by
+  code_lift DiagonaLean.MPCP.Reduction.mpcpFunctor from DiagonaLean.MPCP.fromHalt
+
+example : HaltHard (@DiagonaLean.MPCP.DecisionProblem Bool) := by
+  have hne : false ≠ true := by decide
+  code_lift DiagonaLean.MPCP.Reduction.mpcpFunctor from DiagonaLean.MPCP.fromHalt
+
+example {α : Type} (b0 b1 : α) (hne : b0 ≠ b1) :
+    SynthHaltReduction (@DiagonaLean.MPCP.DecisionProblem α) := by
+  code_lift DiagonaLean.MPCP.Reduction.mpcpFunctor from DiagonaLean.MPCP.fromHalt
 
 /-! ### Synthetic goals -/
 

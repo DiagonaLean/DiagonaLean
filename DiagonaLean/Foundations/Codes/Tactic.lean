@@ -3,7 +3,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.Foundations.Codes.Functor
+import DiagonaLean.Foundations.Codes.ComputableLift
+import DiagonaLean.Foundations.Computability.ReduceFrom
 
 @[expose] public section
 
@@ -13,13 +14,14 @@ A problem given as a functor on codes (`Foundations.Codes.CodeFunctor`) lifts to
 with two distinct letters. `code_lift F from h` applies the lifting theorem that matches the goal,
 with `h` the result over the source alphabet:
 
-* `SynthHaltReduction P`: `CodeFunctor.undecidableOf`, with `h : SynthHaltReduction` over the
-  source. Since `SynthHaltReduction P` is an abbreviation of `HaltProblem ⪯_s P`, `h` may be any
-  reduction from `HaltProblem`.
-* `¬ ComputablePred P`: `CodeFunctor.not_computablePred_lift`, with `h : ¬ ComputablePred` over
-  the source.
-* `¬ MachineDecidable enc P`: the above, then `not_machineDecidable_of_not_computablePred`, with
-  `h : ¬ ComputablePred` over the source.
+* `h` a halting reduction over the source (synthetic or proved): `reduce_from h via` the lift, so
+  every goal `reduce_from` accepts (`SynthHaltReduction`, `HaltReduction`, `HaltHard`,
+  `¬ ComputablePred`, `¬ MachineDecidable enc`). The lift is `CodeFunctor.lift` for a synthetic
+  goal and the proved `CodeFunctor.computableLift` otherwise; `reduce_from` rejects a proved goal
+  from a synthetic `h`.
+* `h : ¬ ComputablePred` over the source: `CodeFunctor.not_computablePred_lift` for a goal
+  `¬ ComputablePred P`, followed by `not_machineDecidable_of_not_computablePred` for a goal
+  `¬ MachineDecidable enc P`.
 
 `code_lift F`, with no source result, proves `ManyOneEquiv P Q` (`CodeFunctor.manyOneEquiv`).
 
@@ -28,7 +30,7 @@ a source result `h` of the wrong type, is reported as such. `P` must be the prob
 unfolding `F` (an `abbrev`). The side goals are closed when possible, and otherwise left as named
 goals, so that what remains to be proved is displayed:
 
-* `SynthHaltReduction P`: the two letters and their distinctness come from a hypothesis
+* from a halting reduction: the two letters and their distinctness come from a hypothesis
   `hne : b0 ≠ b1` in the context (the letters are data, so they cannot come from `Nontrivial`).
 * `case map_computable` (and `map_computable_symm` for `ManyOneEquiv`): the function of the lift,
   `F.liftMap b0 b1`, is computable. It is closed by unfolding `liftMap` and `F` and calling
@@ -69,17 +71,39 @@ def targetHead (e : Expr) : Name × Bool :=
 alphabet of the goal; `code_lift F` proves alphabet invariance. See the module docstring. -/
 syntax "code_lift " ident (" from " term)? : tactic
 
-/-- `code_lift` reads the head of the goal, applies the matching lifting theorem, and reports the
-errors of that theorem, such as a source result `h` of the wrong type. -/
+/-- A hypothesis `b0 ≠ b1` in the local context: the letters and the proof, as syntax. -/
+def findNe? : TacticM (Option (Term × Term × Term)) := withMainContext do
+  for d in ← getLCtx do
+    if d.isImplementationDetail then continue
+    if let some (_, a, b) := (← instantiateMVars d.type).consumeMData.ne? then
+      return some (← Term.exprToSyntax a, ← Term.exprToSyntax b, ← Term.exprToSyntax d.toExpr)
+  return none
+
+/-- `code_lift` reads the source result and the head of the goal. A halting reduction `h` (synthetic
+or proved) is composed with the lift by `reduce_from`, which chooses the layer from the goal: the
+synthetic lift `F.lift` for a synthetic goal, the proved lift `F.computableLift` otherwise. A
+source `h : ¬ ComputablePred` goes through `CodeFunctor.not_computablePred_lift`. -/
 elab_rules : tactic
   | `(tactic| code_lift $F:ident from $h) => withMainContext do
+    let isReduction ← withoutModifyingState do
+      let hTy ← inferType (← Tactic.elabTerm h none (mayPostpone := true))
+      return (← DiagonaLean.Foundations.Computability.ReduceFrom.layerOf? hTy).isSome
+    if isReduction then
+      let some (b0, b1, hne) ← findNe?
+        | throwError "code_lift: no hypothesis `hne : b0 ≠ b1` in the context"
+      let synthGoal := match ← DiagonaLean.Foundations.Computability.ReduceFrom.goalOf?
+          (← getMainTarget) with
+        | some .synth => true
+        | _ => false
+      let link ← if synthGoal then
+          `(DiagonaLean.Foundations.Codes.CodeFunctor.lift $F $b0 $b1 $hne)
+        else
+          `(DiagonaLean.Foundations.Codes.CodeFunctor.computableLift $F $b0 $b1 $hne
+              ?map_computable)
+      evalTactic (← `(tactic| reduce_from $h via $link))
+      evalTactic (← `(tactic| try (case map_computable => code_lift_computable $F)))
+      return
     match targetHead (← instantiateMVars (← getMainTarget)) with
-    | (``DiagonaLean.Synthetic.Definitions.SynthHaltReduction, false) =>
-      evalTactic (← `(tactic|
-        exact DiagonaLean.Foundations.Codes.CodeFunctor.undecidableOf $F $h _ _
-          (by first
-            | assumption
-            | fail "code_lift: no hypothesis `hne : b0 ≠ b1` in the context")))
     | (``ComputablePred, true) =>
       evalTactic (← `(tactic|
         (refine DiagonaLean.Foundations.Codes.CodeFunctor.not_computablePred_lift $F
@@ -93,8 +117,9 @@ elab_rules : tactic
               ?map_computable $h)
          try (case enc_computable => assumption)
          try (case map_computable => code_lift_computable $F))))
-    | _ => throwError "code_lift: the goal must be `Undecidable P`, `¬ ComputablePred P` or \
-        `¬ MachineDecidable enc P`, with `P` the problem of the functor"
+    | _ => throwError "code_lift: from `h : ¬ ComputablePred`, the goal must be \
+        `¬ ComputablePred P` or `¬ MachineDecidable enc P`, with `P` the problem of the functor; \
+        from a halting reduction `h`, any goal `reduce_from` accepts"
   | `(tactic| code_lift $F:ident) => withMainContext do
     match targetHead (← instantiateMVars (← getMainTarget)) with
     | (``ManyOneEquiv, false) =>
