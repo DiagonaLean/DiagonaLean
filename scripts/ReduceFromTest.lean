@@ -55,7 +55,7 @@ example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem Bool)) :
     HaltHard (fun c : DiagonaLean.Foundations.Grammar.CFGCode (DiagonaLean.EmpCFG.Reduction.Term Bool) ×
         DiagonaLean.Foundations.Grammar.CFGCode (DiagonaLean.EmpCFG.Reduction.Term Bool) =>
       DiagonaLean.EmpCFG.IntersectionNonempty c.1.toCFG c.2.toCFG) := by
-  reduce_from h via (DiagonaLean.EmpCFG.MachineLevel.pcpReducesEmpCFGCode (α := Bool))
+  reduce_from h via (DiagonaLean.EmpCFG.synthCodeFromPCP (α := Bool))
 
 example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem Bool)) :
     HaltHard (fun c : DiagonaLean.Foundations.Grammar.CFGCode (Bool ⊕ ℕ) =>

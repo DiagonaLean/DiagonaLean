@@ -542,7 +542,12 @@ theorem pcp_reducesto_empCFG_spec :
 
 /-- PCP many-one reduces to the non-emptiness of the intersection of two context-free grammars,
 through `pcpToEmpCFG`. -/
-def pcpReducesEmpCFG : @PCP.DecisionProblem α ⪯_s @EmpCFG.DecisionProblem (Term α) :=
+def _root_.DiagonaLean.EmpCFG.synthFromPCP :
+    @PCP.DecisionProblem α ⪯_s @EmpCFG.DecisionProblem (Term α) :=
   ⟨pcpToEmpCFG, pcp_reducesto_empCFG_spec⟩
+
+/-- The former name of `EmpCFG.synthFromPCP`. -/
+@[deprecated DiagonaLean.EmpCFG.synthFromPCP (since := "2026-11-23")]
+abbrev pcpReducesEmpCFG := @DiagonaLean.EmpCFG.synthFromPCP
 
 end DiagonaLean.EmpCFG.Reduction

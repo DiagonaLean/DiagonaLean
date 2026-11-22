@@ -17,7 +17,7 @@ a presentation, polymorphic in the name of its one nonterminal (`genPres`). With
 presents `genCFG` itself (`toCFG_genPres_unit`); with the name `0` it is a grammar code, the
 renaming of the first (`genPres_zero`), so it has the same language
 (`language_toCFG_genPres_zero`). The codes of a PCP instance are primitive recursive in it
-(`empCode_prim`), so the many-one reduction `pcpReducesEmpCFGCode` from PCP to the problem on
+(`empCode_prim`), so the many-one reduction `EmpCFG.synthCodeFromPCP` from PCP to the problem on
 codes (`pcp_reducesto_empCFGCode_spec`) transfers `PCP.MachineLevel.not_computablePred_pcp`.
 
 The statements are about grammar codes (`Foundations.Grammar.CFGCode`): a machine reads a finite
@@ -90,10 +90,14 @@ theorem pcp_reducesto_empCFGCode_spec :
 
 /-- PCP many-one reduces to the non-emptiness of the intersection of the languages of two grammar
 codes, through `empCode`. -/
-def pcpReducesEmpCFGCode :
+def _root_.DiagonaLean.EmpCFG.synthCodeFromPCP :
     @PCP.DecisionProblem α ⪯_s
       fun c : CFGCode (Term α) × CFGCode (Term α) => IntersectionNonempty c.1.toCFG c.2.toCFG :=
   ⟨empCode, pcp_reducesto_empCFGCode_spec⟩
+
+/-- The former name of `EmpCFG.synthCodeFromPCP`. -/
+@[deprecated DiagonaLean.EmpCFG.synthCodeFromPCP (since := "2026-11-23")]
+abbrev pcpReducesEmpCFGCode := @DiagonaLean.EmpCFG.synthCodeFromPCP
 
 variable [Primcodable α]
 
@@ -108,7 +112,7 @@ the terminals `Term α`, for any alphabet `α` with two distinct letters. -/
 theorem not_computablePred_empCFGCode [Nontrivial α] :
     ¬ ComputablePred fun c : CFGCode (Term α) × CFGCode (Term α) =>
       IntersectionNonempty c.1.toCFG c.2.toCFG :=
-  not_computablePred_of_reduces pcpReducesEmpCFGCode empCode_prim.to_comp
+  not_computablePred_of_reduces EmpCFG.synthCodeFromPCP empCode_prim.to_comp
     PCP.MachineLevel.not_computablePred_pcp
 
 /-- **Whether the languages of two grammar codes are disjoint is not a computable predicate.** -/
