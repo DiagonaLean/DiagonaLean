@@ -9,9 +9,9 @@ import DiagonaLean.GrammarMem.Reductions.Halt_to_GrammarMem
 
 /-! # Undecidability of membership for grammar codes
 
-`haltReducesGrammarMem` (`Reductions/Halt_to_GrammarMem.lean`) many-one reduces the halting problem
-to membership for grammar codes, so membership is synthetically halting-hard
-(`undecidableGrammarMem`). The machine-level statements are in `MachineLevel.lean`.
+`GrammarMem.synthFromHalt` (`Reductions/Halt_to_GrammarMem.lean`) many-one reduces the halting
+problem to membership for grammar codes, so membership is synthetically halting-hard. The
+machine-level statements are in `MachineLevel.lean`.
 
 ## References
 
@@ -26,7 +26,8 @@ open DiagonaLean.Synthetic.Definitions
 
 variable {T : Type}
 
-/-- **Membership for grammar codes is synthetically halting-hard.** -/
-def undecidableGrammarMem : SynthHaltReduction (@DecisionProblem T) := haltReducesGrammarMem
+/-- The former name of `GrammarMem.synthFromHalt`. -/
+@[deprecated DiagonaLean.GrammarMem.synthFromHalt (since := "2026-11-23")]
+abbrev undecidableGrammarMem := @DiagonaLean.GrammarMem.synthFromHalt
 
 end DiagonaLean.GrammarMem.Reduction

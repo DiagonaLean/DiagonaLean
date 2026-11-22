@@ -14,7 +14,7 @@ import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
 `SemiThue.Reduction.haltToSemiThue` (`MachineLevel.ofSRS`: a fresh start symbol and the symbols
 numbered from `1`), and the empty word. Every rule of that system has a non-empty left side
 (`SemiThue.Reduction.haltToSemiThue_lhs_ne`), so the empty word is in the language iff the machine
-halts (`halt_reducesto_grammarMem_spec`, `haltReducesGrammarMem`).
+halts (`halt_reducesto_grammarMem_spec`, `GrammarMem.synthFromHalt`).
 
 ## References
 
@@ -43,7 +43,11 @@ theorem halt_reducesto_grammarMem_spec :
 
 /-- The halting problem many-one reduces to membership for grammar codes, through
 `haltToGrammarMem`. -/
-def haltReducesGrammarMem : HaltProblem ⪯_s @DecisionProblem T :=
+def _root_.DiagonaLean.GrammarMem.synthFromHalt : HaltProblem ⪯_s @DecisionProblem T :=
   ⟨haltToGrammarMem, halt_reducesto_grammarMem_spec⟩
+
+/-- The former name of `GrammarMem.synthFromHalt`. -/
+@[deprecated DiagonaLean.GrammarMem.synthFromHalt (since := "2026-11-23")]
+abbrev haltReducesGrammarMem := @DiagonaLean.GrammarMem.synthFromHalt
 
 end DiagonaLean.GrammarMem.Reduction

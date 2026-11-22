@@ -11,8 +11,8 @@ Every context-free grammar code is a grammar code of type 0 with the same langua
 ## Layout
 * `Basic.lean`: the problem, type 0, and context-free codes as grammar codes.
 * `MachineLevel.lean`: no Turing machine decides whether the empty word is in the language of a type 0 grammar code (`not_machineDecidable_emptyWord_type0`), nor membership for grammar codes (`not_machineDecidable_grammarMem`), under any computable encoding.
-* `Reductions/Halt_to_GrammarMem.lean`: `HaltProblem ⪯_s` membership for grammar codes (`haltReducesGrammarMem`). See `Reductions/README.md`.
-* `Undecidable.lean`: membership for grammar codes is synthetically halting-hard (`undecidableGrammarMem`).
+* `Reductions/Halt_to_GrammarMem.lean`: `HaltProblem ⪯_s` membership for grammar codes (`GrammarMem.synthFromHalt`). See `Reductions/README.md`.
+* `Undecidable.lean`: membership for grammar codes is synthetically halting-hard (`GrammarMem.synthFromHalt`).
 
 ## Proof sketch
 The reduction goes through the word problem for string rewriting systems (`SemiThue/`): a machine halts iff its configuration string rewrites to the empty string. A fresh start symbol `0` with the rule `[0] → start string`, and the other symbols numbered from `1`, turn the rewriting system into a grammar code (`ofSRS`). When every rule has a non-empty left side, a derivation from `[0]` must begin with the start rule and never meets `0` again (`SRS.derives_start` in `Foundations/Grammar/Rewriting.lean`), so the empty word is in the language iff the start string rewrites to the empty string (`emptyWord_ofSRS_iff`). The machine-level grammar codes are of type 0 (`isType0_gCode`), so the machine-level results for the empty word hold already for type 0 grammar codes, which is Chomsky's class of unrestricted grammars. The `SynthHaltReduction` statement is for all grammar codes.
