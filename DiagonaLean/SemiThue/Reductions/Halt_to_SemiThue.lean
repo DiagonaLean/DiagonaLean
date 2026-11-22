@@ -5,6 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.Foundations.Grammar.Rewriting
+import DiagonaLean.Foundations.Codes.Rewriting
 import DiagonaLean.SemiThue.Basic
 
 @[expose] public section
@@ -31,7 +32,7 @@ the left end, `tm` halts on `w` iff `block (initCfg w)` derives the empty string
 The reduction `haltToSemiThue` normalises the machine and its input
 (`Foundations.Computability.Normalize`), so that both conditions hold, takes `tmRules` of the
 normalised machine, and renames its states to their codes, over the fixed alphabet `Alpha ℕ Sym2`.
-`halt_iff_derives` and `SRS.derives_map_iff` make it a reduction from `HaltProblem`
+`halt_iff_derives` and `Codes.derives_mapRules_iff` make it a reduction from `HaltProblem`
 (`halt_reducesto_semiThue_spec`, `haltReducesSemiThue`). The systems produced have non-empty left
 sides (`haltToSemiThue_lhs_ne`), so it is also a reduction to `DecisionProblemPos`
 (`haltReducesSemiThuePos`).
@@ -491,8 +492,8 @@ theorem halt_reducesto_semiThue_spec : HaltProblem ⪯ₘ[haltToSemiThue] Decisi
   let := (normEnc M).stateEncodable
   rw [halts_normTM_iff,
     halt_iff_derives (tm := normEnc M) (normTM_noBlankWrites _) _ (normTM_noLeftBoundary _ _),
-    ← SRS.derives_map_iff (f := Alpha.map Encodable.encode)
-      (Alpha.map_injective Encodable.encode_injective)]
+    ← Foundations.Codes.derives_mapRules_iff (Alpha.map_injective Encodable.encode_injective)
+      tmRules_lhs_ne]
   rfl
 
 /-- The halting problem many-one reduces to the word problem for string rewriting systems over
