@@ -94,6 +94,8 @@ import DiagonaLean.Synthetic.MetaprogramCheck
 
 import DiagonaLean.Foundations.Computability.Prim
 import DiagonaLean.Foundations.Grammar.Code
+import DiagonaLean.Foundations.Grammar.Rewriting
+import DiagonaLean.Foundations.Computability.StackProof
 import DiagonaLean.Foundations.Computability.PrimrecRec
 import DiagonaLean.Foundations.Computability.PolyTree
 import DiagonaLean.Foundations.Computability.TaggedCode
