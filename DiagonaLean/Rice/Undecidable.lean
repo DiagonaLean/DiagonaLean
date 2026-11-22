@@ -18,9 +18,9 @@ any computable encoding of programs (`not_machineDecidable_rice`, through
 
 The undecidability results split on whether `C` contains the nowhere-defined function, which is
 itself computed by a program. If it does not and `cT` computes a function in `C`, then
-`RiceProblem C` is synthetically halting-hard (`undecidableRice`). If it does and `cF` computes a
+`RiceProblem C` is synthetically halting-hard (`Rice.synthFromHalt`). If it does and `cF` computes a
 function not in `C`, then the complement of `RiceProblem C` is synthetically halting-hard
-(`undecidableRiceCompl`). So every non-trivial `C` is covered by one of the two. A single
+(`Rice.synthComplFromHalt`). So every non-trivial `C` is covered by one of the two. A single
 `SynthHaltReduction` result is not possible: which case holds cannot be computed, and when `C`
 contains the nowhere-defined function, `RiceProblem C` may be co-r.e. (for
 `C = {fun _ => Part.none}`), so that `HaltProblem` does not reduce to it.
@@ -53,19 +53,20 @@ theorem not_machineDecidable_rice {C : Set (ℕ →. ℕ)} (h : IsNontrivial C)
     ¬ MachineDecidable enc (RiceProblem C) :=
   not_machineDecidable_of_not_computablePred henc (not_computablePred_rice h)
 
-/-- **Rice's problem is synthetically halting-hard.** If `cT` computes a function in `C` and the
-nowhere-defined function is not in `C`, then `RiceProblem C` is synthetically halting-hard, given a
-waiter
-program `w` (`exists_isWaiter`). -/
-def undecidableRice {C : Set (ℕ →. ℕ)} (w cT : Code) (hw : IsWaiter w) (hT : cT.eval ∈ C)
-    (hbot : (fun _ => Part.none : ℕ →. ℕ) ∉ C) : SynthHaltReduction (RiceProblem C) :=
-  haltReducesRice w cT hw hT hbot
+/-- The former name of `Rice.synthFromHalt`. -/
+@[deprecated DiagonaLean.Rice.synthFromHalt (since := "2026-11-23")]
+abbrev undecidableRice := @DiagonaLean.Rice.synthFromHalt
 
 /-- **The complement of Rice's problem is synthetically halting-hard.** If `cF` computes a function
 not in `C` and the nowhere-defined function is in `C`, then the complement of `RiceProblem C` is
 synthetically halting-hard, given a waiter program `w` (`exists_isWaiter`). -/
-def undecidableRiceCompl {C : Set (ℕ →. ℕ)} (w cF : Code) (hw : IsWaiter w) (hF : cF.eval ∉ C)
-    (hbot : (fun _ => Part.none : ℕ →. ℕ) ∈ C) : SynthHaltReduction fun c => ¬ RiceProblem C c :=
-  haltReducesRice (C := Cᶜ) w cF hw hF (fun h => h hbot)
+def _root_.DiagonaLean.Rice.synthComplFromHalt {C : Set (ℕ →. ℕ)} (w cF : Code) (hw : IsWaiter w)
+    (hF : cF.eval ∉ C) (hbot : (fun _ => Part.none : ℕ →. ℕ) ∈ C) :
+    SynthHaltReduction fun c => ¬ RiceProblem C c :=
+  Rice.synthFromHalt (C := Cᶜ) w cF hw hF (fun h => h hbot)
+
+/-- The former name of `Rice.synthComplFromHalt`. -/
+@[deprecated DiagonaLean.Rice.synthComplFromHalt (since := "2026-11-23")]
+abbrev undecidableRiceCompl := @DiagonaLean.Rice.synthComplFromHalt
 
 end DiagonaLean.Rice.Reduction
