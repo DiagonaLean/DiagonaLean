@@ -26,7 +26,7 @@ as base-10 numerals, to the first two coordinates of a row vector. Each tile of 
 gives two such matrices, one with a marker digit on its bottom word (`tileMats`). `S * P * T = 0`
 when `[1, 0, 1] * P = [h, h, 1]` (`S_prod_T_eq_zero`), and every zero product
 contains such a run (`mortal_iff_exists_prod_of_Ws`). The main results are `pcp_iff_matmort` and
-the reduction `pcpReducesMatMort`.
+the reduction `MatMort.synthFromPCP`.
 
 ## References
 
@@ -523,11 +523,16 @@ theorem pcp_iff_matmort (K : Stack S23) :
 /-- `matImage` reduces PCP over `S23` to matrix mortality: `K` has a solution iff `matImage K` is
   mortal. -/
 theorem pcp_reducesto_matMort_spec :
-    @PCP.DecisionProblem S23 ⪯_s[matImage] fun Ws => MatMort.DecisionProblem Ws :=
+    @PCP.DecisionProblem S23 ⪯_s[matImage] MatMort.DecisionProblem :=
   pcp_iff_matmort
 
 /-- **The reduction.** PCP over `S23` many-one reduces to matrix mortality through `matImage`. -/
-def pcpReducesMatMort : @PCP.DecisionProblem S23 ⪯_s fun Ws => MatMort.DecisionProblem Ws :=
+def _root_.DiagonaLean.MatMort.synthFromPCP :
+    @PCP.DecisionProblem S23 ⪯_s MatMort.DecisionProblem :=
   ⟨matImage, pcp_reducesto_matMort_spec⟩
+
+/-- The former name of `MatMort.synthFromPCP`. -/
+@[deprecated DiagonaLean.MatMort.synthFromPCP (since := "2026-11-23")]
+abbrev pcpReducesMatMort := @DiagonaLean.MatMort.synthFromPCP
 
 end DiagonaLean.MatMort.Reduction

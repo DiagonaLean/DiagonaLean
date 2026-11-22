@@ -142,13 +142,16 @@ def uses(files):
                 print(f"no identifier at {f}:{ln}:{col}")
                 continue
             tok = m.group(0)
-            if tok.lstrip("@").split(".")[-1] != old.split(".")[-1]:
+            parts = tok.lstrip("@").split(".")
+            short = old.split(".")[-1]
+            if short not in parts:
                 # the warning points at a macro call, not at the name: fix by hand
                 print(f"not the old name at {f}:{ln}:{col}: `{tok}`")
                 continue
+            rest = parts[parts.index(short) + 1:]  # a field after the name, as in `r.f`
             at = "@" if tok.startswith("@") else ""
             name = new[len("DiagonaLean."):] if inside else new
-            lines[ln - 1] = s[:col] + at + name + s[m.end():]
+            lines[ln - 1] = s[:col] + at + ".".join([name] + rest) + s[m.end():]
             n += 1
         p.write_text("\n".join(lines))
     print(f"rewrote {n} uses in {len(edits)} files")

@@ -48,8 +48,8 @@ Each link's function has a `fun_prop` lemma, so `reduce_from` reduces `r.f` to t
 (`ReduceFrom.unfoldField`, which keeps it folded) and closes its computability. -/
 
 example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem DiagonaLean.MatMort.Reduction.S23)) :
-    HaltHard (fun Ws => DiagonaLean.MatMort.DecisionProblem Ws) := by
-  reduce_from h via DiagonaLean.MatMort.Reduction.pcpReducesMatMort
+    HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  reduce_from h via DiagonaLean.MatMort.synthFromPCP
 
 example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem Bool)) :
     HaltHard (fun c : DiagonaLean.Foundations.Grammar.CFGCode (DiagonaLean.EmpCFG.Reduction.Term Bool) ×
