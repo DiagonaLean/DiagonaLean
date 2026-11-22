@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.Foundations.Codes.Basic
+import DiagonaLean.Foundations.Codes.Unary
 import DiagonaLean.Foundations.Grammar.Rewriting
 
 @[expose] public section
@@ -99,5 +99,17 @@ theorem IsCode.encode_ne_nil_iff {c : α → List β} (hc : IsCode c) {l : List 
 theorem lhs_ne_encode_iff {c : α → List β} (hc : IsCode c) {R : SRS α} :
     (∀ lr ∈ SRS.encode c R, lr.1 ≠ []) ↔ ∀ lr ∈ R, lr.1 ≠ [] := by
   simp only [SRS.encode, List.forall_mem_map, hc.encode_ne_nil_iff]
+
+/-- Encoding a system by `unit ∘ g` renames its letters by `g`. -/
+@[simp] theorem SRS.encode_unit_comp (g : α → β) (R : SRS α) :
+    SRS.encode (unit ∘ g) R = R.mapRules g := by
+  simp [SRS.encode, SRS.mapRules, encode_comp]
+
+/-- **Renaming letters injectively keeps derivability**, in a system whose left sides are
+non-empty: `derives_encode_iff` for the synchronizing code `unit ∘ g`. -/
+theorem derives_mapRules_iff {g : α → β} (hg : Function.Injective g) {R : SRS α}
+    (hR : ∀ lr ∈ R, lr.1 ≠ []) (u v : List α) :
+    (R.mapRules g).Derives (u.map g) (v.map g) ↔ R.Derives u v := by
+  simpa [encode_comp] using derives_encode_iff (isSync_unit.comp hg) hR (u := u) (v := v)
 
 end DiagonaLean.Foundations.Codes

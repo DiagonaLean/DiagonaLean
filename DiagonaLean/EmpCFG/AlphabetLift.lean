@@ -95,12 +95,6 @@ abbrev empCodeFunctor : CodeFunctor IsCode where
   map_congr x h := Prod.ext (presEncode_congr fun t ht => h t (List.mem_append_left _ ht))
     (presEncode_congr fun t ht => h t (List.mem_append_right _ ht))
 
-/- Encoding the terminals of a grammar code is primitive recursive, for a code that may depend on
-the input. -/
-derive_primrec sumCode [Primcodable T] [Primcodable β] [Primcodable N]
-derive_primrec presEncode [Primcodable T] [Primcodable β] [Primcodable N]
-derive_primrec presTerminals [Primcodable T] [Primcodable N]
-
 /-- **Non-emptiness of the intersection of two grammar codes is not a computable predicate over
 any nontrivial alphabet**: the lifting of `not_computablePred_empCFGCode` from `Term Bool`. -/
 theorem not_computablePred_empCFGCodeOf [Primcodable α] [Nontrivial α] [DecidableEq α] :

@@ -6,19 +6,20 @@ Authors: Prathamesh TVH, Claude Opus
 import DiagonaLean.MPCP.MachineLevel
 import DiagonaLean.SemiThue.Basic
 import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
+import DiagonaLean.Foundations.Codes.Rewriting
 
 @[expose] public section
 
 /-! # No machine decides the word problem for string rewriting systems
 
-`Reductions/Halt_to_SemiThue.lean` shows that a machine halts iff its configuration string
-rewrites to the empty string under `tmRules`. Here the system is read off the machine's code, as
+`Reductions/Halt_to_SemiThue.lean` shows that a machine halts iff its configuration string rewrites
+to the empty string under `tmRules`. Here the system is read off the machine's code, as
 `MPCP.MachineLevel.instC` reads the MPCP tiles: the transition tiles `transN`, the absorb rules and
 the final rule, over the alphabet `Alpha ℕ Sym2` (`codeRules`). The rules of the code are the rules
 of the normalised machine with its states renamed to numbers (`mem_codeRules`), and renaming letters
-injectively keeps derivability (`SRS.derives_map_iff`), so a machine halts on its own code iff the
-start string of its code rewrites to the empty string (`selfHalt_iff_toEmpty`). The instance is
-primitive recursive in the code (`toEmptyCode_prim`), and self-halting is undecidable.
+injectively keeps derivability (`Codes.derives_mapRules_iff`), so a machine halts on its own code
+iff the start string of its code rewrites to the empty string (`selfHalt_iff_toEmpty`). The instance
+is primitive recursive in the code (`toEmptyCode_prim`), and self-halting is undecidable.
 
 ## Main statements
 
@@ -112,7 +113,8 @@ theorem selfHalt_iff_toEmpty (M : EncodableTM Bool) :
     rw [← startTile_ren]; rfl
   rw [ToEmptyProblem, toEmptyCode, hq, rowsC_eq_rowsE, halts_normTM_iff,
     halt_iff_derives (tm := normEnc M) (normTM_noBlankWrites _) _ (normTM_noLeftBoundary _ _),
-    ← SRS.derives_map_iff (f := Alpha.map (stIdx M)) (Alpha.map_injective (stIdx_injective M)),
+    ← Foundations.Codes.derives_mapRules_iff (Alpha.map_injective (stIdx_injective M))
+      fun lr h => tmRules_lhs_ne (tm := normEnc M) lr h,
     SRS.derives_congr (mem_codeRules M), hstart]
   rfl
 

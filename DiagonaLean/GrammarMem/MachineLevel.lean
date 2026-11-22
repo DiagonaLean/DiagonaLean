@@ -15,7 +15,7 @@ string such that the machine halts on its own code iff the start string rewrites
 string. A fresh start symbol `0`, with the rule `[0] → start string`, and the other symbols numbered
 from `1` (`gSym`), turn this into a grammar code (`gCode`) whose language contains the empty word
 iff the start string rewrites to the empty string (`emptyWord_gCode_iff`, from `SRS.derives_start`
-and `SRS.derives_map_iff`). The grammar codes are of type 0 (`isType0_gCode`) and primitive
+and `Codes.derives_mapRules_iff`). The grammar codes are of type 0 (`isType0_gCode`) and primitive
 recursive in the machine code (`gCode_prim`).
 
 ## Main statements
@@ -73,7 +73,7 @@ theorem emptyWord_ofSRS_iff (R : SRS (Alpha ℕ Normalize.Sym2))
       R.map fun lr => (lr.1.map gSym, lr.2.map gSym)) [Sum.inr 0]
       (([] : List T).map Sum.inl) ↔ _
   rw [List.map_nil, SRS.derives_start (v := [])]
-  · exact SRS.derives_map_iff gSym_injective _ []
+  · exact Foundations.Codes.derives_mapRules_iff gSym_injective hne _ []
   · intro lr hlr
     obtain ⟨lr, -, rfl⟩ := List.mem_map.1 hlr
     simp only [List.mem_map, not_exists, not_and]
