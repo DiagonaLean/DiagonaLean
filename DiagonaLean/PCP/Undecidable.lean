@@ -9,9 +9,9 @@ import DiagonaLean.PCP.Reductions.Halt_to_PCP
 
 /-! # Undecidability of PCP
 
-PCP is undecidable over the fixed alphabet `Ext (Alpha ℕ Bool)` (`undecidablePCP'`), and over
-any alphabet with two distinct letters (`undecidablePCP`), by transporting the first result along
-`AlphabetLift.pcpAlphabetLift`. The machine-level statements are in `MachineLevel.lean`.
+PCP is undecidable over the fixed alphabet `Ext (Alpha ℕ Bool)` (`PCP.synthFromHalt`), and over any
+alphabet with two distinct letters (`PCP.synthFromHaltOver`), by transporting the first result along
+`PCP.synthAlphabetLift`. The machine-level statements are in `MachineLevel.lean`.
 
 ## References
 
@@ -25,17 +25,20 @@ namespace DiagonaLean.PCP.Reduction
 
 open DiagonaLean.MPCP.Reduction DiagonaLean.Synthetic.Definitions
 
-/-- **PCP is synthetically halting-hard over the fixed alphabet `Ext (Alpha ℕ Bool)`.** -/
-def undecidablePCP' :
-    SynthHaltReduction (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
-  haltReducesPCP
+/-- The former name of `PCP.synthFromHalt`. -/
+@[deprecated DiagonaLean.PCP.synthFromHalt (since := "2026-11-23")]
+abbrev undecidablePCP' := @DiagonaLean.PCP.synthFromHalt
 
 /-- **PCP is synthetically halting-hard over any alphabet `α` with two distinct letters `b0`,
-`b1`.** Obtained by transporting `undecidablePCP'` along `AlphabetLift.pcpAlphabetLift`. The letters
+`b1`.** Obtained by transporting `PCP.synthFromHalt` along `PCP.synthAlphabetLift`. The letters
 are arguments rather than taken from `Nontrivial α`, since a definition cannot extract data from a
 proof. -/
-def undecidablePCP {α : Type} (b0 b1 : α) (hne : b0 ≠ b1) :
+def _root_.DiagonaLean.PCP.synthFromHaltOver {α : Type} (b0 b1 : α) (hne : b0 ≠ b1) :
     SynthHaltReduction (@DecisionProblem α) :=
-  SynthHaltReduction.comp undecidablePCP' (AlphabetLift.pcpAlphabetLift b0 b1 hne)
+  SynthHaltReduction.comp PCP.synthFromHalt (PCP.synthAlphabetLift b0 b1 hne)
+
+/-- The former name of `PCP.synthFromHaltOver`. -/
+@[deprecated DiagonaLean.PCP.synthFromHaltOver (since := "2026-11-23")]
+abbrev undecidablePCP := @DiagonaLean.PCP.synthFromHaltOver
 
 end DiagonaLean.PCP.Reduction

@@ -105,8 +105,12 @@ theorem halt_reducesto_pcp_spec :
     (by decide)
 
 /-- The halting problem many-one reduces to PCP over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/
-def haltReducesPCP :
+def _root_.DiagonaLean.PCP.synthFromHalt :
     HaltProblem ⪯_s (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
   ⟨haltToPcp, halt_reducesto_pcp_spec⟩
+
+/-- The former name of `PCP.synthFromHalt`. -/
+@[deprecated DiagonaLean.PCP.synthFromHalt (since := "2026-11-23")]
+abbrev haltReducesPCP := @DiagonaLean.PCP.synthFromHalt
 
 end DiagonaLean.PCP.Reduction

@@ -142,6 +142,10 @@ def uses(files):
                 print(f"no identifier at {f}:{ln}:{col}")
                 continue
             tok = m.group(0)
+            if tok.lstrip("@").split(".")[-1] != old.split(".")[-1]:
+                # the warning points at a macro call, not at the name: fix by hand
+                print(f"not the old name at {f}:{ln}:{col}: `{tok}`")
+                continue
             at = "@" if tok.startswith("@") else ""
             name = new[len("DiagonaLean."):] if inside else new
             lines[ln - 1] = s[:col] + at + name + s[m.end():]

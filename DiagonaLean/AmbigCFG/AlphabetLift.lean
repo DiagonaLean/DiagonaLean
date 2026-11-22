@@ -79,7 +79,7 @@ def undecidableAmbigCFGCodeOf [DecidableEq α] (b0 b1 : α) (hne : b0 ≠ b1) :
   have u : SynthHaltReduction (@CodeProblem (Bool ⊕ ℕ)) :=
     SynthHaltReduction.comp
       (SynthHaltReduction.comp
-        (PCP.Reduction.undecidablePCP false true Bool.false_ne_true) pcpReducesAmbigCFGCode)
+        (PCP.synthFromHaltOver false true Bool.false_ne_true) pcpReducesAmbigCFGCode)
       codeProblemReduces
   have u' : SynthHaltReduction (@CodeProblem α) := by code_lift ambCodeFunctor from u
   SynthHaltReduction.comp u' codeProblemReduces'

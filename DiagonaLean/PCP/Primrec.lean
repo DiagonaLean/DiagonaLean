@@ -15,7 +15,8 @@ Tiles and the extended alphabet `Ext α` are `Primcodable` (`derive_primcodable`
 MPCP instances (lists and pairs of tiles). With these encodings:
 
 * the reduction from MPCP to PCP is primitive recursive (`mpcpToPcp_primrec`);
-* the change of alphabet behind `undecidablePCP` is primitive recursive (`liftInstance_primrec`).
+* the change of alphabet behind `PCP.synthFromHaltOver` is primitive recursive
+  (`liftInstance_primrec`).
 
 This is a statement about the functions themselves, stronger than `#check_reductions`, which only
 checks that they compile.
@@ -73,14 +74,14 @@ variable {γ₁ γ₂ : Type} [DecidableEq γ₁] [Primcodable γ₁] [Primcodab
   fun_prop
 
 /-- The change of alphabet, as the lift map of `pcpFunctor`, is primitive recursive; registered
-with `fun_prop`, so `reduce_from` upgrades `pcpAlphabetLift` with no goal left. -/
+with `fun_prop`, so `reduce_from` upgrades `PCP.synthAlphabetLift` with no goal left. -/
 @[fun_prop] theorem liftMap_primrec (b0 b1 : γ₂) :
     Primrec (pcpFunctor.liftMap (α := γ₁) b0 b1) :=
   liftInstance_primrec b0 b1
 
-/-- The function of the reduction `pcpAlphabetLift` is primitive recursive. -/
+/-- The function of the reduction `PCP.synthAlphabetLift` is primitive recursive. -/
 theorem pcpAlphabetLift_primrec {b0 b1 : γ₂} (hne : b0 ≠ b1) :
-    Primrec (pcpAlphabetLift (γ₁ := γ₁) b0 b1 hne).f :=
+    Primrec (PCP.synthAlphabetLift (γ₁ := γ₁) b0 b1 hne).f :=
   liftInstance_primrec b0 b1
 
 end AlphabetLift

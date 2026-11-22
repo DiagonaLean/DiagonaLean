@@ -12,7 +12,7 @@ import DiagonaLean.PCP.Basic
 /-! # The `reduce_from_pcp` tactic
 
 Every "target problem `Q` is undecidable by reduction from PCP" result in this development composes
-`undecidablePCP` with a reduction `R : PCP.DecisionProblem ⪯_s Q`, through
+`PCP.synthFromHaltOver` with a reduction `R : PCP.DecisionProblem ⪯_s Q`, through
 `SynthHaltReduction.comp`. `R` must be a named definition that Lean compiles (see the
 convention on `SynthReduction`), so the reduction function and its correctness proof live in the
 target's `Reductions/PCP_to_Q.lean`, and the tactic only composes. The result is a definition, so
@@ -21,7 +21,7 @@ the tactic is used in `def … := by reduce_from_pcp …`.
 ## Form
 
 `reduce_from_pcp over_letters b0 b1 via R` closes the goal with
-`SynthHaltReduction.comp (undecidablePCP b0 b1 _) R`. The alphabet is the type of `b0`
+`SynthHaltReduction.comp (PCP.synthFromHaltOver b0 b1 _) R`. The alphabet is the type of `b0`
 and `b1`. The proof of `b0 ≠ b1` is found by `assumption` or `decide`, with a targeted error on
 failure.
 
@@ -47,7 +47,7 @@ macro_rules
   | `(tactic| reduce_from_pcp over_letters $b0 $b1 via $r) =>
     `(tactic|
         (refine DiagonaLean.Synthetic.Definitions.SynthHaltReduction.comp
-          (DiagonaLean.PCP.Reduction.undecidablePCP $b0 $b1 ?hne) $r
+          (DiagonaLean.PCP.synthFromHaltOver $b0 $b1 ?hne) $r
          case hne =>
            first
            | assumption

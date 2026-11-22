@@ -21,12 +21,12 @@ import DiagonaLean.Foundations.Computability.HaltCanon
 * `¬ MachineDecidable enc q`, with `h` proved: `HaltHard.not_machineDecidable ⟨h.trans r⟩ _`,
   leaving `Computable enc`.
 
-A proved goal with a synthetic source is an error: a halting reduction is upgraded at its root,
-from canonical machines (`HaltCanon`), not by a computability proof. The goals the tactic leaves,
-the computability of an upgraded link and of the encoding, are tried with `assumption` and
-`fun_prop`; whatever these do not close stays open. For a link `r`, `r.f` is first reduced to the
-function `r` was built from, with that function kept folded (`unfoldField`), so that its own
-`fun_prop` lemma applies: the links `mpcpReducesPCP`, `pcpAlphabetLift`, `pcpReducesMatMort`,
+A proved goal with a synthetic source is an error: a halting reduction is upgraded at its root, from
+canonical machines (`HaltCanon`), not by a computability proof. The goals the tactic leaves, the
+computability of an upgraded link and of the encoding, are tried with `assumption` and `fun_prop`;
+whatever these do not close stays open. For a link `r`, `r.f` is first reduced to the function `r`
+was built from, with that function kept folded (`unfoldField`), so that its own `fun_prop` lemma
+applies: the links `PCP.synthFromMPCP`, `PCP.synthAlphabetLift`, `pcpReducesMatMort`,
 `pcpReducesEmpCFGCode` and `pcpReducesAmbigCFGCode` are upgraded with no goal left. A link function
 that is an `abbrev` is unfolded by `fun_prop` itself, so it should be a `def` with a lemma.
 

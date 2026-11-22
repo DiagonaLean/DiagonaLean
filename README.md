@@ -131,8 +131,7 @@ Reduce from a problem that is already undecidable, and give the reduction as a n
 ```lean
 import DiagonaLean
 
-open DiagonaLean.Synthetic.Definitions DiagonaLean.PCP
-  DiagonaLean.PCP.Reduction
+open DiagonaLean DiagonaLean.Synthetic.Definitions DiagonaLean.PCP
 
 /-- A toy problem: PCP with the two rows of every tile swapped. -/
 def SwappedPCP (A : Stack Bool) : Prop := DecisionProblem (A.map fun t => ⟨t.bot, t.top⟩)
@@ -144,15 +143,15 @@ def swap (A : Stack Bool) : Stack Bool := A.map fun t => ⟨t.bot, t.top⟩
 theorem swap_spec : (@DecisionProblem Bool) ⪯_s[swap] SwappedPCP := fun A => by
   simp [SwappedPCP, swap, List.map_map, Function.comp_def]
 
-/-- The reduction, as data. -/
-def pcpReducesSwapped : (@DecisionProblem Bool) ⪯_s SwappedPCP := ⟨swap, swap_spec⟩
+/-- The reduction, as data: a link from PCP. -/
+def SwappedPCP.synthFromPCP : (@DecisionProblem Bool) ⪯_s SwappedPCP := ⟨swap, swap_spec⟩
 
-/-- `SwappedPCP` is undecidable. -/
-def swappedUndecidable : SynthHaltReduction SwappedPCP :=
-  SynthHaltReduction.comp (undecidablePCP true false (by decide)) pcpReducesSwapped
+/-- `SwappedPCP` is synthetically halting-hard: PCP's halting reduction, then the link. -/
+def SwappedPCP.synthFromHalt : SynthHaltReduction SwappedPCP := by
+  reduce_from (PCP.synthFromHaltOver true false (by decide)) via SwappedPCP.synthFromPCP
 
-#check_reductions local          -- checks the definitions in this file
-#print axioms swappedUndecidable  -- propext, Classical.choice, Quot.sound
+#check_reductions local              -- checks the definitions in this file
+#print axioms SwappedPCP.synthFromHalt  -- propext, Classical.choice, Quot.sound
 ```
 
 ### Prove a function primitive recursive, computable, or computed by a Turing machine

@@ -17,12 +17,12 @@ encoding every tile by a code `c` (`Stack.encode`) preserves and reflects solvab
 (`decisionProblem_encode_iff`). An injective renaming of letters is such a code (`pcp_map_iff`).
 
 PCP is a functor on codes (`pcpFunctor`), with the letters of an instance as its support, so the
-lift of `Foundations.Codes.Functor` (`Foundations.Codes.CodeFunctor.lift`) applies: each symbol
-of the instance is encoded by the unary code of its position among the symbols of the instance,
-over two distinct letters of any target alphabet. The source alphabet needs only
-decidable equality, countable or not. `AlphabetLift.liftInstance` is this encoding,
-`decisionProblem_lifts` its correctness and `pcpAlphabetLift` the many-one reduction; downstream
-reductions use them to build the encoded instance and transport equivalences.
+lift of `Foundations.Codes.Functor` (`Foundations.Codes.CodeFunctor.lift`) applies: each symbol of
+the instance is encoded by the unary code of its position among the symbols of the instance, over
+two distinct letters of any target alphabet. The source alphabet needs only decidable equality,
+countable or not. `AlphabetLift.liftInstance` is this encoding, `decisionProblem_lifts` its
+correctness and `PCP.synthAlphabetLift` the many-one reduction; downstream reductions use them to
+build the encoded instance and transport equivalences.
 -/
 
 namespace DiagonaLean.PCP
@@ -182,8 +182,12 @@ theorem pcp_alphabet_lift_spec (hne : b0 ≠ b1) :
 
 /-- Many-one reduction from PCP over an arbitrary alphabet to PCP over a target alphabet:
 `pcpFunctor.lift`. -/
-def pcpAlphabetLift (hne : b0 ≠ b1) :
+def _root_.DiagonaLean.PCP.synthAlphabetLift (hne : b0 ≠ b1) :
     (@DiagonaLean.PCP.DecisionProblem γ₁) ⪯_s (@DiagonaLean.PCP.DecisionProblem γ₂) :=
   pcpFunctor.lift b0 b1 hne
+
+/-- The former name of `PCP.synthAlphabetLift`. -/
+@[deprecated DiagonaLean.PCP.synthAlphabetLift (since := "2026-11-23")]
+abbrev pcpAlphabetLift := @DiagonaLean.PCP.synthAlphabetLift
 
 end DiagonaLean.PCP.AlphabetLift
