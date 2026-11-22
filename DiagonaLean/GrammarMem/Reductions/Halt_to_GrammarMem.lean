@@ -26,7 +26,7 @@ halts (`halt_reducesto_grammarMem_spec`, `haltReducesGrammarMem`).
 namespace DiagonaLean.GrammarMem.Reduction
 
 open DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.SemiThue.Reduction
-  DiagonaLean.GrammarMem.MachineLevel DiagonaLean.Synthetic.Notation
+  DiagonaLean.GrammarMem.MachineLevel DiagonaLean.Synthetic.Definitions
 
 variable {T : Type}
 

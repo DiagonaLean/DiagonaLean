@@ -26,7 +26,7 @@ of grammar codes the problem is a functor on codes (`empCodeFunctor`), and the l
 (`not_computablePred_empCFGCodeOf`, `not_machineDecidable_empCFGCodeOf`).
 -/
 
-open DiagonaLean.Synthetic.Notation DiagonaLean.Foundations.Codes
+open DiagonaLean.Synthetic.Definitions DiagonaLean.Foundations.Codes
 
 namespace DiagonaLean.EmpCFG.Reduction
 

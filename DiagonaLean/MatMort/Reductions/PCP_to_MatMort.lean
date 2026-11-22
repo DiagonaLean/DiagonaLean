@@ -10,7 +10,7 @@ import Mathlib.Tactic
 import DiagonaLean.PCP.Reductions.Halt_to_PCP
 import DiagonaLean.MatMort.Basic
 import DiagonaLean.PCP.Basic
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
 @[expose] public section

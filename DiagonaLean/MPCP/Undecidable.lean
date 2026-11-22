@@ -11,11 +11,11 @@ import DiagonaLean.Foundations.Codes.Tactic
 
 /-! # Undecidability of MPCP
 
-`haltReducesMPCP` (`Reductions/Halt_to_MPCP.lean`) many-one reduces the halting problem to MPCP
-over the fixed alphabet `Alpha ℕ Sym2`, so MPCP is `Undecidable` there (`undecidableMPCP`). MPCP is
-a functor on codes (`AlphabetLift.lean`), so it is `Undecidable` over every alphabet with two
-distinct letters (`undecidableMPCPOf`), for instance over `Bool` (`undecidableMPCPBool`). The
-machine-level statements are in `MachineLevel.lean`.
+`haltReducesMPCP` (`Reductions/Halt_to_MPCP.lean`) many-one reduces the halting problem to MPCP over
+the fixed alphabet `Alpha ℕ Sym2`, so MPCP is synthetically halting-hard there (`undecidableMPCP`).
+MPCP is a functor on codes (`AlphabetLift.lean`), so it is synthetically halting-hard over every
+alphabet with two distinct letters (`undecidableMPCPOf`), for instance over `Bool`
+(`undecidableMPCPBool`). The machine-level statements are in `MachineLevel.lean`.
 
 ## References
 
@@ -27,23 +27,22 @@ machine-level statements are in `MachineLevel.lean`.
 
 namespace DiagonaLean.MPCP.Reduction
 
-open DiagonaLean.PCP DiagonaLean.Synthetic.Notation
+open DiagonaLean.PCP DiagonaLean.Synthetic.Definitions
 
 variable {α : Type}
 
-/-- **MPCP is `Undecidable` over the fixed alphabet `Alpha ℕ Sym2`.** -/
+/-- **MPCP is synthetically halting-hard over the fixed alphabet `Alpha ℕ Sym2`.** -/
 def undecidableMPCP :
-    Undecidable fun x : Tile (Alpha ℕ Foundations.Computability.Normalize.Sym2) ×
+    SynthHaltReduction fun x : Tile (Alpha ℕ Foundations.Computability.Normalize.Sym2) ×
       Stack (Alpha ℕ Foundations.Computability.Normalize.Sym2) => MPCP.DecisionProblem x.1 x.2 :=
   haltReducesMPCP
 
-/-- **MPCP is `Undecidable` over any alphabet `α` with two distinct letters `b0`, `b1`.** -/
-def undecidableMPCPOf (b0 b1 : α) (hne : b0 ≠ b1) :
-    Undecidable fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2 := by
-  code_lift mpcpFunctor from undecidableMPCP
+/-- **MPCP is synthetically halting-hard over any alphabet `α` with two distinct letters `b0`,
+`b1`.** -/ def undecidableMPCPOf (b0 b1 : α) (hne : b0 ≠ b1) : SynthHaltReduction fun x : Tile α ×
+Stack α => MPCP.DecisionProblem x.1 x.2 := by code_lift mpcpFunctor from undecidableMPCP
 
-/-- **MPCP over `Bool` is `Undecidable`.** -/
-def undecidableMPCPBool : Undecidable MPCProblem :=
+/-- **MPCP over `Bool` is synthetically halting-hard.** -/
+def undecidableMPCPBool : SynthHaltReduction MPCProblem :=
   undecidableMPCPOf false true Bool.false_ne_true
 
 end DiagonaLean.MPCP.Reduction

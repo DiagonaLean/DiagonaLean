@@ -5,8 +5,7 @@ import DiagonaLean.PCP.Undecidable
 
 /-! Tests for `reduce_from`, run by CI: one case per goal shape, the link upgrade, and the errors. -/
 
-open DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
-  DiagonaLean.Synthetic.Notation DiagonaLean.PCP.Reduction DiagonaLean.MPCP.Reduction
+open DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions DiagonaLean.PCP.Reduction DiagonaLean.MPCP.Reduction
 
 /-- The alphabet of the MPCP and PCP instances built from machines. -/
 abbrev A := Alpha ℕ DiagonaLean.Foundations.Computability.Normalize.Sym2

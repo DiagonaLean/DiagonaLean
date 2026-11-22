@@ -5,7 +5,7 @@ Authors: Aalok Thakkar, Prathamesh Turaga
 
 import DiagonaLean.PCP.Reductions.MPCP_to_PCP
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
 import DiagonaLean.PCP.AlphabetLift
 
@@ -34,7 +34,7 @@ namespace DiagonaLean.PCP.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.MPCP.Reduction DiagonaLean.Halt
   DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability.Normalize
-open DiagonaLean.PCP.AlphabetLift DiagonaLean.Synthetic.Notation
+open DiagonaLean.PCP.AlphabetLift DiagonaLean.Synthetic.Definitions
 
 variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
 

@@ -32,7 +32,7 @@ namespace DiagonaLean.MPCP.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP DiagonaLean.Halt
   DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability.Normalize
-  DiagonaLean.Synthetic.Notation
+  DiagonaLean.Synthetic.Definitions
 
 /-- The alphabet of the reduced MPCP instance, extending the tape alphabet with TM state labels, a
   halt marker, and a configuration separator. -/

@@ -121,7 +121,7 @@ elab "reduce_from " h:term:max " via " r:term : tactic => withMainContext do
         `(DiagonaLean.Foundations.Computability.HaltReduction.toSynthHalt $h) else pure h
       let rS ← if rl == .proved then
         `(DiagonaLean.Foundations.Computability.ComputableReduction.toSynth $r) else pure r
-      `(DiagonaLean.Synthetic.Notation.SynthHaltReduction.comp $hS $rS)
+      `(DiagonaLean.Synthetic.Definitions.SynthHaltReduction.comp $hS $rS)
     | _ =>
       if hl == .synth then
         throwError "reduce_from: the source `{h}` is a synthetic halting reduction, but the goal \

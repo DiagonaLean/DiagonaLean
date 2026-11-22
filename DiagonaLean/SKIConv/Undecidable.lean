@@ -9,15 +9,15 @@ import DiagonaLean.SKIConv.Reductions.Halt_to_SKIConv
 
 /-! # Undecidability of SKI convertibility
 
-Convertibility of SKI terms is `Undecidable` (`undecidableSKIConv`), given the reduction's
-constants: a universal code `u` and the race program `C` for its SKI term `u.toSKI`, from the
-recursion theorem. They are only known to exist, so `C` and the proofs `hu : IsUniversal u` and
-`hC : RaceProg u.toSKI C` are arguments, and `u` is implicit. No Turing machine decides it
-under the encoding of a pair of terms as the binary digits of the pair of their codes
+Convertibility of SKI terms is synthetically halting-hard (`undecidableSKIConv`), given the
+reduction's constants: a universal code `u` and the race program `C` for its SKI term `u.toSKI`,
+from the recursion theorem. They are only known to exist, so `C` and the proofs `hu : IsUniversal u`
+and `hC : RaceProg u.toSKI C` are arguments, and `u` is implicit. No Turing machine decides it under
+the encoding of a pair of terms as the binary digits of the pair of their codes
 (`not_machineDecidable_skiConv`); the encoding is injective (`encSKI_injective`) and follows
-`encNat` in `KAComm/KleeneAlgebra/Race.lean`. It separates the computably inseparable
-pair `SelfOut true`, `SelfOut false`, so no machine decides it on the instances `sepRed U c M` given
-the code of `M` (`not_machineDecidable_skiConv_sepRed`).
+`encNat` in `KAComm/KleeneAlgebra/Race.lean`. It separates the computably inseparable pair
+`SelfOut true`, `SelfOut false`, so no machine decides it on the instances `sepRed U c M` given the
+code of `M` (`not_machineDecidable_skiConv_sepRed`).
 
 ## References
 
@@ -29,15 +29,15 @@ the code of `M` (`not_machineDecidable_skiConv_sepRed`).
 namespace DiagonaLean.SKIConv.Reduction
 
 open Cslib SKI Nat.Partrec DiagonaLean.Foundations.CombinatoryLogic
-  DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
-  DiagonaLean.Synthetic.Notation DiagonaLean.Halt.Encoding DiagonaLean.Halt.Inseparable
+  DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions DiagonaLean.Halt.Encoding
+  DiagonaLean.Halt.Inseparable
 
-/-- **Convertibility of SKI terms is `Undecidable`**, given a universal code `u`
+/-- **Convertibility of SKI terms is synthetically halting-hard**, given a universal code `u`
 (`exists_isUniversal`) and the race program `C` for `u.toSKI` (`exists_raceProg`). These finite
 constants are only known to exist, so they are arguments rather than computed here. The statement
 without them is `not_machineDecidable_skiConv`. -/
 def undecidableSKIConv {u : Code} (C : Code) (hu : IsUniversal u) (hC : RaceProg u.toSKI C) :
-    Undecidable SKIConvProblem :=
+    SynthHaltReduction SKIConvProblem :=
   haltReducesSKIConv u.toSKI C hu (Code.toSKI_correct u) hC
 
 /-- A pair of SKI terms, as the binary digits of the pair of their codes. -/

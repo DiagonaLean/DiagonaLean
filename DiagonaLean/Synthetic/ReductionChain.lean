@@ -13,7 +13,7 @@ import DiagonaLean.Synthetic.Definitions
 Synthetic many-one reducibility is reflexive (`SynthReduction.refl`) and transitive
 (`SynthReduction.trans`), and a reduction from `P` to `Q` is also a reduction from the complement
 of `P` to the complement of `Q` (`SynthReduction.compl`). `reducesRefl`, `reducesTrans` and
-`reducesCompl` are their former names, kept as aliases until existing uses are renamed. Each
+`reducesCompl` are their former names, kept as deprecated aliases. Each
 reduction is a `def` built from a spec theorem (`reduces_reflexive_spec`,
 `reduces_transitive_spec`, `reduces_complement_spec`).
 
@@ -38,6 +38,7 @@ def _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.refl (P : X → Prop
   ⟨id, reduces_reflexive_spec P⟩
 
 /-- The former name of `SynthReduction.refl`. -/
+@[deprecated SynthReduction.refl (since := "2026-11-22")]
 abbrev reducesRefl := @SynthReduction.refl
 
 /-- The composition `hQR.f ∘ hPQ.f` of the two witness functions witnesses that many-one
@@ -52,6 +53,7 @@ def _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.trans {P : X → Pro
   ⟨hQR.f ∘ hPQ.f, reduces_transitive_spec hPQ hQR⟩
 
 /-- The former name of `SynthReduction.trans`. -/
+@[deprecated SynthReduction.trans (since := "2026-11-22")]
 abbrev reducesTrans := @SynthReduction.trans
 
 /-- The witness function `h.f` of `P ⪯_s Q` also witnesses that the complement of `P` reduces to
@@ -66,11 +68,7 @@ def _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.compl {P : X → Pro
   ⟨h.f, reduces_complement_spec h⟩
 
 /-- The former name of `SynthReduction.compl`. -/
+@[deprecated SynthReduction.compl (since := "2026-11-22")]
 abbrev reducesCompl := @SynthReduction.compl
-
-/-- `reduce_chain H` proves a reduction by applying transitivity with `H` and closing with
-reflexivity, as often as needed. -/
-macro "reduce_chain" H:term : tactic =>
-  `(tactic| repeat (first | exact reducesRefl _ | apply reducesTrans $H))
 
 end DiagonaLean.Synthetic.ReductionChain

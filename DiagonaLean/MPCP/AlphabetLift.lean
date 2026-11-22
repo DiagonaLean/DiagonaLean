@@ -60,7 +60,7 @@ theorem mpcp_map_iff (g : α → β) (hg : Function.Injective g) (c : Tile α) (
 
 namespace Reduction
 
-open DiagonaLean.Synthetic.Notation
+open DiagonaLean.Synthetic.Definitions
 
 /-- **MPCP as a functor on codes**: an instance is a start tile and a stack, a code encodes every
 tile, and codes preserve and reflect solvability. -/

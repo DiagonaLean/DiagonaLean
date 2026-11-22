@@ -16,7 +16,7 @@ diagonal argument like the one for the halting problem.
 This is a proof technique, not a notion of undecidability: a function `f` that sends `SelfOut true`
 into `p` and `SelfOut false` outside it, and that a machine computes, shows that no machine decides
 `p` (`not_machineDecidable_of_separation`). Unlike a many-one reduction from `HaltProblem`, it says
-nothing about the machines in neither set, so it does not give `Undecidable p`.
+nothing about the machines in neither set, so it does not give `SynthHaltReduction p`.
 
 ## References
 

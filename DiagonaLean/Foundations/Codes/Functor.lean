@@ -7,7 +7,7 @@ import DiagonaLean.Foundations.Codes.Unary
 import DiagonaLean.Foundations.Computability.MachineBridge
 import DiagonaLean.Foundations.Computability.Prim
 import DiagonaLean.Foundations.Computability.DerivePrimrec
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 
 @[expose] public section
 
@@ -45,7 +45,7 @@ problem, from any alphabet with decidable equality to any alphabet with two dist
   `Primcodable (F.Inst α)` and `Primcodable (F.Inst β)`, the problem is many-one equivalent in
   Mathlib's sense, once the lift's function is computable both ways: its many-one degree does not
   depend on the alphabet. The reductions are data (`F.lift`); with a computable function they give
-  Mathlib's `ManyOneReducible` (`ManyOneReduces.toManyOneReducible`). Every property closed under
+  Mathlib's `ManyOneReducible` (`SynthReduction.toManyOneReducible`). Every property closed under
   computable many-one reductions transports, for instance being a computable predicate
   (`ComputablePred.computable_of_manyOneReducible`) or recursively enumerable
   (`REPred.of_manyOneReducible`); for a single reduction as data, `not_computablePred_of_reduces`
@@ -62,7 +62,7 @@ injectivity (`IsCode`: correspondence problems, grammars) and those that need sy
 
 namespace DiagonaLean.Foundations.Codes
 
-open DiagonaLean.Synthetic.Notation DiagonaLean.Foundations.Computability
+open DiagonaLean.Synthetic.Definitions DiagonaLean.Foundations.Computability
 
 /-! ### Computability of the encodings -/
 
@@ -172,9 +172,10 @@ def CodeFunctor.lift [LiftableCodes Good] [DecidableEq α] (b0 b1 : β) (hne : b
 
 /-- **The lifting.** Undecidability over an alphabet with decidable equality transfers to every
 alphabet with two distinct letters. -/
-def CodeFunctor.undecidableOf [LiftableCodes Good] [DecidableEq α] (u : Undecidable (@F.Prob α))
-    (b0 b1 : β) (hne : b0 ≠ b1) : Undecidable (@F.Prob β) :=
-  undecidabilityFromReducibility u (F.lift b0 b1 hne)
+def CodeFunctor.undecidableOf [LiftableCodes Good] [DecidableEq α]
+    (u : SynthHaltReduction (@F.Prob α))
+    (b0 b1 : β) (hne : b0 ≠ b1) : SynthHaltReduction (@F.Prob β) :=
+  SynthHaltReduction.comp u (F.lift b0 b1 hne)
 
 /-- **The lifting at machine level, to every nontrivial alphabet**, once the lift's function is
 computable. -/

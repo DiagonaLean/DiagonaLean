@@ -57,5 +57,5 @@ Step 3 (`pcp_if_exists_prod`): from a `W`-sequence with `[1, 0, 1] · prod = [h,
 The main result is `pcp_iff_matmort`: for any PCP instance `K` over alphabet `{2, 3}`, `K` has a solution iff the matrix set `H(K)` is mortal. `pcp_reducesto_matMort_spec` restates it as `PCP.DecisionProblem ⪯_s[matImage] MatMort.DecisionProblem`, and `pcpReducesMatMort` packages it as a many-one reduction.
 
 ### Undecidability
-- `undecidableMatMort`: mortality of finite sets of `3 × 3` integer matrices is `Undecidable`, by reduction from PCP over `{2, 3}`.
+- `undecidableMatMort`: mortality of finite sets of `3 × 3` integer matrices is synthetically halting-hard, by reduction from PCP over `{2, 3}`.
 - `not_computablePred_matMort`, `not_machineDecidable_matMort` (`MachineLevel.lean`): it is not a computable predicate, so no Turing machine decides it under any computable encoding. They follow from `PCP.MachineLevel.not_computablePred_pcp` along `pcpReducesMatMort`, whose function `matImage` is primitive recursive (`matImage_primrec`).

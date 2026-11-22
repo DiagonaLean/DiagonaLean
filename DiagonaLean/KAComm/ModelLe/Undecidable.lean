@@ -10,12 +10,12 @@ import DiagonaLean.KAComm.KleeneAlgebra.Between
 
 /-! # Undecidability of inclusion in `L Σ̈`
 
-The failure of inclusion of languages over `ℕ` is `Undecidable` (`undecidableNotModelLe`). No Turing
-machine decides inclusion of languages under the encoding `encNat` of a pair of expressions as the
-binary digits of its code (`not_machineDecidable_modelLe`), or under any encoding that a machine
-computes from `encNat` (`not_machineDecidable_modelLe_of_conv`). The machine-level statement is the
-case of Theorem 18 where the predicate is inclusion of languages itself
-(`not_machineDecidable_between`).
+The failure of inclusion of languages over `ℕ` is synthetically halting-hard
+(`undecidableNotModelLe`). No Turing machine decides inclusion of languages under the encoding
+`encNat` of a pair of expressions as the binary digits of its code (`not_machineDecidable_modelLe`),
+or under any encoding that a machine computes from `encNat`
+(`not_machineDecidable_modelLe_of_conv`). The machine-level statement is the case of Theorem 18
+where the predicate is inclusion of languages itself (`not_machineDecidable_between`).
 
 ## References
 
@@ -25,10 +25,10 @@ case of Theorem 18 where the predicate is inclusion of languages itself
 namespace DiagonaLean.KAComm.ModelLe.Reduction
 
 open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing DiagonaLean.Synthetic.Definitions
-  DiagonaLean.Synthetic.Notation DiagonaLean.Halt.Undecidable
+  DiagonaLean.Halt.Undecidable
 
-/-- **The failure of inclusion of languages over `ℕ` is `Undecidable`.** -/
-def undecidableNotModelLe : Undecidable (Complement ModelLeProblem) :=
+/-- **The failure of inclusion of languages over `ℕ` is synthetically halting-hard.** -/
+def undecidableNotModelLe : SynthHaltReduction (Complement ModelLeProblem) :=
   haltReducesNotModelLe
 
 /-- **No Turing machine decides inclusion of languages over `ℕ`.** -/

@@ -5,7 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.Foundations.Computability.CodeSim
 import DiagonaLean.Foundations.Computability.ComputableReduction
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 
 @[expose] public section
 
@@ -37,7 +37,6 @@ exists: Mathlib's many-one hardness for the halting problem (`haltHard_iff`).
 namespace DiagonaLean.Foundations.Computability
 
 open Cslib.Turing DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
-  DiagonaLean.Synthetic.Notation
 
 /-! ### Canonical machines -/
 

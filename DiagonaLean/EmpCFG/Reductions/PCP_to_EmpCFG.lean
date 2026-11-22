@@ -6,7 +6,7 @@ Authors: Aalok Thakkar
 import DiagonaLean.EmpCFG.Basic
 import DiagonaLean.PCP.Basic
 import DiagonaLean.Synthetic.Definitions
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
 @[expose] public section
@@ -23,7 +23,7 @@ results are `pcp_iff_nempcfg` and `npcp_iff_empcfg`.
   *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
 
-open DiagonaLean.Synthetic.Notation
+open DiagonaLean.Synthetic.Definitions
 
 namespace DiagonaLean.EmpCFG.Reduction
 

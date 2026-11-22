@@ -20,7 +20,7 @@ terminal alphabet.
 
 ## Main statements
 
-* `undecidableAmbigCFGCodeOf`: `Undecidable` over any alphabet with two distinct letters.
+* `undecidableAmbigCFGCodeOf`: `SynthHaltReduction` over any alphabet with two distinct letters.
 * `not_computablePred_ambigCFGCodeOf`, `not_machineDecidable_ambigCFGCodeOf`: over every
   nontrivial `Primcodable` alphabet.
 * `ambigCFGCode_manyOneEquiv`: many-one equivalent over any two such alphabets.
@@ -29,8 +29,7 @@ terminal alphabet.
 namespace DiagonaLean.AmbigCFG.MachineLevel
 
 open DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Codes
-  DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Notation
-  DiagonaLean.Synthetic.Definitions
+  DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
 
 variable {T α : Type}
 
@@ -72,17 +71,18 @@ def codeProblemReduces' [DecidableEq T] :
     @CodeProblem T ⪯_s fun p : CFGCode T => AmbigCFG.DecisionProblem p.toCFG :=
   ⟨id, fun p => codeProblem_iff p⟩
 
-/-- **Ambiguity of grammar codes is `Undecidable` over any alphabet `α` with two distinct letters
+/-- **Ambiguity of grammar codes is synthetically halting-hard over any alphabet `α` with two
+distinct letters
 `b0`, `b1`**: from PCP over `Bool` to codes over `Bool ⊕ ℕ`, then the lifting. -/
 def undecidableAmbigCFGCodeOf [DecidableEq α] (b0 b1 : α) (hne : b0 ≠ b1) :
-    Undecidable fun c : CFGCode α => AmbigCFG.DecisionProblem c.toCFG :=
-  have u : Undecidable (@CodeProblem (Bool ⊕ ℕ)) :=
-    undecidabilityFromReducibility
-      (undecidabilityFromReducibility
+    SynthHaltReduction fun c : CFGCode α => AmbigCFG.DecisionProblem c.toCFG :=
+  have u : SynthHaltReduction (@CodeProblem (Bool ⊕ ℕ)) :=
+    SynthHaltReduction.comp
+      (SynthHaltReduction.comp
         (PCP.Reduction.undecidablePCP false true Bool.false_ne_true) pcpReducesAmbigCFGCode)
       codeProblemReduces
-  have u' : Undecidable (@CodeProblem α) := by code_lift ambCodeFunctor from u
-  undecidabilityFromReducibility u' codeProblemReduces'
+  have u' : SynthHaltReduction (@CodeProblem α) := by code_lift ambCodeFunctor from u
+  SynthHaltReduction.comp u' codeProblemReduces'
 
 /-- **Whether a grammar code is ambiguous is not a computable predicate over any nontrivial
 alphabet**: the lifting of `not_computablePred_ambigCFGCode` from the terminals `Bool ⊕ ℕ`. -/

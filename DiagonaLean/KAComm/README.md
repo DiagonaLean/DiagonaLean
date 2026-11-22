@@ -161,7 +161,7 @@ open DiagonaLean
 | `MachineDecidable`, `TMDeciderFor` | `Synthetic/Definitions.lean` | Some `SingleTapeTM Bool` outputs `[true]` on every yes-instance and `[false]` on every no-instance. |
 | `SingleTapeTM`, `SingleTapeTM.Outputs` | Cslib, `Cslib/Computability/Machines/Turing/SingleTape/Deterministic.lean` (revision pinned in `lake-manifest.json`) | A standard deterministic single-tape machine with finite state and alphabet. "Outputs" means it halts with exactly that list on the tape. |
 
-For Theorems 3–6, also read `Provable`, `ModelLe` (`KleeneAlgebra/Inequality.lean`), `LangFactor`, `EqVia` (`KleeneAlgebra/Separation.lean`), the eight `DecisionProblem`s (`X/Basic.lean`), and `Undecidable`, `ManyOneReduces` and `HaltProblem` (`Synthetic/Undecidability.lean`, `Synthetic/Definitions.lean`, `Halt/Basic.lean`). Use `#print X` to see a definition as Lean elaborated it.
+For Theorems 3–6, also read `Provable`, `ModelLe` (`KleeneAlgebra/Inequality.lean`), `LangFactor`, `EqVia` (`KleeneAlgebra/Separation.lean`), the eight `DecisionProblem`s (`X/Basic.lean`), and `SynthHaltReduction`, `SynthReduction` and `HaltProblem` (`Synthetic/HaltReduction.lean`, `Synthetic/Definitions.lean`, `Halt/Basic.lean`). Use `#print X` to see a definition as Lean elaborated it.
 
 **3. Check the axioms.**
 
@@ -172,6 +172,6 @@ For Theorems 3–6, also read `Provable`, `ModelLe` (`KleeneAlgebra/Inequality.l
 
 The result must list only these three, Lean's standard axioms. Any `sorryAx`, any `Lean.ofReduceBool` (from `native_decide`) or any user-declared axiom means the proof is incomplete or trusts the compiler. Do the same for each result you rely on.
 
-**4. Check the reductions are programs.** Lean is classical, so a value of `Undecidable p` (`HaltProblem ⪯_s p`) means something only if its function is computable. Otherwise it could case on whether a machine halts. CI checks every reduction in the library with `#check_reductions` (`scripts/CheckReductions.lean`; rules in [`CONTRIBUTING.md`](../../CONTRIBUTING.md#reductions)). `scripts/CheckMetaprograms.lean` rejects metaprograms that could bypass that check. This only concerns Theorem 6. Theorems 1–5 quantify over Turing machines directly, so they need no such check.
+**4. Check the reductions are programs.** Lean is classical, so a value of `SynthHaltReduction p` (`HaltProblem ⪯_s p`) means something only if its function is computable. Otherwise it could case on whether a machine halts. CI checks every reduction in the library with `#check_reductions` (`scripts/CheckReductions.lean`; rules in [`CONTRIBUTING.md`](../../CONTRIBUTING.md#reductions)). `scripts/CheckMetaprograms.lean` rejects metaprograms that could bypass that check. This only concerns Theorem 6. Theorems 1–5 quantify over Turing machines directly, so they need no such check.
 
 **5. Build from a fresh checkout.** Run `lake exe cache get && lake build` and confirm there are no errors and no `sorry` warnings. The commands in steps 1 and 3 can be run with `lake env lean <file>.lean`.

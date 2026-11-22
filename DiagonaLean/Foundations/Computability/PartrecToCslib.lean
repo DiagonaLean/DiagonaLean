@@ -16,7 +16,7 @@ Mathlib's chain `ToPartrec.Code → TM2 → TM1 → TM1 over Bool → TM0`, foll
 The machine is a *finite constant*: it is obtained classically, once, for the fixed `g`. Mathlib's
 chain is `noncomputable` because of its supports, so a reduction may not call the compiler on data
 that depends on its input. It may use the machine, because one finite constant cannot hide
-infinitely many answers (see the convention on `ManyOneReduces`).
+infinitely many answers (see the convention on `SynthReduction`).
 
 ## The result bit
 

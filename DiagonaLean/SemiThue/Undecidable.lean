@@ -9,13 +9,14 @@ import DiagonaLean.SemiThue.AlphabetLift
 
 /-! # Undecidability of the word problem for string rewriting systems
 
-`haltReducesSemiThue` (`Reductions/Halt_to_SemiThue.lean`) many-one reduces the halting problem
-to the word problem over the fixed alphabet `Alpha ℕ Sym2`, so the word problem is `Undecidable`
-there (`undecidableSemiThue`). Its systems have non-empty left sides (`haltReducesSemiThuePos`),
-and on such systems the word problem is a functor on synchronizing codes (`AlphabetLift.lean`), so
-it is `Undecidable` over every alphabet with two distinct letters (`undecidableSemiThuePosOf`).
-`posReduces` returns to the plain word problem (`undecidableSemiThueOf`, `undecidableSemiThueBool`).
-The machine-level statements are in `MachineLevel.lean` and `AlphabetLift.lean`.
+`haltReducesSemiThue` (`Reductions/Halt_to_SemiThue.lean`) many-one reduces the halting problem to
+the word problem over the fixed alphabet `Alpha ℕ Sym2`, so the word problem is synthetically
+halting-hard there (`undecidableSemiThue`). Its systems have non-empty left sides
+(`haltReducesSemiThuePos`), and on such systems the word problem is a functor on synchronizing codes
+(`AlphabetLift.lean`), so it is synthetically halting-hard over every alphabet with two distinct
+letters (`undecidableSemiThuePosOf`). `posReduces` returns to the plain word problem
+(`undecidableSemiThueOf`, `undecidableSemiThueBool`). The machine-level statements are in
+`MachineLevel.lean` and `AlphabetLift.lean`.
 
 ## References
 
@@ -26,29 +27,30 @@ The machine-level statements are in `MachineLevel.lean` and `AlphabetLift.lean`.
 
 namespace DiagonaLean.SemiThue.Reduction
 
-open DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Codes DiagonaLean.Synthetic.Notation
+open DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Codes DiagonaLean.Synthetic.Definitions
 
 variable {α : Type}
 
-/-- **The word problem for string rewriting systems is `Undecidable`**, over `Alpha ℕ Sym2`. -/
-def undecidableSemiThue :
-    Undecidable (@DecisionProblem (Alpha ℕ Foundations.Computability.Normalize.Sym2)) :=
-  haltReducesSemiThue
+/-- **The word problem for string rewriting systems is synthetically halting-hard**, over
+`Alpha ℕ Sym2`. -/ def undecidableSemiThue : SynthHaltReduction (@DecisionProblem (Alpha ℕ
+Foundations.Computability.Normalize.Sym2)) := haltReducesSemiThue
 
 /-- **The word problem for systems with non-empty left sides over every alphabet `α` with two
-distinct letters is `Undecidable`**: the lifting of `Foundations.Codes.CodeFunctor.undecidableOf`.
+distinct letters is synthetically halting-hard**: the lifting of
+`Foundations.Codes.CodeFunctor.undecidableOf`.
 -/
 def undecidableSemiThuePosOf (b0 b1 : α) (hne : b0 ≠ b1) :
-    Undecidable (@DecisionProblemPos α) := by
+    SynthHaltReduction (@DecisionProblemPos α) := by
   code_lift semiThueFunctor from haltReducesSemiThuePos
 
-/-- **The word problem for string rewriting systems is `Undecidable` over any alphabet `α` with two
+/-- **The word problem for string rewriting systems is synthetically halting-hard over any alphabet
+`α` with two
 distinct letters `b0`, `b1`.** -/
-def undecidableSemiThueOf (b0 b1 : α) (hne : b0 ≠ b1) : Undecidable (@DecisionProblem α) :=
-  undecidabilityFromReducibility (undecidableSemiThuePosOf b0 b1 hne) (posReduces b0)
+def undecidableSemiThueOf (b0 b1 : α) (hne : b0 ≠ b1) : SynthHaltReduction (@DecisionProblem α) :=
+  SynthHaltReduction.comp (undecidableSemiThuePosOf b0 b1 hne) (posReduces b0)
 
-/-- **The word problem for string rewriting systems over `Bool` is `Undecidable`.** -/
-def undecidableSemiThueBool : Undecidable (@DecisionProblem Bool) :=
+/-- **The word problem for string rewriting systems over `Bool` is synthetically halting-hard.** -/
+def undecidableSemiThueBool : SynthHaltReduction (@DecisionProblem Bool) :=
   undecidableSemiThueOf false true Bool.false_ne_true
 
 end DiagonaLean.SemiThue.Reduction

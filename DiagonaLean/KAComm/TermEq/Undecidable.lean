@@ -10,7 +10,7 @@ import DiagonaLean.KAComm.KleeneAlgebra.Separation
 
 /-! # Undecidability of equality on `T Σ̈`
 
-Provable equality in pre-Kleene algebra with commutativity over `ℕ` is `Undecidable`
+Provable equality in pre-Kleene algebra with commutativity over `ℕ` is synthetically halting-hard
 (`undecidableTermEq`), given finite constants that are only known to exist. No Turing machine
 decides it under the encoding `encNat` of a pair of expressions as the binary digits of its code
 (`not_machineDecidable_termEq`), or under any encoding that a machine computes from `encNat`
@@ -25,16 +25,17 @@ given the code of `M` (`not_machineDecidable_termEq_eqRed`), by computable insep
 namespace DiagonaLean.KAComm.TermEq.Reduction
 
 open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing Nat.Partrec DiagonaLean.Foundations.Computability
-  DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
+  DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
   DiagonaLean.Halt.Undecidable
 
-/-- **Provable equality in pre-Kleene algebra with commutativity over `ℕ` is `Undecidable`**, given
-the interpreter constants `B` (`exists_base`) and the race program `C` (`exists_raceProg`). These
-finite constants are only known to exist, since Mathlib's construction of a program from a `Partrec`
-function is not executable, so they are arguments rather than computed here. The statement without
+/-- **Provable equality in pre-Kleene algebra with commutativity over `ℕ` is synthetically
+halting-hard**, given the interpreter constants `B` (`exists_base`) and the race program `C`
+(`exists_raceProg`). These finite constants are only known to exist, since Mathlib's construction of
+a program from a `Partrec` function is not executable, so they are arguments rather than computed
+here. The statement without
 them is `not_machineDecidable_termEq`. -/
 def undecidableTermEq (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg false B C) :
-    Undecidable TermEqProblem :=
+    SynthHaltReduction TermEqProblem :=
   haltReducesTermEq B C hB hC
 
 /-- **No Turing machine decides provable equality in pre-Kleene algebra over `ℕ`.** -/

@@ -24,12 +24,13 @@ variable {α : Type} [DecidableEq α]
 
 namespace DiagonaLean.AmbigCFG.Reduction
 
-open DiagonaLean.PCP DiagonaLean.AmbigCFG DiagonaLean.Synthetic.Notation
+open DiagonaLean.PCP DiagonaLean.AmbigCFG DiagonaLean.Synthetic.Definitions
 
-/-- **CFG ambiguity is `Undecidable`.** This holds over any alphabet with two distinct letters
+/-- **CFG ambiguity is synthetically halting-hard.** This holds over any alphabet with two distinct
+letters
 `b0`, `b1`, through `pcpReducesAmbigCFG`. -/
 def undecidableAmbigCFG (b0 b1 : α) (hne : b0 ≠ b1) :
-    Undecidable (fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2) := by
+    SynthHaltReduction (fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2) := by
   reduce_from_pcp over_letters b0 b1 via pcpReducesAmbigCFG
 
 end DiagonaLean.AmbigCFG.Reduction

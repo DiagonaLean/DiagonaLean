@@ -13,9 +13,9 @@ A problem given as a functor on codes (`Foundations.Codes.CodeFunctor`) lifts to
 with two distinct letters. `code_lift F from h` applies the lifting theorem that matches the goal,
 with `h` the result over the source alphabet:
 
-* `Undecidable P`: `CodeFunctor.undecidableOf`, with `h : Undecidable` over the source. Since
-  `Undecidable P` is an abbreviation of `HaltProblem ⪯_s P`, `h` may be any reduction from
-  `HaltProblem`.
+* `SynthHaltReduction P`: `CodeFunctor.undecidableOf`, with `h : SynthHaltReduction` over the
+  source. Since `SynthHaltReduction P` is an abbreviation of `HaltProblem ⪯_s P`, `h` may be any
+  reduction from `HaltProblem`.
 * `¬ ComputablePred P`: `CodeFunctor.not_computablePred_lift`, with `h : ¬ ComputablePred` over
   the source.
 * `¬ MachineDecidable enc P`: the above, then `not_machineDecidable_of_not_computablePred`, with
@@ -28,8 +28,8 @@ a source result `h` of the wrong type, is reported as such. `P` must be the prob
 unfolding `F` (an `abbrev`). The side goals are closed when possible, and otherwise left as named
 goals, so that what remains to be proved is displayed:
 
-* `Undecidable P`: the two letters and their distinctness come from a hypothesis `hne : b0 ≠ b1`
-  in the context (the letters are data, so they cannot come from `Nontrivial`).
+* `SynthHaltReduction P`: the two letters and their distinctness come from a hypothesis
+  `hne : b0 ≠ b1` in the context (the letters are data, so they cannot come from `Nontrivial`).
 * `case map_computable` (and `map_computable_symm` for `ManyOneEquiv`): the function of the lift,
   `F.liftMap b0 b1`, is computable. It is closed by unfolding `liftMap` and `F` and calling
   `fun_prop`, which needs `fun_prop` lemmas for the encodings and the letters of the instance
@@ -74,7 +74,7 @@ errors of that theorem, such as a source result `h` of the wrong type. -/
 elab_rules : tactic
   | `(tactic| code_lift $F:ident from $h) => withMainContext do
     match targetHead (← instantiateMVars (← getMainTarget)) with
-    | (``DiagonaLean.Synthetic.Notation.Undecidable, false) =>
+    | (``DiagonaLean.Synthetic.Definitions.SynthHaltReduction, false) =>
       evalTactic (← `(tactic|
         exact DiagonaLean.Foundations.Codes.CodeFunctor.undecidableOf $F $h _ _
           (by first

@@ -596,7 +596,7 @@ theorem pcp_iff_ambigcfg (P : Stack α) :
 /-- A context-free grammar over `PCPAlpha` for *some* tile-count `n`, bundled into one
   fixed type. `Stack.toGrammar P`'s own alphabet `PCPAlpha P = Sum α (Fin P.length)`
   depends on `P.length`, so it can't itself be the codomain of a many-one reduction
-  `Stack α → Y` for a single fixed `Y`, which `Undecidable` and `ManyOneReduces` need.
+  `Stack α → Y` for a single fixed `Y`, which `SynthHaltReduction` and `SynthReduction` need.
   Bundling the length alongside the grammar is the standard way to state "CFG
   ambiguity is undecidable" once instances don't all share one alphabet. -/
 abbrev AmbigCFGInstance (α : Type) : Type 1 :=

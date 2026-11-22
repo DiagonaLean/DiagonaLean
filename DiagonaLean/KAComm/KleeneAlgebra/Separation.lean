@@ -6,7 +6,7 @@ Authors: Prathamesh TVH, Claude Opus
 import DiagonaLean.KAComm.KleeneAlgebra.Inequality
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Halting
 import DiagonaLean.Halt.Inseparable
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 
 @[expose] public section
 
@@ -34,7 +34,7 @@ through `T Σ̈`, `K Σ̈` and `L Σ̈`.
 namespace DiagonaLean.KAComm.KleeneAlgebra
 
 open Cslib.Turing DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Halt.Undecidable
-  DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation DiagonaLean.Halt.Inseparable RExp
+  DiagonaLean.Synthetic.Definitions DiagonaLean.Halt.Inseparable RExp
   TD FreePreKA
 
 variable {X : Type*}
@@ -175,10 +175,12 @@ def haltReducesNotEqVia (F : LangFactor X)
   ⟨haltEqRed, fun p => (halt_iff_not_modelLe p).trans
     (not_congr ((modelLe_iff_langEq _).trans (eqVia_iff_langEq F hF (haltEqRed p)).symm))⟩
 
-/-- **The failure of equality on `X` is `Undecidable`.** This holds for any `X` whose equality
+/-- **The failure of equality on `X` is synthetically halting-hard.** This holds for any `X` whose
+equality
 agrees with language equality. -/
 def undecidableNotEqVia (F : LangFactor X)
-    (hF : ∀ a b : TD ℕ, pl a = pl b → F.l' a = F.l' b) : Undecidable (Complement (EqVia F)) :=
+    (hF : ∀ a b : TD ℕ, pl a = pl b → F.l' a = F.l' b) :
+    SynthHaltReduction (Complement (EqVia F)) :=
   haltReducesNotEqVia F hF
 
 /-- The machines whose instance `eqRed M` holds in `X`: the paper's set `A'` (Theorem 19). -/

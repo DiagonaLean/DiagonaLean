@@ -12,5 +12,5 @@ Given a finite list of tiles `P : Stack` over an alphabet `α`, each tile pairin
 * `Reductions/MPCP_to_PCP.lean`: `MPCP ⪯_s PCP` over the extended alphabet `Ext α` (`mpcpReducesPCP`).
 * `Reductions/Halt_to_PCP.lean`: `HaltProblem ⪯_s` PCP over `Ext (Alpha ℕ Bool)` (`haltReducesPCP`). See `Reductions/README.md`.
 * `Primrec.lean`: tiles and `Ext α` are `Primcodable`, and `mpcpToPcp` and `liftInstance` are primitive recursive.
-* `Undecidable.lean`: PCP is `Undecidable` over `Ext (Alpha ℕ Bool)` (`undecidablePCP'`), and over every alphabet with two distinct letters (`undecidablePCP`).
+* `Undecidable.lean`: PCP is synthetically halting-hard over `Ext (Alpha ℕ Bool)` (`undecidablePCP'`), and over every alphabet with two distinct letters (`undecidablePCP`).
 * `MachineLevel.lean`: over any nontrivial `Primcodable` alphabet, PCP is not a computable predicate (`not_computablePred_pcp`), so no Turing machine decides it under any computable encoding (`not_machineDecidable_pcp`).

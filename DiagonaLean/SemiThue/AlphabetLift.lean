@@ -17,12 +17,13 @@ functor on synchronizing codes (`semiThueFunctor`): encoding every word keeps le
 (`Foundations.Codes.derives_encode_iff`). The plain word problem is not: an empty left side
 matches inside a block.
 
-The reductions from the halting problem produce systems with non-empty left sides, so the
-restricted problem is undecidable over `Alpha ℕ Sym2`, both as `Undecidable` and at machine level.
-The lifting of `Foundations.Codes.Functor` moves it to every alphabet with two distinct letters,
-and `posReduces` returns to the plain word problem, sending a system with an empty left side to a
-fixed instance without solution. The `Undecidable` statements obtained this way are in
-`Undecidable.lean` (`undecidableSemiThuePosOf`, `undecidableSemiThueOf`, `undecidableSemiThueBool`).
+The reductions from the halting problem produce systems with non-empty left sides, so the restricted
+problem is undecidable over `Alpha ℕ Sym2`, both by a synthetic halting reduction and at machine
+level. The lifting of `Foundations.Codes.Functor` moves it to every alphabet with two distinct
+letters, and `posReduces` returns to the plain word problem, sending a system with an empty left
+side to a fixed instance without solution. The `SynthHaltReduction` statements obtained this way are
+in `Undecidable.lean` (`undecidableSemiThuePosOf`, `undecidableSemiThueOf`,
+`undecidableSemiThueBool`).
 
 ## Main statements
 
@@ -35,7 +36,7 @@ fixed instance without solution. The `Undecidable` statements obtained this way 
 
 namespace DiagonaLean.SemiThue
 
-open Foundations.Grammar Foundations.Codes DiagonaLean.Synthetic.Notation
+open Foundations.Grammar Foundations.Codes DiagonaLean.Synthetic.Definitions
 
 variable {α T : Type}
 

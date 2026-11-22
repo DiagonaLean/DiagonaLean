@@ -24,7 +24,7 @@ Kleene algebra (`true`).
 `reduction B C p` is the instance of that machine over `ℕ`, and `reductionB B C p` its substitution
 over `{0, 1}`. Both are untagged functions of the data of `p`. Their only classical ingredients are
 finite constants: the interpreter's table and tape symbols (`Base`), and the code `C` from
-Mathlib's recursion theorem. So they follow the convention on `ManyOneReduces`. Smullyan's argument
+Mathlib's recursion theorem. So they follow the convention on `SynthReduction`. Smullyan's argument
 gives `HaltProblem p ↔` the instance holds (`halt_iff_rel`, `halt_iff_qb`).
 
 `not_machineDecidable_of_family` is the same argument for real machines: a decider for the instance

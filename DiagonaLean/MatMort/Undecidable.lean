@@ -10,9 +10,9 @@ import DiagonaLean.PCP.Undecidable
 
 /-! # Undecidability of matrix mortality
 
-Mortality of finite sets of `3 × 3` integer matrices is `Undecidable` (`undecidableMatMort`), by
-the reduction from PCP over `S23` of `Reductions/PCP_to_MatMort.lean`. The machine-level
-statements are in `MachineLevel.lean`.
+Mortality of finite sets of `3 × 3` integer matrices is synthetically halting-hard
+(`undecidableMatMort`), by the reduction from PCP over `S23` of `Reductions/PCP_to_MatMort.lean`.
+The machine-level statements are in `MachineLevel.lean`.
 
 ## References
 
@@ -21,11 +21,12 @@ statements are in `MachineLevel.lean`.
 
 namespace DiagonaLean.MatMort.Reduction
 
-open DiagonaLean.PCP DiagonaLean.MatMort DiagonaLean.Synthetic.Notation
+open DiagonaLean.PCP DiagonaLean.MatMort DiagonaLean.Synthetic.Definitions
 
-/-- **Matrix mortality of `3 × 3` integer matrices is `Undecidable`.** It is reduced from PCP
+/-- **Matrix mortality of `3 × 3` integer matrices is synthetically halting-hard.** It is reduced
+from PCP
 over the alphabet `S23 = {2, 3}` through `pcpReducesMatMort`. -/
-def undecidableMatMort : Undecidable (fun Ws => DecisionProblem Ws) := by
+def undecidableMatMort : SynthHaltReduction (fun Ws => DecisionProblem Ws) := by
   reduce_from_pcp over_letters (0 : S23) (1 : S23) via pcpReducesMatMort
 
 end DiagonaLean.MatMort.Reduction

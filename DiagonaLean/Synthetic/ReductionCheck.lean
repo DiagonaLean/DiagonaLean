@@ -21,10 +21,11 @@ the current file instead), private ones included.
 A reduction is a term of `SynthReduction` (`⪯_s`; former name `ManyOneReduces`): a term whose type,
 after its parameters and after unfolding every definition, is a reduction structure, listed in
 `reductionStructs`. Unfolding matters, since a type can reach a reduction structure through an alias
-whose own type is not syntactically a sort, such as `def T : (fun _ => Type 1) () := Undecidable p`,
-or through a field of a structure, such as `box.T` for `def box : Box := ⟨Undecidable p⟩`. A
-*carrier* is a reduction structure or an untrusted definition, other than a reduction itself, whose
-body mentions a carrier, such as `Undecidable`, `T` or `box`.
+whose own type is not syntactically a sort, such as
+`def T : (fun _ => Type 1) () := SynthHaltReduction p`, or through a field of a structure, such as
+`box.T` for `def box : Box := ⟨SynthHaltReduction p⟩`. A *carrier* is a reduction structure or an
+untrusted definition, other than a reduction itself, whose body mentions a carrier, such as
+`SynthHaltReduction`, `T` or `box`.
 
 1. **Every reduction is a compiled definition with honest proofs.** A definition whose type ends in
    a reduction is safe, not `noncomputable`, without `implemented_by` or `extern`, and has compiled
@@ -357,9 +358,9 @@ def declViolations (env : Environment) (tainted carriers : NameSet) (c : Name) (
   | _ => return #[]
 
 /-- The reduction structures, and every untrusted definition, other than a reduction, whose body
-mentions one of them, directly or through another such definition: aliases such as `Undecidable`,
-whatever their declared type, and values that store such a type, such as
-`box` in `def box : Box := ⟨Undecidable p⟩`. Only the body after the parameters counts, so a
+mentions one of them, directly or through another such definition: aliases such as
+`SynthHaltReduction`, whatever their declared type, and values that store such a type, such as `box`
+in `def box : Box := ⟨SynthHaltReduction p⟩`. Only the body after the parameters counts, so a
 predicate on reductions, such as `fun r : p ⪯_s q => Computable r.f`, is not a carrier, and neither
 are the definitions Lean generates (`isAuxiliary`), such as the projection `SynthReduction.f`. A
 reduction is not a carrier, so that a theorem may state facts about a named one. Computed by

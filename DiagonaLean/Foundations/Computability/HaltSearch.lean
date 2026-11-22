@@ -5,7 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.Foundations.Computability.RunAfterWrite
 import DiagonaLean.Foundations.Computability.ListConfig
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 
 @[expose] public section
 
@@ -23,7 +23,7 @@ recursive test of the numeric data of `(M, w)`.
 
 namespace DiagonaLean.Foundations.Computability
 
-open Cslib.Turing DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Notation
+open Cslib.Turing DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
 
 /-- A numeric configuration: state code, left cells, head symbol, right cells. -/
 abbrev SC := ℕ × List ℕ × ℕ × List ℕ
