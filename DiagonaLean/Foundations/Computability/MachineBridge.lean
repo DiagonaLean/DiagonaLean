@@ -231,4 +231,51 @@ theorem machineDecidable_unary_iff {X : Type*} [Primcodable X] {P : X → Prop} 
     MachineDecidable encUnary P ↔ ComputablePred P :=
   machineDecidable_iff encUnary_prim.to_comp decUnary_prim.to_comp decUnary_encUnary
 
+/-! ### Binary encodings of pairs of codes
+
+Several problems are encoded as the binary digits of the pair of the codes of two terms
+(`bitsPair (c a) (c b)`: `encSKI`, `encBeta`, KAComm's `encNat`), and their machine-level results
+are proved for that encoding. With a primitive recursive decoder of the code, the encoding has a
+computable decoder, so those results give `¬ ComputablePred`, and with it `¬ MachineDecidable`
+under every computable encoding. -/
+
+/-- The number whose binary digits, least significant first, are `l`: the inverse of `bitsOf`. -/
+def valBits (l : List Bool) : ℕ := l.foldr (fun b acc => 2 * acc + b.toNat) 0
+
+theorem valBits_eq_valG (l : List Bool) : valBits l = valG (l.map bitG) := by
+  induction l with
+  | nil => rfl
+  | cons b t ih => cases b <;> simp [valBits, valG, bitG] at ih ⊢ <;> omega
+
+/-- **`valBits` inverts `bitsOf`.** -/
+theorem valBits_bitsOf (n : ℕ) : valBits (bitsOf n) = n := by
+  rw [valBits_eq_valG, bitsOf_map, valG_trNat]
+
+@[fun_prop] theorem valBits_prim : Primrec valBits := by
+  unfold valBits
+  fun_prop
+
+/-- The decoder of `bitsPair (c a) (c b)`, from a decoder `d` of the code `c`. -/
+def unbitsPair {T : Type*} (d : ℕ → Option T) (l : List Bool) : Option (T × T) :=
+  (d (valBits l).unpair.1).bind fun a => (d (valBits l).unpair.2).map fun b => (a, b)
+
+theorem unbitsPair_bitsPair {T : Type*} {c : T → ℕ} {d : ℕ → Option T}
+    (hd : ∀ t, d (c t) = some t) (a b : T) : unbitsPair d (bitsPair (c a) (c b)) = some (a, b) := by
+  simp [unbitsPair, bitsPair, valBits_bitsOf, hd]
+
+theorem unbitsPair_prim {T : Type*} [Primcodable T] {d : ℕ → Option T} (hd : Primrec d) :
+    Primrec (unbitsPair d) := by
+  unfold unbitsPair
+  fun_prop
+
+/-- **From one binary encoding of pairs to every computable encoding.** If no machine decides `P`
+under the encoding of a pair of terms as the binary digits of the pair of their codes, and the
+code has a primitive recursive decoder, then `P` is not a computable predicate. -/
+theorem not_computablePred_of_bitsPair {T : Type*} [Primcodable T] {c : T → ℕ}
+    {d : ℕ → Option T} (hc : Primrec c) (hd : Primrec d) (hdc : ∀ t, d (c t) = some t)
+    {P : T × T → Prop} (h : ¬ MachineDecidable (fun i => bitsPair (c i.1) (c i.2)) P) :
+    ¬ ComputablePred P := fun hP =>
+  h ((machineDecidable_iff (prim_bitsPair (hc.comp Primrec.fst) (hc.comp Primrec.snd)).to_comp
+    (unbitsPair_prim hd).to_comp (fun i => unbitsPair_bitsPair hdc i.1 i.2)).2 hP)
+
 end DiagonaLean.Foundations.Computability

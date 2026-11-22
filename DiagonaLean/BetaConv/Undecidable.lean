@@ -4,6 +4,8 @@ Authors: Aalok Thakkar, Claude Opus
 -/
 
 import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
+import DiagonaLean.Foundations.LambdaCalculus.Primcodable
+import DiagonaLean.Foundations.Computability.MachineBridge
 
 @[expose] public section
 
@@ -14,8 +16,10 @@ reduction's constants: a universal code `u` and the race program `C` for its SKI
 from the recursion theorem. They are only known to exist, so `C` and the proofs `hu : IsUniversal u`
 and `hC : RaceProg u.toSKI C` are arguments, and `u` is implicit. No Turing machine decides it under
 the encoding of a pair of terms as the binary digits of the pair of their codes
-(`not_machineDecidable_betaConv`); the encoding is injective (`encBeta_injective`) and follows
-`encNat` in `KAComm/KleeneAlgebra/Race.lean`. It separates the computably inseparable pair
+(`not_machineDecidable_betaConv`), so it is not a computable predicate
+(`not_computablePred_betaConv`) and no machine decides it under any computable encoding
+(`not_machineDecidable_betaConv_of_computable`); the encoding is injective (`encBeta_injective`) and
+follows `encNat` in `KAComm/KleeneAlgebra/Race.lean`. It separates the computably inseparable pair
 `SelfOut true`, `SelfOut false`, so no machine decides it on the instances `sepRed U c M` given the
 code of `M` (`not_machineDecidable_betaConv_sepRed`).
 
@@ -69,6 +73,17 @@ theorem not_machineDecidable_betaConv : ¬ MachineDecidable encBeta BetaConvProb
     fun _ _ h => not_betaConv_linst_of_zero hu (Code.toSKI_correct u) h
   exact ProofRace.not_machineDecidable_of_race chk_prim (instCode_prim u.toSKI)
     (fun c n => (linst u.toSKI c n, tr FF)) henc hQ pos neg
+
+/-- **β-conversion of λ-terms is not a computable predicate.** `encBeta` writes the pair of codes
+`tc` in binary, and `tc` has a primitive recursive decoder (`tcDec`), so a computable decision
+procedure would give a machine deciding it under `encBeta` (`not_computablePred_of_bitsPair`). -/
+theorem not_computablePred_betaConv : ¬ ComputablePred BetaConvProblem :=
+  not_computablePred_of_bitsPair tc_primrec tcDec_primrec tcDec_tc not_machineDecidable_betaConv
+
+/-- **No Turing machine decides β-conversion under any computable encoding.** -/
+theorem not_machineDecidable_betaConv_of_computable {enc : Term ℕ × Term ℕ → List Bool}
+    (henc : Computable enc) : ¬ MachineDecidable enc BetaConvProblem :=
+  not_machineDecidable_of_not_computablePred henc not_computablePred_betaConv
 
 /-- **On the instances `sepRed`, no machine decides β-conversion** given the code of the machine:
 they separate the computably inseparable pair `SelfOut true`, `SelfOut false`. -/

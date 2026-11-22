@@ -58,6 +58,7 @@ root (from `HaltCanon`); proving the last link computable does not upgrade a syn
 | `not_computablePred_of_reduces` | `r : p ⪯_s q`, `Computable r.f`, `¬ ComputablePred p` → `¬ ComputablePred q` |
 | `not_computablePred_of_selfHalt` | a computable map of machine codes that reduces self-halting gives `¬ ComputablePred` (the older route; new results go through `HaltHard`) |
 | `not_machineDecidable_of_not_computablePred` | `Computable enc → ¬ ComputablePred P → ¬ MachineDecidable enc P` |
+| `not_computablePred_of_bitsPair` | for an encoding `bitsPair (c a) (c b)` (the binary digits of a pair of codes) with a primitive recursive decoder `d` of `c`: `¬ MachineDecidable` under it gives `¬ ComputablePred` (used for SKI, β and KAComm over `ℕ`; decoders `skcDec`, `tcDec`, `rcDec` from `TaggedCode.decode`) |
 | `machineDecidable_iff` | `MachineDecidable enc P ↔ ComputablePred P`, for a computable `enc` with a computable decoder `dec` (`dec (enc x) = some x`; `MachineBridge.lean`) |
 | `ComputableReduction.manyOneReducible` | `p ⪯ q → ManyOneReducible p q` |
 | `REPred.of_reduces`, `REPred.of_manyOneReducible` | r.e.-ness pulls back along reductions |
