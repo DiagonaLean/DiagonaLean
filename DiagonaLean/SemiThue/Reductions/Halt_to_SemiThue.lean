@@ -33,9 +33,9 @@ The reduction `haltToSemiThue` normalises the machine and its input
 (`Foundations.Computability.Normalize`), so that both conditions hold, takes `tmRules` of the
 normalised machine, and renames its states to their codes, over the fixed alphabet `Alpha ℕ Sym2`.
 `halt_iff_derives` and `Codes.derives_mapRules_iff` make it a reduction from `HaltProblem`
-(`halt_reducesto_semiThue_spec`, `haltReducesSemiThue`). The systems produced have non-empty left
+(`halt_reducesto_semiThue_spec`, `SemiThue.synthFromHalt`). The systems produced have non-empty left
 sides (`haltToSemiThue_lhs_ne`), so it is also a reduction to `DecisionProblemPos`
-(`haltReducesSemiThuePos`).
+(`SemiThue.synthPosFromHalt`).
 -/
 
 namespace DiagonaLean.SemiThue.Reduction
@@ -498,8 +498,12 @@ theorem halt_reducesto_semiThue_spec : HaltProblem ⪯_s[haltToSemiThue] Decisio
 
 /-- The halting problem many-one reduces to the word problem for string rewriting systems over
 `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
-def haltReducesSemiThue : HaltProblem ⪯_s @DecisionProblem (Alpha ℕ Sym2) :=
+def _root_.DiagonaLean.SemiThue.synthFromHalt : HaltProblem ⪯_s @DecisionProblem (Alpha ℕ Sym2) :=
   ⟨haltToSemiThue, halt_reducesto_semiThue_spec⟩
+
+/-- The former name of `SemiThue.synthFromHalt`. -/
+@[deprecated DiagonaLean.SemiThue.synthFromHalt (since := "2026-11-23")]
+abbrev haltReducesSemiThue := @DiagonaLean.SemiThue.synthFromHalt
 
 /-- Every rule of a system produced by the reduction has a non-empty left side. -/
 theorem haltToSemiThue_lhs_ne (p : EncodableTM Bool × List Bool) :
@@ -516,9 +520,13 @@ theorem halt_reducesto_semiThuePos_spec :
 
 /-- The halting problem many-one reduces to the word problem for systems with non-empty left sides
 over `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
-def haltReducesSemiThuePos :
+def _root_.DiagonaLean.SemiThue.synthPosFromHalt :
     HaltProblem ⪯_s @DecisionProblemPos (Alpha ℕ Sym2) :=
   ⟨haltToSemiThue, halt_reducesto_semiThuePos_spec⟩
+
+/-- The former name of `SemiThue.synthPosFromHalt`. -/
+@[deprecated DiagonaLean.SemiThue.synthPosFromHalt (since := "2026-11-23")]
+abbrev haltReducesSemiThuePos := @DiagonaLean.SemiThue.synthPosFromHalt
 
 end Reduction
 

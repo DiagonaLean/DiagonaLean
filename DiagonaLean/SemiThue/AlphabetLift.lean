@@ -20,14 +20,14 @@ matches inside a block.
 The reductions from the halting problem produce systems with non-empty left sides, so the restricted
 problem is undecidable over `Alpha ℕ Sym2`, both by a synthetic halting reduction and at machine
 level. The lifting of `Foundations.Codes.Functor` moves it to every alphabet with two distinct
-letters, and `posReduces` returns to the plain word problem, sending a system with an empty left
-side to a fixed instance without solution. The `SynthHaltReduction` statements obtained this way are
-in `Undecidable.lean` (`undecidableSemiThuePosOf`, `undecidableSemiThueOf`,
-`undecidableSemiThueBool`).
+letters, and `SemiThue.synthFromPos` returns to the plain word problem, sending a system with an
+empty left side to a fixed instance without solution. The `SynthHaltReduction` statements obtained
+this way are in `Undecidable.lean` (`SemiThue.synthPosFromHaltOver`, `SemiThue.synthFromHaltOver`,
+`SemiThue.synthFromHaltBool`).
 
 ## Main statements
 
-* `semiThueFunctor`, `posReduces`.
+* `semiThueFunctor`, `SemiThue.synthFromPos`.
 * `not_computablePred_semiThuePosOf`, `not_computablePred_semiThueOf`,
   `not_machineDecidable_semiThueOf`: over every nontrivial `Primcodable` alphabet.
 * `semiThuePos_manyOneEquiv`: the restricted problem is many-one equivalent over any two such
@@ -74,8 +74,13 @@ theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯_s[posToWord a] @Decis
   · exact and_iff_right (hall.1 h)
 
 /-- The restricted word problem many-one reduces to the plain one, given a letter. -/
-def posReduces (a : T) : @DecisionProblemPos T ⪯_s @DecisionProblem T :=
+def _root_.DiagonaLean.SemiThue.synthFromPos (a : T) :
+    @DecisionProblemPos T ⪯_s @DecisionProblem T :=
   ⟨posToWord a, posToWord_spec a⟩
+
+/-- The former name of `SemiThue.synthFromPos`. -/
+@[deprecated DiagonaLean.SemiThue.synthFromPos (since := "2026-11-23")]
+abbrev posReduces := @DiagonaLean.SemiThue.synthFromPos
 
 namespace MachineLevel
 
@@ -103,7 +108,7 @@ nontrivial alphabet.** -/
 theorem not_computablePred_semiThueOf [Primcodable α] [Nontrivial α] :
     ¬ ComputablePred (@DecisionProblem α) := by
   obtain ⟨a, -, -⟩ := exists_pair_ne α
-  refine not_computablePred_of_reduces (posReduces a) (Primrec.to_comp ?_)
+  refine not_computablePred_of_reduces (SemiThue.synthFromPos a) (Primrec.to_comp ?_)
     not_computablePred_semiThuePosOf
   show Primrec (posToWord a)
   unfold posToWord

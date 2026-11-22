@@ -9,13 +9,13 @@ import DiagonaLean.SemiThue.AlphabetLift
 
 /-! # Undecidability of the word problem for string rewriting systems
 
-`haltReducesSemiThue` (`Reductions/Halt_to_SemiThue.lean`) many-one reduces the halting problem to
-the word problem over the fixed alphabet `Alpha ℕ Sym2`, so the word problem is synthetically
-halting-hard there (`undecidableSemiThue`). Its systems have non-empty left sides
-(`haltReducesSemiThuePos`), and on such systems the word problem is a functor on synchronizing codes
-(`AlphabetLift.lean`), so it is synthetically halting-hard over every alphabet with two distinct
-letters (`undecidableSemiThuePosOf`). `posReduces` returns to the plain word problem
-(`undecidableSemiThueOf`, `undecidableSemiThueBool`). The machine-level statements are in
+`SemiThue.synthFromHalt` (`Reductions/Halt_to_SemiThue.lean`) many-one reduces the halting problem
+to the word problem over the fixed alphabet `Alpha ℕ Sym2`, so the word problem is synthetically
+halting-hard there. Its systems have non-empty left sides (`SemiThue.synthPosFromHalt`), and on such
+systems the word problem is a functor on synchronizing codes (`AlphabetLift.lean`), so it is
+synthetically halting-hard over every alphabet with two distinct letters
+(`SemiThue.synthPosFromHaltOver`). `SemiThue.synthFromPos` returns to the plain word problem
+(`SemiThue.synthFromHaltOver`, `SemiThue.synthFromHaltBool`). The machine-level statements are in
 `MachineLevel.lean` and `AlphabetLift.lean`.
 
 ## References
@@ -31,28 +31,39 @@ open DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Codes DiagonaLean.Synthe
 
 variable {α : Type}
 
-/-- **The word problem for string rewriting systems is synthetically halting-hard**, over
-`Alpha ℕ Sym2`. -/
-def undecidableSemiThue :
-    SynthHaltReduction (@DecisionProblem (Alpha ℕ Foundations.Computability.Normalize.Sym2)) :=
-  haltReducesSemiThue
+/-- The former name of `SemiThue.synthFromHalt`. -/
+@[deprecated DiagonaLean.SemiThue.synthFromHalt (since := "2026-11-23")]
+abbrev undecidableSemiThue := @DiagonaLean.SemiThue.synthFromHalt
 
 /-- **The word problem for systems with non-empty left sides over every alphabet `α` with two
 distinct letters is synthetically halting-hard**: the lifting of
 `Foundations.Codes.CodeFunctor.undecidableOf`.
 -/
-def undecidableSemiThuePosOf (b0 b1 : α) (hne : b0 ≠ b1) :
+def _root_.DiagonaLean.SemiThue.synthPosFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
     SynthHaltReduction (@DecisionProblemPos α) := by
-  code_lift semiThueFunctor from haltReducesSemiThuePos
+  code_lift semiThueFunctor from SemiThue.synthPosFromHalt
+
+/-- The former name of `SemiThue.synthPosFromHaltOver`. -/
+@[deprecated DiagonaLean.SemiThue.synthPosFromHaltOver (since := "2026-11-23")]
+abbrev undecidableSemiThuePosOf := @DiagonaLean.SemiThue.synthPosFromHaltOver
 
 /-- **The word problem for string rewriting systems is synthetically halting-hard over any alphabet
 `α` with two
 distinct letters `b0`, `b1`.** -/
-def undecidableSemiThueOf (b0 b1 : α) (hne : b0 ≠ b1) : SynthHaltReduction (@DecisionProblem α) :=
-  SynthHaltReduction.comp (undecidableSemiThuePosOf b0 b1 hne) (posReduces b0)
+def _root_.DiagonaLean.SemiThue.synthFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
+    SynthHaltReduction (@DecisionProblem α) :=
+  SynthHaltReduction.comp (SemiThue.synthPosFromHaltOver b0 b1 hne) (SemiThue.synthFromPos b0)
+
+/-- The former name of `SemiThue.synthFromHaltOver`. -/
+@[deprecated DiagonaLean.SemiThue.synthFromHaltOver (since := "2026-11-23")]
+abbrev undecidableSemiThueOf := @DiagonaLean.SemiThue.synthFromHaltOver
 
 /-- **The word problem for string rewriting systems over `Bool` is synthetically halting-hard.** -/
-def undecidableSemiThueBool : SynthHaltReduction (@DecisionProblem Bool) :=
-  undecidableSemiThueOf false true Bool.false_ne_true
+def _root_.DiagonaLean.SemiThue.synthFromHaltBool : SynthHaltReduction (@DecisionProblem Bool) :=
+  SemiThue.synthFromHaltOver false true Bool.false_ne_true
+
+/-- The former name of `SemiThue.synthFromHaltBool`. -/
+@[deprecated DiagonaLean.SemiThue.synthFromHaltBool (since := "2026-11-23")]
+abbrev undecidableSemiThueBool := @DiagonaLean.SemiThue.synthFromHaltBool
 
 end DiagonaLean.SemiThue.Reduction
