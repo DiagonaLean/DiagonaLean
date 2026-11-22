@@ -6,18 +6,98 @@ Authors: Prathamesh Turaga
 import Mathlib.Order.SuccPred.Nat
 import DiagonaLean.PCP.Basic
 import DiagonaLean.Synthetic.Definitions
+import DiagonaLean.Foundations.Codes.Correspondence
 
 @[expose] public section
 
 /-! # Transporting PCP across alphabets
 
-Every PCP instance `P : Stack γ₁` can be recoded, one symbol at a time, into a PCP instance
-over any alphabet `γ₂` with at least two distinct elements: each symbol of `γ₁` is encoded
-by a fixed-width binary word over `γ₂`, and the codomain instance is solvable iff the
-source instance is (`decisionProblem_lifts`). `pcpAlphabetLift` packages this as a many-one
-reduction; the concrete data (`liftInstance`, `symbolBits`) is exported so downstream reductions
-can build the encoded instance and transport equivalences back and forth.
+A PCP instance is a list of pairs of words, so `Foundations.Codes.Correspondence` applies:
+encoding every tile by a code `c` (`Stack.encode`) preserves and reflects solvability, as soon as
+`encode c` is injective on the words over the letters of the instance
+(`decisionProblem_encode_iff`).
+
+`AlphabetLift` builds such a code into any alphabet `γ₂` with at least two distinct elements, for
+any alphabet with decidable equality, countable or not: each symbol of the instance is encoded by a
+fixed-width binary word over `γ₂`, through its position among the symbols of the instance
+(`decisionProblem_lifts`). `pcpAlphabetLift` packages this as a many-one reduction; the concrete
+data (`liftInstance`, `symbolBits`) is exported so downstream reductions can build the encoded
+instance and transport equivalences back and forth.
 -/
+
+namespace DiagonaLean.PCP
+
+open Foundations.Codes
+
+variable {α β : Type}
+
+/-- A tile as a pair of words. -/
+def Tile.toPair (t : Tile α) : List α × List α := (t.top, t.bot)
+
+theorem Tile.toPair_injective : Function.Injective (Tile.toPair (α := α)) := by
+  rintro ⟨_, _⟩ ⟨_, _⟩ h
+  simpa [Tile.toPair] using h
+
+/-- Encoding both words of a tile. -/
+def Tile.encode (c : α → List β) (t : Tile α) : Tile β :=
+  ⟨Foundations.Codes.encode c t.top, Foundations.Codes.encode c t.bot⟩
+
+theorem Tile.toPair_encode (c : α → List β) (t : Tile α) :
+    (t.encode c).toPair = encodePair c t.toPair := rfl
+
+/-- Encoding every tile of an instance. -/
+def Stack.encode (c : α → List β) (P : Stack α) : Stack β := P.map (Tile.encode c)
+
+theorem τ1_eq_tops (A : Stack α) : τ1 A = tops (A.map Tile.toPair) := by
+  simp [τ1, tops, Function.comp_def, Tile.toPair]
+
+theorem τ2_eq_bots (A : Stack α) : τ2 A = bots (A.map Tile.toPair) := by
+  simp [τ2, bots, Function.comp_def, Tile.toPair]
+
+/-- The correspondences of an instance, as sequences of pairs, are the images of its stacks. -/
+theorem isCorr_map_toPair_iff {P : Stack α} {s : List α × List α} {B : List (List α × List α)} :
+    IsCorr (P.map Tile.toPair) s B ↔
+      ∃ A : Stack α, B = A.map Tile.toPair ∧ (∀ t ∈ A, t ∈ P) ∧ s.1 ++ τ1 A = s.2 ++ τ2 A := by
+  constructor
+  · rintro ⟨hB, h⟩
+    obtain ⟨A, hA, rfl⟩ := exists_map_eq_of_forall_mem_map hB
+    exact ⟨A, rfl, hA, by rwa [τ1_eq_tops, τ2_eq_bots]⟩
+  · rintro ⟨A, rfl, hA, h⟩
+    refine ⟨fun t ht => ?_, by rwa [← τ1_eq_tops, ← τ2_eq_bots]⟩
+    obtain ⟨t, ht', rfl⟩ := List.mem_map.1 ht
+    exact List.mem_map_of_mem (hA t ht')
+
+/-- PCP solvability as a non-empty correspondence of pairs, with empty start pair. -/
+theorem decisionProblem_iff_isCorr (P : Stack α) :
+    DecisionProblem P ↔ ∃ B, B ≠ [] ∧ IsCorr (P.map Tile.toPair) ([], []) B := by
+  constructor
+  · rintro ⟨A, hne, hA, h⟩
+    exact ⟨_, by simpa using hne, isCorr_map_toPair_iff.2 ⟨A, rfl, hA, h⟩⟩
+  · rintro ⟨B, hne, h⟩
+    obtain ⟨A, rfl, hA, h⟩ := isCorr_map_toPair_iff.1 h
+    exact ⟨A, by simpa using hne, hA, h⟩
+
+/-- **Changing the alphabet of PCP.** Encoding the tiles preserves and reflects solvability when
+`encode c` is injective on the words over the letters of the instance. -/
+theorem decisionProblem_encode_iff {c : α → List β} {P : Stack α}
+    (hc : InjOnLetters c (([], []) :: P.map Tile.toPair)) :
+    DecisionProblem (P.encode c) ↔ DecisionProblem P := by
+  have e : (P.encode c).map Tile.toPair = (P.map Tile.toPair).map (encodePair c) := by
+    simp [Stack.encode, Tile.toPair_encode]
+  rw [decisionProblem_iff_isCorr, decisionProblem_iff_isCorr, e]
+  constructor
+  · rintro ⟨B, hne, h⟩
+    obtain ⟨A, rfl, hA⟩ := IsCorr.of_encode hc h
+    exact ⟨A, by simpa using hne, hA⟩
+  · rintro ⟨A, hne, h⟩
+    exact ⟨_, by simpa using hne, h.encode⟩
+
+/-- PCP solvability is preserved and reflected by a code. -/
+theorem decisionProblem_encode_iff_of_isCode {c : α → List β} (hc : IsCode c) (P : Stack α) :
+    DecisionProblem (P.encode c) ↔ DecisionProblem P :=
+  decisionProblem_encode_iff (hc.injOnLetters _)
+
+end DiagonaLean.PCP
 
 namespace DiagonaLean.PCP.AlphabetLift
 
@@ -279,96 +359,23 @@ theorem liftWord_injective (P : DiagonaLean.PCP.Stack γ₁) (hne : b0 ≠ b1)
           grind
         rw [haa', huu']
 
-/-- `τ1` commutes with lifting a PCP stack to a new alphabet. -/
-theorem τ1_lift (P A : DiagonaLean.PCP.Stack γ₁) :
-    DiagonaLean.PCP.τ1 (A.map (liftTile b0 b1 P)) = liftWord b0 b1 P (DiagonaLean.PCP.τ1 A) := by
-  induction A with
-  | nil => simp [liftWord]
-  | cons t A ih =>
-      simp [liftWord_append, ← ih, liftTile]
+open DiagonaLean.PCP Foundations.Codes
 
-/-- `τ2` commutes with lifting a PCP stack to a new alphabet. -/
-theorem τ2_lift (P A : DiagonaLean.PCP.Stack γ₁) :
-    DiagonaLean.PCP.τ2 (A.map (liftTile b0 b1 P)) = liftWord b0 b1 P (DiagonaLean.PCP.τ2 A) := by
-  induction A with
-  | nil => simp [liftWord]
-  | cons t A ih =>
-      simp [liftWord_append, ← ih, liftTile]
-open DiagonaLean.PCP
+/-- The lifted instance encodes every tile with the code `symbolWord`. -/
+theorem liftInstance_eq_encode (P : Stack γ₁) :
+    liftInstance b0 b1 P = P.encode (symbolWord b0 b1 P) := rfl
 
-/-- All symbols in the top projection of a valid sub-stack appear in the original stack. -/
-theorem mem_τ1_symbolsUsed (P A : DiagonaLean.PCP.Stack γ₁) (hA : ∀ t ∈ A, t ∈ P) :
-    ∀ a ∈ DiagonaLean.PCP.τ1 A, a ∈ symbolsUsed P := by
-  intro a ha
-  obtain ⟨l, hl, hal⟩ := List.mem_flatten.1 (by simpa only [DiagonaLean.PCP.τ1] using ha)
-  obtain ⟨t, ht, rfl⟩ := List.mem_map.1 hl
-  exact List.mem_dedup.2
-    (List.mem_flatMap.2 ⟨t, hA t ht, List.mem_append_left _ hal⟩)
+theorem mem_symbolsUsed_of_mem_letters {P : Stack γ₁} {a : γ₁}
+    (h : a ∈ letters (([], []) :: P.map Tile.toPair)) : a ∈ symbolsUsed P := by
+  simpa [letters, symbolsUsed, Tile.toPair] using h
 
-/-- All symbols in the bottom projection of a valid sub-stack appear in the original stack. -/
-theorem mem_τ2_symbolsUsed (P A : Stack γ₁) (hA : ∀ t ∈ A, t ∈ P) :
-    ∀ a ∈ τ2 A, a ∈ symbolsUsed P := by
-  intro a ha
-  obtain ⟨l, hl, hal⟩ := List.mem_flatten.1 (by simpa only [DiagonaLean.PCP.τ2] using ha)
-  obtain ⟨t, ht, rfl⟩ := List.mem_map.1 hl
-  exact List.mem_dedup.2
-    (List.mem_flatMap.2 ⟨t, hA t ht, List.mem_append_right _ hal⟩)
-
-/-- A PCP instance is solvable if and only if its lifted instance is solvable. -/
-theorem decisionProblem_lifts (P : DiagonaLean.PCP.Stack γ₁) (hne : b0 ≠ b1) :
-    DiagonaLean.PCP.DecisionProblem P ↔ DiagonaLean.PCP.DecisionProblem (liftInstance b0 b1 P) := by
-      constructor
-      · intro h
-        unfold DiagonaLean.PCP.DecisionProblem
-        unfold DiagonaLean.PCP.DecisionProblem at h
-        rcases h with ⟨A,hAne, hAmem, hAeq⟩
-        refine ⟨A.map (liftTile b0 b1 P), ?_, ?_, ?_⟩
-        · simpa using hAne
-        · intro t ht
-          obtain ⟨t', ht', rfl⟩ := List.mem_map.mp ht
-          unfold liftInstance
-          apply List.mem_map_of_mem
-          exact (hAmem t' ht')
-        · rw [τ1_lift, τ2_lift, hAeq]
-      rintro ⟨B, hBne, hBmem, hBeq⟩
-      have hpre : ∀ t ∈ B, ∃ t' ∈ P, t = liftTile b0 b1 P t' := by
-        intro t ht
-        obtain ⟨t', ht', rfl⟩ := List.mem_map.mp (hBmem t ht)
-        exact ⟨t', ht', rfl⟩
-      choose f hfP hfeq using hpre
-  -- `f : ∀ t, t ∈ B → Tile γ₁`, `hfP : ∀ t ht, f t ht ∈ P`,
-  -- `hfeq : ∀ t ht, t = liftTile b0 b1 P (f t ht)`
-      have hBA : B = (B.attach.map (fun x => f x.1 x.2)).map (liftTile b0 b1 P) := by
-        simp only [List.map_map]
-        have hval : List.map (fun x : {t // t ∈ B} => (↑x : Tile γ₂)) B.attach = B := by
-          simp
-        conv_lhs => rw [← hval]
-        exact List.map_congr_left (fun x _ => hfeq x.1 x.2)
-      set A : Stack γ₁ := B.attach.map (fun x => f x.1 x.2) with hA_def
-      have hAmemP : ∀ t ∈ A, t ∈ P := by
-          intro t ht
-          rw [hA_def] at ht
-          obtain ⟨x, _, rfl⟩ := List.mem_map.mp ht
-          exact hfP x.1 x.2
-      unfold DecisionProblem
-      use A
-      simp only [ne_eq, List.map_eq_nil_iff, List.attach_eq_nil_iff, List.mem_map, List.mem_attach,
-          true_and, Subtype.exists, forall_exists_index, A]
-      constructor
-      · exact hBne
-      · have hτ1 : τ1 B = liftWord b0 b1 P (τ1 A) := by
-            conv_lhs => rw [hBA]
-            exact τ1_lift b0 b1 P A
-        have hτ2 : τ2 B = liftWord b0 b1 P (τ2 A) := by
-            conv_lhs => rw [hBA]
-            exact τ2_lift b0 b1 P A
-        constructor
-        · intro t x x_1 ft
-          rw [← ft]
-          simp [hfP]
-        · show τ1 A = τ2 A
-          exact liftWord_injective b0 b1 P hne (mem_τ1_symbolsUsed P A hAmemP)
-            (mem_τ2_symbolsUsed P A hAmemP) (by rw [← hτ1, ← hτ2, hBeq])
+/-- A PCP instance is solvable if and only if its lifted instance is solvable: `symbolWord` is
+injective on the words over the symbols of the instance (`liftWord_injective`). -/
+theorem decisionProblem_lifts (P : Stack γ₁) (hne : b0 ≠ b1) :
+    DecisionProblem P ↔ DecisionProblem (liftInstance b0 b1 P) :=
+  (decisionProblem_encode_iff fun _ hu _ hv h => liftWord_injective b0 b1 P hne
+    (fun _ ha => mem_symbolsUsed_of_mem_letters (hu _ ha))
+    (fun _ ha => mem_symbolsUsed_of_mem_letters (hv _ ha)) h).symm
 
 /-- `liftInstance b0 b1` witnesses the many-one reduction from PCP over an arbitrary alphabet
 to PCP over a target alphabet. -/

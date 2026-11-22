@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.MPCP.Undecidable
+import DiagonaLean.MPCP.AlphabetLift
 import DiagonaLean.PCP.Primrec
 import DiagonaLean.Foundations.Computability.CodeSim
 import DiagonaLean.Foundations.Computability.MachineBridge
@@ -32,7 +32,6 @@ procedure for MPCP would decide self-halting, contradicting `self_halt_undecidab
 * `not_machineDecidable_mpcp`: no Turing machine decides it under any computable encoding.
 -/
 
-derive_primcodable DiagonaLean.MPCP.Reduction.Alpha
 
 namespace DiagonaLean.MPCP.MachineLevel
 

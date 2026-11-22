@@ -24,6 +24,7 @@ import DiagonaLean.Foundations.Computability.Normalize.Sim
 import DiagonaLean.Foundations.Computability.Normalize.Steps
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.MPCP.Undecidable
+import DiagonaLean.MPCP.AlphabetLift
 import DiagonaLean.MPCP.MachineLevel
 import DiagonaLean.SemiThue.Basic
 import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
@@ -49,6 +50,7 @@ import DiagonaLean.AmbigCFG.Rename
 import DiagonaLean.EmpCFG.Basic
 import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFG
 import DiagonaLean.EmpCFG.Undecidable
+import DiagonaLean.EmpCFG.AlphabetLift
 import DiagonaLean.EmpCFG.MachineLevel
 
 import DiagonaLean.MatMort.Basic
@@ -103,6 +105,11 @@ import DiagonaLean.Synthetic.MetaprogramCheck
 import DiagonaLean.Foundations.Computability.Prim
 import DiagonaLean.Foundations.Grammar.Code
 import DiagonaLean.Foundations.Grammar.Rewriting
+import DiagonaLean.Foundations.Codes.Basic
+import DiagonaLean.Foundations.Codes.Unary
+import DiagonaLean.Foundations.Codes.Correspondence
+import DiagonaLean.Foundations.Codes.Rewriting
+import DiagonaLean.Foundations.Codes.Grammar
 import DiagonaLean.Foundations.Computability.StackProof
 import DiagonaLean.Foundations.Computability.PrimrecRec
 import DiagonaLean.Foundations.Computability.PolyTree
