@@ -3,6 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
+import DiagonaLean.MPCP.MachineLevel
 import DiagonaLean.SemiThue.Basic
 import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
 

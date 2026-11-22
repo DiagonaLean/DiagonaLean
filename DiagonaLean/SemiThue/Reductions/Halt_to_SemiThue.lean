@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.MPCP.MachineLevel
+import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.Foundations.Grammar.Rewriting
 import DiagonaLean.SemiThue.Basic
 
@@ -472,8 +472,6 @@ theorem halt_iff_derives (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Sym
 /-! ### The reduction -/
 
 section Reduction
-
-open DiagonaLean.PCP.Reduction
 
 /-- **The reduction.** The rewriting system of the normalised machine and its start string, with
 states renamed to their codes, and the empty string as target. -/
