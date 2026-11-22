@@ -39,6 +39,8 @@ import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFG
 import DiagonaLean.AmbigCFG.Undecidable
 import DiagonaLean.AmbigCFG.MachineLevel
 import DiagonaLean.AmbigCFG.Rename
+import DiagonaLean.AmbigCFG.Encode
+import DiagonaLean.AmbigCFG.AlphabetLift
 
 import DiagonaLean.EmpCFG.Basic
 import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFG

@@ -66,9 +66,6 @@ open DiagonaLean.Synthetic.Notation DiagonaLean.Foundations.Computability
 
 /-! ### Computability of the encodings -/
 
-/- `encode_prim`: encoding is primitive recursive, for a code that may depend on the input. -/
-derive_primrec encode [Primcodable α] [Primcodable β]
-
 /- `letters_prim`: the letters of a list of pairs of words are primitive recursive. -/
 derive_primrec letters [Primcodable α]
 

@@ -4,6 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import Mathlib.Data.List.Basic
+import DiagonaLean.Foundations.Computability.DerivePrimrec
 
 @[expose] public section
 
@@ -64,6 +65,9 @@ theorem encode_map_letters (c : α → List β) (g : β → γ) (w : List α) :
 
 /-- The letters occurring in a list of pairs of words. -/
 def letters (P : List (List α × List α)) : List α := P.flatMap fun t => t.1 ++ t.2
+
+/- `encode_prim`: encoding is primitive recursive, for a code that may depend on the input. -/
+derive_primrec encode [Primcodable α] [Primcodable β]
 
 /-! ### The category of codes
 

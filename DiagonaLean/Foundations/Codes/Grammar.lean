@@ -6,6 +6,7 @@ Authors: Prathamesh TVH, Claude Opus
 import DiagonaLean.Foundations.Codes.Basic
 import Mathlib.Computability.ContextFreeGrammar
 import DiagonaLean.Foundations.Grammar.Code
+import DiagonaLean.Foundations.Computability.DerivePrimrec
 
 @[expose] public section
 
@@ -287,5 +288,11 @@ theorem toCFG_presEncode [DecidableEq T] [DecidableEq β] [DecidableEq N] (hc : 
     exact ⟨_, ⟨x, hx, rfl⟩, (e x).symm⟩
   · rintro ⟨_, ⟨x, hx, rfl⟩, rfl⟩
     exact ⟨x, hx, e x⟩
+
+/- Encoding the terminals of a grammar code is primitive recursive, for a code that may depend on
+the input, and so are its terminals. -/
+derive_primrec sumCode [Primcodable T] [Primcodable β] [Primcodable N]
+derive_primrec presEncode [Primcodable T] [Primcodable β] [Primcodable N]
+derive_primrec presTerminals [Primcodable T] [Primcodable N]
 
 end DiagonaLean.Foundations.Codes
