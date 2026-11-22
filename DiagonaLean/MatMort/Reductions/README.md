@@ -58,3 +58,4 @@ The main result is `pcp_iff_matmort`: for any PCP instance `K` over alphabet `{2
 
 ### Undecidability
 - `undecidableMatMort`: mortality of finite sets of `3 × 3` integer matrices is `Undecidable`, by reduction from PCP over `{2, 3}`.
+- `not_computablePred_matMort`, `not_machineDecidable_matMort`: it is not a computable predicate, so no Turing machine decides it under any computable encoding. They follow from `PCP.Reduction.not_computablePred_pcp` along `pcpReducesMatMort`, whose function `matImage` is primitive recursive (`matImage_primrec`).
