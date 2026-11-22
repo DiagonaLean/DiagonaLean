@@ -7,10 +7,11 @@ Authors: Prathamesh TVH, Claude Opus
 Given a string rewriting system (semi-Thue system) `R : SRS T`, a list of rules `l → r` between strings over `T`, and two strings `u` and `v`, does `u` rewrite to `v` in some number of steps, each replacing one occurrence of a left side by its right side? This is `DecisionProblem (R, u, v)` in `Basic.lean`; `ToEmptyProblem (R, u)` is the case `v = []`. The string rewriting systems themselves, and a stack machine checking their derivations, are in `Foundations/Grammar/Rewriting.lean`.
 
 ## Layout
-* `Basic.lean`: the problem.
-* `Reductions/Halt_to_SemiThue.lean`: a machine halts iff its configuration string rewrites to the empty string (`halt_iff_derives`).
-* `Undecidable.lean`: `HaltProblem ⪯ₘ` the word problem (`haltReducesSemiThue`), so it is `Undecidable` (`undecidableSemiThue`).
-* `MachineLevel.lean`: no Turing machine decides it under any computable encoding (`not_machineDecidable_semiThue`, `not_machineDecidable_toEmpty`).
+* `Basic.lean`: the problem, and its restriction to systems whose left sides are all non-empty (`DecisionProblemPos`).
+* `Reductions/Halt_to_SemiThue.lean`: a machine halts iff its configuration string rewrites to the empty string (`halt_iff_derives`), so `HaltProblem ⪯ₘ` the word problem over `Alpha ℕ Sym2` (`haltReducesSemiThue`) and its restriction (`haltReducesSemiThuePos`). See `Reductions/README.md`.
+* `MachineLevel.lean`: no Turing machine decides it over `Alpha ℕ Sym2` under any computable encoding (`not_machineDecidable_semiThue`, `not_machineDecidable_toEmpty`).
+* `AlphabetLift.lean`: the restricted problem is a functor on synchronizing codes (`semiThueFunctor`), and `posReduces` returns to the plain word problem; no Turing machine decides the word problem over any nontrivial `Primcodable` alphabet (`not_machineDecidable_semiThueOf`).
+* `Undecidable.lean`: the word problem is `Undecidable` over `Alpha ℕ Sym2` (`undecidableSemiThue`), and over every alphabet with two distinct letters (`undecidableSemiThueOf`), for instance over `Bool` (`undecidableSemiThueBool`).
 
 ## Proof sketch
 The transition tiles of the MPCP reduction (`MPCP/Reductions/Halt_to_MPCP.lean`) pair a window of a configuration with its successor; read as rules `top → bot`, they rewrite the configuration string `# … q a … #` one machine step at a time. With the absorb tiles (`a h⊥ → h⊥`, `h⊥ a → h⊥`) and a final rule `# h⊥ # → []`, they form `tmRules tm`.

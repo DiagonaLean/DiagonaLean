@@ -42,6 +42,9 @@ instance : Fintype PCPNonterm where
   elems := {S, A, B}
   complete x := by cases x <;> simp
 
+/-- `PCPNonterm` is nonempty. -/
+instance : Nonempty PCPNonterm := ⟨.S⟩
+
 /-- Inject a word over `α` into terminal symbols of `PCPAlpha P`. -/
 def liftWord {P : Stack α} (w : List α) : List (Symbol (PCPAlpha P) PCPNonterm) :=
   w.map (Symbol.terminal ∘ Sum.inl)

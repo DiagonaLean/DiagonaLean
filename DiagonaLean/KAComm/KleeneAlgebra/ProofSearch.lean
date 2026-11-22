@@ -425,7 +425,7 @@ theorem exists_prog_rel (ka : Bool) {e f : RExp (ℕ ⊕ ℕ)} (h : Rel ka e f) 
 def Checks (ka : Bool) (k a b : ℕ) : Prop := StackProof.Checks sys ka k (a, b)
 
 /-- `Rel ka` is checking: two expressions are related iff some program checks their codes. -/
-theorem rel_iff_checks' {ka : Bool} {e f : RExp (ℕ ⊕ ℕ)} :
+theorem rel_iff_checks {ka : Bool} {e f : RExp (ℕ ⊕ ℕ)} :
     Rel ka e f ↔ ∃ k, Checks ka k (rc e) (rc f) := by
   rw [show (∃ k, Checks ka k (rc e) (rc f)) ↔ ∃ k, StackProof.Checks sys ka k (rc e, rc f) from
     Iff.rfl, ← StackProof.good_iff_checks sys ka (good_default ka) (fun _ hs n => stepS_inv hs n)
@@ -437,12 +437,12 @@ theorem rel_iff_checks' {ka : Bool} {e f : RExp (ℕ ⊕ ℕ)} :
 /-- An equation is provable in pre-Kleene algebra iff some program checks its codes. -/
 theorem equiv_iff_checks {e f : RExp (ℕ ⊕ ℕ)} :
     Equiv DComm e f ↔ ∃ k, Checks false k (rc e) (rc f) := by
-  simpa [Rel] using rel_iff_checks' (ka := false) (e := e) (f := f)
+  simpa [Rel] using rel_iff_checks (ka := false) (e := e) (f := f)
 
 /-- An equation is provable in Kleene algebra iff some program checks its codes. -/
 theorem kaEquiv_iff_checks {e f : RExp (ℕ ⊕ ℕ)} :
     KAEquiv DComm e f ↔ ∃ k, Checks true k (rc e) (rc f) :=
-  rel_true.symm.trans rel_iff_checks'
+  rel_true.symm.trans rel_iff_checks
 
 /-- `Checks ka` is a primitive recursive predicate. -/
 theorem checks_prim (ka : Bool) : PrimrecPred fun x : ℕ × ℕ × ℕ => Checks ka x.1 x.2.1 x.2.2 :=

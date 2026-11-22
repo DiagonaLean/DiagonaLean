@@ -5,7 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFG
 import DiagonaLean.AmbigCFG.Rename
-import DiagonaLean.PCP.Undecidable
+import DiagonaLean.PCP.MachineLevel
 
 @[expose] public section
 
@@ -18,8 +18,9 @@ nonterminals and in the terminals that index the tiles (`ambPres`). With `PCPNon
 it presents `Stack.toGrammar` (`toCFG_ambPres_abs`); with `0, 1, 2` and natural numbers it is a
 grammar code over `α ⊕ ℕ` (`ambCode`), the renaming of the first (`ambCode_eq_map`). Injective
 renamings keep and reflect ambiguity (`AmbigCFG.decisionProblem_map_iff`), so PCP many-one reduces
-to the ambiguity of grammar codes (`pcpReducesAmbigCFGCode`), through a primitive recursive
-function (`ambCode_prim`), and `PCP.Reduction.not_computablePred_pcp` transfers.
+to the ambiguity of grammar codes (`pcp_reducesto_ambigCFGCode_spec`, `pcpReducesAmbigCFGCode`),
+through a primitive recursive function (`ambCode_prim`), and
+`PCP.MachineLevel.not_computablePred_pcp` transfers.
 
 The statements are about grammar codes (`Foundations.Grammar.CFGCode`): a machine reads a finite
 description, and `CFGCode.toCFG` is the grammar a code describes.
@@ -65,6 +66,7 @@ def absTs (P : Stack α) : List (Fin P.length × Tile α) :=
 def codeTs (P : Stack α) : List (ℕ × Tile α) :=
   (List.range P.length).map fun i => (i, P.getD i ⟨[], []⟩)
 
+/-- Forgetting the bounds of the indices of `absTs P` gives `codeTs P`. -/
 theorem absTs_map_val (P : Stack α) : (absTs P).map (Prod.map Fin.val id) = codeTs P := by
   apply List.ext_getElem
   · simp [absTs, codeTs]
@@ -81,9 +83,11 @@ def ntIdx : PCPNonterm → ℕ
   | .A => 1
   | .B => 2
 
+/-- `ntIdx` is injective. -/
 theorem ntIdx_injective : Function.Injective ntIdx := by
   intro a b h; cases a <;> cases b <;> first | rfl | (simp [ntIdx] at h)
 
+/-- The code of `P` is the renaming of the presentation with `PCPNonterm` and `Fin P.length`. -/
 theorem ambCode_eq_map (P : Stack α) :
     ambCode P = (ambPres PCPNonterm.S PCPNonterm.A PCPNonterm.B (absTs P)).map
       (Sum.map id Fin.val) ntIdx := by
@@ -120,14 +124,19 @@ theorem toCFG_ambPres_abs (P : Stack α) :
     · exact ⟨_, Or.inr ⟨_, ⟨i, rfl⟩, Or.inr (Or.inr (Or.inr rfl))⟩,
         by simp [ruleOf, symOf, baseProd, liftWord, idxSym, Function.comp_def]⟩
 
-instance : Nonempty PCPNonterm := ⟨.S⟩
+/-- `ambCode` witnesses the reduction from PCP to the ambiguity of grammar codes. -/
+theorem pcp_reducesto_ambigCFGCode_spec [Nonempty α] :
+    @PCP.DecisionProblem α ⪯ₘ[ambCode]
+      fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG := by
+  intro P
+  beta_reduce
+  rw [pcp_iff_ambigcfg, ← toCFG_ambPres_abs, ambCode_eq_map,
+    decisionProblem_map_iff (Function.injective_id.sumMap Fin.val_injective) ntIdx_injective]
 
 /-- PCP many-one reduces to the ambiguity of grammar codes, through `ambCode`. -/
 def pcpReducesAmbigCFGCode [Nonempty α] :
     @PCP.DecisionProblem α ⪯ₘ fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG :=
-  ⟨ambCode, fun P => by
-    rw [pcp_iff_ambigcfg, ← toCFG_ambPres_abs, ambCode_eq_map,
-      decisionProblem_map_iff (Function.injective_id.sumMap Fin.val_injective) ntIdx_injective]⟩
+  ⟨ambCode, pcp_reducesto_ambigCFGCode_spec⟩
 
 variable [Primcodable α]
 
@@ -142,7 +151,7 @@ theorem ambCode_prim : Primrec (ambCode (α := α)) := by
 theorem not_computablePred_ambigCFGCode [Nontrivial α] :
     ¬ ComputablePred fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG :=
   not_computablePred_of_reduces pcpReducesAmbigCFGCode ambCode_prim.to_comp
-    PCP.Reduction.not_computablePred_pcp
+    PCP.MachineLevel.not_computablePred_pcp
 
 /-- **No Turing machine decides whether a grammar code is ambiguous**, under any computable
 encoding of codes as bit strings. -/

@@ -16,7 +16,7 @@ absolute index `i`. The lemmas `InvAt.moveRight`, `InvAt.moveLeft`, `InvAt.tm_mo
 either machine moves its head or writes.
 -/
 
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.Foundations.Computability.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -153,4 +153,4 @@ theorem InvAt.write_preserve (h : InvAt t i t' p) (hp : 0 ≤ p) :
 /-- Writing the head symbol back leaves a tape unchanged. -/
 theorem write_head_self (t' : BiTape Sym2) : t'.write t'.head = t' := rfl
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.Foundations.Computability.Normalize

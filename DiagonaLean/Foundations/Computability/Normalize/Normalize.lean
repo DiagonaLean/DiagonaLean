@@ -35,7 +35,7 @@ by `tm` represented by a dedicated non-blank symbol.
 
 open Cslib.Turing SingleTapeTM
 
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.Foundations.Computability.Normalize
 
 open DiagonaLean.Halt
 
@@ -57,4 +57,4 @@ abbrev normEnc (M : DiagonaLean.Halt.Encoding.EncodableTM Bool) :
   letI := M.stateEncodable
   ⟨normTM M.toSingleTapeTM, (inferInstance : Encodable (M.State × Ctrl))⟩
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.Foundations.Computability.Normalize

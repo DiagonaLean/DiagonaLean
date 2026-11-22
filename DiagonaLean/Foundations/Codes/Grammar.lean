@@ -12,10 +12,10 @@ import DiagonaLean.Foundations.Grammar.Code
 /-! # Changing the terminal alphabet of a context-free grammar
 
 A code `c` on terminals extends to sentential forms by leaving nonterminals alone (`symCode c`).
-Encoding the right side of every rule gives a grammar `G.encode c hc` over the code alphabet. A
-nonterminal occurs in an encoded sentential form only as the image of a nonterminal
+Encoding the right side of every rule gives a grammar `grammarEncode c hc G` over the code
+alphabet. A nonterminal occurs in an encoded sentential form only as the image of a nonterminal
 (`split_nonterminal`), so every step from an encoded sentential form is the image of a step, with
-no assumption on `c`; the language of `G.encode c hc` is the image of the language of `G`
+no assumption on `c`; the language of `grammarEncode c hc G` is the image of the language of `G`
 (`mem_language_encode_iff`). When `c` is a code, words of the two languages correspond one to one,
 so non-emptiness of an intersection is preserved and reflected (`intersection_encode_iff`).
 
@@ -23,9 +23,9 @@ Grammar codes (`Foundations.Grammar.GrammarPres`) keep their rules in a list, so
 (`presEncode`) needs no proof, and the grammar of the encoded code is the encoded grammar
 (`toCFG_presEncode`): on codes, encoding terminals is a total function, as a reduction needs.
 
-The code is needed already to build `G.encode c hc`: Mathlib keeps the rules in a `Finset`, and
-mapping them without decidable equality takes an embedding, so `symCode c` must be a code
-(`isCode_symCode`).
+The code is needed already to build `grammarEncode c hc G`: Mathlib keeps the rules in a
+`Finset`, and mapping them without decidable equality takes an embedding, so `symCode c` must be a
+code (`isCode_symCode`).
 -/
 
 namespace DiagonaLean.Foundations.Codes
@@ -39,6 +39,7 @@ def symCode (c : T → List β) : Symbol T N → List (Symbol β N)
   | .terminal t => (c t).map .terminal
   | .nonterminal n => [.nonterminal n]
 
+/-- A word of terminals encodes to the word of terminals of its encoding. -/
 @[simp] theorem encode_symCode_map_terminal (c : T → List β) (w : List T) :
     encode (symCode (N := N) c) (w.map .terminal) = (encode c w).map .terminal := by
   induction w <;> simp_all [symCode]
@@ -119,6 +120,7 @@ theorem isCode_symCode {c : T → List β} (hc : IsCode c) : IsCode (symCode (N 
 def ruleEncode (c : T → List β) (r : ContextFreeRule T N) : ContextFreeRule β N :=
   ⟨r.input, encode (symCode c) r.output⟩
 
+/-- If `c` is a code, encoding the right sides of rules is injective. -/
 theorem ruleEncode_injective {c : T → List β} (hc : IsCode c) :
     Function.Injective (ruleEncode (N := N) c) := by
   rintro ⟨_, _⟩ ⟨_, _⟩ h
@@ -135,6 +137,7 @@ abbrev grammarEncode (c : T → List β) (hc : IsCode c) (G : ContextFreeGrammar
 
 variable {c : T → List β} {hc : IsCode c} {G : ContextFreeGrammar T}
 
+/-- A step of `G` maps to a step of the encoded grammar between the encoded sentential forms. -/
 theorem produces_grammarEncode {u v : List (Symbol T G.NT)} (h : G.Produces u v) :
     (grammarEncode c hc G).Produces (encode (symCode c) u) (encode (symCode c) v) := by
   obtain ⟨r, hr, hrw⟩ := h
@@ -143,6 +146,8 @@ theorem produces_grammarEncode {u v : List (Symbol T G.NT)} (h : G.Produces u v)
   have := (ruleEncode c r).rewrites_of_exists_parts (encode (symCode c) p) (encode (symCode c) q)
   simpa [ruleEncode, symCode] using this
 
+/-- Every step of the encoded grammar from an encoded sentential form is the image of a step of
+`G`. -/
 theorem produces_grammarEncode_inv {u : List (Symbol T G.NT)} {y : List (Symbol β G.NT)}
     (h : (grammarEncode c hc G).Produces (encode (symCode c) u) y) :
     ∃ v, G.Produces u v ∧ y = encode (symCode c) v := by
@@ -153,12 +158,16 @@ theorem produces_grammarEncode_inv {u : List (Symbol T G.NT)} {y : List (Symbol 
   refine ⟨u₁ ++ r.output ++ u₂, ⟨r, hr, ?_⟩, by simp [ruleEncode]⟩
   simpa using ContextFreeRule.rewrites_of_exists_parts r u₁ u₂
 
+/-- A derivation in `G` maps to a derivation in the encoded grammar between the encoded sentential
+forms. -/
 theorem derives_grammarEncode {u v : List (Symbol T G.NT)} (h : G.Derives u v) :
     (grammarEncode c hc G).Derives (encode (symCode c) u) (encode (symCode c) v) := by
   induction h with
   | refl => exact .refl _
   | tail _ hs ih => exact ih.trans_produces (produces_grammarEncode hs)
 
+/-- Every sentential form derived in the encoded grammar from an encoded sentential form is the
+encoding of one derived in `G`. -/
 theorem derives_grammarEncode_inv {u : List (Symbol T G.NT)} {y : List (Symbol β G.NT)}
     (h : (grammarEncode c hc G).Derives (encode (symCode c) u) y) :
     ∃ v, G.Derives u v ∧ y = encode (symCode c) v := by
@@ -220,6 +229,8 @@ theorem presEncode_congr {c c' : T → List β} {p : GrammarPres N T}
     rw [h t (List.mem_flatMap.2 ⟨r, hr, List.mem_flatMap.2 ⟨.inl t, hs, by simp⟩⟩)]
   | inr n => rfl
 
+/-- Encoding the symbols of a grammar code by `sumCode c` and then reading them as symbols is
+reading them as symbols and then encoding by `symCode c`. -/
 theorem map_symOf_encode (c : T → List β) (w : List (T ⊕ N)) :
     (encode (sumCode c) w).map symOf = encode (symCode c) (w.map symOf) := by
   induction w with
@@ -228,15 +239,18 @@ theorem map_symOf_encode (c : T → List β) (w : List (T ⊕ N)) :
     simp only [encode_cons, List.map_cons, List.map_append, ih]
     rcases s with t | n <;> simp [sumCode, symCode, symOf, Function.comp_def]
 
+/-- `sumCode` of the identity code encodes every word as itself. -/
 theorem encode_sumCode_unit (w : List (T ⊕ N)) : encode (sumCode (unit (α := T))) w = w := by
   induction w with
   | nil => rfl
   | cons s w ih => rcases s with t | n <;> simp_all [sumCode, unit]
 
+/-- A word of terminals encodes by `sumCode c` to the word of terminals of its encoding by `c`. -/
 theorem encode_sumCode_map_inl (c : T → List β) (l : List T) :
     encode (sumCode (N := N) c) (l.map Sum.inl) = (encode c l).map Sum.inl := by
   induction l <;> simp_all [sumCode]
 
+/-- Encoding by `sumCode c₁`, then by `sumCode c₂`, is encoding by `sumCode (kcomp c₂ c₁)`. -/
 theorem encode_sumCode_kcomp {γ : Type} (c₁ : T → List β) (c₂ : β → List γ) (w : List (T ⊕ N)) :
     encode (sumCode c₂) (encode (sumCode c₁) w) = encode (sumCode (kcomp c₂ c₁)) w := by
   induction w with
@@ -248,9 +262,11 @@ theorem encode_sumCode_kcomp {γ : Type} (c₁ : T → List β) (c₂ : β → L
     · exact encode_sumCode_map_inl c₂ (c₁ t)
     · rfl
 
+/-- The identity code encodes every grammar code as itself. -/
 @[simp] theorem presEncode_unit (p : GrammarPres N T) : presEncode unit p = p := by
   simp [presEncode, encode_sumCode_unit]
 
+/-- Encoding a grammar code by `c₁`, then by `c₂`, is encoding it by `kcomp c₂ c₁`. -/
 theorem presEncode_kcomp {γ : Type} (c₁ : T → List β) (c₂ : β → List γ) (p : GrammarPres N T) :
     presEncode c₂ (presEncode c₁ p) = presEncode (kcomp c₂ c₁) p := by
   simp only [presEncode, List.map_map, Function.comp_def, encode_sumCode_kcomp]

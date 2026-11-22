@@ -34,9 +34,10 @@ So every `¬ ComputablePred` result of Mathlib, such as `ComputablePred.rice` or
 * `machineDecidable_iff`: the equivalence.
 * `not_machineDecidable_of_not_computablePred`: the form used for undecidability.
 * `not_computablePred_of_reduces`: `¬ ComputablePred` transfers along a reduction with a computable
-  function.
-* `not_computablePred_of_selfHalt`, `not_machineDecidable_of_selfHalt`: a predicate that a
-  computable map of machine codes reduces self-halting to is not computable.
+  function; `REPred.of_reduces`, `REPred.of_manyOneReducible`: recursive enumerability transfers
+  back along one.
+* `not_computablePred_of_selfHalt`: a predicate that a computable map of machine codes reduces
+  self-halting to is not computable.
 * `encUnary`, `machineDecidable_unary_iff`: an encoding of any `Primcodable` type that satisfies
   the hypotheses.
 -/
@@ -161,6 +162,17 @@ theorem not_computablePred_of_reduces {X Y : Type*} [Primcodable X] [Primcodable
     ¬ ComputablePred q :=
   fun hq => hp (ComputablePred.computable_of_manyOneReducible (r.toManyOneReducible hr) hq)
 
+/-- Recursive enumerability transfers back along a reduction (`⪯ₘ`) with a computable function. -/
+theorem _root_.REPred.of_reduces {X Y : Type*} [Primcodable X] [Primcodable Y] {p : X → Prop}
+    {q : Y → Prop} (r : p ⪯ₘ q) (hr : Computable r.f) (hq : REPred q) : REPred p :=
+  REPred.of_eq (hq.comp hr) fun x => (r.hf x).symm
+
+/-- Recursive enumerability transfers back along a computable many-one reduction. -/
+theorem _root_.REPred.of_manyOneReducible {X Y : Type*} [Primcodable X] [Primcodable Y]
+    {p : X → Prop} {q : Y → Prop} (h : ManyOneReducible p q) (hq : REPred q) : REPred p := by
+  obtain ⟨f, hf, hpq⟩ := h
+  exact REPred.of_reduces (q := q) ⟨f, hpq⟩ hf hq
+
 /-! ### From self-halting on codes -/
 
 /-- **A predicate that a computable map of codes reduces self-halting to is not computable.**
@@ -182,15 +194,6 @@ theorem not_computablePred_of_selfHalt {X : Type*} [Primcodable X] {P : X → Pr
   refine Halt.Undecidable.self_halt_undecidable ⟨D, fun M => ?_⟩
   simpa only [id, ← hspec] using hD (encodeBoolTM M)
 
-/-- **No machine decides a predicate that a computable map of codes reduces self-halting to**,
-under any computable encoding. -/
-theorem not_machineDecidable_of_selfHalt {X : Type*} [Primcodable X] {P : X → Prop}
-    {code : List Bool → X} (hcode : Computable code)
-    (hspec : ∀ M : EncodableTM Bool,
-      Halts M.toSingleTapeTM (encodeBoolTM M) ↔ P (code (encodeBoolTM M)))
-    {enc : X → List Bool} (henc : Computable enc) : ¬ MachineDecidable enc P :=
-  not_machineDecidable_of_not_computablePred henc (not_computablePred_of_selfHalt hcode hspec)
-
 /-! ### A canonical encoding -/
 
 /-- The unary encoding of a `Primcodable` value: `encode x` copies of `false`. -/
@@ -201,12 +204,15 @@ def encUnary {X : Type*} [Primcodable X] (x : X) : List Bool :=
 def decUnary {X : Type*} [Primcodable X] (l : List Bool) : Option X :=
   Encodable.decode l.length
 
+/-- `encUnary` is primitive recursive. -/
 theorem encUnary_prim {X : Type*} [Primcodable X] : Primrec (encUnary : X → List Bool) :=
   Primrec.list_map (Primrec.list_range.comp Primrec.encode) (Primrec.const false).to₂
 
+/-- `decUnary` is primitive recursive. -/
 theorem decUnary_prim {X : Type*} [Primcodable X] : Primrec (decUnary : List Bool → Option X) :=
   Primrec.decode.comp Primrec.list_length
 
+/-- `decUnary` inverts `encUnary`. -/
 @[simp] theorem decUnary_encUnary {X : Type*} [Primcodable X] (x : X) :
     decUnary (encUnary x) = some x := by
   simp [decUnary, encUnary]

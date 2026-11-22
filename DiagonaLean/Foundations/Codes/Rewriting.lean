@@ -32,25 +32,25 @@ variable {α β : Type}
 def SRS.encode (c : α → List β) (R : SRS α) : SRS β :=
   R.map fun lr => (Codes.encode c lr.1, Codes.encode c lr.2)
 
-/-- The letters of a system. -/
-def SRS.letters (R : SRS α) : List α := R.flatMap fun lr => lr.1 ++ lr.2
-
 /-- Codes that agree on the letters of a system encode it alike. -/
-theorem SRS.encode_congr {c c' : α → List β} {R : SRS α} (h : ∀ a ∈ SRS.letters R, c a = c' a) :
+theorem SRS.encode_congr {c c' : α → List β} {R : SRS α} (h : ∀ a ∈ letters R, c a = c' a) :
     SRS.encode c R = SRS.encode c' R :=
   List.map_congr_left fun lr hlr => Prod.ext
     (Codes.encode_congr fun a ha => h a (List.mem_flatMap.2 ⟨lr, hlr, List.mem_append_left _ ha⟩))
     (Codes.encode_congr fun a ha => h a (List.mem_flatMap.2 ⟨lr, hlr, List.mem_append_right _ ha⟩))
 
+/-- The identity code encodes every system as itself. -/
 @[simp] theorem SRS.encode_unit (R : SRS α) : SRS.encode unit R = R := by
   simp [SRS.encode]
 
+/-- Encoding a system by `c₁`, then by `c₂`, is encoding it by `kcomp c₂ c₁`. -/
 theorem SRS.encode_kcomp {γ : Type} (c₁ : α → List β) (c₂ : β → List γ) (R : SRS α) :
     SRS.encode c₂ (SRS.encode c₁ R) = SRS.encode (kcomp c₂ c₁) R := by
   simp only [SRS.encode, List.map_map]
   refine List.map_congr_left fun lr _ => ?_
   simp only [Function.comp_apply, _root_.DiagonaLean.Foundations.Codes.encode_kcomp]
 
+/-- A step of `R` maps to a step of the encoded system between the encoded words. -/
 theorem step_encode {c : α → List β} {R : SRS α} {u v : List α} (h : R.Step u v) :
     (SRS.encode c R).Step (encode c u) (encode c v) := by
   obtain ⟨lr, hlr, p, q, rfl, rfl⟩ := h

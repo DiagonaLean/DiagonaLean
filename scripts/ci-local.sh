@@ -95,9 +95,12 @@ run_check() {
 }
 export -f run_check
 # NUL-separated, so that xargs does no quote processing on the commands.
-printf '%s\0' "${checks[@]}" | xargs -0 -P "$jobs" -I{} bash -c 'run_check "$1" "$2"' _ {} "$logs"
+# Each check is the last argument (`-n 1`), not a `-I` replacement, which BSD xargs caps at
+# 255 bytes.
+export logs
+printf '%s\0' "${checks[@]}" | xargs -0 -n 1 -P "$jobs" bash -c 'run_check "$1" "$logs"' _
 
-failed=$(ls "$logs"/*.failed 2>/dev/null | wc -l)
+failed=$(find "$logs" -name '*.failed' | wc -l | tr -d ' ')
 for f in "$logs"/*.failed; do
   [ -e "$f" ] || continue
   name=$(basename "$f" .failed)
@@ -105,4 +108,4 @@ for f in "$logs"/*.failed; do
   tail -30 "$logs/$name.log"
 done
 echo "== done in $(( $(date +%s) - start ))s: $failed failed; logs in $logs"
-[ "$failed" = 0 ]
+[ "$failed" -eq 0 ]

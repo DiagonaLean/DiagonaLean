@@ -3,8 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.MPCP.MachineLevel
+import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.Foundations.Grammar.Rewriting
+import DiagonaLean.SemiThue.Basic
 
 @[expose] public section
 
@@ -26,13 +27,22 @@ the left end, `tm` halts on `w` iff `block (initCfg w)` derives the empty string
   determinism it is the machine's step, except for an interior right move at the right end, which
   leaves the marker before `#`: a string from which nothing can be rewritten, so the empty string
   is never reached (`not_derives_stuck`), or the halting marker, when the machine has halted.
+
+The reduction `haltToSemiThue` normalises the machine and its input
+(`Foundations.Computability.Normalize`), so that both conditions hold, takes `tmRules` of the
+normalised machine, and renames its states to their codes, over the fixed alphabet `Alpha ℕ Sym2`.
+`halt_iff_derives` and `SRS.derives_map_iff` make it a reduction from `HaltProblem`
+(`halt_reducesto_semiThue_spec`, `haltReducesSemiThue`). The systems produced have non-empty left
+sides (`haltToSemiThue_lhs_ne`), so it is also a reduction to `DecisionProblemPos`
+(`haltReducesSemiThuePos`).
 -/
 
 namespace DiagonaLean.SemiThue.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Halt
-  DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Normalize
-  Relation
+  DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Grammar
+  DiagonaLean.Foundations.Computability.Normalize
+  DiagonaLean.Synthetic.Notation Relation
 
 /-! ### Markers -/
 
@@ -73,6 +83,7 @@ end Mark
 
 variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
 
+/-- No letter of a lifted tape is a marker. -/
 theorem isMark_liftTape (tm : SingleTapeTM Symbol) (l : List (Option Symbol)) :
     ∀ x ∈ liftTape tm l, isMark x = false := by
   intro x hx
@@ -85,6 +96,7 @@ theorem block_running (tm : SingleTapeTM Symbol) (q : tm.State) (t : BiTape Symb
       ↟ₛq :: (↟ₜt.head :: (liftTape tm t.right.toList ++ [#])) := by
   simp [block, encodeCfg, encodeRunningCfg, liftTape]
 
+/-- The string of a running configuration has no halting marker. -/
 theorem halt_not_mem_block_running (tm : SingleTapeTM Symbol) (q : tm.State) (t : BiTape Symbol) :
     (h⊥ : Alpha tm.State Symbol) ∉ block tm ⟨some q, t⟩ := by
   simp [block, encodeCfg, encodeRunningCfg, liftTape]
@@ -104,23 +116,27 @@ def tmRules (tm : EncodableTM Symbol) : SRS (Alpha tm.State Symbol) :=
 
 variable {tm : EncodableTM Symbol}
 
+/-- The rule of a transition tile is a rule of the system. -/
 theorem tileRule_mem {q : tm.State} {a : Option Symbol} {T : Tile (Alpha tm.State Symbol)}
     (hT : T ∈ transitionTilesFor tm.toSingleTapeTM q a) : tileRule T ∈ tmRules tm :=
   List.mem_append_left _ (List.mem_append_left _ (List.mem_map_of_mem
-    ((MPCP.MachineLevel.mem_transitionTiles tm T).2 ⟨q, a, hT⟩)))
+    ((MPCP.Reduction.mem_transitionTiles tm T).2 ⟨q, a, hT⟩)))
 
+/-- The rule `a h⊥ → h⊥` is a rule of the system. -/
 theorem absorbLeft_mem (a : Option Symbol) :
     (([↟ₜa, h⊥], [h⊥]) : List _ × List _) ∈ tmRules tm :=
   List.mem_append_left _ (List.mem_append_right _ (List.mem_map.2
     ⟨absorbLeftTile tm.toSingleTapeTM a, List.mem_flatMap.2 ⟨a, mem_enumerate a, by
       simp [absorbTilesFor]⟩, rfl⟩))
 
+/-- The rule `h⊥ a → h⊥` is a rule of the system. -/
 theorem absorbRight_mem (a : Option Symbol) :
     (([h⊥, ↟ₜa], [h⊥]) : List _ × List _) ∈ tmRules tm :=
   List.mem_append_left _ (List.mem_append_right _ (List.mem_map.2
     ⟨absorbRightTile tm.toSingleTapeTM a, List.mem_flatMap.2 ⟨a, mem_enumerate a, by
       simp [absorbTilesFor]⟩, rfl⟩))
 
+/-- The final rule `# h⊥ # → []` is a rule of the system. -/
 theorem final_mem : (([#, h⊥, #], []) : List _ × List _) ∈ tmRules tm :=
   List.mem_append_right _ (List.mem_singleton.2 rfl)
 
@@ -130,7 +146,7 @@ theorem mem_tmRules_cases {lr : List (Alpha tm.State Symbol) × List (Alpha tm.S
     (∃ q a T, T ∈ transitionTilesFor tm.toSingleTapeTM q a ∧ lr = tileRule T) ∨ h⊥ ∈ lr.1 := by
   simp only [tmRules, List.mem_append, List.mem_map, List.mem_singleton] at h
   rcases h with (⟨T, hT, rfl⟩ | ⟨T, hT, rfl⟩) | rfl
-  · obtain ⟨q, a, hT⟩ := (MPCP.MachineLevel.mem_transitionTiles tm T).1 hT
+  · obtain ⟨q, a, hT⟩ := (MPCP.Reduction.mem_transitionTiles tm T).1 hT
     exact Or.inl ⟨q, a, T, hT, rfl⟩
   · right
     obtain ⟨a, -, hT⟩ := List.mem_flatMap.1 hT
@@ -181,12 +197,6 @@ theorem not_derives_stuck {L : List (Alpha tm.State Symbol)} (hL : ∀ x ∈ L, 
       simp only [List.mem_append, List.mem_cons, List.not_mem_nil, or_false, reduceCtorEq] at this
       have := hL _ this
       simp [isMark] at this
-
-theorem not_derives_of_not_step {s : List (Alpha tm.State Symbol)} (hs : s ≠ [])
-    (h : ∀ s', ¬ (tmRules tm).Step s s') : ¬ (tmRules tm).Derives s [] := fun hd => by
-  rcases hd.cases_head with rfl | ⟨s', hs', -⟩
-  · exact hs rfl
-  · exact h s' hs'
 
 /-! ### One step -/
 
@@ -360,6 +370,7 @@ theorem step_inv (h_nbw : NoBlankWrites tm.toSingleTapeTM) {q : tm.State} {t : B
 
 /-! ### Erasing a halted configuration -/
 
+/-- The halting marker swallows the tape on its left, up to `#`. -/
 theorem derives_absorb_left (l : List (Option Symbol)) (rest : List (Alpha tm.State Symbol)) :
     (tmRules tm).Derives (# :: liftTape tm.toSingleTapeTM l ++ h⊥ :: rest) (# :: h⊥ :: rest) := by
   induction l using List.reverseRecOn with
@@ -369,6 +380,7 @@ theorem derives_absorb_left (l : List (Option Symbol)) (rest : List (Alpha tm.St
     exact ⟨_, absorbLeft_mem a, # :: liftTape tm.toSingleTapeTM l, rest,
       by simp [liftTape], by simp⟩
 
+/-- The halting marker swallows the tape on its right, up to `#`. -/
 theorem derives_absorb_right (pre : List (Alpha tm.State Symbol)) (r : List (Option Symbol)) :
     (tmRules tm).Derives (pre ++ h⊥ :: liftTape tm.toSingleTapeTM r ++ [#]) (pre ++ [h⊥, #]) := by
   induction r with
@@ -456,5 +468,57 @@ theorem halt_iff_derives (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Sym
     Halts tm.toSingleTapeTM w ↔
       (tmRules tm).Derives (block tm.toSingleTapeTM (initCfg tm.toSingleTapeTM w)) [] :=
   ⟨derives_of_halts h_nbw w h_nlb, halts_of_derives h_nbw w⟩
+
+/-! ### The reduction -/
+
+section Reduction
+
+/-- **The reduction.** The rewriting system of the normalised machine and its start string, with
+states renamed to their codes, and the empty string as target. -/
+def haltToSemiThue (p : EncodableTM Bool × List Bool) :
+    SRS (Alpha ℕ Sym2) × List (Alpha ℕ Sym2) ×
+      List (Alpha ℕ Sym2) :=
+  letI := (normEnc p.1).stateEncodable
+  ((tmRules (normEnc p.1)).mapRules (Alpha.map Encodable.encode),
+    (block (normEnc p.1).toSingleTapeTM
+      (initCfg (normEnc p.1).toSingleTapeTM (encInput p.2))).map (Alpha.map Encodable.encode),
+    [])
+
+/-- `haltToSemiThue` witnesses the reduction from the halting problem to the word problem. -/
+theorem halt_reducesto_semiThue_spec : HaltProblem ⪯ₘ[haltToSemiThue] DecisionProblem := by
+  rintro ⟨M, w⟩
+  show Halts M.toSingleTapeTM w ↔ _
+  let := (normEnc M).stateEncodable
+  rw [halts_normTM_iff,
+    halt_iff_derives (tm := normEnc M) (normTM_noBlankWrites _) _ (normTM_noLeftBoundary _ _),
+    ← SRS.derives_map_iff (f := Alpha.map Encodable.encode)
+      (Alpha.map_injective Encodable.encode_injective)]
+  rfl
+
+/-- The halting problem many-one reduces to the word problem for string rewriting systems over
+`Alpha ℕ Sym2`, through `haltToSemiThue`. -/
+def haltReducesSemiThue : HaltProblem ⪯ₘ @DecisionProblem (Alpha ℕ Sym2) :=
+  ⟨haltToSemiThue, halt_reducesto_semiThue_spec⟩
+
+/-- Every rule of a system produced by the reduction has a non-empty left side. -/
+theorem haltToSemiThue_lhs_ne (p : EncodableTM Bool × List Bool) :
+    ∀ lr ∈ (haltToSemiThue p).1, lr.1 ≠ [] := by
+  intro lr hlr
+  obtain ⟨lr₀, hlr₀, rfl⟩ := List.mem_map.1 hlr
+  simpa using tmRules_lhs_ne lr₀ hlr₀
+
+/-- `haltToSemiThue` witnesses the reduction from the halting problem to the word problem for
+systems with non-empty left sides. -/
+theorem halt_reducesto_semiThuePos_spec :
+    HaltProblem ⪯ₘ[haltToSemiThue] DecisionProblemPos := fun p =>
+  (halt_reducesto_semiThue_spec p).trans (and_iff_right (haltToSemiThue_lhs_ne p)).symm
+
+/-- The halting problem many-one reduces to the word problem for systems with non-empty left sides
+over `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
+def haltReducesSemiThuePos :
+    HaltProblem ⪯ₘ @DecisionProblemPos (Alpha ℕ Sym2) :=
+  ⟨haltToSemiThue, halt_reducesto_semiThuePos_spec⟩
+
+end Reduction
 
 end DiagonaLean.SemiThue.Reduction

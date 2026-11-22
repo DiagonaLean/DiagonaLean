@@ -5,6 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.Foundations.Computability.PartrecToCslib
 import DiagonaLean.Foundations.Computability.Prim
+import DiagonaLean.Foundations.Computability.DerivePrimrec
 
 @[expose] public section
 
@@ -34,10 +35,9 @@ open Cslib.Turing Turing
 /-! ### Row codes -/
 
 /-- Decode a symbol. -/
-def optOf : ℕ → Option Bool
-  | 0 => none
-  | 1 => some false
-  | _ => some true
+def optOf (n : ℕ) : Option Bool := if n = 0 then none else if n = 1 then some false else some true
+
+derive_primrec optOf
 
 /-- Encode a symbol. -/
 def hc : Option Bool → ℕ
@@ -390,7 +390,8 @@ variable {α : Type*} [Primcodable α]
   fun_prop
 
 /-- `bitCode` of a primitive recursive function is primitive recursive. -/
-@[fun_prop] theorem prim_bitCode {f : α → Bool} (hf : Primrec f) : Primrec fun x => bitCode (f x) := by
+@[fun_prop] theorem prim_bitCode {f : α → Bool} (hf : Primrec f) :
+    Primrec fun x => bitCode (f x) := by
   unfold bitCode
   exact prim_ite (pred_eq hf (Primrec.const true)) (Primrec.const _) (Primrec.const _)
 

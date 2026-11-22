@@ -3,7 +3,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.SemiThue.Undecidable
 import DiagonaLean.SemiThue.MachineLevel
 import DiagonaLean.Foundations.Codes.Tactic
 import DiagonaLean.Foundations.Codes.Rewriting
@@ -22,11 +21,12 @@ The reductions from the halting problem produce systems with non-empty left side
 restricted problem is undecidable over `Alpha ℕ Sym2`, both as `Undecidable` and at machine level.
 The lifting of `Foundations.Codes.Functor` moves it to every alphabet with two distinct letters,
 and `posReduces` returns to the plain word problem, sending a system with an empty left side to a
-fixed instance without solution.
+fixed instance without solution. The `Undecidable` statements obtained this way are in
+`Undecidable.lean` (`undecidableSemiThuePosOf`, `undecidableSemiThueOf`, `undecidableSemiThueBool`).
 
 ## Main statements
 
-* `undecidableSemiThuePosOf`, `undecidableSemiThueOf`, `undecidableSemiThueBool`.
+* `semiThueFunctor`, `posReduces`.
 * `not_computablePred_semiThuePosOf`, `not_computablePred_semiThueOf`,
   `not_machineDecidable_semiThueOf`: over every nontrivial `Primcodable` alphabet.
 * `semiThuePos_manyOneEquiv`: the restricted problem is many-one equivalent over any two such
@@ -49,7 +49,7 @@ abbrev semiThueFunctor : CodeFunctor IsSync where
   natural hc x := by
     rw [DecisionProblemPos, DecisionProblemPos, lhs_ne_encode_iff hc.isCode]
     exact and_congr_right fun h => derives_encode_iff hc h
-  supp x := SRS.letters x.1 ++ x.2.1 ++ x.2.2
+  supp x := letters x.1 ++ x.2.1 ++ x.2.2
   map_congr x h := Prod.ext (SRS.encode_congr fun a ha => h a (by simp [ha]))
     (Prod.ext (encode_congr fun a ha => h a (by simp [ha]))
       (encode_congr fun a ha => h a (by simp [ha])))
@@ -59,6 +59,7 @@ empty system, which has no solution. -/
 def posToWord (a : T) (x : SRS T × List T × List T) : SRS T × List T × List T :=
   bif x.1.all (fun lr => !(lr.1.length == 0)) then x else ([], [a], [])
 
+/-- `posToWord a` witnesses the reduction from the restricted word problem to the plain one. -/
 theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯ₘ[posToWord a] @DecisionProblem T := by
   intro x
   have hall : x.1.all (fun lr => !(lr.1.length == 0)) = true ↔ ∀ lr ∈ x.1, lr.1 ≠ [] := by
@@ -75,34 +76,6 @@ theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯ₘ[posToWord a] @Deci
 def posReduces (a : T) : @DecisionProblemPos T ⪯ₘ @DecisionProblem T :=
   ⟨posToWord a, posToWord_spec a⟩
 
-namespace Reduction
-
-open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.MPCP.Reduction
-
-/-- The halting problem many-one reduces to the restricted word problem over `Alpha ℕ Sym2`, through
-`haltToSemiThue`: its systems have non-empty left sides. -/
-def haltReducesSemiThuePos :
-    HaltProblem ⪯ₘ @DecisionProblemPos (Alpha ℕ Foundations.Normalize.Sym2) :=
-  ⟨haltToSemiThue, fun p =>
-    (halt_reducesto_semiThue_spec p).trans (and_iff_right (haltToSemiThue_lhs_ne p)).symm⟩
-
-/-- **The restricted word problem over every alphabet `α` with two distinct letters is
-`Undecidable`**: the lifting of `Foundations.Codes.CodeFunctor.undecidableOf`. -/
-def undecidableSemiThuePosOf (b0 b1 : α) (hne : b0 ≠ b1) :
-    Undecidable (@DecisionProblemPos α) := by
-  code_lift semiThueFunctor from haltReducesSemiThuePos
-
-/-- **The word problem for string rewriting systems is `Undecidable` over any alphabet `α` with two
-distinct letters `b0`, `b1`.** -/
-def undecidableSemiThueOf (b0 b1 : α) (hne : b0 ≠ b1) : Undecidable (@DecisionProblem α) :=
-  undecidabilityFromReducibility (undecidableSemiThuePosOf b0 b1 hne) (posReduces b0)
-
-/-- **The word problem for string rewriting systems over `Bool` is `Undecidable`.** -/
-def undecidableSemiThueBool : Undecidable (@DecisionProblem Bool) :=
-  undecidableSemiThueOf false true Bool.false_ne_true
-
-end Reduction
-
 namespace MachineLevel
 
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.MPCP.Reduction
@@ -111,14 +84,13 @@ open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding Diagon
 /-- **The restricted word problem is not a computable predicate** over `Alpha ℕ Sym2`: the systems
 of machine codes have non-empty left sides (`codeRules_lhs_ne`). -/
 theorem not_computablePred_semiThuePos :
-    ¬ ComputablePred (@DecisionProblemPos (Alpha ℕ Foundations.Normalize.Sym2)) :=
+    ¬ ComputablePred (@DecisionProblemPos (Alpha ℕ Foundations.Computability.Normalize.Sym2)) :=
   not_computablePred_of_selfHalt (code := fun w => ((toEmptyCode w).1, (toEmptyCode w).2, []))
     (by have := toEmptyCode_prim; exact Primrec.to_comp (by fun_prop))
     fun M => (selfHalt_iff_toEmpty M).trans (and_iff_right (codeRules_lhs_ne _)).symm
 
 /- Encoding a system is primitive recursive, for a code that may depend on the input. -/
 derive_primrec SRS.encode [Primcodable α] [Primcodable β]
-derive_primrec SRS.letters [Primcodable α]
 
 /-- **The restricted word problem is not a computable predicate over any nontrivial alphabet.** -/
 theorem not_computablePred_semiThuePosOf [Primcodable α] [Nontrivial α] :

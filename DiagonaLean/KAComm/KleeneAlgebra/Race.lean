@@ -192,13 +192,6 @@ def RaceProg (ka : Bool) (B : Base) (C : Code) : Prop := RaceOn ka B (instCode B
 theorem exists_raceProg (ka : Bool) (B : Base) : ∃ C, RaceProg ka B C :=
   exists_raceOn ka B (instCode_prim B.K)
 
-/-- `Rel ka e f` holds iff some `k` passes the proof test on the codes of `e` and `f`. -/
-theorem rel_iff_checks {ka : Bool} {e f : RExp (ℕ ⊕ ℕ)} :
-    Rel ka e f ↔ ∃ k, Checks ka k (rc e) (rc f) := by
-  cases ka
-  · simpa [Rel] using equiv_iff_checks
-  · simpa [Rel] using kaEquiv_iff_checks
-
 /-- If the interpreter outputs `true` on `l`, the two sides of `rInst K l` are related. -/
 theorem rel_pos {ka : Bool} {K : UConst} {l : List Bool} (h : (NM K l).Outputs [] [true]) :
     Rel ka (rInst K l).1 (rInst K l).2 :=

@@ -7,7 +7,7 @@ Authors: Akhilesh Balaji
 2. [`Halt ⪯ₘ PCP`](#halt-ₘ-pcp)
 
 ## `MPCP ⪯ₘ PCP`
-Given an MPCP instance `(c, R)` (a distinguished tile `c` and a stack `R`), we construct a PCP instance `mpcpToPcp c R` such that `MPCP.DecisionProblem c R ↔ PCP.DecisionProblem (mpcpToPcp c R)` (`mpcp_iff_pcp`).
+Given an MPCP instance `(c, R)` (a distinguished tile `c` and a stack `R`), we construct a PCP instance `mpcpToPcp c R` such that `MPCP.DecisionProblem c R ↔ PCP.DecisionProblem (mpcpToPcp c R)` (`mpcp_iff_pcp`). `mpcp_reducesto_pcp_spec` restates it as the many-one reduction `MPCP.DecisionProblem ⪯ₘ[fun x => mpcpToPcp x.1 x.2] PCP.DecisionProblem` on pairs `(c, R)`, and `mpcpReducesPCP` packages it.
 
 ### Alphabet Extension
 The alphabet `α` is extended with two fresh markers, `Ext α = α | ⋕ | ₹`, where `{⋕,₹} ∩ α = ∅` by construction. A letter `a : α` is lifted to `↟a : Ext α`.
@@ -67,4 +67,4 @@ The generalized lemma proceeds by induction on the remaining stack, maintaining 
 `Halt_to_PCP.lean` composes `Halt ⪯ₘ MPCP` with `MPCP ⪯ₘ PCP`. The machine is first normalized (`Foundations/Computability/Normalize/`) so that it meets the side conditions of the MPCP reduction, and the states of the machine are encoded as natural numbers (`pcpRed`, `pcpRed_iff`). `AlphabetLift` then lifts the instance to the fixed alphabet `Ext (Alpha ℕ Bool)`. The reduction function is `haltToPcp`, `halt_reducesto_pcp_spec` gives `HaltProblem ⪯ₘ[haltToPcp] PCP.DecisionProblem`, and `haltReducesPCP` packages it.
 
 ### Undecidability
-`Undecidable.lean` collects `undecidablePCP'`, which states that PCP over the fixed alphabet `Ext (Alpha ℕ Bool)` is `Undecidable`, and `undecidablePCP b0 b1 hne`, which transports it along `AlphabetLift.pcpAlphabetLift` to any alphabet with two distinct letters `b0` and `b1`. It also collects `not_computablePred_pcp` and `not_machineDecidable_pcp`: over any nontrivial `Primcodable` alphabet, PCP is not a computable predicate, and no Turing machine decides it under any computable encoding. They follow from `MPCP.MachineLevel.not_computablePred_mpcp` along `mpcpReducesPCP` and `pcpAlphabetLift`, whose functions are primitive recursive (`mpcpToPcp_primrec`, `liftInstance_primrec`).
+`Undecidable.lean` collects `undecidablePCP'`, which states that PCP over the fixed alphabet `Ext (Alpha ℕ Bool)` is `Undecidable`, and `undecidablePCP b0 b1 hne`, which transports it along `AlphabetLift.pcpAlphabetLift` to any alphabet with two distinct letters `b0` and `b1`. `MachineLevel.lean` collects `not_computablePred_pcp` and `not_machineDecidable_pcp`: over any nontrivial `Primcodable` alphabet, PCP is not a computable predicate, and no Turing machine decides it under any computable encoding. They follow from `MPCP.MachineLevel.not_computablePred_mpcp` along `mpcpReducesPCP` and `pcpAlphabetLift`, whose functions are primitive recursive (`mpcpToPcp_primrec`, `liftInstance_primrec`).

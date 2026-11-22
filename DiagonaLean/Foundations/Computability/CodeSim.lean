@@ -4,7 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.HaltSearch
-import DiagonaLean.Foundations.Computability.PrimDef
+import DiagonaLean.Foundations.Computability.DerivePrimrec
 
 @[expose] public section
 
@@ -348,7 +348,8 @@ theorem tokens_prim : Primrec tokens := by
   unfold tokens; fun_prop
 
 /-- `tokens` of a primitive recursive function is primitive recursive. -/
-@[fun_prop] theorem prim_tokens {f : α → List Bool} (hf : Primrec f) : Primrec fun x => tokens (f x) :=
+@[fun_prop] theorem prim_tokens {f : α → List Bool} (hf : Primrec f) :
+    Primrec fun x => tokens (f x) :=
   tokens_prim.comp hf
 
 end Prim

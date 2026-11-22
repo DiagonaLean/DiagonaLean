@@ -4,7 +4,6 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Codes.Basic
-import Mathlib.Data.Set.Function
 
 @[expose] public section
 
@@ -15,11 +14,11 @@ start pair `s` (empty for PCP, the start tile for MPCP), whose top and bottom co
 `IsCorr P s A`. They are stated here on pairs of words, so that `PCP/` and `MPCP/` instantiate them
 with their tiles.
 
-Encoding every word by a code `c` maps correspondences to correspondences (`IsCorr.encode`).
-Conversely, every correspondence of the encoded instance is the image of a correspondence
-(`IsCorr.of_encode`), as soon as `encode c` is injective on the words over the letters of the
-instance (`InjOnLetters`). A code is injective on all words; `PCP.AlphabetLift`'s fixed-width
-code is injective only on the letters of the instance it was built for.
+Encoding every word by a letterwise code `c` maps correspondences to correspondences
+(`IsCorr.encode`). Conversely, when `c` is a code, every correspondence of the encoded instance is
+the image of a correspondence (`IsCorr.of_encode`). A code that is injective only on the letters
+of one instance, such as the `localCode` of `PCP.AlphabetLift`, is handled by
+`Foundations.Codes.CodeFunctor.natural_on`, which moves the instance to the subtype of its letters.
 -/
 
 namespace DiagonaLean.Foundations.Codes
@@ -36,47 +35,25 @@ def tops (A : List (List α × List α)) : List α := (A.map Prod.fst).flatten
 /-- The concatenation of the bottom words of a sequence of pairs. -/
 def bots (A : List (List α × List α)) : List α := (A.map Prod.snd).flatten
 
-/-- The letters occurring in a list of pairs. -/
-def letters (P : List (List α × List α)) : List α := P.flatMap fun t => t.1 ++ t.2
-
 /-- `A` is drawn from `P` and, after the start pair `s`, its tops and bottoms agree. -/
 def IsCorr (P : List (List α × List α)) (s : List α × List α) (A : List (List α × List α)) :
     Prop :=
   (∀ t ∈ A, t ∈ P) ∧ s.1 ++ tops A = s.2 ++ bots A
 
-/-- `encode c` is injective on the words over the letters of `P`. -/
-def InjOnLetters (c : α → List β) (P : List (List α × List α)) : Prop :=
-  Set.InjOn (encode c) {w | ∀ a ∈ w, a ∈ letters P}
-
-theorem IsCode.injOnLetters {c : α → List β} (hc : IsCode c) (P : List (List α × List α)) :
-    InjOnLetters c P :=
-  hc.injOn
-
+/-- Encoding a concatenation of words is concatenating their encodings. -/
 theorem encode_flatten (c : α → List β) (L : List (List α)) :
     encode c L.flatten = (L.map (encode c)).flatten := by
   induction L <;> simp_all
 
+/-- The tops of an encoded sequence are the encoding of its tops. -/
 @[simp] theorem tops_map_encodePair (c : α → List β) (A : List (List α × List α)) :
     tops (A.map (encodePair c)) = encode c (tops A) := by
   simp [tops, encode_flatten, encodePair, Function.comp_def]
 
+/-- The bottoms of an encoded sequence are the encoding of its bottoms. -/
 @[simp] theorem bots_map_encodePair (c : α → List β) (A : List (List α × List α)) :
     bots (A.map (encodePair c)) = encode c (bots A) := by
   simp [bots, encode_flatten, encodePair, Function.comp_def]
-
-/-- The letters of the tops of a sequence drawn from `P` are letters of `P`. -/
-theorem mem_letters_of_mem_tops {P A : List (List α × List α)} (hA : ∀ t ∈ A, t ∈ P) {a : α}
-    (ha : a ∈ tops A) : a ∈ letters P := by
-  obtain ⟨l, hl, hal⟩ := List.mem_flatten.1 ha
-  obtain ⟨t, ht, rfl⟩ := List.mem_map.1 hl
-  exact List.mem_flatMap.2 ⟨t, hA t ht, List.mem_append_left _ hal⟩
-
-/-- The letters of the bottoms of a sequence drawn from `P` are letters of `P`. -/
-theorem mem_letters_of_mem_bots {P A : List (List α × List α)} (hA : ∀ t ∈ A, t ∈ P) {a : α}
-    (ha : a ∈ bots A) : a ∈ letters P := by
-  obtain ⟨l, hl, hal⟩ := List.mem_flatten.1 ha
-  obtain ⟨t, ht, rfl⟩ := List.mem_map.1 hl
-  exact List.mem_flatMap.2 ⟨t, hA t ht, List.mem_append_right _ hal⟩
 
 /-- Encoding maps correspondences to correspondences. -/
 theorem IsCorr.encode {c : α → List β} {P A : List (List α × List α)} {s : List α × List α}
@@ -96,26 +73,16 @@ theorem exists_map_eq_of_forall_mem_map {X Y : Type} {f : X → Y} {P : List X} 
     obtain ⟨A, hA, rfl⟩ := ih fun y hy => h y (by simp [hy])
     exact ⟨x :: A, by simp_all, rfl⟩
 
-/-- Every correspondence of the encoded instance is the image of a correspondence, when the code
-is injective on the words over the letters of the instance and its start pair. -/
-theorem IsCorr.of_encode {c : α → List β} {P : List (List α × List α)} {s : List α × List α}
-    (hc : InjOnLetters c (s :: P)) {B : List (List β × List β)}
+/-- If `c` is a code, every correspondence of the encoded instance is the image of a
+correspondence. -/
+theorem IsCorr.of_encode {c : α → List β} (hc : IsCode c) {P : List (List α × List α)}
+    {s : List α × List α} {B : List (List β × List β)}
     (h : IsCorr (P.map (encodePair c)) (encodePair c s) B) :
     ∃ A : List (List α × List α), B = A.map (encodePair c) ∧ IsCorr P s A := by
   obtain ⟨A, hA, rfl⟩ := exists_map_eq_of_forall_mem_map h.1
-  have hA' : ∀ t ∈ A, t ∈ s :: P := fun t ht => List.mem_cons_of_mem _ (hA t ht)
-  have hs : ∀ t ∈ [s], t ∈ s :: P := by simp
-  refine ⟨A, rfl, hA, hc ?_ ?_ ?_⟩
-  · intro a ha
-    rcases List.mem_append.1 ha with ha | ha
-    · exact mem_letters_of_mem_tops hs (by simpa [tops] using ha)
-    · exact mem_letters_of_mem_tops hA' ha
-  · intro a ha
-    rcases List.mem_append.1 ha with ha | ha
-    · exact mem_letters_of_mem_bots hs (by simpa [bots] using ha)
-    · exact mem_letters_of_mem_bots hA' ha
-  · have := h.2
-    simp only [tops_map_encodePair, bots_map_encodePair, encodePair, ← encode_append] at this
-    exact this
+  refine ⟨A, rfl, hA, hc ?_⟩
+  have := h.2
+  simp only [tops_map_encodePair, bots_map_encodePair, encodePair, ← encode_append] at this
+  exact this
 
 end DiagonaLean.Foundations.Codes

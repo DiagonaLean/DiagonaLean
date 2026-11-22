@@ -15,7 +15,7 @@ configurations as strings (MPCP, string rewriting) assume both, and `Normalize.n
 machine over `Bool` into one satisfying them (`normTM_noBlankWrites`, `normTM_noLeftBoundary`).
 -/
 
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.Foundations.Computability.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -34,4 +34,4 @@ def NoLeftBoundary (tm : SingleTapeTM Symbol) (w : List Symbol) : Prop :=
       cfg = ⟨some q, t⟩ → t.left.toList = [] →
       (tm.tr q t.head).1.movement ≠ some Turing.Dir.left
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.Foundations.Computability.Normalize

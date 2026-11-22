@@ -1,6 +1,6 @@
 # Automating computability proofs
 
-A plan for proving `Primrec`, `Computable` and machine-level computability automatically, for functions on arbitrary inductive types. Written on 2026-11-18, last updated 2026-11-19; update it as milestones land. M1–M8 and M13 for nested `List T` are done, and M12 is decided (see *Milestones*); what remains is in *What's next*.
+A plan for proving `Primrec`, `Computable` and machine-level computability automatically, for functions on arbitrary inductive types. Written on 2026-11-18, last updated 2026-11-22; update it as milestones land. M1–M8 and M13 for nested `List T` are done, and M12 is decided (see *Milestones*). `derive_primrec` states and proves the `fun_prop` lemma of a definition, and every reduction in the library from PCP onward, together with Halt → MPCP, is primitive recursive (see *Applied*). What remains is in *What's next*.
 
 A guided tour of what the automation proves, one tactic call per function, is in `examples/Automation.lean` at the repository root (run it with `lake env lean examples/Automation.lean`).
 
@@ -104,6 +104,7 @@ With this layer, `RExp`, `SKI` and `Term` get real `Primcodable` instances, and 
   * *Coverage (2026-11-19):* integer arithmetic (`IntPrim.lean`: `+`, `-`, `*`, negation, powers, `≤`, `<`, `natAbs`, `toNat`, casts; Mathlib has none of these); about 45 further list, option, `Bool` and `ℕ` operations in `Prim.lean` (`take`, `drop`, `filter`, `find?`, `count`, `sum`, `zip`, `zipWith`, `zipIdx`, `erase`, `insert`, `×ˢ`, `getLast?`, `min?`, `max?`, `gcd`, `lcm`, `Nat.log`, `sqrt`, bounded `∀`/`∃`), with predicates that may depend on the outer variable; and vectors and matrices (`MatrixPrim.lean`: `![…]`, `!![…]`, `Matrix.of`, `List.ofFn`, and `fun i => …` over `Fin n`), so a matrix with primitive recursive entries needs no split into entries.
   * *More `irreducible` pitfalls:* the λ-calculus proof search needs `attribute [local irreducible] results` for its `stepS` lemma, for the same reason as `Nat.pair`.
   * *Upstream:* Mathlib PR #36893 (a draft with merge conflicts) makes `Primrec` and `Computable` `fun_prop` properties for `Primrec/Basic.lean` only.
+* **`derive_primrec` for non-recursive definitions** (`DerivePrimrec.lean`, PR #45). `derive_primrec f` states the uncurried lemma `Primrec fun x : A₁ × A₂ => f x.1 x.2`, proves it by `unfold f; fun_prop`, and registers it as `f_prim` with `@[fun_prop]`. It is a command, permitted by name in `Synthetic/MetaprogramCheck.lean` (CONTRIBUTING convention 9). *Function arguments (PR #54):* an explicit argument `c : A → B` is not `Primcodable`, so the lemma is then stated in compositional form over a parameter type, with `c : X → A → B` and the hypothesis `Primrec fun p : X × A => c p.1 p.2`. An argument whose domain is a function is rejected with a message. The machine-level MPCP and SemiThue results use it for every step of the tile construction (`MPCP/MachineLevel.lean`).
 * **`primrec_rec` for structural recursion.** A tactic, not a command. `scripts/CheckMetaprograms.lean` forbids metaprograms that add declarations, and a tactic adds none: you write `@[fun_prop] theorem f_primrec : Primrec f := by primrec_rec`.
   * *Done for `ℕ` and `List` (M3, extended in `232cf0f`):* recursion on the last argument, with any number of parameters (packed into a product in the goal when there are two or more). On `ℕ` it also handles course-of-values recursion (`f (n / 2)`, `f (n - 3)`) and nested patterns (`f 0`, `f 1`, `f (n + 2)`), through `primrec₂_of_nat_cov_eqns`, built on `Primrec.nat_strong_rec`. Still unsupported: overlapping patterns, nested recursive calls (`f (f n)`), non-structural recursion on lists, and recursion on an argument other than the last. *Added 2026-11-19:* polymorphic definitions (type and instance arguments stay fixed), and recursion on the first argument of a two-argument function on `ℕ` while the second argument changes (`f (n+1) a = … f n (h n a) …`, through `primrec₂_of_nat_param_eqns`).
   * *Finding:* the library's own recursive `Primrec` proofs are not pattern-matching recursion. They use `Nat.iterate` and folds explicitly, so it was `fun_prop` lemmas for those, not `primrec_rec`, that converted the benchmark.
@@ -191,54 +192,32 @@ and close the side goals with the layers above. With layer 2, `c₁` and `c₂` 
 
 ## What's next
 
-### Next steps, in order (2026-11-19)
+### Next steps, in order (2026-11-22)
 
-**Immediate**
-
-1. Check CI on #39 and #40.
-
-**The PR stack** (needs the reviewers)
-
-3. Get #35 reviewed, and settle its `bitsPair` overlap with #37.
-4. Merge in order: #35, #36, #38, #39, #40. Split #38 if its size stalls review.
-
-**Applied work: new results**
-
-5. **Halt → MPCP/PCP at machine level** (recommended next feature). It gives the PCP chain, and MatMort with it, machine-level undecidability like KA, SKI and β: build the tiles from the machine's code as `dataC` does, prove that primitive recursive with `fun_prop`/`primrec_rec`, and close with `tm_computes`.
-6. **A concrete code for grammars** (rules over numbered nonterminals), which unblocks PCP → EmpCFG and PCP → AmbigCFG.
+The PR stack (#35–#40) and the applied work it led to (#41–#54) are merged. The former items "Halt → MPCP/PCP at machine level" and "a concrete code for grammars" are done: see *Applied*.
 
 **Automation gaps**
 
-7. `List (List T)` fields, and other containers (`T × T` in a list).
-8. Mutual inductive families: the many-sorted design under M13.
-9. `primrec_rec`: recursion through a `filter`; `foldr`/`foldl` directly over a list field; recursion on an argument other than the last; two lists at once (`zipWith`-shaped); calls on grandchildren and deeper.
-10. A `fun_prop` hook for `primrec_rec`, so a recursive definition needs no separately stated lemma.
-11. When a function on a right-hand side has no `fun_prop` lemma, `primrec_rec` runs into a heartbeat timeout instead of failing with a clear message.
-12. Switch `SKI` to `derive_primcodable`, as `RExp` and `Term` were; its `primrec_of_eqns` is still hand-written.
+1. `List (List T)` fields, and other containers (`T × T` in a list).
+2. Mutual inductive families: the many-sorted design under M13.
+3. `primrec_rec`: recursion through a `filter`; `foldr`/`foldl` directly over a list field; recursion on an argument other than the last; two lists at once (`zipWith`-shaped); calls on grandchildren and deeper.
+4. A `fun_prop` hook for `primrec_rec`, so a recursive definition needs no separately stated lemma.
+5. When a function on a right-hand side has no `fun_prop` lemma, `primrec_rec` runs into a heartbeat timeout instead of failing with a clear message.
+6. Switch `SKI` to `derive_primcodable`, as `RExp` and `Term` were; its `primrec_of_eqns` is still hand-written.
 
 **Longer term**
 
-13. M9: offer `fun_prop` for `Primrec`/`Computable` and Theorems A and B to Mathlib.
-14. M10 and M11: see *Long term* below for how hard they are.
-15. Option B, a verified compiler to Cslib's `MultiTapeTM` with step counts, only if running-time bounds become a goal (see M12).
+7. M9: offer `fun_prop` for `Primrec`/`Computable` and Theorems A and B to Mathlib.
+8. M10 and M11: see *Long term* below for how hard they are.
+9. Option B, a verified compiler to Cslib's `MultiTapeTM` with step counts, only if running-time bounds become a goal (see M12).
 
 ### Where the work is
 
-| PR | Contents | Base | State (2026-11-19) |
-|---|---|---|---|
-| #35 | `Undecidable` as data, the reduction check, the KA paper, the SKI/β merge | `main` | Review requested from Aalok |
-| #36 | `prim` → `fun_prop` (M1) | #35's branch | Waiting for #35 |
-| #38 | Everything else here: M2–M8, M3b, paramorphisms, `derive_primcodable` | #36's branch | CI green on `6af24df`; later commits pushed |
-| #39 | M13 for nested types, the M12 decision, this file (`feat/nested-primcodable`) | #38's branch | Opened 2026-11-19 |
-| #40 | Universe-polymorphic `derive_primcodable`, `RExp` and `Term` derived, nested paramorphisms, `Option T` fields, examples, README tactics table, `reduce_from_pcp` (`feat/nested-containers`) | #39's branch | Opened 2026-11-19 |
-| #37 (Aalok) | Moves `bitsPair` to `Foundations/Computability`; SKI/β problems via `Foundations` relations | `main` | Overlaps #35 (same `bitsPair` move); whichever merges second needs a small conflict fix |
+Everything above is on `main`. #35–#40, #37 included, merged on 2026-11-19. Later PRs: #44 (machine-level MPCP, PCP, MatMort), #45 (`derive_primrec`), #46 (grammar codes; machine-level EmpCFG, AmbigCFG), #47 (proof systems checked by a stack machine, `StackProof.lean`), #48 (SemiThue, GrammarMem), #49–#51 (refactors), #52–#54 (alphabet lifts through `Foundations/Codes`).
 
+### 1. Get the stack reviewed and merged
 
-### 1. Get the stack reviewed and merged (no new code)
-
-* Merge order: #35, then #36, then #38, then #39. GitHub retargets each stacked PR when its base merges.
-* Settle the #35 / #37 overlap with Aalok first.
-* #38 is large. If review stalls, split it: (a) tactics (`fun_prop` for `Computable`, `primrec_rec`, `tm_computer`); (b) Theorems A and B (`PolyTree.lean`, `TaggedCode.lean`); (c) the `Primcodable` files for `RExp`, `SKI`, `Term`; (d) `derive_primcodable`, which carries the policy change in `scripts/CheckMetaprograms.lean` and deserves its own review.
+Done.
 
 ### 2. M13: nested and mutual types
 
@@ -299,8 +278,9 @@ Offer `fun_prop` for `Primrec` and `Computable`, and Theorems A and B, to Mathli
 | MPCP → PCP | `mpcpToPcp_primrec` (`PCP/Primrec.lean`) | **Done** (`252d2da`) |
 | PCP alphabet lift | `liftInstance_primrec`, `pcpAlphabetLift_primrec` | **Done** (`252d2da`, `376ac50`). Since 2026-11-19 `hashL` and `hashR` are proved by a bare `primrec_rec`, with no hand-written rewrite lemmas; since 2026-11-22 the lift is the unary code of the letters used (`localCode`), and `natToBits` is gone |
 | PCP → MatMort | `matImage_primrec`, `pcpReducesMatMort_primrec` (`MatMort/Primrec.lean`), with `Finset.primcodable` (`FinsetPrim.lean`) | **Done** (`376ac50`). Since 2026-11-19 the matrix of a pair of words is `unfold …; fun_prop`, through `IntPrim` and `MatrixPrim`; no `ℕ` detour, no split into entries |
-| PCP → EmpCFG, AmbigCFG | — | Blocked: `ContextFreeGrammar` has a field `NT : Type`, so grammars are not `Primcodable`; needs a concrete code for grammars (rules over numbered nonterminals). For AmbigCFG the output type also depends on the input (`Fin P.length`) |
-| Halt → MPCP / PCP | — | A machine is not a `Primcodable` value; the route is the KA one: build the tiles from the machine's code (as `dataC` does) and use `tm_computes`. Largest of these, and the one that gives the PCP chain machine-level results |
+| PCP → EmpCFG, AmbigCFG | `empCode_prim` (`EmpCFG/MachineLevel.lean`), `ambCode_prim` (`AmbigCFG/MachineLevel.lean`) | **Done** (#46). The reductions go to grammar codes (`Foundations/Grammar/Code.lean`: rules over numbered nonterminals), which are `Primcodable`; `ContextFreeGrammar`, whose field `NT : Type` blocks this, is reached through `GrammarCode.toCFG` |
+| Halt → MPCP / PCP | `instC_prim` (`MPCP/MachineLevel.lean`) | **Done** (#44). The tiles are built from the machine's code, each step by `derive_primrec`, and `not_computablePred_of_selfHalt` (`MachineBridge.lean`) closes the argument; PCP and MatMort follow through the reductions above |
+| Halt → SemiThue, GrammarMem | `SemiThue/MachineLevel.lean`, `GrammarMem/MachineLevel.lean` | **Done** (#48), from the MPCP tiles |
 | Halt → KA, SKI, β | `tm_computer` / `tm_computes` | Done earlier, at machine level |
 
 ### 5. Smaller items

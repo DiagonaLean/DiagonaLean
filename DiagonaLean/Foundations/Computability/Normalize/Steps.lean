@@ -14,7 +14,7 @@ configuration satisfying the matching instance of the simulation invariant `InvA
 `step_start`, `step_chkR_marker` and `step_sim_right_R`. `normTM_step` unfolds one step.
 -/
 
-namespace DiagonaLean.Foundations.Normalize
+namespace DiagonaLean.Foundations.Computability.Normalize
 
 open Cslib.Turing SingleTapeTM
 
@@ -223,4 +223,4 @@ theorem step_sim_left_L {wr : Option Bool} {q₂ : tm.State} (hi : i < 0)
   · have := ((h.write wr).moveRight).tm_moveLeft
     rwa [show fold i + 1 = fold (i - 1) - 1 by rw [fold_pred_of_neg hi]; ring] at this
 
-end DiagonaLean.Foundations.Normalize
+end DiagonaLean.Foundations.Computability.Normalize
