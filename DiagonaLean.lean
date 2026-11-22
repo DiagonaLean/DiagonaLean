@@ -122,6 +122,7 @@ import DiagonaLean.Foundations.Computability.ProofRace
 import DiagonaLean.Foundations.Computability.OutputSearch
 import DiagonaLean.Foundations.Computability.MachineBridge
 import DiagonaLean.Foundations.Computability.ComputableReduction
+import DiagonaLean.Foundations.Computability.HaltCanon
 import DiagonaLean.Foundations.Computability.Normalize.Conditions
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
 import DiagonaLean.Foundations.Computability.Normalize.Cell
