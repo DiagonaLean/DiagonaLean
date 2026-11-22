@@ -124,6 +124,7 @@ import DiagonaLean.Foundations.Computability.OutputSearch
 import DiagonaLean.Foundations.Computability.MachineBridge
 import DiagonaLean.Foundations.Computability.ComputableReduction
 import DiagonaLean.Foundations.Computability.HaltCanon
+import DiagonaLean.Foundations.Computability.ReduceFrom
 import DiagonaLean.Foundations.Computability.Normalize.Conditions
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
 import DiagonaLean.Foundations.Computability.Normalize.Cell
@@ -144,6 +145,7 @@ import DiagonaLean.Foundations.Codes.Correspondence
 import DiagonaLean.Foundations.Codes.Rewriting
 import DiagonaLean.Foundations.Codes.Grammar
 import DiagonaLean.Foundations.Codes.Functor
+import DiagonaLean.Foundations.Codes.ComputableLift
 import DiagonaLean.Foundations.Codes.Tactic
 
 import DiagonaLean.Foundations.CombinatoryLogic.Code
