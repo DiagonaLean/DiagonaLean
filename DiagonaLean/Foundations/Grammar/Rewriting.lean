@@ -74,6 +74,55 @@ theorem Derives.append {u v u' v' : List T} (h : R.Derives u v) (h' : R.Derives 
 theorem Derives.rule {lr : List T × List T} (h : lr ∈ R) : R.Derives lr.1 lr.2 :=
   .single ⟨lr, h, [], [], by simp, by simp⟩
 
+/-- Derivability depends only on the set of rules. -/
+theorem derives_congr {R' : SRS T} (h : ∀ lr, lr ∈ R ↔ lr ∈ R') (u v : List T) :
+    R.Derives u v ↔ R'.Derives u v := by
+  have : R.Step = R'.Step := by
+    funext u v
+    simp only [SRS.Step, h]
+  rw [SRS.Derives, SRS.Derives, this]
+
+/-- Renaming the letters of the rules by `f`. -/
+def mapRules {T' : Type} (f : T → T') (R : SRS T) : SRS T' :=
+  R.map fun lr => (lr.1.map f, lr.2.map f)
+
+variable {T' : Type} {f : T → T'}
+
+theorem step_map {u v : List T} (h : R.Step u v) : (R.mapRules f).Step (u.map f) (v.map f) := by
+  obtain ⟨lr, hlr, p, q, rfl, rfl⟩ := h
+  exact ⟨_, List.mem_map_of_mem hlr, p.map f, q.map f, by simp, by simp⟩
+
+/-- A step of the renamed system from a renamed string is a renamed step, for injective `f`. -/
+theorem step_of_map (hf : Function.Injective f) {u : List T} {v' : List T'}
+    (h : (R.mapRules f).Step (u.map f) v') : ∃ v, v' = v.map f ∧ R.Step u v := by
+  obtain ⟨_, hlr', p', q', hu, rfl⟩ := h
+  obtain ⟨lr, hlr, rfl⟩ := List.mem_map.1 hlr'
+  obtain ⟨p, mq, rfl, hp, hmq⟩ := List.map_eq_append_iff.1 (by simpa [List.append_assoc] using hu)
+  obtain ⟨m, q, rfl, hm, hq⟩ := List.map_eq_append_iff.1 hmq
+  obtain rfl := List.map_injective_iff.2 hf hm
+  exact ⟨p ++ lr.2 ++ q, by simp [hp, hq], lr, hlr, p, q, by simp, rfl⟩
+
+theorem derives_map {u v : List T} (h : R.Derives u v) :
+    (R.mapRules f).Derives (u.map f) (v.map f) := by
+  induction h with
+  | refl => exact .refl
+  | tail _ hs ih => exact ih.tail (step_map hs)
+
+/-- **Renaming letters injectively keeps derivability.** -/
+theorem derives_map_iff (hf : Function.Injective f) (u v : List T) :
+    (R.mapRules f).Derives (u.map f) (v.map f) ↔ R.Derives u v := by
+  refine ⟨fun h => ?_, derives_map⟩
+  have key : ∀ {v'}, (R.mapRules f).Derives (u.map f) v' → ∃ v, v' = v.map f ∧ R.Derives u v := by
+    intro v' h
+    induction h with
+    | refl => exact ⟨u, rfl, .refl⟩
+    | tail _ hs ih =>
+      obtain ⟨b, rfl, hb⟩ := ih
+      obtain ⟨c, rfl, hc⟩ := step_of_map hf hs
+      exact ⟨c, rfl, hb.tail hc⟩
+  obtain ⟨v', hv, hd⟩ := key h
+  rwa [List.map_injective_iff.2 hf hv]
+
 end SRS
 
 /-! ### The stack machine -/
