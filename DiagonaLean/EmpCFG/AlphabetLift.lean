@@ -7,7 +7,7 @@ import DiagonaLean.EmpCFG.Undecidable
 import DiagonaLean.PCP.Primrec
 import DiagonaLean.EmpCFG.MachineLevel
 import DiagonaLean.Foundations.Codes.Grammar
-import DiagonaLean.Foundations.Codes.Functor
+import DiagonaLean.Foundations.Codes.Tactic
 
 @[expose] public section
 
@@ -87,29 +87,25 @@ abbrev empCodeFunctor : CodeFunctor IsCode where
     rw [codeProblem_iff, codeProblem_iff]
     simp only [IntersectionNonempty, toCFG_presEncode hc]
     exact intersection_encode_iff (hc := hc) _ _
+  supp x := presTerminals x.1 ++ presTerminals x.2
+  map_congr x h := Prod.ext (presEncode_congr fun t ht => h t (List.mem_append_left _ ht))
+    (presEncode_congr fun t ht => h t (List.mem_append_right _ ht))
 
-/-- A primitive recursive code acts primitive recursively on pairs of grammar codes. -/
-theorem empCodeFunctor_map_primrec {γ δ : Type} [Primcodable γ] [Primcodable δ] {c : γ → List δ}
-    (hc : Primrec c) : Primrec (empCodeFunctor.map c) := by
-  have hs : Primrec (sumCode (N := ℕ) c) := by
-    unfold sumCode
-    fun_prop
-  show Primrec fun x : CFGCode γ × CFGCode γ => (presEncode c x.1, presEncode c x.2)
-  unfold presEncode
-  fun_prop
+/- Encoding the terminals of a grammar code is primitive recursive, for a code that may depend on
+the input. -/
+derive_primrec sumCode [Primcodable T] [Primcodable β] [Primcodable N]
+derive_primrec presEncode [Primcodable T] [Primcodable β] [Primcodable N]
+derive_primrec presTerminals [Primcodable T] [Primcodable N]
 
 /-- **Non-emptiness of the intersection of two grammar codes is not a computable predicate over
-any nontrivial alphabet**: the lifting of `not_computablePred_empCFGCode` from `Term Bool` along
-`bitCode`. -/
+any nontrivial alphabet**: the lifting of `not_computablePred_empCFGCode` from `Term Bool`. -/
 theorem not_computablePred_empCFGCodeOf [Primcodable α] [Nontrivial α] [DecidableEq α] :
     ¬ ComputablePred fun c : CFGCode α × CFGCode α => IntersectionNonempty c.1.toCFG c.2.toCFG := by
   have h₀ : ¬ ComputablePred (@CodeProblem (Reduction.Term Bool)) := by
     rw [codeProblem_eq]
     exact not_computablePred_empCFGCode (α := Bool)
-  have h := empCodeFunctor.not_computablePred_lift (β := α) (fun hne => (isSync_bitCode hne).isCode)
-    (fun b0 b1 => (empCodeFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp) h₀
-  have h' : ¬ ComputablePred (@CodeProblem α) := h
-  rwa [codeProblem_eq] at h'
+  have h : ¬ ComputablePred (@CodeProblem α) := by code_lift empCodeFunctor from h₀
+  rwa [codeProblem_eq] at h
 
 /-- **No Turing machine decides non-emptiness of the intersection of two grammar codes over any
 nontrivial alphabet**, under any computable encoding. -/
@@ -124,11 +120,7 @@ theorem empCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [N
     [Nontrivial β] [DecidableEq α] [DecidableEq β] :
     ManyOneEquiv (fun c : CFGCode α × CFGCode α => IntersectionNonempty c.1.toCFG c.2.toCFG)
       fun c : CFGCode β × CFGCode β => IntersectionNonempty c.1.toCFG c.2.toCFG := by
-  have h : ManyOneEquiv (@CodeProblem α) (@CodeProblem β) :=
-    empCodeFunctor.manyOneEquiv (fun hne => (isSync_bitCode hne).isCode)
-      (fun hne => (isSync_bitCode hne).isCode)
-      (fun b0 b1 => (empCodeFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
-      (fun b0 b1 => (empCodeFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
+  have h : ManyOneEquiv (@CodeProblem α) (@CodeProblem β) := by code_lift empCodeFunctor
   rwa [codeProblem_eq, codeProblem_eq] at h
 
 end DiagonaLean.EmpCFG.MachineLevel

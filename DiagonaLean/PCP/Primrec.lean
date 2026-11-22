@@ -45,38 +45,19 @@ theorem mpcpToPcp_primrec : Primrec₂ (mpcpToPcp (α := α)) := by
 
 end Reduction
 
-section Codes
-
-variable {α β γ : Type} [Primcodable α] [Primcodable β] [Primcodable γ] {c : α → List β}
-
-/-- Encoding a tile is primitive recursive in it, for a primitive recursive code. -/
-@[fun_prop] theorem prim_tileEncode (hc : Primrec c) {f : γ → Tile α} (hf : Primrec f) :
-    Primrec fun x => (f x).encode c := by
-  unfold Tile.encode
-  fun_prop
-
-/-- Encoding a stack is primitive recursive in it, for a primitive recursive code. -/
-@[fun_prop] theorem prim_stackEncode (hc : Primrec c) {f : γ → Stack α} (hf : Primrec f) :
-    Primrec fun x => (f x).encode c := by
-  unfold Stack.encode
-  have : Primrec (Tile.encode c) := prim_tileEncode hc Primrec.id
-  fun_prop
-
-end Codes
+/- Encoding tiles and stacks is primitive recursive, for a code that may depend on the input. -/
+derive_primrec Tile.encode [Primcodable α] [Primcodable β]
+derive_primrec Stack.encode [Primcodable α] [Primcodable β]
+derive_primrec Stack.letters [Primcodable α]
 
 namespace AlphabetLift
-
-theorem natToBits_primrec : Primrec₂ natToBits := by primrec_rec
-
-@[fun_prop] theorem prim_natToBits {β : Type} [Primcodable β] {f g : β → ℕ} (hf : Primrec f)
-    (hg : Primrec g) : Primrec fun x => natToBits (f x) (g x) := natToBits_primrec.comp hf hg
 
 variable {γ₁ γ₂ : Type} [DecidableEq γ₁] [Primcodable γ₁] [Primcodable γ₂]
 
 /-- **The change of alphabet is primitive recursive**, for fixed target letters `b0`, `b1`. -/
 theorem liftInstance_primrec (b0 b1 : γ₂) :
     Primrec (liftInstance (γ₁ := γ₁) b0 b1) := by
-  unfold liftInstance liftTile liftWord symbolWord symbolBits widthFor symbolsUsed bitTo
+  unfold liftInstance
   fun_prop
 
 /-- The function of the reduction `pcpAlphabetLift` is primitive recursive. -/

@@ -117,6 +117,9 @@ theorem isSync_unary : IsSync unary where
     obtain ⟨w₃, rfl, rfl⟩ := encode_unary_eq_append (append_cancel_left h)
     exact ⟨w₁, w₃, by simp, rfl, rfl⟩
 
+theorem isSync_unit : IsSync (unit (α := α)) :=
+  ⟨isCode_unit, fun w l p q _ h => ⟨p, q, by simpa using h, by simp, by simp⟩⟩
+
 /-- Precomposing a synchronizing code with an injective renaming of letters gives a synchronizing
 code. -/
 theorem IsSync.comp {β γ : Type} {c : β → List γ} (hc : IsSync c) {f : α → β}

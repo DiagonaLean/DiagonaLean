@@ -5,7 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.SemiThue.Undecidable
 import DiagonaLean.SemiThue.MachineLevel
-import DiagonaLean.Foundations.Codes.Functor
+import DiagonaLean.Foundations.Codes.Tactic
 import DiagonaLean.Foundations.Codes.Rewriting
 
 @[expose] public section
@@ -49,6 +49,10 @@ abbrev semiThueFunctor : CodeFunctor IsSync where
   natural hc x := by
     rw [DecisionProblemPos, DecisionProblemPos, lhs_ne_encode_iff hc.isCode]
     exact and_congr_right fun h => derives_encode_iff hc h
+  supp x := SRS.letters x.1 ++ x.2.1 ++ x.2.2
+  map_congr x h := Prod.ext (SRS.encode_congr fun a ha => h a (by simp [ha]))
+    (Prod.ext (encode_congr fun a ha => h a (by simp [ha]))
+      (encode_congr fun a ha => h a (by simp [ha])))
 
 /-- Back to the plain word problem: a system with an empty left side goes to `[a] ⇒* []` in the
 empty system, which has no solution. -/
@@ -83,11 +87,10 @@ def haltReducesSemiThuePos :
     (halt_reducesto_semiThue_spec p).trans (and_iff_right (haltToSemiThue_lhs_ne p)).symm⟩
 
 /-- **The restricted word problem over every alphabet `α` with two distinct letters is
-`Undecidable`**: the lifting along `bitCode`. -/
+`Undecidable`**: the lifting of `Foundations.Codes.CodeFunctor.undecidableOf`. -/
 def undecidableSemiThuePosOf (b0 b1 : α) (hne : b0 ≠ b1) :
-    Undecidable (@DecisionProblemPos α) :=
-  semiThueFunctor.undecidableOf (α := Alpha ℕ Foundations.Normalize.Sym2) haltReducesSemiThuePos
-    b0 b1 (isSync_bitCode hne)
+    Undecidable (@DecisionProblemPos α) := by
+  code_lift semiThueFunctor from haltReducesSemiThuePos
 
 /-- **The word problem for string rewriting systems is `Undecidable` over any alphabet `α` with two
 distinct letters `b0`, `b1`.** -/
@@ -113,21 +116,14 @@ theorem not_computablePred_semiThuePos :
     (by have := toEmptyCode_prim; exact Primrec.to_comp (by fun_prop))
     fun M => (selfHalt_iff_toEmpty M).trans (and_iff_right (codeRules_lhs_ne _)).symm
 
-/-- A primitive recursive code acts primitive recursively on rewriting instances. -/
-theorem semiThueFunctor_map_primrec {γ δ : Type} [Primcodable γ] [Primcodable δ]
-    {c : γ → List δ} (hc : Primrec c) : Primrec (semiThueFunctor.map c) := by
-  show Primrec fun x : SRS γ × List γ × List γ =>
-    (SRS.encode c x.1, encode c x.2.1, encode c x.2.2)
-  unfold SRS.encode
-  fun_prop
+/- Encoding a system is primitive recursive, for a code that may depend on the input. -/
+derive_primrec SRS.encode [Primcodable α] [Primcodable β]
+derive_primrec SRS.letters [Primcodable α]
 
 /-- **The restricted word problem is not a computable predicate over any nontrivial alphabet.** -/
 theorem not_computablePred_semiThuePosOf [Primcodable α] [Nontrivial α] :
-    ¬ ComputablePred (@DecisionProblemPos α) :=
-  semiThueFunctor.not_computablePred_lift (α := Alpha ℕ Foundations.Normalize.Sym2)
-    (fun hne => isSync_bitCode hne)
-    (fun b0 b1 => (semiThueFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
-    not_computablePred_semiThuePos
+    ¬ ComputablePred (@DecisionProblemPos α) := by
+  code_lift semiThueFunctor from not_computablePred_semiThuePos
 
 /-- **The word problem for string rewriting systems is not a computable predicate over any
 nontrivial alphabet.** -/
@@ -150,10 +146,8 @@ theorem not_machineDecidable_semiThueOf [Primcodable α] [Nontrivial α]
 /-- **Alphabet invariance of the restricted word problem**: over any two nontrivial `Primcodable`
 alphabets, it is many-one equivalent. -/
 theorem semiThuePos_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
-    [Nontrivial β] : ManyOneEquiv (@DecisionProblemPos α) (@DecisionProblemPos β) :=
-  semiThueFunctor.manyOneEquiv (fun hne => isSync_bitCode hne) (fun hne => isSync_bitCode hne)
-    (fun b0 b1 => (semiThueFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
-    (fun b0 b1 => (semiThueFunctor_map_primrec (bitCode_primrec b0 b1)).to_comp)
+    [Nontrivial β] : ManyOneEquiv (@DecisionProblemPos α) (@DecisionProblemPos β) := by
+  code_lift semiThueFunctor
 
 end MachineLevel
 
