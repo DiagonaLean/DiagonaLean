@@ -9,7 +9,7 @@ import DiagonaLean.SKIConv.Reductions.Halt_to_SKIConv
 
 /-! # Undecidability of SKI convertibility
 
-Convertibility of SKI terms is synthetically halting-hard (`undecidableSKIConv`), given the
+Convertibility of SKI terms is synthetically halting-hard (`SKIConv.synthFromHalt`), given the
 reduction's constants: a universal code `u` and the race program `C` for its SKI term `u.toSKI`,
 from the recursion theorem. They are only known to exist, so `C` and the proofs `hu : IsUniversal u`
 and `hC : RaceProg u.toSKI C` are arguments, and `u` is implicit. No Turing machine decides it under
@@ -36,9 +36,13 @@ open Cslib SKI Nat.Partrec DiagonaLean.Foundations.CombinatoryLogic
 (`exists_isUniversal`) and the race program `C` for `u.toSKI` (`exists_raceProg`). These finite
 constants are only known to exist, so they are arguments rather than computed here. The statement
 without them is `not_machineDecidable_skiConv`. -/
-def undecidableSKIConv {u : Code} (C : Code) (hu : IsUniversal u) (hC : RaceProg u.toSKI C) :
-    SynthHaltReduction SKIConvProblem :=
-  haltReducesSKIConv u.toSKI C hu (Code.toSKI_correct u) hC
+def _root_.DiagonaLean.SKIConv.synthFromHalt {u : Code} (C : Code) (hu : IsUniversal u)
+    (hC : RaceProg u.toSKI C) : SynthHaltReduction SKIConvProblem :=
+  SKIConv.synthFromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC
+
+/-- The former name of `SKIConv.synthFromHalt`. -/
+@[deprecated DiagonaLean.SKIConv.synthFromHalt (since := "2026-11-23")]
+abbrev undecidableSKIConv := @DiagonaLean.SKIConv.synthFromHalt
 
 /-- A pair of SKI terms, as the binary digits of the pair of their codes. -/
 def encSKI (i : SKI × SKI) : List Bool := bitsPair (skc i.1) (skc i.2)

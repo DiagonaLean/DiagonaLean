@@ -9,11 +9,11 @@ import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
 
 /-! # Undecidability of β-conversion
 
-β-conversion of λ-terms is synthetically halting-hard (`undecidableBetaConv`), given the reduction's
-constants: a universal code `u` and the race program `C` for its SKI term `u.toSKI`, from the
-recursion theorem. They are only known to exist, so `C` and the proofs `hu : IsUniversal u` and
-`hC : RaceProg u.toSKI C` are arguments, and `u` is implicit. No Turing machine decides it under the
-encoding of a pair of terms as the binary digits of the pair of their codes
+β-conversion of λ-terms is synthetically halting-hard (`BetaConv.synthFromHalt`), given the
+reduction's constants: a universal code `u` and the race program `C` for its SKI term `u.toSKI`,
+from the recursion theorem. They are only known to exist, so `C` and the proofs `hu : IsUniversal u`
+and `hC : RaceProg u.toSKI C` are arguments, and `u` is implicit. No Turing machine decides it under
+the encoding of a pair of terms as the binary digits of the pair of their codes
 (`not_machineDecidable_betaConv`); the encoding is injective (`encBeta_injective`) and follows
 `encNat` in `KAComm/KleeneAlgebra/Race.lean`. It separates the computably inseparable pair
 `SelfOut true`, `SelfOut false`, so no machine decides it on the instances `sepRed U c M` given the
@@ -37,9 +37,14 @@ open Cslib SKI LambdaCalculus.LocallyNameless.Untyped Nat.Partrec
 (`Foundations.CombinatoryLogic.exists_isUniversal`) and the race program `C` for `u.toSKI`
 (`exists_raceProg`). These finite constants are only known to exist, so they are arguments rather
 than computed here. The statement without them is `not_machineDecidable_betaConv`. -/
-def undecidableBetaConv {u : Code} (C : Code) (hu : Foundations.CombinatoryLogic.IsUniversal u)
-    (hC : RaceProg u.toSKI C) : SynthHaltReduction BetaConvProblem :=
-  haltReducesBetaConv u.toSKI C hu (Code.toSKI_correct u) hC
+def _root_.DiagonaLean.BetaConv.synthFromHalt {u : Code} (C : Code)
+    (hu : Foundations.CombinatoryLogic.IsUniversal u) (hC : RaceProg u.toSKI C) :
+    SynthHaltReduction BetaConvProblem :=
+  BetaConv.synthFromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC
+
+/-- The former name of `BetaConv.synthFromHalt`. -/
+@[deprecated DiagonaLean.BetaConv.synthFromHalt (since := "2026-11-23")]
+abbrev undecidableBetaConv := @DiagonaLean.BetaConv.synthFromHalt
 
 /-- A pair of λ-terms, as the binary digits of the pair of their codes. -/
 def encBeta (i : Term ℕ × Term ℕ) : List Bool :=

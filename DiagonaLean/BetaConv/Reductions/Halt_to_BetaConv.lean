@@ -48,10 +48,14 @@ theorem halt_reducesto_betaConv_spec {u : Code} {U : SKI} {C : Code}
   halt_iff_betaConv hu hU hC
 
 /-- `HaltProblem` many-one reduces to β-conversion. -/
-def haltReducesBetaConv {u : Code} (U : SKI) (C : Code)
+def _root_.DiagonaLean.BetaConv.synthFromHaltWith {u : Code} (U : SKI) (C : Code)
     (hu : Foundations.CombinatoryLogic.IsUniversal u) (hU : Computes U u.eval)
     (hC : RaceProg U C) : HaltProblem ⪯_s BetaConvProblem :=
   ⟨reduction U C, halt_reducesto_betaConv_spec hu hU hC⟩
+
+/-- The former name of `BetaConv.synthFromHaltWith`. -/
+@[deprecated DiagonaLean.BetaConv.synthFromHaltWith (since := "2026-11-23")]
+abbrev haltReducesBetaConv := @DiagonaLean.BetaConv.synthFromHaltWith
 
 /-- The separating instance of a machine: the λ-instance of the reader program `c` on the data
 of `M` on its own code, against `tr FF`. -/
