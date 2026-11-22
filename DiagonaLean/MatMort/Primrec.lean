@@ -52,7 +52,7 @@ theorem matImage_eq (K : Stack S23) : matImage K =
   simp [matImage, tileMats, markedW, markedBot, Prod.exists, Bool.exists_bool, and_or_left, exists_or]
 
 /-- **The reduction from PCP to matrix mortality is primitive recursive.** -/
-theorem matImage_primrec : Primrec matImage := by
+@[fun_prop] theorem matImage_primrec : Primrec matImage := by
   have h : Primrec fun K : Stack S23 =>
       ([S, T] ++ K.map (fun tile => stringPairToW (liftS23 tile.top) (liftS23 tile.bot)) ++
         K.map (fun tile => stringPairToW (liftS23 tile.top) (one₁₂₃ :: liftS23 tile.bot))).toFinset := by

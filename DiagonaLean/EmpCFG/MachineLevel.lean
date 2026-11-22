@@ -99,7 +99,7 @@ variable [Primcodable α]
 
 omit [DecidableEq α] in
 /-- **The codes of a PCP instance are primitive recursive in it.** -/
-theorem empCode_prim : Primrec (empCode (α := α)) := by
+@[fun_prop] theorem empCode_prim : Primrec (empCode (α := α)) := by
   unfold empCode genPres
   fun_prop
 

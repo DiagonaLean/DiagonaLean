@@ -485,7 +485,7 @@ theorem pcp_if_exists_prod (K : Stack S23) :
   · exact wordToInt_injective (h₀.trans h₁.symm)
 
 /-- The matrix set of a PCP instance `K`: `S`, `T` and the tile matrices of `K`. -/
-abbrev matImage (K : Stack S23) := {S, T} ∪ tileMats K
+def matImage (K : Stack S23) := {S, T} ∪ tileMats K
 
 /-- If a PCP instance `K` has a solution, then its corresponding set of constructed matrices has a
   mortality solution: mark the first tile of the solution. -/
