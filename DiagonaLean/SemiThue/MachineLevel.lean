@@ -55,6 +55,22 @@ derive_primrec codeRules
 
 derive_primrec toEmptyCode
 
+/-- Every rule of `codeRules` has a non-empty left side. -/
+theorem codeRules_lhs_ne (rows : List (ℕ × ℕ)) : ∀ lr ∈ codeRules rows, lr.1 ≠ [] := by
+  intro lr hlr
+  simp only [codeRules, haltRules, List.mem_append, List.mem_map, List.mem_flatMap, List.mem_cons,
+    List.not_mem_nil, or_false] at hlr
+  rcases hlr with ⟨T, hT, rfl⟩ | ⟨a, -, rfl | rfl⟩ | rfl
+  · simp only [transN, List.mem_flatMap] at hT
+    obtain ⟨_, -, _, -, _, -, hT⟩ := hT
+    unfold trTilesN at hT
+    split_ifs at hT
+    · obtain rfl := List.mem_singleton.1 hT; simp [tileRule]
+    · simp only [List.mem_cons, List.not_mem_nil, or_false] at hT
+      rcases hT with rfl | rfl <;> simp [tileRule]
+    · obtain ⟨_, -, rfl⟩ := List.mem_map.1 hT; simp [tileRule]
+  all_goals simp
+
 section
 
 variable (M : EncodableTM Bool)

@@ -32,6 +32,15 @@ variable {α β : Type}
 def SRS.encode (c : α → List β) (R : SRS α) : SRS β :=
   R.map fun lr => (Codes.encode c lr.1, Codes.encode c lr.2)
 
+@[simp] theorem SRS.encode_unit (R : SRS α) : SRS.encode unit R = R := by
+  simp [SRS.encode]
+
+theorem SRS.encode_kcomp {γ : Type} (c₁ : α → List β) (c₂ : β → List γ) (R : SRS α) :
+    SRS.encode c₂ (SRS.encode c₁ R) = SRS.encode (kcomp c₂ c₁) R := by
+  simp only [SRS.encode, List.map_map]
+  refine List.map_congr_left fun lr _ => ?_
+  simp only [Function.comp_apply, _root_.DiagonaLean.Foundations.Codes.encode_kcomp]
+
 theorem step_encode {c : α → List β} {R : SRS α} {u v : List α} (h : R.Step u v) :
     (SRS.encode c R).Step (encode c u) (encode c v) := by
   obtain ⟨lr, hlr, p, q, rfl, rfl⟩ := h
@@ -70,5 +79,15 @@ theorem derives_encode_iff {c : α → List β} (hc : IsSync c) {R : SRS α}
     induction h with
     | refl => exact .refl
     | tail _ hs ih => exact ih.tail (step_encode hs)
+
+/-- A code sends exactly the empty word to the empty word. -/
+theorem IsCode.encode_ne_nil_iff {c : α → List β} (hc : IsCode c) {l : List α} :
+    encode c l ≠ [] ↔ l ≠ [] :=
+  ⟨fun h hl => h (by rw [hl]; rfl), fun h he => h (hc (he.trans (encode_nil c).symm))⟩
+
+/-- A code keeps every left side non-empty, and only then. -/
+theorem lhs_ne_encode_iff {c : α → List β} (hc : IsCode c) {R : SRS α} :
+    (∀ lr ∈ SRS.encode c R, lr.1 ≠ []) ↔ ∀ lr ∈ R, lr.1 ≠ [] := by
+  simp only [SRS.encode, List.forall_mem_map, hc.encode_ne_nil_iff]
 
 end DiagonaLean.Foundations.Codes

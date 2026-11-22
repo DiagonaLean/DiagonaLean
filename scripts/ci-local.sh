@@ -36,7 +36,11 @@ logs=$(mktemp -d)
 
 # 1. Style: added lines longer than 100 characters, with file and line number.
 echo "== style (added lines since $(git rev-parse --short "$base"))"
-git diff -U0 "$base" -- '*.lean' | python3 -c '
+# Untracked files count as added in full (`git diff` alone does not list them).
+{ git diff -U0 "$base" -- '*.lean'
+  git ls-files -z --others --exclude-standard -- '*.lean' |
+    xargs -0 -r -n1 git diff -U0 --no-index /dev/null || true
+} | python3 -c '
 import re, sys
 bad, path, line = 0, None, 0
 for raw in sys.stdin:

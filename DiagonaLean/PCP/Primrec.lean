@@ -6,6 +6,7 @@ Authors: Prathamesh TVH, Claude Opus
 import DiagonaLean.PCP.AlphabetLift
 import DiagonaLean.PCP.Reductions.MPCP_to_PCP
 import DiagonaLean.Foundations.Computability.DerivePrimcodable
+import DiagonaLean.Foundations.Codes.Functor
 
 @[expose] public section
 
@@ -43,6 +44,25 @@ theorem mpcpToPcp_primrec : Primrec₂ (mpcpToPcp (α := α)) := by
   fun_prop
 
 end Reduction
+
+section Codes
+
+variable {α β γ : Type} [Primcodable α] [Primcodable β] [Primcodable γ] {c : α → List β}
+
+/-- Encoding a tile is primitive recursive in it, for a primitive recursive code. -/
+@[fun_prop] theorem prim_tileEncode (hc : Primrec c) {f : γ → Tile α} (hf : Primrec f) :
+    Primrec fun x => (f x).encode c := by
+  unfold Tile.encode
+  fun_prop
+
+/-- Encoding a stack is primitive recursive in it, for a primitive recursive code. -/
+@[fun_prop] theorem prim_stackEncode (hc : Primrec c) {f : γ → Stack α} (hf : Primrec f) :
+    Primrec fun x => (f x).encode c := by
+  unfold Stack.encode
+  have : Primrec (Tile.encode c) := prim_tileEncode hc Primrec.id
+  fun_prop
+
+end Codes
 
 namespace AlphabetLift
 

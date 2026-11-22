@@ -13,6 +13,8 @@ A letterwise code `c : α → List β` extends to the monoid homomorphism `encod
 from words over `α` to words over `β`. A problem about words can be moved to a smaller alphabet by
 applying `encode c` to its instances, when the problem is preserved and reflected by `encode c`:
 
+The codes form a category, and `encode` is a functor on it (`encode_unit`, `encode_kcomp`).
+
 * `IsCode c`: `encode c` is injective. Problems about equality of concatenations, such as PCP and
   MPCP, are preserved and reflected (`Codes/Correspondence.lean`).
 * `IsSync c`: moreover every occurrence of an encoded non-empty word inside an encoded word is
@@ -38,6 +40,25 @@ def encode (c : α → List β) (w : List α) : List β := w.flatMap c
 @[simp] theorem encode_append (c : α → List β) (u v : List α) :
     encode c (u ++ v) = encode c u ++ encode c v := by
   simp [encode]
+
+/-! ### The category of codes
+
+The identity of an alphabet is the code of one-letter words (`unit`), and codes compose by
+substitution (`kcomp`): this is the Kleisli category of `List`. `encode` is a functor from it to
+functions between words (`encode_unit`, `encode_kcomp`). -/
+
+/-- The identity code: every letter is its own one-letter word. -/
+def unit (a : α) : List α := [a]
+
+/-- Composition of codes: substitute the code words of `c₂` into those of `c₁`. -/
+def kcomp (c₂ : β → List γ) (c₁ : α → List β) (a : α) : List γ := encode c₂ (c₁ a)
+
+@[simp] theorem encode_unit (w : List α) : encode unit w = w := by
+  induction w <;> simp_all [unit]
+
+theorem encode_kcomp (c₂ : β → List γ) (c₁ : α → List β) (w : List α) :
+    encode c₂ (encode c₁ w) = encode (kcomp c₂ c₁) w := by
+  induction w <;> simp_all [kcomp]
 
 /-- `c` is a code: its homomorphism is injective. -/
 def IsCode (c : α → List β) : Prop := Function.Injective (encode c)
