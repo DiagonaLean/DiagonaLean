@@ -4,7 +4,7 @@ Authors: Aalok Thakkar, Prathamesh Turaga
 -/
 
 import DiagonaLean.PCP.Primrec
-import DiagonaLean.MPCP.MachineLevel
+import DiagonaLean.MPCP.Hardness
 
 @[expose] public section
 
@@ -12,8 +12,9 @@ import DiagonaLean.MPCP.MachineLevel
 
 PCP is not a computable predicate over any nontrivial alphabet (`not_computablePred_pcp`), so no
 Turing machine decides it under any computable encoding (`not_machineDecidable_pcp`). This follows
-from `MPCP.MachineLevel.not_computablePred_mpcp` along the primitive recursive reductions
-`mpcpReducesPCP` (`mpcpToPcp_primrec`) and `pcpAlphabetLift` (`pcpAlphabetLift_primrec`).
+from `MPCP.MachineLevel.not_computablePred_mpcp` (`MPCP/Hardness.lean`) along the primitive
+recursive reductions `mpcpReducesPCP` (`mpcpToPcp_primrec`) and `pcpAlphabetLift`
+(`pcpAlphabetLift_primrec`).
 
 ## References
 
