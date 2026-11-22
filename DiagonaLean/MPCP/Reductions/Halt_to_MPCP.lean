@@ -3145,8 +3145,9 @@ theorem halt_reducesto_mpcp_spec :
       (normTM_noLeftBoundary tm.toSingleTapeTM w)]
   exact mpcp_map_iff _ (Alpha.map_injective Encodable.encode_injective) _ _
 
-/-- The halting problem many-one reduces to MPCP over the fixed alphabet `Alpha ℕ Sym2`, through
-`haltToMpcpNorm`. -/
+/-- **MPCP is synthetically halting-hard over the fixed alphabet `Alpha ℕ Sym2`.** The halting
+problem many-one reduces to MPCP over the fixed alphabet `Alpha ℕ Sym2`, through `haltToMpcpNorm`.
+-/
 def _root_.DiagonaLean.MPCP.synthFromHalt :
     HaltProblem ⪯_s (@MPCP.DecisionProblem (Alpha ℕ Sym2)) :=
   ⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩

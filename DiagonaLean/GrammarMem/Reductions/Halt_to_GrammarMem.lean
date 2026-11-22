@@ -41,8 +41,8 @@ theorem halt_reducesto_grammarMem_spec :
     HaltProblem ⪯_s[haltToGrammarMem] @DecisionProblem T := fun p =>
   (halt_reducesto_semiThue_spec p).trans (emptyWord_ofSRS_iff _ _ (haltToSemiThue_lhs_ne p)).symm
 
-/-- The halting problem many-one reduces to membership for grammar codes, through
-`haltToGrammarMem`. -/
+/-- **Membership for grammar codes is synthetically halting-hard.** The halting problem many-one
+reduces to membership for grammar codes, through `haltToGrammarMem`. -/
 def _root_.DiagonaLean.GrammarMem.synthFromHalt : HaltProblem ⪯_s @DecisionProblem T :=
   ⟨haltToGrammarMem, halt_reducesto_grammarMem_spec⟩
 

@@ -104,7 +104,8 @@ theorem halt_reducesto_pcp_spec :
     (pcpRed normTMEnc (encInput w))
     (by decide)
 
-/-- The halting problem many-one reduces to PCP over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/
+/-- **PCP is synthetically halting-hard over the fixed alphabet `Ext (Alpha ℕ Bool)`.** The halting
+problem many-one reduces to PCP over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/
 def _root_.DiagonaLean.PCP.synthFromHalt :
     HaltProblem ⪯_s (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
   ⟨haltToPcp, halt_reducesto_pcp_spec⟩

@@ -28,8 +28,8 @@ theorem halt_reducesto_not_langEq_spec :
     HaltProblem ⪯_s[haltEqRed] Complement LangEqProblem :=
   fun p => (halt_iff_not_modelLe p).trans (not_congr (modelLe_iff_langEq _))
 
-/-- **The reduction.** `HaltProblem` many-one reduces to the failure of language equality over
-`ℕ`. -/
+/-- **The failure of equality of languages over `ℕ` is synthetically halting-hard.** `HaltProblem`
+many-one reduces to the failure of language equality over `ℕ`. -/
 def _root_.DiagonaLean.KAComm.LangEq.synthComplFromHalt :
     HaltProblem ⪯_s Complement LangEqProblem :=
   ⟨haltEqRed, halt_reducesto_not_langEq_spec⟩

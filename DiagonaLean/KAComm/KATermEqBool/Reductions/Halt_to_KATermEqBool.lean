@@ -31,8 +31,12 @@ theorem halt_reducesto_kaTermEqBool_spec {B : Base} {C : Code} (hB : B.Good)
   (halt_iff_qb hB hC p).trans (by
     simpa [QB, KAComm.KleeneAlgebra.Rel, reductionB, DecisionProblem] using kaEquiv_iff_map)
 
-/-- **The reduction.** `HaltProblem` many-one reduces to provable equality in Kleene algebra over
-`{0, 1}`. -/
+/-- **Provable equality in Kleene algebra with commutativity over `{0, 1}` is synthetically
+halting-hard**, given the interpreter constants `B` (`exists_base`) and the race program `C`
+(`exists_raceProgB`). These finite constants are only known to exist, since Mathlib's construction
+of a program from a `Partrec` function is not executable, so they are arguments rather than computed
+here. The statement without them is `not_machineDecidable_kaTermEqBool`. `HaltProblem` many-one
+reduces to provable equality in Kleene algebra over `{0, 1}`. -/
 def _root_.DiagonaLean.KAComm.KATermEqBool.synthFromHalt (B : Base) (C : Code) (hB : B.Good)
     (hC : RaceProgB true B C) :
     HaltProblem ⪯_s KATermEqBoolProblem :=

@@ -496,8 +496,9 @@ theorem halt_reducesto_semiThue_spec : HaltProblem ⪯_s[haltToSemiThue] Decisio
       tmRules_lhs_ne]
   rfl
 
-/-- The halting problem many-one reduces to the word problem for string rewriting systems over
-`Alpha ℕ Sym2`, through `haltToSemiThue`. -/
+/-- **The word problem for string rewriting systems is synthetically halting-hard**, over
+`Alpha ℕ Sym2`. The halting problem many-one reduces to the word problem for string rewriting
+systems over `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
 def _root_.DiagonaLean.SemiThue.synthFromHalt : HaltProblem ⪯_s @DecisionProblem (Alpha ℕ Sym2) :=
   ⟨haltToSemiThue, halt_reducesto_semiThue_spec⟩
 

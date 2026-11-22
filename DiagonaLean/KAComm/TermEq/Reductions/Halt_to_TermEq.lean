@@ -31,8 +31,12 @@ theorem halt_reducesto_termEq_spec {B : Base} {C : Code} (hB : B.Good)
     (hC : RaceProg false B C) : HaltProblem ⪯_s[reduction B C] TermEqProblem := fun p => by
   simpa [KAComm.KleeneAlgebra.Rel, DecisionProblem] using halt_iff_rel hB hC p
 
-/-- **The reduction.** `HaltProblem` many-one reduces to provable equality in pre-Kleene algebra
-with commutativity. -/
+/-- **Provable equality in pre-Kleene algebra with commutativity over `ℕ` is synthetically
+halting-hard**, given the interpreter constants `B` (`exists_base`) and the race program `C`
+(`exists_raceProg`). These finite constants are only known to exist, since Mathlib's construction of
+a program from a `Partrec` function is not executable, so they are arguments rather than computed
+here. The statement without them is `not_machineDecidable_termEq`. `HaltProblem` many-one reduces to
+provable equality in pre-Kleene algebra with commutativity. -/
 def _root_.DiagonaLean.KAComm.TermEq.synthFromHalt (B : Base) (C : Code) (hB : B.Good)
     (hC : RaceProg false B C) :
     HaltProblem ⪯_s TermEqProblem :=
