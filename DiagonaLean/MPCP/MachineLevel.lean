@@ -21,16 +21,13 @@ the tiles of `haltTiles` with each state `(q, c)` renamed to the number
 
 The tiles of `stackN (rowsE M)` are those of `haltTiles` for `normTM M`, renamed (`mem_stackN`), and
 solvability depends only on the set of tiles (`mpcp_congr`). So `M` halts on `w` iff
-`instOf (encode M.q₀) (rowsE M) w` is solvable (`halts_iff_mpcpN`). Two functions build on
-`instOf`: `instC` reads the table off a machine code (`rowsC`, as `dataC` does), on input the code
-itself (`selfHalt_iff_instC`); `canonInst` (`Hardness.lean`) reads it off a canonical machine, which
-gives the halting reduction `MPCP.fromHalt` and, from it, the negative results.
+`instOf (encode M.q₀) (rowsE M) w` is solvable (`halts_iff_mpcpN`). `canonInst` (`Hardness.lean`)
+reads the table off a canonical machine, which gives the halting reduction `MPCP.fromHalt` and,
+from it, the negative results.
 
 ## Main statements
 
-* `instC_prim`: the instance of a code is primitive recursive in the code.
 * `halts_iff_mpcpN`: a machine halts on an input iff the instance of its table on it is solvable.
-* `selfHalt_iff_instC`: `M` halts on its own code iff the instance of its code is solvable.
 -/
 
 derive_primcodable DiagonaLean.MPCP.Reduction.Alpha
@@ -115,12 +112,6 @@ def instOf (q : ℕ) (rows : List (ℕ × ℕ)) (w : List Bool) :
     Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) :=
   (startN q w, stackN rows)
 
-/-- **The MPCP instance of a machine code `w`**, on input `w` itself. The first token of a code is
-the start state's code plus one (`headI_tokens_code`). -/
-def instC (w : List Bool) :
-    Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) :=
-  instOf ((tokens w).headI - 1) (rowsC w) w
-
 derive_primrec markerN
 
 derive_primrec normTrN
@@ -136,8 +127,6 @@ derive_primrec encInput
 derive_primrec startN
 
 derive_primrec instOf
-
-derive_primrec instC
 
 /-! ### Correctness -/
 
@@ -265,16 +254,5 @@ theorem halts_iff_mpcpN (w : List Bool) :
   exact mpcp_congr _ (mem_stackN M)
 
 end
-
-/-- **A machine halts on its own code iff the MPCP instance of its code is solvable**: `instC`
-reads the start state and the table off the code (`headI_tokens_code`, `rowsC_eq_rowsE`). -/
-theorem selfHalt_iff_instC (M : EncodableTM Bool) :
-    Halts M.toSingleTapeTM (encodeBoolTM M) ↔
-      MPCP.DecisionProblem (instC (encodeBoolTM M)) := by
-  let := M.stateEncodable
-  have hq : (tokens (encodeBoolTM M)).headI - 1 = Encodable.encode M.q₀ := by
-    rw [headI_tokens_code]; rfl
-  rw [instC, hq, rowsC_eq_rowsE]
-  exact halts_iff_mpcpN M _
 
 end DiagonaLean.MPCP.MachineLevel

@@ -19,8 +19,7 @@ the final rule, over the alphabet `Alpha ℕ Sym2` (`codeRules`, `toEmptyOf`). T
 of a machine are the rules of the normalised machine with its states renamed to numbers
 (`mem_codeRules`), and renaming letters injectively keeps derivability
 (`Codes.derives_mapRules_iff`), so a machine halts on an input iff the start string of its table
-rewrites to the empty string (`halts_iff_toEmptyN`). `toEmptyCode` reads the table off a machine
-code (`selfHalt_iff_toEmpty`).
+rewrites to the empty string (`halts_iff_toEmptyN`).
 
 ## Main statements
 
@@ -52,18 +51,11 @@ def toEmptyOf (q : ℕ) (rows : List (ℕ × ℕ)) (w : List Bool) :
     SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) :=
   (codeRules rows, (startN q w).bot)
 
-/-- **The instance of a machine code** `w`, on input `w` itself. -/
-def toEmptyCode (w : List Bool) :
-    SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) :=
-  toEmptyOf ((tokens w).headI - 1) (rowsC w) w
-
 derive_primrec tileRule [Primcodable α]
 
 derive_primrec codeRules
 
 derive_primrec toEmptyOf
-
-derive_primrec toEmptyCode
 
 /-- Every rule of `codeRules` has a non-empty left side. -/
 theorem codeRules_lhs_ne (rows : List (ℕ × ℕ)) : ∀ lr ∈ codeRules rows, lr.1 ≠ [] := by
@@ -120,20 +112,5 @@ theorem halts_iff_toEmptyN (w : List Bool) :
   rfl
 
 end
-
-/-- **A machine halts on its own code iff the start string of its code rewrites to the empty
-string**: `toEmptyCode` reads the start state and the table off the code (`headI_tokens_code`,
-`rowsC_eq_rowsE`). -/
-theorem selfHalt_iff_toEmpty (M : EncodableTM Bool) :
-    Halts M.toSingleTapeTM (encodeBoolTM M) ↔ ToEmptyProblem (toEmptyCode (encodeBoolTM M)) := by
-  let := M.stateEncodable
-  have hq : (tokens (encodeBoolTM M)).headI - 1 = Encodable.encode M.q₀ := by
-    rw [headI_tokens_code]; rfl
-  rw [toEmptyCode, hq, rowsC_eq_rowsE]
-  exact halts_iff_toEmptyN M _
-
-/-- Rewriting to the empty string is the word problem with target `[]`. -/
-def toEmptyReducesSemiThue {T : Type} : @ToEmptyProblem T ⪯_s @DecisionProblem T :=
-  ⟨fun x => (x.1, x.2, []), fun _ => Iff.rfl⟩
 
 end DiagonaLean.SemiThue.MachineLevel

@@ -14,8 +14,7 @@ A fresh start symbol `0`, with the rule `[0] → u`, and the symbols of `Alpha �
 `1` (`gSym`), turn a string rewriting system `R` and a start string `u` into a grammar code
 (`ofSRS`). When the left sides of `R` are non-empty, its language contains the empty word iff `u`
 rewrites to the empty string (`emptyWord_ofSRS_iff`, from `SRS.derives_start` and
-`Codes.derives_mapRules_iff`), and it is of type 0 (`isType0_ofSRS`). `gCode` applies this to the
-instance `SemiThue.MachineLevel.toEmptyCode` of a machine code (`selfHalt_iff_emptyWord`).
+`Codes.derives_mapRules_iff`), and it is of type 0 (`isType0_ofSRS`).
 
 ## Main statements
 
@@ -54,14 +53,9 @@ def ofSRS (R : SRS (Alpha ℕ Normalize.Sym2))
     GrammarCode T :=
   (0, ([.inr 0], u.map gSym) :: R.map fun lr => (lr.1.map gSym, lr.2.map gSym))
 
-/-- **The grammar code of a machine code** `w`. -/
-def gCode (w : List Bool) : GrammarCode T := ofSRS (toEmptyCode w).1 (toEmptyCode w).2
-
 derive_primrec gSym [Primcodable T]
 
 derive_primrec ofSRS [Primcodable T]
-
-derive_primrec gCode [Primcodable T]
 
 /-- **The empty word is in the language of `ofSRS R u` iff `u` rewrites to the empty string**, when
 every rule of `R` has a non-empty left side. -/
@@ -84,12 +78,6 @@ theorem emptyWord_ofSRS_iff (R : SRS (Alpha ℕ Normalize.Sym2))
     exact fun a _ => gSym_ne_start a
   · simp
 
-/-- **The empty word is in the language of the grammar code of `w` iff the start string of `w`
-rewrites to the empty string.** -/
-theorem emptyWord_gCode_iff (w : List Bool) :
-    EmptyWordProblem (gCode (T := T) w) ↔ ToEmptyProblem (toEmptyCode w) :=
-  emptyWord_ofSRS_iff _ _ (codeRules_lhs_ne (rowsC w))
-
 /-- The grammar code of a rewriting system whose left sides are non-empty is of type 0. -/
 theorem isType0_ofSRS (R : SRS (Alpha ℕ Normalize.Sym2)) (u : List (Alpha ℕ Normalize.Sym2))
     (hne : ∀ lr ∈ R, lr.1 ≠ []) : IsType0 (ofSRS (T := T) R u) := by
@@ -100,16 +88,6 @@ theorem isType0_ofSRS (R : SRS (Alpha ℕ Normalize.Sym2)) (u : List (Alpha ℕ 
   · obtain ⟨lr₀, hlr₀, rfl⟩ := List.mem_map.1 hlr
     obtain ⟨a, l, hl⟩ := List.exists_cons_of_ne_nil (hne lr₀ hlr₀)
     exact ⟨Encodable.encode a + 1, by simp [hl, gSym]⟩
-
-/-- The grammar code of a machine code is of type 0. -/
-theorem isType0_gCode (w : List Bool) : IsType0 (gCode (T := T) w) :=
-  isType0_ofSRS _ _ (codeRules_lhs_ne (rowsC w))
-
-/-- **A machine halts on its own code iff the empty word is in the language of the grammar code of
-its code.** -/
-theorem selfHalt_iff_emptyWord (M : EncodableTM Bool) :
-    Halts M.toSingleTapeTM (encodeBoolTM M) ↔ EmptyWordProblem (gCode (T := T) (encodeBoolTM M)) :=
-  (selfHalt_iff_toEmpty M).trans (emptyWord_gCode_iff _).symm
 
 variable [Primcodable T]
 
