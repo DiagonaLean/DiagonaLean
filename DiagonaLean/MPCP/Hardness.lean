@@ -20,6 +20,7 @@ the table of `c.toTM`. So `canonInst (c, w) = instOf c.start c.table w` is a red
 ## Main statements
 
 * `MPCP.fromHalt`, `MPCP.haltHard`: MPCP over `Alpha ℕ Sym2` is halting-hard.
+* `MPCP.fromHaltOver b0 b1 hne`, `MPCP.fromHaltBool`: over any alphabet with two distinct letters.
 * `not_computablePred_mpcp`, `not_machineDecidable_mpcp`: so it is not a computable predicate, and
   no Turing machine decides it under any computable encoding.
 * `not_computablePred_mpcpOf`, `not_machineDecidable_mpcpOf`: the same over any nontrivial
@@ -86,6 +87,16 @@ def fromHalt : HaltReduction (@MPCP.DecisionProblem (Alpha ℕ Normalize.Sym2)) 
 
 theorem haltHard : HaltHard (@MPCP.DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
   ⟨fromHalt⟩
+
+/-- **MPCP is halting-hard over any alphabet with two distinct letters**: `fromHalt`, then the
+change of alphabet along `mpcpFunctor`, proved computable. -/
+def fromHaltOver {α : Type} [Primcodable α] (b0 b1 : α) (hne : b0 ≠ b1) :
+    HaltReduction (@MPCP.DecisionProblem α) := by
+  code_lift mpcpFunctor from fromHalt
+
+/-- **MPCP over `Bool` is halting-hard.** -/
+def fromHaltBool : HaltReduction MPCProblem :=
+  fromHaltOver false true Bool.false_ne_true
 
 end DiagonaLean.MPCP
 

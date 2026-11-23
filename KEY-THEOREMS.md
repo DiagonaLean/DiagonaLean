@@ -106,9 +106,14 @@ duplicates `MatMortProblem`, `AmbigCFGProblem` and `EmpCFGProblem` are deprecate
 (a halting reduction), `…Over b0 b1 hne`, `…Bool`, `synthCompl…` (the complement),
 `X.synthAlphabetLift`; proved versions drop `synth` (`MPCP.fromHalt`, `MPCP.haltHard`).
 
-**Roots in place:** `MPCP.fromHalt : HaltReduction MPCP.DecisionProblem` (over `Alpha ℕ Sym2`,
-through `canonInst = instOf c.start c.table w`, `MPCP/Hardness.lean`) is the only proved root so
-far; `MPCP.MachineLevel.not_computablePred_mpcp` follows from `MPCP.haltHard`.
+**Proved halting reductions** (`HaltReduction`, 2026-11-23): the root `MPCP.fromHalt` (over
+`Alpha ℕ Sym2`, through `canonInst = instOf c.start c.table w`, `MPCP/Hardness.lean`), and from it
+`MPCP.fromHaltOver`/`…Bool`, `PCP.fromHalt`/`…Over`/`…Bool`, `MatMort.fromHalt`,
+`EmpCFG.codeFromHaltOver`, `AmbigCFG.codeFromHaltOver`, with the proved links `PCP.fromMPCP`,
+`MatMort.fromPCP`, `EmpCFG.codeFromPCP`, `AmbigCFG.codeFromPCP`. Still only synthetic: SemiThue
+and GrammarMem (their root goes through self-halting, not `HaltCanon`), the grammar problems on
+Mathlib's `ContextFreeGrammar` (not `Primcodable`), and KAComm, SKI, β, Rice (their reductions take
+classically obtained constants). Their `¬ ComputablePred` results are kernel-checked all the same.
 
 ## 7. Pitfalls that cost time
 
