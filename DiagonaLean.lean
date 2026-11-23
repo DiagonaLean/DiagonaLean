@@ -125,6 +125,7 @@ import DiagonaLean.Foundations.Computability.CodeSim
 import DiagonaLean.Foundations.Computability.ProofRace
 import DiagonaLean.Foundations.Computability.OutputSearch
 import DiagonaLean.Foundations.Computability.MachineBridge
+import DiagonaLean.Foundations.Computability.MachineComputes
 import DiagonaLean.Foundations.Computability.ComputableReduction
 import DiagonaLean.Foundations.Computability.HaltCanon
 import DiagonaLean.Foundations.Computability.ReduceFrom
