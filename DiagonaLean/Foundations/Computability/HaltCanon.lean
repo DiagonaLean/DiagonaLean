@@ -28,7 +28,7 @@ is `Primcodable`, and every value is a real machine (`CanonTM.toTM`), so the hal
 * **Undecidable.** Self-halting reduces to `HaltCanon` through `parse`
   (`not_computablePred_haltCanon`).
 * **The bridge.** `synthHaltToCanon : HaltProblem ⪯_s HaltCanon` is the synthetic reduction that
-  connects the two layers.
+  connects the two layers, and `synthCanonToHalt : HaltCanon ⪯_s HaltProblem` (`c.toTM`) goes back.
 
 `HaltReduction P` is a reduction from `HaltCanon` proved computable, and `HaltHard P` says one
 exists: Mathlib's many-one hardness for the halting problem (`haltHard_iff`).
@@ -428,6 +428,11 @@ theorem not_computablePred_haltCanon : ¬ ComputablePred HaltCanon :=
 reading the canonical machine off the machine's code. -/
 def synthHaltToCanon : HaltProblem ⪯_s HaltCanon :=
   ⟨fun p => (parse (encodeBoolTM p.1), p.2), fun p => (halts_parse_code p.1 p.2).symm⟩
+
+/-- **The bridge back**: a canonical machine is a machine, so `HaltCanon` reduces to `HaltProblem`
+by `c.toTM`. With `synthHaltToCanon` the two halting problems are synthetically equivalent. -/
+def synthCanonToHalt : HaltCanon ⪯_s HaltProblem :=
+  ⟨fun p => (p.1.toTM, p.2), fun _ => Iff.rfl⟩
 
 /-! ### Reductions from the halting problem, proved computable -/
 
