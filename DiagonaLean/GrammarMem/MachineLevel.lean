@@ -91,15 +91,20 @@ theorem emptyWord_gCode_iff (w : List Bool) :
     EmptyWordProblem (gCode (T := T) w) ↔ ToEmptyProblem (toEmptyCode w) :=
   emptyWord_ofSRS_iff _ _ (codeRules_lhs_ne (rowsC w))
 
-/-- The grammar code of a machine code is of type 0. -/
-theorem isType0_gCode (w : List Bool) : IsType0 (gCode (T := T) w) := by
-  rw [isType0_iff, gCode, ofSRS]
+/-- The grammar code of a rewriting system whose left sides are non-empty is of type 0. -/
+theorem isType0_ofSRS (R : SRS (Alpha ℕ Normalize.Sym2)) (u : List (Alpha ℕ Normalize.Sym2))
+    (hne : ∀ lr ∈ R, lr.1 ≠ []) : IsType0 (ofSRS (T := T) R u) := by
+  rw [isType0_iff, ofSRS]
   intro lr hlr
   rcases List.mem_cons.1 hlr with rfl | hlr
   · exact ⟨0, List.mem_singleton.2 rfl⟩
   · obtain ⟨lr₀, hlr₀, rfl⟩ := List.mem_map.1 hlr
-    obtain ⟨a, l, hl⟩ := List.exists_cons_of_ne_nil (codeRules_lhs_ne (rowsC w) lr₀ hlr₀)
+    obtain ⟨a, l, hl⟩ := List.exists_cons_of_ne_nil (hne lr₀ hlr₀)
     exact ⟨Encodable.encode a + 1, by simp [hl, gSym]⟩
+
+/-- The grammar code of a machine code is of type 0. -/
+theorem isType0_gCode (w : List Bool) : IsType0 (gCode (T := T) w) :=
+  isType0_ofSRS _ _ (codeRules_lhs_ne (rowsC w))
 
 /-- **A machine halts on its own code iff the empty word is in the language of the grammar code of
 its code.** -/

@@ -73,6 +73,11 @@ theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯_s[posToWord a] @Decis
     · simp at hlr
   · exact and_iff_right (hall.1 h)
 
+/-- `posToWord a` is primitive recursive. -/
+@[fun_prop] theorem posToWord_prim [Primcodable T] (a : T) : Primrec (posToWord a) := by
+  unfold posToWord
+  fun_prop
+
 /-- The restricted word problem many-one reduces to the plain one, given a letter. -/
 def _root_.DiagonaLean.SemiThue.synthFromPos (a : T) :
     @DecisionProblemPos T ⪯_s @DecisionProblem T :=
@@ -110,9 +115,7 @@ theorem not_computablePred_semiThueOf [Primcodable α] [Nontrivial α] :
   obtain ⟨a, -, -⟩ := exists_pair_ne α
   refine not_computablePred_of_reduces (SemiThue.synthFromPos a) (Primrec.to_comp ?_)
     not_computablePred_semiThuePosOf
-  show Primrec (posToWord a)
-  unfold posToWord
-  fun_prop
+  exact posToWord_prim a
 
 /-- **No Turing machine decides the word problem for string rewriting systems over any nontrivial
 alphabet**, under any computable encoding. -/

@@ -21,10 +21,12 @@ import DiagonaLean.SemiThue.Basic
 import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
 import DiagonaLean.SemiThue.MachineLevel
 import DiagonaLean.SemiThue.AlphabetLift
+import DiagonaLean.SemiThue.Hardness
 import DiagonaLean.SemiThue.Undecidable
 import DiagonaLean.GrammarMem.Basic
 import DiagonaLean.GrammarMem.Reductions.Halt_to_GrammarMem
 import DiagonaLean.GrammarMem.MachineLevel
+import DiagonaLean.GrammarMem.Hardness
 import DiagonaLean.GrammarMem.Undecidable
 
 import DiagonaLean.PCP.Basic

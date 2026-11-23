@@ -46,15 +46,22 @@ rules and the final rule. -/
 def codeRules (rows : List (ℕ × ℕ)) : SRS (Alpha ℕ Normalize.Sym2) :=
   (transN rows).map tileRule ++ haltRules
 
-/-- **The instance of a machine code** `w`: its rewriting system, and the start string of the
-normalised machine on input `w` itself. -/
+/-- **The instance of a transition table** `rows` with start state number `q`, on input `w`: its
+rewriting system, and the start string of the normalised machine. -/
+def toEmptyOf (q : ℕ) (rows : List (ℕ × ℕ)) (w : List Bool) :
+    SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) :=
+  (codeRules rows, (startN q w).bot)
+
+/-- **The instance of a machine code** `w`, on input `w` itself. -/
 def toEmptyCode (w : List Bool) :
     SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) :=
-  (codeRules (rowsC w), (startN ((tokens w).headI - 1) w).bot)
+  toEmptyOf ((tokens w).headI - 1) (rowsC w) w
 
 derive_primrec tileRule [Primcodable α]
 
 derive_primrec codeRules
+
+derive_primrec toEmptyOf
 
 derive_primrec toEmptyCode
 
@@ -97,26 +104,33 @@ theorem mem_codeRules
   · obtain ⟨T, hT, rfl⟩ := List.mem_map.1 h
     exact List.mem_map_of_mem ((mem_transN M T).2 hT)
 
-end
-
-/-- **A machine halts on its own code iff the start string of its code rewrites to the empty
-string.** -/
-theorem selfHalt_iff_toEmpty (M : EncodableTM Bool) :
-    Halts M.toSingleTapeTM (encodeBoolTM M) ↔ ToEmptyProblem (toEmptyCode (encodeBoolTM M)) := by
-  let := M.stateEncodable
-  have hq : (tokens (encodeBoolTM M)).headI - 1 = Encodable.encode M.q₀ := by
-    rw [headI_tokens_code]; rfl
-  have hstart : (startN (Encodable.encode M.q₀) (encodeBoolTM M)).bot =
+/-- **A machine halts on an input iff the start string of its table on that input rewrites to the
+empty string.** The construction does not use that the input is the machine's own code. -/
+theorem halts_iff_toEmptyN (w : List Bool) :
+    Halts M.toSingleTapeTM w ↔ ToEmptyProblem (toEmptyOf (Encodable.encode M.q₀) (rowsE M) w) := by
+  have hstart : (startN (Encodable.encode M.q₀) w).bot =
       (block (normTM M.toSingleTapeTM)
-        (initCfg (normTM M.toSingleTapeTM) (encInput (encodeBoolTM M)))).map
-        (Alpha.map (stIdx M)) := by
+        (initCfg (normTM M.toSingleTapeTM) (encInput w))).map (Alpha.map (stIdx M)) := by
     rw [← startTile_ren]; rfl
-  rw [ToEmptyProblem, toEmptyCode, hq, rowsC_eq_rowsE, halts_normTM_iff,
+  rw [ToEmptyProblem, toEmptyOf, halts_normTM_iff,
     halt_iff_derives (tm := normEnc M) (normTM_noBlankWrites _) _ (normTM_noLeftBoundary _ _),
     ← Foundations.Codes.derives_mapRules_iff (Alpha.map_injective (stIdx_injective M))
       fun lr h => tmRules_lhs_ne (tm := normEnc M) lr h,
     SRS.derives_congr (mem_codeRules M), hstart]
   rfl
+
+end
+
+/-- **A machine halts on its own code iff the start string of its code rewrites to the empty
+string**: `toEmptyCode` reads the start state and the table off the code (`headI_tokens_code`,
+`rowsC_eq_rowsE`). -/
+theorem selfHalt_iff_toEmpty (M : EncodableTM Bool) :
+    Halts M.toSingleTapeTM (encodeBoolTM M) ↔ ToEmptyProblem (toEmptyCode (encodeBoolTM M)) := by
+  let := M.stateEncodable
+  have hq : (tokens (encodeBoolTM M)).headI - 1 = Encodable.encode M.q₀ := by
+    rw [headI_tokens_code]; rfl
+  rw [toEmptyCode, hq, rowsC_eq_rowsE]
+  exact halts_iff_toEmptyN M _
 
 /-- **Whether a string rewrites to the empty string is not a computable predicate**, for string
 rewriting systems over `Alpha ℕ Sym2`. -/

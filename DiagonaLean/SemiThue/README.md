@@ -11,6 +11,7 @@ Given a string rewriting system (semi-Thue system) `R : SRS T`, a list of rules 
 * `Reductions/Halt_to_SemiThue.lean`: a machine halts iff its configuration string rewrites to the empty string (`halt_iff_derives`), so `HaltProblem ⪯_s` the word problem over `Alpha ℕ Sym2` (`SemiThue.synthFromHalt`) and its restriction (`SemiThue.synthPosFromHalt`). See `Reductions/README.md`.
 * `MachineLevel.lean`: no Turing machine decides it over `Alpha ℕ Sym2` under any computable encoding (`not_machineDecidable_semiThue`, `not_machineDecidable_toEmpty`).
 * `AlphabetLift.lean`: the restricted problem is a functor on synchronizing codes (`semiThueFunctor`), and `SemiThue.synthFromPos` returns to the plain word problem; no Turing machine decides the word problem over any nontrivial `Primcodable` alphabet (`not_machineDecidable_semiThueOf`).
+* `Hardness.lean`: the word problem is halting-hard, by a reduction from `HaltCanon` proved computable, over `Alpha ℕ Sym2` (`SemiThue.fromHalt`, `SemiThue.posFromHalt`, `SemiThue.toEmptyFromHalt`) and over every alphabet with two distinct letters (`SemiThue.fromHaltOver`, `SemiThue.fromHaltBool`).
 * `Undecidable.lean`: the word problem is synthetically halting-hard over `Alpha ℕ Sym2` (`SemiThue.synthFromHalt`), and over every alphabet with two distinct letters (`SemiThue.synthFromHaltOver`), for instance over `Bool` (`SemiThue.synthFromHaltBool`).
 
 ## Proof sketch

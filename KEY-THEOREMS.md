@@ -110,8 +110,12 @@ duplicates `MatMortProblem`, `AmbigCFGProblem` and `EmpCFGProblem` are deprecate
 `Alpha ℕ Sym2`, through `canonInst = instOf c.start c.table w`, `MPCP/Hardness.lean`), and from it
 `MPCP.fromHaltOver`/`…Bool`, `PCP.fromHalt`/`…Over`/`…Bool`, `MatMort.fromHalt`,
 `EmpCFG.codeFromHaltOver`, `AmbigCFG.codeFromHaltOver`, with the proved links `PCP.fromMPCP`,
-`MatMort.fromPCP`, `EmpCFG.codeFromPCP`, `AmbigCFG.codeFromPCP`. Still only synthetic: SemiThue
-and GrammarMem (their root goes through self-halting, not `HaltCanon`), the grammar problems on
+`MatMort.fromPCP`, `EmpCFG.codeFromPCP`, `AmbigCFG.codeFromPCP`. A second root from `HaltCanon`,
+on the same table construction: `SemiThue.fromHalt`/`…Over`/`…Bool`, `SemiThue.posFromHalt`/`…Over`,
+`SemiThue.toEmptyFromHalt` (`SemiThue/Hardness.lean`, through `canonToEmpty`), and from it
+`GrammarMem.emptyWordFromHalt`, `GrammarMem.fromHalt`. Constructions on tables share
+`MPCP.MachineLevel.SameTable` (same lookup, same state numbers) and `CanonTM.sameTable`. Still only
+synthetic: the grammar problems on
 Mathlib's `ContextFreeGrammar` (not `Primcodable`), and KAComm, SKI, β, Rice (their reductions take
 classically obtained constants). Their `¬ ComputablePred` results are kernel-checked all the same.
 
