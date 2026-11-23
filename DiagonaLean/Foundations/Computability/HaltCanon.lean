@@ -462,4 +462,15 @@ theorem HaltHard.not_machineDecidable {P : β → Prop} (h : HaltHard P) {enc : 
     (henc : Computable enc) : ¬ MachineDecidable enc P :=
   not_machineDecidable_of_not_computablePred henc h.not_computablePred
 
+/-- **The target of a halting reduction is undecidable**: `HaltHard.not_computablePred`, by dot
+notation on the reduction (`MPCP.fromHalt.not_computablePred`). -/
+theorem HaltReduction.not_computablePred {P : β → Prop} (h : HaltReduction P) :
+    ¬ ComputablePred P :=
+  HaltHard.not_computablePred ⟨h⟩
+
+/-- **No machine decides the target of a halting reduction**, under any computable encoding. -/
+theorem HaltReduction.not_machineDecidable {P : β → Prop} (h : HaltReduction P)
+    {enc : β → List Bool} (henc : Computable enc) : ¬ MachineDecidable enc P :=
+  HaltHard.not_machineDecidable ⟨h⟩ henc
+
 end DiagonaLean.Foundations.Computability

@@ -9,9 +9,9 @@ Given a string rewriting system (semi-Thue system) `R : SRS T`, a list of rules 
 ## Layout
 * `Basic.lean`: the problem, and its restriction to systems whose left sides are all non-empty (`DecisionProblemPos`).
 * `Reductions/Halt_to_SemiThue.lean`: a machine halts iff its configuration string rewrites to the empty string (`halt_iff_derives`), so `HaltProblem ⪯_s` the word problem over `Alpha ℕ Sym2` (`SemiThue.synthFromHalt`) and its restriction (`SemiThue.synthPosFromHalt`). See `Reductions/README.md`.
-* `MachineLevel.lean`: no Turing machine decides it over `Alpha ℕ Sym2` under any computable encoding (`not_machineDecidable_semiThue`, `not_machineDecidable_toEmpty`).
-* `AlphabetLift.lean`: the restricted problem is a functor on synchronizing codes (`semiThueFunctor`), and `SemiThue.synthFromPos` returns to the plain word problem; no Turing machine decides the word problem over any nontrivial `Primcodable` alphabet (`not_machineDecidable_semiThueOf`).
-* `Hardness.lean`: the word problem is halting-hard, by a reduction from `HaltCanon` proved computable, over `Alpha ℕ Sym2` (`SemiThue.fromHalt`, `SemiThue.posFromHalt`, `SemiThue.toEmptyFromHalt`) and over every alphabet with two distinct letters (`SemiThue.fromHaltOver`, `SemiThue.fromHaltBool`).
+* `MachineLevel.lean`: the rewriting system of a transition table (`codeRules`, `toEmptyOf`); a machine halts on an input iff the start string of its table rewrites to the empty string (`halts_iff_toEmptyN`).
+* `AlphabetLift.lean`: the restricted problem is a functor on synchronizing codes (`semiThueFunctor`), and `SemiThue.synthFromPos` returns to the plain word problem.
+* `Hardness.lean`: the word problem is halting-hard, by a reduction from `HaltCanon` proved computable, over `Alpha ℕ Sym2` (`SemiThue.fromHalt`, `SemiThue.posFromHalt`, `SemiThue.toEmptyFromHalt`) and over every alphabet with two distinct letters (`SemiThue.fromHaltOver`, `SemiThue.fromHaltBool`). So no Turing machine decides it under any computable encoding (`not_machineDecidable_semiThue`, `not_machineDecidable_toEmpty`, and over every nontrivial alphabet `not_machineDecidable_semiThueOf`).
 * `Undecidable.lean`: the word problem is synthetically halting-hard over `Alpha ℕ Sym2` (`SemiThue.synthFromHalt`), and over every alphabet with two distinct letters (`SemiThue.synthFromHaltOver`), for instance over `Bool` (`SemiThue.synthFromHaltBool`).
 
 ## Proof sketch

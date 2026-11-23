@@ -19,14 +19,12 @@ it presents `Stack.toGrammar` (`toCFG_ambPres_abs`); with `0, 1, 2` and natural 
 grammar code over `α ⊕ ℕ` (`ambCode`), the renaming of the first (`ambCode_eq_map`). Injective
 renamings keep and reflect ambiguity (`AmbigCFG.decisionProblem_map_iff`), so PCP many-one reduces
 to the ambiguity of grammar codes (`pcp_reducesto_ambigCFGCode_spec`, `AmbigCFG.synthCodeFromPCP`),
-through a primitive recursive function (`ambCode_prim`), and
-`PCP.MachineLevel.not_computablePred_pcp` transfers.
+through a primitive recursive function (`ambCode_prim`). So it is proved computable
+(`AmbigCFG.codeFromPCP`) and gives the halting reduction `AmbigCFG.codeFromHaltOver b0 b1 hne` (from
+`PCP.fromHaltOver`), from which the negative results follow.
 
 The statements are about grammar codes (`Foundations.Grammar.CFGCode`): a machine reads a finite
 description, and `CFGCode.toCFG` is the grammar a code describes.
-
-The reductions are also proved computable: `AmbigCFG.codeFromPCP`, and the halting reduction
-`AmbigCFG.codeFromHaltOver b0 b1 hne` (from `PCP.fromHaltOver`).
 
 
 ## Main statements
@@ -154,19 +152,6 @@ omit [DecidableEq α] in
   unfold ambCode ambPres codeTs
   fun_prop
 
-/-- **Whether a grammar code is ambiguous is not a computable predicate**, over the terminals
-`α ⊕ ℕ`, for any alphabet `α` with two distinct letters. -/
-theorem not_computablePred_ambigCFGCode [Nontrivial α] :
-    ¬ ComputablePred fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG :=
-  not_computablePred_of_reduces AmbigCFG.synthCodeFromPCP ambCode_prim.to_comp
-    PCP.MachineLevel.not_computablePred_pcp
-
-/-- **No Turing machine decides whether a grammar code is ambiguous**, under any computable
-encoding of codes as bit strings. -/
-theorem not_machineDecidable_ambigCFGCode [Nontrivial α] {enc : CFGCode (α ⊕ ℕ) → List Bool}
-    (henc : Computable enc) : ¬ MachineDecidable enc fun c => AmbigCFG.DecisionProblem c.toCFG :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_ambigCFGCode
-
 end DiagonaLean.AmbigCFG.MachineLevel
 
 namespace DiagonaLean.AmbigCFG
@@ -189,3 +174,26 @@ def codeFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
   reduce_from (PCP.fromHaltOver b0 b1 hne) via AmbigCFG.synthCodeFromPCP
 
 end DiagonaLean.AmbigCFG
+
+namespace DiagonaLean.AmbigCFG.MachineLevel
+
+open DiagonaLean.PCP DiagonaLean.AmbigCFG DiagonaLean.Foundations.Grammar
+  DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
+
+variable {α : Type} [DecidableEq α] [Primcodable α]
+
+/-- **Whether a grammar code is ambiguous is not a computable predicate**, over the terminals
+`α ⊕ ℕ`, for any alphabet `α` with two distinct letters: it is halting-hard there
+(`AmbigCFG.codeFromHaltOver`). -/
+theorem not_computablePred_ambigCFGCode [Nontrivial α] :
+    ¬ ComputablePred fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG := by
+  obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
+  exact (AmbigCFG.codeFromHaltOver b0 b1 hne).not_computablePred
+
+/-- **No Turing machine decides whether a grammar code is ambiguous**, under any computable
+encoding of codes as bit strings. -/
+theorem not_machineDecidable_ambigCFGCode [Nontrivial α] {enc : CFGCode (α ⊕ ℕ) → List Bool}
+    (henc : Computable enc) : ¬ MachineDecidable enc fun c => AmbigCFG.DecisionProblem c.toCFG :=
+  not_machineDecidable_of_not_computablePred henc not_computablePred_ambigCFGCode
+
+end DiagonaLean.AmbigCFG.MachineLevel

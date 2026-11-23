@@ -10,23 +10,23 @@ import DiagonaLean.Foundations.Codes.Rewriting
 
 @[expose] public section
 
-/-! # No machine decides the word problem for string rewriting systems
+/-! # The word problem for string rewriting systems, at machine level
 
 `Reductions/Halt_to_SemiThue.lean` shows that a machine halts iff its configuration string rewrites
-to the empty string under `tmRules`. Here the system is read off the machine's code, as
-`MPCP.MachineLevel.instC` reads the MPCP tiles: the transition tiles `transN`, the absorb rules and
-the final rule, over the alphabet `Alpha ℕ Sym2` (`codeRules`). The rules of the code are the rules
-of the normalised machine with its states renamed to numbers (`mem_codeRules`), and renaming letters
-injectively keeps derivability (`Codes.derives_mapRules_iff`), so a machine halts on its own code
-iff the start string of its code rewrites to the empty string (`selfHalt_iff_toEmpty`). The instance
-is primitive recursive in the code (`toEmptyCode_prim`), and self-halting is undecidable.
+to the empty string under `tmRules`. Here the system is read off a transition table, as
+`MPCP.MachineLevel.instOf` reads the MPCP tiles: the transition tiles `transN`, the absorb rules and
+the final rule, over the alphabet `Alpha ℕ Sym2` (`codeRules`, `toEmptyOf`). The rules of the table
+of a machine are the rules of the normalised machine with its states renamed to numbers
+(`mem_codeRules`), and renaming letters injectively keeps derivability
+(`Codes.derives_mapRules_iff`), so a machine halts on an input iff the start string of its table
+rewrites to the empty string (`halts_iff_toEmptyN`). `toEmptyCode` reads the table off a machine
+code (`selfHalt_iff_toEmpty`).
 
 ## Main statements
 
-* `not_computablePred_toEmpty`, `not_machineDecidable_toEmpty`: whether a string rewrites to the
-  empty string in a string rewriting system is not computable.
-* `not_computablePred_semiThue`, `not_machineDecidable_semiThue`: the word problem for string
-  rewriting systems is not computable (Post, Markov 1947).
+* `halts_iff_toEmptyN`, `codeRules_lhs_ne`: used in `Hardness.lean` for the halting reductions
+  `SemiThue.fromHalt`, `SemiThue.toEmptyFromHalt`, `SemiThue.posFromHalt`, from which the negative
+  results there (`not_computablePred_semiThue`, `not_machineDecidable_semiThue`, …) follow.
 -/
 
 namespace DiagonaLean.SemiThue.MachineLevel
@@ -132,39 +132,8 @@ theorem selfHalt_iff_toEmpty (M : EncodableTM Bool) :
   rw [toEmptyCode, hq, rowsC_eq_rowsE]
   exact halts_iff_toEmptyN M _
 
-/-- **Whether a string rewrites to the empty string is not a computable predicate**, for string
-rewriting systems over `Alpha ℕ Sym2`. -/
-theorem not_computablePred_toEmpty :
-    ¬ ComputablePred fun x :
-      SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) =>
-        ToEmptyProblem x :=
-  not_computablePred_of_selfHalt toEmptyCode_prim.to_comp selfHalt_iff_toEmpty
-
-/-- **No Turing machine decides whether a string rewrites to the empty string**, under any
-computable encoding. -/
-theorem not_machineDecidable_toEmpty
-    {enc : SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) →
-      List Bool}
-    (henc : Computable enc) : ¬ MachineDecidable enc ToEmptyProblem :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_toEmpty
-
 /-- Rewriting to the empty string is the word problem with target `[]`. -/
 def toEmptyReducesSemiThue {T : Type} : @ToEmptyProblem T ⪯_s @DecisionProblem T :=
   ⟨fun x => (x.1, x.2, []), fun _ => Iff.rfl⟩
-
-/-- **The word problem for string rewriting systems is not a computable predicate** (Post, Markov
-1947), over `Alpha ℕ Sym2`. -/
-theorem not_computablePred_semiThue :
-    ¬ ComputablePred (@DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
-  not_computablePred_of_reduces toEmptyReducesSemiThue
-    (Primrec.to_comp (by unfold toEmptyReducesSemiThue; fun_prop)) not_computablePred_toEmpty
-
-/-- **No Turing machine decides the word problem for string rewriting systems**, under any
-computable encoding. -/
-theorem not_machineDecidable_semiThue
-    {enc : SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) ×
-      List (Alpha ℕ Normalize.Sym2) → List Bool}
-    (henc : Computable enc) : ¬ MachineDecidable enc DecisionProblem :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_semiThue
 
 end DiagonaLean.SemiThue.MachineLevel

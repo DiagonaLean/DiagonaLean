@@ -24,6 +24,11 @@ is a reduction from `HaltCanon`, proved computable.
   with non-empty left sides, are halting-hard, over `Alpha ℕ Sym2`.
 * `SemiThue.posFromHaltOver`, `SemiThue.fromHaltOver b0 b1 hne`, `SemiThue.fromHaltBool`: over any
   alphabet with two distinct letters.
+* `not_computablePred_semiThue`, `not_machineDecidable_semiThue`, `not_computablePred_toEmpty`,
+  `not_computablePred_semiThuePos`, and over every nontrivial alphabet
+  `not_computablePred_semiThueOf`, `not_machineDecidable_semiThueOf`,
+  `not_computablePred_semiThuePosOf`: the word problem (Post, Markov 1947) and its variants are not
+  computable predicates, and no Turing machine decides them under any computable encoding.
 -/
 
 namespace DiagonaLean.SemiThue.MachineLevel
@@ -108,3 +113,69 @@ def fromHaltBool : HaltReduction (@DecisionProblem Bool) :=
   fromHaltOver false true Bool.false_ne_true
 
 end DiagonaLean.SemiThue
+
+namespace DiagonaLean.SemiThue.MachineLevel
+
+open DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Computability
+  DiagonaLean.Foundations.Grammar DiagonaLean.Synthetic.Definitions
+
+variable {α : Type}
+
+/-- **Whether a string rewrites to the empty string is not a computable predicate**, for string
+rewriting systems over `Alpha ℕ Sym2`: it is halting-hard (`SemiThue.toEmptyFromHalt`). -/
+theorem not_computablePred_toEmpty :
+    ¬ ComputablePred fun x :
+      SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) =>
+        ToEmptyProblem x :=
+  SemiThue.toEmptyFromHalt.not_computablePred
+
+/-- **No Turing machine decides whether a string rewrites to the empty string**, under any
+computable encoding. -/
+theorem not_machineDecidable_toEmpty
+    {enc : SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) →
+      List Bool}
+    (henc : Computable enc) : ¬ MachineDecidable enc ToEmptyProblem :=
+  SemiThue.toEmptyFromHalt.not_machineDecidable henc
+
+/-- **The word problem for string rewriting systems is not a computable predicate** (Post, Markov
+1947), over `Alpha ℕ Sym2`: it is halting-hard (`SemiThue.fromHalt`). -/
+theorem not_computablePred_semiThue :
+    ¬ ComputablePred (@DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
+  SemiThue.fromHalt.not_computablePred
+
+/-- **No Turing machine decides the word problem for string rewriting systems**, under any
+computable encoding. -/
+theorem not_machineDecidable_semiThue
+    {enc : SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) ×
+      List (Alpha ℕ Normalize.Sym2) → List Bool}
+    (henc : Computable enc) : ¬ MachineDecidable enc DecisionProblem :=
+  SemiThue.fromHalt.not_machineDecidable henc
+
+/-- **The restricted word problem is not a computable predicate** over `Alpha ℕ Sym2`: it is
+halting-hard (`SemiThue.posFromHalt`). -/
+theorem not_computablePred_semiThuePos :
+    ¬ ComputablePred (@DecisionProblemPos (Alpha ℕ Normalize.Sym2)) :=
+  SemiThue.posFromHalt.not_computablePred
+
+/-- **The restricted word problem is not a computable predicate over any nontrivial alphabet**: it
+is halting-hard there (`SemiThue.posFromHaltOver`). -/
+theorem not_computablePred_semiThuePosOf [Primcodable α] [Nontrivial α] :
+    ¬ ComputablePred (@DecisionProblemPos α) := by
+  obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
+  exact (SemiThue.posFromHaltOver b0 b1 hne).not_computablePred
+
+/-- **The word problem for string rewriting systems is not a computable predicate over any
+nontrivial alphabet**: it is halting-hard there (`SemiThue.fromHaltOver`). -/
+theorem not_computablePred_semiThueOf [Primcodable α] [Nontrivial α] :
+    ¬ ComputablePred (@DecisionProblem α) := by
+  obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
+  exact (SemiThue.fromHaltOver b0 b1 hne).not_computablePred
+
+/-- **No Turing machine decides the word problem for string rewriting systems over any nontrivial
+alphabet**, under any computable encoding. -/
+theorem not_machineDecidable_semiThueOf [Primcodable α] [Nontrivial α]
+    {enc : SRS α × List α × List α → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc (@DecisionProblem α) :=
+  not_machineDecidable_of_not_computablePred henc not_computablePred_semiThueOf
+
+end DiagonaLean.SemiThue.MachineLevel

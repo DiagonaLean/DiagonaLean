@@ -22,6 +22,9 @@ proved computable.
 * `GrammarMem.emptyWordFromHalt`: whether the empty word belongs to the language of a type 0
   grammar code is halting-hard.
 * `GrammarMem.fromHalt`, `GrammarMem.haltHard`: membership for grammar codes is halting-hard.
+* `not_computablePred_emptyWord_type0`, `not_machineDecidable_emptyWord_type0`,
+  `not_computablePred_grammarMem`, `not_machineDecidable_grammarMem`: so neither is a computable
+  predicate, and no Turing machine decides either under any computable encoding.
 -/
 
 namespace DiagonaLean.GrammarMem.MachineLevel
@@ -74,3 +77,34 @@ theorem haltHard : HaltHard (@DecisionProblem T) :=
   ⟨fromHalt⟩
 
 end DiagonaLean.GrammarMem
+
+namespace DiagonaLean.GrammarMem.MachineLevel
+
+open DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
+
+variable {T : Type} [Primcodable T]
+
+/-- **Whether the empty word belongs to the language of a type 0 grammar code is not a computable
+predicate**: it is halting-hard (`GrammarMem.emptyWordFromHalt`). -/
+theorem not_computablePred_emptyWord_type0 :
+    ¬ ComputablePred fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1 :=
+  GrammarMem.emptyWordFromHalt.not_computablePred
+
+/-- **No Turing machine decides whether the empty word belongs to the language of a type 0 grammar
+code**, under any computable encoding. -/
+theorem not_machineDecidable_emptyWord_type0
+    {enc : { g : GrammarCode T // IsType0 g } → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc fun g => EmptyWordProblem g.1 :=
+  GrammarMem.emptyWordFromHalt.not_machineDecidable henc
+
+/-- **Membership for grammar codes is not a computable predicate**: it is halting-hard
+(`GrammarMem.fromHalt`). -/
+theorem not_computablePred_grammarMem : ¬ ComputablePred (@DecisionProblem T) :=
+  GrammarMem.fromHalt.not_computablePred
+
+/-- **No Turing machine decides membership for grammar codes**, under any computable encoding. -/
+theorem not_machineDecidable_grammarMem {enc : GrammarCode T × List T → List Bool}
+    (henc : Computable enc) : ¬ MachineDecidable enc DecisionProblem :=
+  GrammarMem.fromHalt.not_machineDecidable henc
+
+end DiagonaLean.GrammarMem.MachineLevel

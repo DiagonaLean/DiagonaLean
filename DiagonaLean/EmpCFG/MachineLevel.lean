@@ -18,13 +18,12 @@ presents `genCFG` itself (`toCFG_genPres_unit`); with the name `0` it is a gramm
 renaming of the first (`genPres_zero`), so it has the same language
 (`language_toCFG_genPres_zero`). The codes of a PCP instance are primitive recursive in it
 (`empCode_prim`), so the many-one reduction `EmpCFG.synthCodeFromPCP` from PCP to the problem on
-codes (`pcp_reducesto_empCFGCode_spec`) transfers `PCP.MachineLevel.not_computablePred_pcp`.
+codes (`pcp_reducesto_empCFGCode_spec`) is proved computable (`EmpCFG.codeFromPCP`) and gives the
+halting reduction `EmpCFG.codeFromHaltOver b0 b1 hne` (from `PCP.fromHaltOver`), from which the
+negative results follow.
 
 The statements are about grammar codes (`Foundations.Grammar.CFGCode`): a machine reads a finite
 description, and `CFGCode.toCFG` is the grammar a code describes.
-
-The reductions are also proved computable: `EmpCFG.codeFromPCP`, and the halting reduction
-`EmpCFG.codeFromHaltOver b0 b1 hne` (from `PCP.fromHaltOver`).
 
 
 ## Main statements
@@ -111,13 +110,46 @@ omit [DecidableEq α] in
   unfold empCode genPres
   fun_prop
 
+end DiagonaLean.EmpCFG.MachineLevel
+
+namespace DiagonaLean.EmpCFG
+
+open DiagonaLean.EmpCFG.Reduction DiagonaLean.EmpCFG.MachineLevel
+  DiagonaLean.Foundations.Computability DiagonaLean.Foundations.Grammar
+
+variable {α : Type} [DecidableEq α] [Primcodable α]
+
+/-- **The reduction from PCP to the intersection problem for grammar codes, proved computable**
+(`empCode_prim`). -/
+def codeFromPCP : @PCP.DecisionProblem α ⪯
+    fun c : CFGCode (Term α) × CFGCode (Term α) => IntersectionNonempty c.1.toCFG c.2.toCFG :=
+  .ofSynth EmpCFG.synthCodeFromPCP empCode_prim.to_comp
+
+/-- **Non-emptiness of the intersection of two grammar codes is halting-hard**, over the terminals
+`Term α` for any alphabet `α` with two distinct letters: `PCP.fromHaltOver`, then `codeFromPCP`. -/
+def codeFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
+    HaltReduction
+      fun c : CFGCode (Term α) × CFGCode (Term α) => IntersectionNonempty c.1.toCFG c.2.toCFG := by
+  reduce_from (PCP.fromHaltOver b0 b1 hne) via EmpCFG.synthCodeFromPCP
+
+end DiagonaLean.EmpCFG
+
+namespace DiagonaLean.EmpCFG.MachineLevel
+
+open DiagonaLean.PCP DiagonaLean.EmpCFG DiagonaLean.EmpCFG.Reduction
+  DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Computability
+  DiagonaLean.Synthetic.Definitions
+
+variable {α : Type} [DecidableEq α] [Primcodable α]
+
 /-- **Whether the languages of two grammar codes intersect is not a computable predicate**, over
-the terminals `Term α`, for any alphabet `α` with two distinct letters. -/
+the terminals `Term α`, for any alphabet `α` with two distinct letters: it is halting-hard there
+(`EmpCFG.codeFromHaltOver`). -/
 theorem not_computablePred_empCFGCode [Nontrivial α] :
     ¬ ComputablePred fun c : CFGCode (Term α) × CFGCode (Term α) =>
-      IntersectionNonempty c.1.toCFG c.2.toCFG :=
-  not_computablePred_of_reduces EmpCFG.synthCodeFromPCP empCode_prim.to_comp
-    PCP.MachineLevel.not_computablePred_pcp
+      IntersectionNonempty c.1.toCFG c.2.toCFG := by
+  obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
+  exact (EmpCFG.codeFromHaltOver b0 b1 hne).not_computablePred
 
 /-- **Whether the languages of two grammar codes are disjoint is not a computable predicate.** -/
 theorem not_computablePred_empCFGCode_empty [Nontrivial α] :
@@ -142,25 +174,3 @@ theorem not_machineDecidable_empCFGCode_empty [Nontrivial α]
   not_machineDecidable_of_not_computablePred henc not_computablePred_empCFGCode_empty
 
 end DiagonaLean.EmpCFG.MachineLevel
-
-namespace DiagonaLean.EmpCFG
-
-open DiagonaLean.EmpCFG.Reduction DiagonaLean.EmpCFG.MachineLevel
-  DiagonaLean.Foundations.Computability DiagonaLean.Foundations.Grammar
-
-variable {α : Type} [DecidableEq α] [Primcodable α]
-
-/-- **The reduction from PCP to the intersection problem for grammar codes, proved computable**
-(`empCode_prim`). -/
-def codeFromPCP : @PCP.DecisionProblem α ⪯
-    fun c : CFGCode (Term α) × CFGCode (Term α) => IntersectionNonempty c.1.toCFG c.2.toCFG :=
-  .ofSynth EmpCFG.synthCodeFromPCP empCode_prim.to_comp
-
-/-- **Non-emptiness of the intersection of two grammar codes is halting-hard**, over the terminals
-`Term α` for any alphabet `α` with two distinct letters: `PCP.fromHaltOver`, then `codeFromPCP`. -/
-def codeFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
-    HaltReduction
-      fun c : CFGCode (Term α) × CFGCode (Term α) => IntersectionNonempty c.1.toCFG c.2.toCFG := by
-  reduce_from (PCP.fromHaltOver b0 b1 hne) via EmpCFG.synthCodeFromPCP
-
-end DiagonaLean.EmpCFG

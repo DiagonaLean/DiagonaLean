@@ -10,38 +10,17 @@ import DiagonaLean.PCP.MachineLevel
 
 /-! # Matrix mortality is not a computable predicate
 
-Mortality of finite sets of `3 × 3` integer matrices is not a computable predicate
-(`not_computablePred_matMort`), so no Turing machine decides it under any computable encoding
-(`not_machineDecidable_matMort`): PCP over `S23` is not a computable predicate
-(`PCP.MachineLevel.not_computablePred_pcp`), and the reduction `matImage` is primitive recursive
-(`matImage_primrec`).
-
-The reduction is also proved computable: `MatMort.fromPCP`, and the halting reduction
-`MatMort.fromHalt` (from `PCP.fromHaltOver`).
+The reduction `matImage` from PCP over `S23` is primitive recursive (`matImage_primrec`), so it
+is proved computable (`MatMort.fromPCP`) and gives the halting reduction `MatMort.fromHalt` (from
+`PCP.fromHaltOver`). So mortality of finite sets of `3 × 3` integer matrices is not a computable
+predicate (`not_computablePred_matMort`), and no Turing machine decides it under any computable
+encoding (`not_machineDecidable_matMort`).
 
 
 ## References
 
 * [M. S. Paterson, *Unsolvability in 3 × 3 Matrices*][Paterson1970]
 -/
-
-namespace DiagonaLean.MatMort.MachineLevel
-
-open DiagonaLean.MatMort.Reduction DiagonaLean.Foundations.Computability
-  DiagonaLean.Synthetic.Definitions
-
-/-- **Matrix mortality of `3 × 3` integer matrices is not a computable predicate.** -/
-theorem not_computablePred_matMort : ¬ ComputablePred DecisionProblem :=
-  not_computablePred_of_reduces MatMort.synthFromPCP matImage_primrec.to_comp
-    PCP.MachineLevel.not_computablePred_pcp
-
-/-- **No Turing machine decides matrix mortality** of `3 × 3` integer matrices, under any
-computable encoding of finite sets of matrices as bit strings. -/
-theorem not_machineDecidable_matMort {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool}
-    (henc : Computable enc) : ¬ MachineDecidable enc DecisionProblem :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_matMort
-
-end DiagonaLean.MatMort.MachineLevel
 
 namespace DiagonaLean.MatMort
 
@@ -57,3 +36,21 @@ def fromHalt : HaltReduction MatMort.DecisionProblem := by
   reduce_from (PCP.fromHaltOver (0 : S23) 1 (by decide)) via MatMort.synthFromPCP
 
 end DiagonaLean.MatMort
+
+namespace DiagonaLean.MatMort.MachineLevel
+
+open DiagonaLean.MatMort.Reduction DiagonaLean.Foundations.Computability
+  DiagonaLean.Synthetic.Definitions
+
+/-- **Matrix mortality of `3 × 3` integer matrices is not a computable predicate**: it is
+halting-hard (`MatMort.fromHalt`). -/
+theorem not_computablePred_matMort : ¬ ComputablePred DecisionProblem :=
+  MatMort.fromHalt.not_computablePred
+
+/-- **No Turing machine decides matrix mortality** of `3 × 3` integer matrices, under any
+computable encoding of finite sets of matrices as bit strings. -/
+theorem not_machineDecidable_matMort {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool}
+    (henc : Computable enc) : ¬ MachineDecidable enc DecisionProblem :=
+  not_machineDecidable_of_not_computablePred henc not_computablePred_matMort
+
+end DiagonaLean.MatMort.MachineLevel

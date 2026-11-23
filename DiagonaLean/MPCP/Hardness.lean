@@ -123,20 +123,19 @@ theorem not_machineDecidable_mpcp
     (henc : Computable enc) : ¬ MachineDecidable enc MPCP.DecisionProblem :=
   MPCP.haltHard.not_machineDecidable henc
 
-open Foundations.Codes in
-/-- **MPCP is not a computable predicate over any nontrivial alphabet**: the lifting of
-`not_computablePred_mpcp` (`Foundations.Codes.CodeFunctor.not_computablePred_lift`).
--/
+/-- **MPCP is not a computable predicate over any nontrivial alphabet**: it is halting-hard there
+(`MPCP.fromHaltOver`). -/
 theorem not_computablePred_mpcpOf {α : Type} [Primcodable α] [Nontrivial α] :
     ¬ ComputablePred (@MPCP.DecisionProblem α) := by
-  code_lift mpcpFunctor from not_computablePred_mpcp
+  obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
+  exact (MPCP.fromHaltOver b0 b1 hne).not_computablePred
 
 /-- **No Turing machine decides MPCP over any nontrivial alphabet**, under any computable
 encoding. -/
 theorem not_machineDecidable_mpcpOf {α : Type} [Primcodable α] [Nontrivial α]
     {enc : Tile α × Stack α → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc MPCP.DecisionProblem := by
-  code_lift Reduction.mpcpFunctor from not_computablePred_mpcp
+    ¬ MachineDecidable enc MPCP.DecisionProblem :=
+  not_machineDecidable_of_not_computablePred henc not_computablePred_mpcpOf
 
 open Foundations.Codes in
 /-- **Alphabet invariance of MPCP**: over any two nontrivial `Primcodable` alphabets, MPCP is
