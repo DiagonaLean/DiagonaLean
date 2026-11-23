@@ -11,7 +11,7 @@ import DiagonaLean.MPCP.Hardness
 /-! # PCP is not a computable predicate
 
 The reductions `PCP.synthFromMPCP` (`mpcpToPcp_primrec`) and `PCP.synthAlphabetLift`
-(`pcpAlphabetLift_primrec`) are proved computable, so `MPCP.fromHalt` gives the halting reductions
+(`synthAlphabetLift_primrec`) are proved computable, so `MPCP.fromHalt` gives the halting reductions
 `PCP.fromHalt`, `PCP.fromHaltOver b0 b1 hne` and `PCP.fromHaltBool`, through the proved link
 `PCP.fromMPCP`. So PCP is not a computable predicate over any nontrivial alphabet
 (`not_computablePred_pcp`), and no Turing machine decides it under any computable encoding

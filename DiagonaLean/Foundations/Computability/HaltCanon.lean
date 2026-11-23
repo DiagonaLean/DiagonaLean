@@ -235,8 +235,9 @@ section TablePrim
 
 variable {α : Type*} [Primcodable α]
 
+/-- The table of a canonical machine: `prim_subtype_val` at the predicate `canonValid`. -/
 @[fun_prop] theorem prim_canon_val {f : α → CanonTM} (hf : Primrec f) : Primrec fun x => (f x).1 :=
-  (Primrec.subtype_val (hp := canonValid_primrecPred)).comp hf
+  prim_subtype_val (hp := canonValid_primrecPred) hf
 
 @[fun_prop] theorem prim_canon_n {f : α → CanonTM} (hf : Primrec f) : Primrec fun x => (f x).n :=
   Primrec.fst.comp (prim_canon_val hf)
