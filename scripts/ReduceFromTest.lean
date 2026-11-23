@@ -6,6 +6,7 @@ import DiagonaLean.MatMort.Primrec
 import DiagonaLean.EmpCFG.MachineLevel
 import DiagonaLean.AmbigCFG.MachineLevel
 import DiagonaLean.Foundations.Codes.Tactic
+import DiagonaLean.GrammarMem.Hardness
 
 /-! Tests for `reduce_from`, run by CI: one case per goal shape, the link upgrade, and the errors. -/
 
@@ -94,6 +95,11 @@ def synthFromProved : SynthHaltReduction PCPA := by
 /-- Both synthetic. -/
 def synthFromSynth : SynthHaltReduction PCPA := by
   reduce_from DiagonaLean.MPCP.synthFromHalt via (DiagonaLean.PCP.synthFromMPCP (α := A))
+
+/-- A link out of a subtype (type 0 grammar codes): `prim_subtype_val` with the predicate's
+`@[fun_prop]` lemma `isType0_prim`. -/
+def fromSubtypeLink : HaltReduction (@DiagonaLean.GrammarMem.DecisionProblem Bool) := by
+  reduce_from DiagonaLean.GrammarMem.emptyWordFromHalt via DiagonaLean.GrammarMem.synthFromEmptyWord
 
 /-! ### Errors -/
 

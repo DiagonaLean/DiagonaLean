@@ -115,7 +115,7 @@ theorem selfHalt_iff_emptyWord (M : EncodableTM Bool) :
 variable [Primcodable T]
 
 /-- `IsType0` is a primitive recursive predicate. -/
-theorem isType0_prim : PrimrecPred (IsType0 (T := T)) := by
+@[fun_prop] theorem isType0_prim : PrimrecPred (IsType0 (T := T)) := by
   unfold IsType0 isType0
   fun_prop
 

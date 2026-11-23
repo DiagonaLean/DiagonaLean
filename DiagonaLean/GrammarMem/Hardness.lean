@@ -66,10 +66,9 @@ def emptyWordFromHalt :
     (Primrec.subtype_mk canonGCode_prim).to_comp, haltCanon_iff_emptyWord⟩
 
 /-- **Membership for grammar codes is halting-hard**: `emptyWordFromHalt`, then
-`synthFromEmptyWord`, proved computable. -/
-def fromHalt : HaltReduction (@DecisionProblem T) :=
-  emptyWordFromHalt.trans
-    (.ofSynth GrammarMem.synthFromEmptyWord (Primrec.subtype_val.pair (Primrec.const [])).to_comp)
+`synthFromEmptyWord`, proved computable (`prim_subtype_val`). -/
+def fromHalt : HaltReduction (@DecisionProblem T) := by
+  reduce_from emptyWordFromHalt via GrammarMem.synthFromEmptyWord
 
 theorem haltHard : HaltHard (@DecisionProblem T) :=
   ⟨fromHalt⟩

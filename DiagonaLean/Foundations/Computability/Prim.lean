@@ -58,6 +58,14 @@ variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
 
 @[fun_prop] theorem prim_snd {f : α → β × γ} (hf : Primrec f) : Primrec fun x => (f x).2 := Primrec.snd.comp hf
 
+/-- The value of an element of a subtype with the encoding `Primcodable.subtype hp`. `fun_prop`
+proves `hp` as a side goal, so the predicate needs a `@[fun_prop]` lemma (`isType0_prim`). -/
+@[fun_prop] theorem prim_subtype_val {p : β → Prop} [DecidablePred p] {hp : PrimrecPred p}
+    {f : α → { b // p b }} (hf : @Primrec α { b // p b } _ (Primcodable.subtype hp) f) :
+    Primrec fun x => (f x).1 :=
+  letI := Primcodable.subtype hp
+  (Primrec.subtype_val (hp := hp)).comp hf
+
 @[fun_prop] theorem prim_natPair {f g : α → ℕ} (hf : Primrec f) (hg : Primrec g) :
     Primrec fun x => Nat.pair (f x) (g x) := Primrec₂.natPair.comp hf hg
 
