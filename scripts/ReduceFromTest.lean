@@ -101,7 +101,42 @@ def synthFromSynth : SynthHaltReduction PCPA := by
 def fromSubtypeLink : HaltReduction (@DiagonaLean.GrammarMem.DecisionProblem Bool) := by
   reduce_from DiagonaLean.GrammarMem.emptyWordFromHalt via DiagonaLean.GrammarMem.synthFromEmptyWord
 
+/-! ### Negative sources
+
+A source `h : ¬ ComputablePred p` transfers along a link, so no halting reduction is needed. -/
+
+/-- A synthetic link, upgraded: its computability is closed by `fun_prop`. -/
+example : ¬ ComputablePred PCPA := by
+  reduce_from DiagonaLean.MPCP.MachineLevel.not_computablePred_mpcp via (DiagonaLean.PCP.synthFromMPCP (α := A))
+
+/-- A proved link needs nothing more. -/
+example : ¬ ComputablePred PCPA := by
+  reduce_from DiagonaLean.MPCP.MachineLevel.not_computablePred_mpcp via
+    (ComputableReduction.ofSynth (DiagonaLean.PCP.synthFromMPCP (α := A)) mpcpToPcp_primrec.to_comp)
+
+/-- The encoding's computability is closed by `assumption`. -/
+example {enc : DiagonaLean.PCP.Stack (Ext A) → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc PCPA := by
+  reduce_from DiagonaLean.MPCP.MachineLevel.not_computablePred_mpcp via (DiagonaLean.PCP.synthFromMPCP (α := A))
+
 /-! ### Errors -/
+
+/--
+error: reduce_from: the source `DiagonaLean.MPCP.MachineLevel.not_computablePred_mpcp` is a negative result (`¬ ComputablePred`), so it proves only a goal `¬ ComputablePred q` or `¬ MachineDecidable enc q`; the other goals need a halting reduction as the source.
+-/
+#guard_msgs in
+example : HaltHard PCPA := by
+  reduce_from DiagonaLean.MPCP.MachineLevel.not_computablePred_mpcp via
+    (DiagonaLean.PCP.synthFromMPCP (α := A))
+
+/--
+error: reduce_from: the source `(1 : ℕ)` is neither a reduction nor a negative result: its type is
+  ℕ
+expected a `SynthReduction` (`⪯_s`, `SynthHaltReduction`), a `ComputableReduction` (`HaltReduction`) or `¬ ComputablePred p`
+-/
+#guard_msgs in
+example : ¬ ComputablePred PCPA := by
+  reduce_from (1 : ℕ) via (DiagonaLean.PCP.synthFromMPCP (α := A))
 
 /--
 error: reduce_from: the source `DiagonaLean.MPCP.synthFromHalt` is a synthetic halting reduction, but the goal needs a proved one. A halting reduction is upgraded at its root, by a reduction from `HaltCanon` proved computable, not by a computability proof of the link.
@@ -118,3 +153,48 @@ is not one of `SynthHaltReduction q`, `HaltReduction q`, `HaltHard q`, `¬ Compu
 #guard_msgs in
 example : True := by
   reduce_from DiagonaLean.MPCP.fromHalt via (DiagonaLean.PCP.synthFromMPCP (α := A))
+
+/-! ### Adversarial cases -/
+
+/-- The link behind two layers of definitions is still read: `unfoldField` reaches the function. -/
+def layer1 : @DiagonaLean.MPCP.DecisionProblem A ⪯_s PCPA := DiagonaLean.PCP.synthFromMPCP (α := A)
+def layer2 : @DiagonaLean.MPCP.DecisionProblem A ⪯_s PCPA := layer1
+
+example : HaltReduction PCPA := by
+  reduce_from DiagonaLean.MPCP.fromHalt via layer2
+
+/-- A composite link: the function is a composition, and `fun_prop` reads it. -/
+example : HaltReduction PCPA := by
+  reduce_from DiagonaLean.MPCP.fromHalt via
+    (SynthReduction.trans (SynthReduction.refl _) (DiagonaLean.PCP.synthFromMPCP (α := A)))
+
+/-- A classical link: the tactic does not close its computability, which is unprovable. -/
+noncomputable def cheat : HaltCanon ⪯_s (fun b : Bool => b = true) :=
+  ⟨fun x => @decide (HaltCanon x) (Classical.propDecidable _), fun x => by simp⟩
+
+/--
+error: unsolved goals
+⊢ Computable cheat.f
+-/
+#guard_msgs in
+noncomputable def cheatProved : HaltReduction (fun b : Bool => b = true) := by
+  reduce_from (ComputableReduction.refl HaltCanon) via cheat
+
+-- A source that does not exist reports the unknown identifier, not a vague type.
+/--
+error: Unknown identifier `DiagonaLean.Nonexistent`
+-/
+#guard_msgs in
+example : HaltReduction PCPA := by
+  reduce_from DiagonaLean.Nonexistent via layer2
+
+-- A source and a link that do not meet say which is which.
+/--
+error: reduce_from: the source `(ComputableReduction.refl HaltCanon)` reduces to
+  HaltCanon
+but the link `layer2` starts from
+  DiagonaLean.MPCP.DecisionProblem
+-/
+#guard_msgs in
+example : HaltReduction PCPA := by
+  reduce_from (ComputableReduction.refl HaltCanon) via layer2
