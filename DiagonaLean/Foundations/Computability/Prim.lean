@@ -202,6 +202,14 @@ proves `hp` as a side goal, so the predicate needs a `@[fun_prop]` lemma (`isTyp
 @[fun_prop] theorem prim_sumInr {δ : Type*} [Primcodable δ] {f : α → δ} (hf : Primrec f) :
     Primrec fun x => (Sum.inr (f x) : β ⊕ δ) := Primrec.sumInr.comp hf
 
+/-- `Sum.map`, as `Sum.elim` of the two injections. -/
+@[fun_prop] theorem prim_sumMap {δ ε : Type*} [Primcodable δ] [Primcodable ε] {o : α → β ⊕ δ}
+    {f : α → β → γ} {g : α → δ → ε} (ho : Primrec o) (hf : Primrec fun y : α × β => f y.1 y.2)
+    (hg : Primrec fun y : α × δ => g y.1 y.2) : Primrec fun x => Sum.map (f x) (g x) (o x) :=
+  (prim_sumElim (f := fun x b => (Sum.inl (f x b) : γ ⊕ ε))
+    (g := fun x d => (Sum.inr (g x d) : γ ⊕ ε)) ho (prim_sumInl hf) (prim_sumInr hg)).of_eq
+    fun x => by cases o x <;> rfl
+
 @[fun_prop] theorem prim_some {f : α → β} (hf : Primrec f) : Primrec fun x => some (f x) :=
   Primrec.option_some.comp hf
 

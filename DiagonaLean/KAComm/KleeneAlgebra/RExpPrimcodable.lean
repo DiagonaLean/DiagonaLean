@@ -113,6 +113,22 @@ theorem primrec_iff_rc {β : Type} [Primcodable β] {f : β → RExp (ℕ ⊕ �
     Primrec f ↔ Primrec fun b => rc (f b) :=
   TaggedCode.primrec_iff rcKids rcKids_lt rcBuild rc_spec rc_primrec rcKids_primrec rcBuild_primrec
 
+/-- **Renaming the letters of an expression by a primitive recursive function is primitive
+recursive**, by `primrec_of_eqns` (`primrec_rec` does not apply: `map` takes the function as a
+parameter, which cannot be an argument of `Primrec₂`). -/
+@[fun_prop] theorem map_prim {X Y : Type} [Primcodable X] [Primcodable Y] {φ : X → Y}
+    (hφ : Primrec φ) : Primrec (map φ) := by
+  have : Inhabited (RExp Y) := ⟨.zero⟩
+  have h := primrec_of_eqns (X := X) (P := Unit) (σ := RExp Y) (f := fun _ e => e.map φ)
+    (fun _ _ => .zero) (fun _ _ => .one) (fun _ x _ => .sym (φ x))
+    (fun _ l => .plus (l.getD 0 default) (l.getD 1 default))
+    (fun _ l => .mul (l.getD 0 default) (l.getD 1 default))
+    (fun _ l => .star (l.getD 0 default))
+    (fun _ => rfl) (fun _ => rfl) (fun _ _ => rfl) (fun _ _ _ => rfl) (fun _ _ _ => rfl)
+    (fun _ _ => rfl) (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop) (by fun_prop)
+    (by fun_prop)
+  exact h.comp (Primrec.const ()) Primrec.id
+
 end RExp
 
 end DiagonaLean.KAComm.KleeneAlgebra

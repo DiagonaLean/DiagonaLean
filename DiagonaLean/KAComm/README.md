@@ -64,14 +64,14 @@ so every left letter commutes with every right letter. $\mathrm{Exp}(\ddot\Sigma
 > is undecidable. The same holds for $\Sigma = \mathbb N$.
 
 This is the claim of the paper's title: Kleene algebra with a fixed finite set of commutativity conditions on primitive letters has an undecidable equational theory.
-*Lean:* `KATermEqBool.Reduction.not_machineDecidable_kaTermEqBool`, `KATermEq.Reduction.not_machineDecidable_kaTermEq`. Over `ℕ` also `KATermEq.Reduction.not_computablePred_kaTermEq`.
+*Lean:* `KATermEqBool.Reduction.not_machineDecidable_kaTermEqBool`, `KATermEq.Reduction.not_machineDecidable_kaTermEq`. Also `KATermEq.Reduction.not_computablePred_kaTermEq` and `KATermEqBool.Reduction.not_computablePred_kaTermEqBool`.
 
 > **Theorem 2** (without induction). For $\Sigma = \{0, 1\}$ and for $\Sigma = \mathbb N$, the set
 > $$\{\,(e, f) \;:\; \mathsf{PKA} + H_\Sigma \vdash e = f\,\}$$
 > is undecidable.
 
 So undecidability does not come from the induction axioms. The abstract states it as "our results hold even for weaker theories".
-*Lean:* `TermEqBool.Reduction.not_machineDecidable_termEqBool`, `TermEq.Reduction.not_machineDecidable_termEq`. Over `ℕ` also `TermEq.Reduction.not_computablePred_termEq`.
+*Lean:* `TermEqBool.Reduction.not_machineDecidable_termEqBool`, `TermEq.Reduction.not_machineDecidable_termEq`. Also `TermEq.Reduction.not_computablePred_termEq` and `TermEqBool.Reduction.not_computablePred_termEqBool`.
 
 > **Theorem 3** (paper's Theorem 18, for every theory in between). Let $\Sigma = \{0, 1\}$ or $\Sigma = \mathbb N$, and let $S \subseteq \mathrm{Exp}(\ddot\Sigma)^2$ satisfy
 > $$\mathsf{PKA} + H_\Sigma \vdash e \le f \;\Longrightarrow\; (e, f) \in S \;\Longrightarrow\; \mathcal L(e) \subseteq \mathcal L(f).$$
@@ -84,7 +84,7 @@ Theorems 1 and 2 are instances of this. The proof reduces from the computably in
 > 1. equality $\mathcal L(e) = \mathcal L(f)$ and inclusion $\mathcal L(e) \subseteq \mathcal L(f)$ in the language model are undecidable;
 > 2. for every theory $\mathsf T \supseteq \mathsf{PKA}$ for which $\mathcal L$ is sound under $H_\Sigma$, the set $\{(e, f) : \mathsf T + H_\Sigma \vdash e = f\}$ is undecidable.
 
-*Lean:* `not_machineDecidable_langEqBool`, `not_machineDecidable_modelLeBool`, `not_machineDecidable_langEq`, `not_machineDecidable_modelLe`, each in its problem's `Reduction` namespace; part 2 is Theorem 3 with $S$ the theory. Over `ℕ` also `not_computablePred_langEq` and `not_computablePred_modelLe`.
+*Lean:* `not_machineDecidable_langEqBool`, `not_machineDecidable_modelLeBool`, `not_machineDecidable_langEq`, `not_machineDecidable_modelLe`, each in its problem's `Reduction` namespace; part 2 is Theorem 3 with $S$ the theory. Also `not_computablePred_langEq`, `not_computablePred_langEqBool`, `not_computablePred_modelLe` and `not_computablePred_modelLeBool`.
 
 > **Theorem 5** (Theorem 18 on a model). Let $\Sigma = \mathbb N$. Suppose the language map factors through a set $X$ as
 > $$T\ddot\Sigma \xrightarrow{\ \varphi\ } X \xrightarrow{\ g\ } L\ddot\Sigma, \qquad g \circ \varphi = \mathcal L.$$

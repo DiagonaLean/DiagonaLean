@@ -188,6 +188,7 @@ import DiagonaLean.KAComm.KleeneAlgebra.Instance
 import DiagonaLean.KAComm.KleeneAlgebra.InstanceCode
 import DiagonaLean.KAComm.KleeneAlgebra.BinarySubst
 import DiagonaLean.KAComm.KleeneAlgebra.Race
+import DiagonaLean.KAComm.KleeneAlgebra.BoolCode
 import DiagonaLean.KAComm.KleeneAlgebra.Between
 
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Configurations
