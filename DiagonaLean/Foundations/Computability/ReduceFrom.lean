@@ -4,6 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Foundations.Computability.HaltCanon
+import DiagonaLean.Synthetic.ReductionCheck
 
 @[expose] public section
 
@@ -38,6 +39,33 @@ function that is an `abbrev` is unfolded by `fun_prop` itself, so it should be a
 `h` is a term, possibly applied, so a source needs no registration. Reductions are recognised by
 their type after unfolding abbreviations: `SynthReduction` (with `SynthHaltReduction` and the
 former names `Undecidable`, `ManyOneReduces`) and `ComputableReduction` (with `HaltReduction`).
+
+## The link as a function and a proof: `synth_reduce_from`
+
+On a goal `SynthHaltReduction q`, the link may be given as its two parts, as the original
+`reduceFromPCP` did. The tactic is `synth_reduce_from`, the synthetic one; `reduce_from … via`
+stays the one for every goal.
+
+* `synth_reduce_from h with f`: leaves `forward` (`x`, `hp : p x ⊢ q (f x)`) and `backward`
+  (`x`, `hq : q (f x) ⊢ p x`).
+* `synth_reduce_from h with f unfold`: the same, with both problems unfolded one step (`hp`
+  becomes the existential of PCP, say); kept folded, with a message, when the unfolding is
+  recursive or very large.
+* `synth_reduce_from h with f using spec`: the link is `⟨f, spec⟩`, with `spec : p ⪯_s[f] q`.
+* `synth_reduce_from h with f using fwd bwd`: the two directions as the lemmas of the reduction
+  files, `fwd : p x → q (f x)` and `bwd : q (f x) → p x`.
+* `synth_reduce_from h via r`: `reduce_from h via r`, for a synthetic goal only.
+
+The function is checked at tactic time, for the message: it may not use a `noncomputable`
+definition, `implemented_by`, `extern`, `opaque`, `partial`, `unsafe` or classical choice, one level
+deep; `#check_reductions` and the compiler check the rest. Proved goals take `reduce_from … via`.
+
+## A problem as the source
+
+A source that is a problem `X → Prop` rather than a reduction is looked up by the naming
+convention: in the namespace of the problem's head constant, `synthFromHalt` and
+`synthFromHaltBool` (without explicit arguments) whose target unifies with the problem. No match, or
+several, is an error that says so.
 -/
 
 namespace DiagonaLean.Foundations.Computability.ReduceFrom
@@ -181,6 +209,174 @@ def unfoldFunction : TacticM Unit := withMainContext do
   if f' == f then throwError "nothing to unfold"
   replaceMainGoal [← g.change (mk f')]
 
+open DiagonaLean.Synthetic.ReductionCheck (isTrusted escapeHatch)
+
+/-- A problem: a predicate `X → Prop`. -/
+def isProblemType (ty : Expr) : MetaM Bool :=
+  forallTelescopeReducing ty fun xs body => return !xs.isEmpty && (← whnf body).isProp
+
+/-- The names, in the namespace of a problem, of the synthetic halting reductions to it that
+`reduce_from` looks for. -/
+def sourceSuffixes : List Name := [`synthFromHalt, `synthFromHaltBool]
+
+/-- A type with an explicit binder, so a definition that must be applied to arguments. -/
+def hasExplicitBinder : Expr → Bool
+  | .forallE _ _ b bi => bi.isExplicit || hasExplicitBinder b
+  | _ => false
+
+/-- What was found for the problem `p`. -/
+structure Lookup where
+  /-- The namespace searched: the prefix of the problem's head constant. -/
+  ns : Name
+  /-- The sources whose target is the problem. -/
+  matched : Array Name := #[]
+  /-- The sources that exist but reduce halting to another problem. -/
+  elsewhere : Array Name := #[]
+  /-- The sources that exist but take explicit arguments, so cannot be found by name. -/
+  needsArgs : Array Name := #[]
+
+/-- The synthetic halting reductions in the namespace of `p`'s head constant (by the naming
+convention) whose target unifies with `p` and that take no explicit arguments. -/
+def lookupSynthSource (p : Expr) : MetaM Lookup := do
+  let p ← instantiateMVars p
+  let some c := p.getAppFn.constName? | throwError "reduce_from: the problem{indentExpr p}\n\
+    has no head constant, so no source can be looked up from its name"
+  let mut lk : Lookup := { ns := c.getPrefix }
+  let env ← getEnv
+  for suf in sourceSuffixes do
+    let n := lk.ns ++ suf
+    unless env.contains n do continue
+    let ci ← getConstInfo n
+    if hasExplicitBinder ci.type then
+      lk := { lk with needsArgs := lk.needsArgs.push n }
+      continue
+    let ok ← withoutModifyingState do
+      let e ← mkConstWithFreshMVarLevels n
+      let (_, _, concl) ← forallMetaTelescopeReducing (← inferType e)
+      match ← endsOf? concl with
+      | some (_, q) => isDefEq q p
+      | none => pure false
+    if ok then lk := { lk with matched := lk.matched.push n }
+    else lk := { lk with elsewhere := lk.elsewhere.push n }
+  return lk
+
+/-- If `h` is a problem rather than a reduction, the registered source for it (by name); otherwise
+`h` itself. -/
+def resolveSource (h : Term) : TacticM Term := do
+  let r ← withoutModifyingState do
+    let e ← withoutRecover <| elabTerm h none (mayPostpone := true)
+    unless ← isProblemType (← inferType e) do return none
+    return some (← lookupSynthSource e)
+  let some lk := r | return h
+  match lk.matched with
+  | #[n] => return ⟨(mkIdent n).raw⟩
+  | #[] =>
+    let names (a : Array Name) : MessageData := MessageData.joinSep (a.toList.map (m!"`{·}`")) ", "
+    let mut msg := m!"reduce_from: `{h}` is a problem, not a reduction, so the tactic looks for a \
+      synthetic halting reduction to it in the namespace `{lk.ns}`, by the names `synthFromHalt` \
+      and `synthFromHaltBool`, and finds none that applies. Give the source explicitly."
+    unless lk.elsewhere.isEmpty do
+      msg := msg ++ m!"\nThese exist but reduce halting to another problem: {names lk.elsewhere}."
+    unless lk.needsArgs.isEmpty do
+      msg := msg ++ m!"\nThese take explicit arguments, so give them as the source: \
+        {names lk.needsArgs}."
+    throwError msg
+  | ns => throwError "reduce_from: several halting reductions to `{h}` apply: {
+      MessageData.joinSep (ns.toList.map (m!"`{·}`")) ", "}. Fix the alphabet or give the source \
+      explicitly."
+
+/-- The link function of a synthetic result must be a program: a constant that is not
+`noncomputable`, and without an escape hatch (`implemented_by`, `extern`, `opaque`, `partial`,
+`unsafe`), or classical choice. One level only: `#check_reductions` and the compiler check the
+rest, so this check is for the message. -/
+def checkLinkFunction (f : Term) : TacticM Unit := do
+  let some e ← (do
+      try withoutModifyingState do
+        return some (← instantiateMVars (← withoutRecover <| elabTerm f none (mayPostpone := true)))
+      catch _ => return none) | return
+  let env ← getEnv
+  for c in e.getUsedConstants do
+    let classical := (`Classical).isPrefixOf c && !(env.find? c matches some (.thmInfo _))
+    if isTrusted env c && !classical then continue
+    let why? : Option String :=
+      if classical then some "has no compiled code (classical choice)"
+      else if isNoncomputable env c then some "is marked `noncomputable`"
+      else escapeHatch env c
+    if let some why := why? then
+      let who : MessageData :=
+        if f.raw.isIdent && f.raw.getId == c then m!"the link function `{c}` {why}"
+        else m!"the link function uses `{c}`, which {why}"
+      throwError "synth_reduce_from: {who}. The function of a synthetic reduction must be a \
+        compiled program. For a proved result, use a proved link, or prove `Computable` of the \
+        function."
+
+/-- How the correctness of the link function is given: left as the goals `forward` and `backward`
+(`open_`), the same with both problems unfolded (`unfold`), as a whole statement (`spec`), or as
+the two directions (`lemmas`). -/
+inductive LinkProof
+  | open_ | unfold | spec (s : Term) | lemmas (a b : Term)
+
+/-- One unfolding of the head definition of a problem applied to an instance, beta first; a problem
+that is an alias (`abbrev`) is unfolded through to its definition. Kept folded (with a message)
+when the unfolding is recursive (a matcher, `brecOn`, well-founded recursion) or very large. -/
+partial def unfoldProblem? (e : Expr) (fuel : Nat := 4) : MetaM (Option Expr) := do
+  let e := (← instantiateMVars e).headBeta
+  let fn := e.getAppFn
+  let some e' ← unfoldDefinition? e | return none
+  let env ← getEnv
+  let recursive := e'.getUsedConstants.any fun c =>
+    isMatcherCore env c || c == ``WellFounded.fix ||
+      (match c with | .str _ n => n == "brecOn" | _ => false)
+  if recursive || e'.sizeWithoutSharing > 6000 then
+    logInfo m!"synth_reduce_from … unfold: `{e}` unfolds into a recursive or very large term, so \
+      it is kept folded"
+    return none
+  if fn.isConst && fuel > 0 && (← isReducible fn.constName!) then
+    return (← unfoldProblem? e' (fuel - 1)).getD e' |> some
+  return some e'
+
+/-- Unfold the hypothesis `hyp` and the target of the goal `g`, each by one step. -/
+def unfoldSplitGoal (g : MVarId) (hyp : Name) : MetaM MVarId := g.withContext do
+  let mut g := g
+  if let some d := (← getLCtx).findFromUserName? hyp then
+    if let some t ← unfoldProblem? d.type then g ← g.changeLocalDecl d.fvarId t
+  if let some t ← unfoldProblem? (← g.getType) then g ← g.change t
+  return g
+
+/-- `synth_reduce_from h with f …` on a goal `SynthHaltReduction q`: the link is `⟨f, proof⟩`. -/
+def runWith (h f : Term) (how : LinkProof) : TacticM Unit := withMainContext do
+  match ← goalOf? (← getMainTarget) with
+  | some .synth => pure ()
+  | _ => throwError "synth_reduce_from: the goal{indentExpr (← getMainTarget)}\nis not \
+      `SynthHaltReduction q`. For a proved goal, use `reduce_from … via`."
+  let h ← resolveSource h
+  checkLinkFunction f
+  let link : Term ← match how with
+    | .open_ | .unfold => `(⟨$f, ?spec⟩)
+    | .spec s => `(⟨$f, $s⟩)
+    | .lemmas a b => `(⟨$f, fun _ => ⟨$a, $b⟩⟩)
+  let term ← `(DiagonaLean.Synthetic.Definitions.SynthHaltReduction.comp $h $link)
+  try withoutRecover <| evalTactic (← `(tactic| refine $term))
+  catch e =>
+    match how with
+    | .lemmas a b => throwError "synth_reduce_from: the lemmas `{a}` and `{b}` do not prove that \
+        `{f}` reduces the source `{h}` to the goal. They must state `p x → q ({f} x)` and the \
+        converse, in this order; or give the whole statement with `using`.\n{e.toMessageData}"
+    | .spec s => throwError "synth_reduce_from: `{s}` does not prove that `{f}` reduces the \
+        source `{h}` to the goal.\n{e.toMessageData}"
+    | _ => throw e
+  match how with
+  | .open_ | .unfold =>
+    evalTactic (← `(tactic| intro $(mkIdent `x):ident))
+    evalTactic (← `(tactic| refine ⟨fun $(mkIdent `hp):ident => ?forward,
+      fun $(mkIdent `hq):ident => ?backward⟩))
+    if let .unfold := how then
+      match ← getGoals with
+      | gf :: gb :: rest =>
+        setGoals ((← unfoldSplitGoal gf `hp) :: (← unfoldSplitGoal gb `hq) :: rest)
+      | _ => pure ()
+  | _ => pure ()
+
 end DiagonaLean.Foundations.Computability.ReduceFrom
 
 open DiagonaLean.Foundations.Computability.ReduceFrom Lean Elab Tactic in
@@ -188,6 +384,7 @@ open DiagonaLean.Foundations.Computability.ReduceFrom Lean Elab Tactic in
 from `p` to `q`. The goal decides whether the result is synthetic or proved; see the module
 docstring of `Foundations.Computability.ReduceFrom`. -/
 elab "reduce_from " h:term:max " via " r:term : tactic => withMainContext do
+  let h ← resolveSource h
   let some goal ← goalOf? (← getMainTarget) | throwError "reduce_from: the goal{indentExpr
       (← getMainTarget)}\nis not one of `SynthHaltReduction q`, `HaltReduction q`, `HaltHard q`, \
       `¬ ComputablePred q`, `¬ MachineDecidable enc q`"
@@ -238,3 +435,34 @@ elab "reduce_from " h:term:max " via " r:term : tactic => withMainContext do
       unfoldFunction
       evalTactic (← `(tactic| fun_prop))
   setGoals (left ++ others)
+
+open DiagonaLean.Foundations.Computability.ReduceFrom Lean Elab Tactic
+
+/-- `synth_reduce_from h with f`: on a goal `SynthHaltReduction q`, build the link from the function
+`f` and leave its correctness as the two goals `forward` (`hp : p x ⊢ q (f x)`) and `backward`
+(`hq : q (f x) ⊢ p x`). `with f unfold` also unfolds both problems one step. `with f using spec`
+(`spec : p ⪯_s[f] q`) or `with f using fwd bwd` closes the link with a known theorem, and
+`synth_reduce_from h via r` composes with a bundled link. `h` is a halting reduction to `p`, or the
+problem `p` itself, found by the naming convention. See `Foundations.Computability.ReduceFrom`. -/
+syntax (name := srfWith) "synth_reduce_from " term:max " with " term:max : tactic
+@[tactic_alt srfWith]
+syntax (name := srfUnfold) "synth_reduce_from " term:max " with " term:max &" unfold" : tactic
+@[tactic_alt srfWith]
+syntax (name := srfUsing) "synth_reduce_from " term:max " with " term:max " using " term:max
+  : tactic
+@[tactic_alt srfWith]
+syntax (name := srfLemmas) "synth_reduce_from " term:max " with " term:max " using " term:max
+  term:max : tactic
+@[tactic_alt srfWith]
+syntax (name := srfVia) "synth_reduce_from " term:max " via " term:max : tactic
+
+elab_rules : tactic
+  | `(tactic| synth_reduce_from $h with $f) => runWith h f .open_
+  | `(tactic| synth_reduce_from $h with $f unfold) => runWith h f .unfold
+  | `(tactic| synth_reduce_from $h with $f using $s) => runWith h f (.spec s)
+  | `(tactic| synth_reduce_from $h with $f using $a $b) => runWith h f (.lemmas a b)
+  | `(tactic| synth_reduce_from $h via $r) => withMainContext do
+    match ← goalOf? (← getMainTarget) with
+    | some .synth => evalTactic (← `(tactic| reduce_from $h via $r))
+    | _ => throwError "synth_reduce_from: the goal{indentExpr (← getMainTarget)}\nis not \
+        `SynthHaltReduction q`. For a proved goal, use `reduce_from … via`."

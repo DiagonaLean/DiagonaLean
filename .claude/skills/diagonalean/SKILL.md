@@ -80,7 +80,17 @@ extract them from `Nontrivial α` (a `Prop`).
   (through `ComputableReduction.not_computablePred`, or `not_computablePred_of_reduces` for a
   synthetic link) and nothing else. `h` and `r` are arbitrary terms (applied
   definitions, hypotheses, `.trans` chains), not only names. The bare correctness theorem is not a
-  reduction; pass `⟨_, spec⟩`.
+  reduction; pass `⟨_, spec⟩`, or on a synthetic goal use `with` (next).
+* **`synth_reduce_from h with f …`** (synthetic goals `SynthHaltReduction q` only; proved goals take
+  `reduce_from … via`): the link is built from the function and its correctness, as the original
+  `reduceFromPCP` did, with no bundled `synthFromX` definition needed. `with f` leaves `forward`
+  (`x`, `hp : p x`) and `backward` (`x`, `hq : q (f x)`); `with f unfold` also unfolds both problems
+  one step; `with f using spec` (`spec : p ⪯_s[f] q`) or `with f using fwd bwd` closes the link with
+  a known theorem; `synth_reduce_from h via r` composes a bundled link. `f` must be a program (no
+  `noncomputable`, `implemented_by`, `extern`, `opaque`, `partial`, `unsafe`, classical choice): the
+  tactic says so. The source `h` may be a **problem** (`@SemiThue.DecisionProblem Bool`): it is
+  found in the problem's namespace as `synthFromHalt` or `synthFromHaltBool` (no explicit
+  arguments), by name, in `reduce_from … via` too.
 * **`code_lift F from h`**: a halting reduction `h` is composed with the lift by `reduce_from`
   (synthetic `F.lift` or proved `F.computableLift`, chosen by the goal), so it proves every goal
   `reduce_from` does, over any alphabet with two letters (`hne : b0 ≠ b1` in the context); a source

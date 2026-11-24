@@ -7,6 +7,7 @@ import DiagonaLean.EmpCFG.MachineLevel
 import DiagonaLean.AmbigCFG.MachineLevel
 import DiagonaLean.Foundations.Codes.Tactic
 import DiagonaLean.GrammarMem.Hardness
+import DiagonaLean.SemiThue.Undecidable
 
 /-! Tests for `reduce_from`, run by CI: one case per goal shape, the link upgrade, and the errors. -/
 
@@ -198,3 +199,121 @@ but the link `layer2` starts from
 #guard_msgs in
 example : HaltReduction PCPA := by
   reduce_from (ComputableReduction.refl HaltCanon) via layer2
+
+/-! ### The link as a function and a proof (`synth_reduce_from … with`)
+
+`synth_reduce_from h with f using spec` builds the link `⟨f, spec⟩` from the function and its
+correctness; the goal must be `SynthHaltReduction q`. -/
+
+open DiagonaLean.MatMort.Reduction
+
+/-- The whole statement. -/
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+/-- The two directions, as two lemmas. -/
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h with matImage using matmort_of_pcp pcp_of_matmort
+
+/-- The function alone leaves `forward` and `backward`, with named hypotheses. -/
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h with matImage
+  · exact matmort_of_pcp hp
+  · exact pcp_of_matmort hq
+
+/-- `unfold` also unfolds both problems one step: `hp` is the existential of PCP. -/
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h with matImage unfold
+  · obtain ⟨A, hne, hmem, heq⟩ := hp
+    exact matmort_of_pcp (by unfold DiagonaLean.PCP.DecisionProblem; exact ⟨A, hne, hmem, heq⟩)
+  · exact pcp_of_matmort hq
+
+/-- A problem that is a lambda (the AmbigCFG instance type) is unfolded after beta. -/
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem Bool)) :
+    SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem Bool) := by
+  synth_reduce_from h with id unfold
+  · exact hp
+  · exact hq
+
+/-- A function given as a lambda is read too (it uses only trusted constants). -/
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h with (fun K => matImage K) using matmort_of_pcp pcp_of_matmort
+
+/-- `via` composes with a bundled link, on a synthetic goal. -/
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h via DiagonaLean.MatMort.synthFromPCP
+
+/-! ### A problem as the source: found by the naming convention -/
+
+/-- `SemiThue.synthFromHaltBool` is the source for the problem over `Bool`. -/
+example : SynthHaltReduction (@DiagonaLean.SemiThue.DecisionProblem Bool) := by
+  reduce_from (@DiagonaLean.SemiThue.DecisionProblem Bool) via (SynthReduction.refl _)
+
+example : SynthHaltReduction (@DiagonaLean.SemiThue.DecisionProblem Bool) := by
+  synth_reduce_from (@DiagonaLean.SemiThue.DecisionProblem Bool) with id using (fun _ => Iff.rfl)
+
+/-! ### Errors of `synth_reduce_from` and of the lookup -/
+
+noncomputable def badF : DiagonaLean.PCP.Stack S23 → Finset (Matrix (Fin 3) (Fin 3) ℤ) := matImage
+
+/--
+error: synth_reduce_from: the link function `badF` is marked `noncomputable`. The function of a synthetic reduction must be a compiled program. For a proved result, use a proved link, or prove `Computable` of the function.
+-/
+#guard_msgs in
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h with badF using pcp_reducesto_matMort_spec
+
+/--
+error: synth_reduce_from: the link function uses `Classical.choice`, which has no compiled code (classical choice). The function of a synthetic reduction must be a compiled program. For a proved result, use a proved link, or prove `Computable` of the function.
+-/
+#guard_msgs in
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h with
+    (fun K => (Classical.choice ⟨matImage K⟩ : Finset (Matrix (Fin 3) (Fin 3) ℤ)))
+    using matmort_of_pcp pcp_of_matmort
+
+def stubImpl : DiagonaLean.PCP.Stack S23 → Finset (Matrix (Fin 3) (Fin 3) ℤ) := matImage
+
+@[implemented_by stubImpl]
+def stubF : DiagonaLean.PCP.Stack S23 → Finset (Matrix (Fin 3) (Fin 3) ℤ) :=
+  fun K => Classical.choice ⟨matImage K⟩
+
+/--
+error: synth_reduce_from: the link function `stubF` uses `implemented_by`. The function of a synthetic reduction must be a compiled program. For a proved result, use a proved link, or prove `Computable` of the function.
+-/
+#guard_msgs in
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h with stubF using pcp_reducesto_matMort_spec
+
+-- the message embeds Lean's own mismatch text, which is not stable, so only the failure is checked
+#guard_msgs (drop error) in
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h with matImage using pcp_of_matmort matmort_of_pcp
+
+/--
+error: synth_reduce_from: the goal
+  HaltHard DiagonaLean.MatMort.DecisionProblem
+is not `SynthHaltReduction q`. For a proved goal, use `reduce_from … via`.
+-/
+#guard_msgs in
+example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+/--
+error: reduce_from: `DiagonaLean.MatMort.DecisionProblem` is a problem, not a reduction, so the tactic looks for a synthetic halting reduction to it in the namespace `DiagonaLean.MatMort`, by the names `synthFromHalt` and `synthFromHaltBool`, and finds none that applies. Give the source explicitly.
+-/
+#guard_msgs in
+example : SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from DiagonaLean.MatMort.DecisionProblem with matImage
+    using pcp_reducesto_matMort_spec
