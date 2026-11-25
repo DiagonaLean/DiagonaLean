@@ -7,6 +7,7 @@ import DiagonaLean.PCP.Primrec
 import DiagonaLean.EmpCFG.MachineLevel
 import DiagonaLean.Foundations.Codes.Grammar
 import DiagonaLean.Foundations.Codes.Tactic
+import DiagonaLean.Foundations.Computability.HaltResults
 
 @[expose] public section
 
@@ -22,8 +23,9 @@ letters (`EmpCFG.synthAlphabetLift`). `Undecidable.lean` uses it for `EmpCFG.syn
 Mathlib's grammars keep their rules in a `Finset`, so encoding them needs the proof that the code
 is a code, and is not the action of a functor. Grammar codes keep their rules in a list: on pairs
 of grammar codes the problem is a functor on codes (`empCodeFunctor`), and the lifting of
-`Foundations.Codes.Functor` gives the machine-level statements over every nontrivial alphabet
-(`not_computablePred_empCFGCodeOf`, `not_machineDecidable_empCFGCodeOf`).
+`Foundations.Codes.Functor` moves the halting reduction `EmpCFG.codeFromHaltTerm` to every alphabet
+with two distinct letters (`EmpCFG.codeFromHaltOver`), and `halt_results` states
+`EmpCFG.Code.haltHard`, `EmpCFG.Code.not_computablePred` and `EmpCFG.Code.not_machineDecidable`.
 -/
 
 open DiagonaLean.Synthetic.Definitions DiagonaLean.Foundations.Codes
@@ -99,23 +101,6 @@ abbrev empCodeFunctor : CodeFunctor IsCode where
   map_congr x h := Prod.ext (presEncode_congr fun t ht => h t (List.mem_append_left _ ht))
     (presEncode_congr fun t ht => h t (List.mem_append_right _ ht))
 
-/-- **Non-emptiness of the intersection of two grammar codes is not a computable predicate over
-any nontrivial alphabet**: the lifting of `not_computablePred_empCFGCode` from `Term Bool`. -/
-theorem not_computablePred_empCFGCodeOf [Primcodable α] [Nontrivial α] [DecidableEq α] :
-    ¬ ComputablePred fun c : CFGCode α × CFGCode α => IntersectionNonempty c.1.toCFG c.2.toCFG := by
-  have h₀ : ¬ ComputablePred (@CodeProblem (Reduction.Term Bool)) := by
-    rw [codeProblem_eq]
-    exact not_computablePred_empCFGCode (α := Bool)
-  have h : ¬ ComputablePred (@CodeProblem α) := by code_lift empCodeFunctor from h₀
-  rwa [codeProblem_eq] at h
-
-/-- **No Turing machine decides non-emptiness of the intersection of two grammar codes over any
-nontrivial alphabet**, under any computable encoding. -/
-theorem not_machineDecidable_empCFGCodeOf [Primcodable α] [Nontrivial α] [DecidableEq α]
-    {enc : CFGCode α × CFGCode α → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc fun c => IntersectionNonempty c.1.toCFG c.2.toCFG :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_empCFGCodeOf
-
 /-- **Alphabet invariance of CFG intersection on grammar codes**: over any two nontrivial
 `Primcodable` alphabets, non-emptiness of the intersection is many-one equivalent. -/
 theorem empCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
@@ -126,3 +111,31 @@ theorem empCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [N
   rwa [codeProblem_eq, codeProblem_eq] at h
 
 end DiagonaLean.EmpCFG.MachineLevel
+
+namespace DiagonaLean.EmpCFG
+
+open DiagonaLean.EmpCFG.MachineLevel DiagonaLean.Foundations.Codes
+  DiagonaLean.Foundations.Computability DiagonaLean.Foundations.Grammar
+
+variable {α : Type} [Primcodable α] [DecidableEq α]
+
+/-- **Non-emptiness of the intersection of two grammar codes is halting-hard over any alphabet with
+two distinct letters**: `codeFromHaltTerm` over `Term Bool`, then the lifting along
+`empCodeFunctor`, proved computable. -/
+def codeFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
+    HaltReduction fun c : CFGCode α × CFGCode α => IntersectionNonempty c.1.toCFG c.2.toCFG := by
+  have h : HaltReduction (@CodeProblem (Reduction.Term Bool)) := by
+    rw [codeProblem_eq]
+    exact codeFromHaltTerm false true Bool.false_ne_true
+  rw [← codeProblem_eq]
+  code_lift empCodeFunctor from h
+
+section
+variable [Nontrivial α]
+
+halt_results Code for (fun c : CFGCode α × CFGCode α => IntersectionNonempty c.1.toCFG c.2.toCFG)
+  over_letters from codeFromHaltOver
+
+end
+
+end DiagonaLean.EmpCFG

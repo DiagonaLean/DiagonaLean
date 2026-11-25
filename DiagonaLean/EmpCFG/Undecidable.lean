@@ -30,7 +30,7 @@ open DiagonaLean.EmpCFG DiagonaLean.PCP ContextFreeGrammar
 
 /-- **Non-emptiness of the intersection of two context-free grammars is synthetically
 halting-hard.** This holds over the terminals `Term α`, for any alphabet `α` with two distinct
-letters `b0`, `b1`, through `EmpCFG.synthFromPCP`. -/
+letters `b0`, `b1`, through `pcpToEmpCFG`. -/
 def _root_.DiagonaLean.EmpCFG.synthFromHaltTerm {α : Type} [DecidableEq α] (b0 b1 : α)
     (hne : b0 ≠ b1) :
     SynthHaltReduction (@DiagonaLean.EmpCFG.DecisionProblem (Term α)) := by
