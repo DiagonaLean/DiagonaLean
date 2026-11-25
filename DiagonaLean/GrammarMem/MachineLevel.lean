@@ -21,7 +21,7 @@ rewrites to the empty string (`emptyWord_ofSRS_iff`, from `SRS.derives_start` an
 * `ofSRS`, `emptyWord_ofSRS_iff`, `isType0_ofSRS`, and the `Primcodable` instance of type 0 grammar
   codes: used in `Hardness.lean` for the halting reductions `GrammarMem.emptyWordFromHalt` and
   `GrammarMem.fromHalt`, from which the negative results there
-  (`not_computablePred_grammarMem`, `not_machineDecidable_emptyWord_type0`, …) follow.
+  (`GrammarMem.not_computablePred`, `GrammarMem.EmptyWord.not_machineDecidable`, …) follow.
 -/
 
 namespace DiagonaLean.GrammarMem.MachineLevel
@@ -98,15 +98,5 @@ variable [Primcodable T]
 
 /-- Type 0 grammar codes, with the encoding of a subtype. -/
 instance : Primcodable { g : GrammarCode T // IsType0 g } := Primcodable.subtype isType0_prim
-
-/-- Membership of the empty word in a type 0 grammar is membership in a grammar. -/
-def _root_.DiagonaLean.GrammarMem.synthFromEmptyWord :
-    (fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1) ⪯_s
-      @DecisionProblem T :=
-  ⟨fun g => (g.1, []), fun _ => Iff.rfl⟩
-
-/-- The former name of `GrammarMem.synthFromEmptyWord`. -/
-@[deprecated DiagonaLean.GrammarMem.synthFromEmptyWord (since := "2026-11-23")]
-abbrev emptyWordReducesGrammarMem := @DiagonaLean.GrammarMem.synthFromEmptyWord
 
 end DiagonaLean.GrammarMem.MachineLevel

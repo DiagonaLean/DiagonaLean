@@ -12,7 +12,7 @@ Every context-free grammar code is a grammar code of type 0 with the same langua
 * `Basic.lean`: the problem, type 0, and context-free codes as grammar codes.
 * `MachineLevel.lean`: the grammar code of a rewriting system (`ofSRS`), its language and type (`emptyWord_ofSRS_iff`, `isType0_ofSRS`).
 * `Reductions/Halt_to_GrammarMem.lean`: `HaltProblem ⪯_s` membership for grammar codes (`GrammarMem.synthFromHalt`). See `Reductions/README.md`.
-* `Hardness.lean`: membership for grammar codes is halting-hard, by a reduction from `HaltCanon` proved computable (`GrammarMem.fromHalt`), already for the empty word and type 0 codes (`GrammarMem.emptyWordFromHalt`). So no Turing machine decides whether the empty word is in the language of a type 0 grammar code (`not_machineDecidable_emptyWord_type0`), nor membership for grammar codes (`not_machineDecidable_grammarMem`), under any computable encoding.
+* `Hardness.lean`: membership for grammar codes is halting-hard, by a reduction from `HaltCanon` proved computable (`GrammarMem.fromHalt`), already for the empty word and type 0 codes (`GrammarMem.emptyWordFromHalt`). So no Turing machine decides whether the empty word is in the language of a type 0 grammar code (`GrammarMem.EmptyWord.not_machineDecidable`), nor membership for grammar codes (`GrammarMem.not_machineDecidable`), under any computable encoding.
 * `Undecidable.lean`: membership for grammar codes is synthetically halting-hard (`GrammarMem.synthFromHalt`).
 
 ## Proof sketch

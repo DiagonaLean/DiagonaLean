@@ -5,6 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.GrammarMem.MachineLevel
 import DiagonaLean.SemiThue.Hardness
+import DiagonaLean.Foundations.Computability.HaltResults
 
 @[expose] public section
 
@@ -21,10 +22,11 @@ proved computable.
 
 * `GrammarMem.emptyWordFromHalt`: whether the empty word belongs to the language of a type 0
   grammar code is halting-hard.
-* `GrammarMem.fromHalt`, `GrammarMem.haltHard`: membership for grammar codes is halting-hard.
-* `not_computablePred_emptyWord_type0`, `not_machineDecidable_emptyWord_type0`,
-  `not_computablePred_grammarMem`, `not_machineDecidable_grammarMem`: so neither is a computable
-  predicate, and no Turing machine decides either under any computable encoding.
+* `GrammarMem.fromHalt`: membership for grammar codes is halting-hard.
+* By `halt_results`: `GrammarMem.haltHard`, `GrammarMem.not_computablePred`,
+  `GrammarMem.not_machineDecidable` for membership, and the same under `GrammarMem.EmptyWord` for
+  the empty word in type 0 grammar codes: neither is a computable predicate, and no Turing machine
+  decides either under any computable encoding.
 -/
 
 namespace DiagonaLean.GrammarMem.MachineLevel
@@ -68,43 +70,16 @@ def emptyWordFromHalt :
   ⟨fun x => ⟨canonGCode x, isType0_canonGCode x⟩,
     (Primrec.subtype_mk canonGCode_prim).to_comp, haltCanon_iff_emptyWord⟩
 
-/-- **Membership for grammar codes is halting-hard**: `emptyWordFromHalt`, then
-`synthFromEmptyWord`, proved computable (`prim_subtype_val`). -/
+/-- **Membership for grammar codes is halting-hard**: `emptyWordFromHalt`, then asking for the
+empty word, `g ↦ (g, [])`, computable by `prim_subtype_val`. -/
 def fromHalt : HaltReduction (@DecisionProblem T) := by
-  reduce_from emptyWordFromHalt via GrammarMem.synthFromEmptyWord
+  hard_reduce_from emptyWordFromHalt
+    with (fun g : { g : GrammarCode T // IsType0 g } => (g.1, ([] : List T)))
+    using (fun _ => Iff.rfl)
 
-theorem haltHard : HaltHard (@DecisionProblem T) :=
-  ⟨fromHalt⟩
+halt_results (@DecisionProblem T) from fromHalt
+
+halt_results EmptyWord for (fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1)
+  from emptyWordFromHalt
 
 end DiagonaLean.GrammarMem
-
-namespace DiagonaLean.GrammarMem.MachineLevel
-
-open DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
-
-variable {T : Type} [Primcodable T]
-
-/-- **Whether the empty word belongs to the language of a type 0 grammar code is not a computable
-predicate**: it is halting-hard (`GrammarMem.emptyWordFromHalt`). -/
-theorem not_computablePred_emptyWord_type0 :
-    ¬ ComputablePred fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1 :=
-  GrammarMem.emptyWordFromHalt.not_computablePred
-
-/-- **No Turing machine decides whether the empty word belongs to the language of a type 0 grammar
-code**, under any computable encoding. -/
-theorem not_machineDecidable_emptyWord_type0
-    {enc : { g : GrammarCode T // IsType0 g } → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc fun g => EmptyWordProblem g.1 :=
-  GrammarMem.emptyWordFromHalt.not_machineDecidable henc
-
-/-- **Membership for grammar codes is not a computable predicate**: it is halting-hard
-(`GrammarMem.fromHalt`). -/
-theorem not_computablePred_grammarMem : ¬ ComputablePred (@DecisionProblem T) :=
-  GrammarMem.fromHalt.not_computablePred
-
-/-- **No Turing machine decides membership for grammar codes**, under any computable encoding. -/
-theorem not_machineDecidable_grammarMem {enc : GrammarCode T × List T → List Bool}
-    (henc : Computable enc) : ¬ MachineDecidable enc DecisionProblem :=
-  GrammarMem.fromHalt.not_machineDecidable henc
-
-end DiagonaLean.GrammarMem.MachineLevel
