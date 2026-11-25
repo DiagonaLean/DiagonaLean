@@ -27,7 +27,7 @@ namespace DiagonaLean.AmbigCFG.Reduction
 open DiagonaLean.PCP DiagonaLean.AmbigCFG DiagonaLean.Synthetic.Definitions
 
 /-- **CFG ambiguity is synthetically halting-hard.** This holds over any alphabet with two distinct
-letters `b0`, `b1`, through `AmbigCFG.synthFromPCP`. -/
+letters `b0`, `b1`, through `pcpToAmbigCFG`. -/
 def _root_.DiagonaLean.AmbigCFG.synthFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
     SynthHaltReduction (fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2) := by
   reduce_from_pcp over_letters b0 b1 with pcpToAmbigCFG using pcp_reducesto_ambigCFG_spec
