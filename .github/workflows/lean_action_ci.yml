@@ -20,6 +20,8 @@ jobs:
         run: lake env lean scripts/FunPropTest.lean
       - name: Check that reduce_from composes reductions in both layers
         run: lake env lean scripts/ReduceFromTest.lean
+      - name: Check that halt_results states the consequences of a halting reduction
+        run: lake env lean scripts/HaltResultsTest.lean
       - name: Check that no metaprogram changes the environment
         run: lake env lean --run scripts/CheckMetaprograms.lean
       - name: Check that the metaprogram check rejects an injected reduction

@@ -75,6 +75,7 @@ checks=(
   "reductions-test|lake env lean scripts/CheckReductionsTest.lean"
   "fun-prop-test|lake env lean scripts/FunPropTest.lean"
   "reduce-from-test|lake env lean scripts/ReduceFromTest.lean"
+  "halt-results-test|lake env lean scripts/HaltResultsTest.lean"
   "metaprograms|lake env lean --run scripts/CheckMetaprograms.lean"
   "metaprograms-fixture|out=\$(lake env lean --run scripts/CheckMetaprograms.lean scripts/metaprogram-fixture) && exit 1; for word in run_cmd addDecl modifyEnv declMapExt debug.; do grep -qF \"\\\`\$word\\\`\" <<< \"\$out\" || { echo \"not reported: \$word\"; exit 1; }; done"
   "metaprograms-test|lake env lean scripts/CheckMetaprogramsTest.lean"

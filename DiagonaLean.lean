@@ -128,6 +128,7 @@ import DiagonaLean.Foundations.Computability.MachineBridge
 import DiagonaLean.Foundations.Computability.MachineComputes
 import DiagonaLean.Foundations.Computability.ComputableReduction
 import DiagonaLean.Foundations.Computability.HaltCanon
+import DiagonaLean.Foundations.Computability.HaltResults
 import DiagonaLean.Foundations.Computability.ReduceFrom
 import DiagonaLean.Foundations.Computability.Normalize.Conditions
 import DiagonaLean.Foundations.Computability.Normalize.Normalize

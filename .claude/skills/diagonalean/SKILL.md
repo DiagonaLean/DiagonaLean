@@ -1,6 +1,6 @@
 ---
 name: diagonalean
-description: How to write, prove and check Lean 4 code in the DiagonaLean library (undecidability by many-one reductions, on Mathlib and Cslib) — the two layers of reductions (synthetic `⪯_s`, proved `⪯`), the tactics `reduce_from`, `code_lift`, `fun_prop`, `derive_primrec`, `primrec_rec`, `derive_primcodable`, the key theorems from hardness to "no Turing machine decides it", Primcodable/Primrec proofs, naming of packages, and the compliance rules that `#check_reductions` and CI enforce. Use it for any work in this repository — a new undecidable problem, a new reduction or link, a `Primrec`/`Computable` proof, an alphabet change, a renaming or refactor, a review of a DiagonaLean PR, or fixing a CI failure — even when the request does not name the skill or a tactic.
+description: How to write, prove and check Lean 4 code in the DiagonaLean library (undecidability by many-one reductions, on Mathlib and Cslib) — the two layers of reductions (synthetic `⪯_s`, proved `⪯`), the tactics `reduce_from`, `code_lift`, `fun_prop`, `derive_primrec`, `primrec_rec`, `derive_primcodable`, the command `halt_results`, the key theorems from hardness to "no Turing machine decides it", Primcodable/Primrec proofs, naming of packages, and the compliance rules that `#check_reductions` and CI enforce. Use it for any work in this repository — a new undecidable problem, a new reduction or link, a `Primrec`/`Computable` proof, an alphabet change, a renaming or refactor, a review of a DiagonaLean PR, or fixing a CI failure — even when the request does not name the skill or a tactic.
 ---
 
 # Working in DiagonaLean
@@ -58,7 +58,8 @@ trivial and is rejected by the check. `∃ f, p ⪯[f] q` (Mathlib's `ManyOneRed
    ```
    With a proved source (`MPCP.fromHalt`, or another `HaltReduction`), the same tactic proves
    `HaltReduction`, `HaltHard`, `¬ ComputablePred` and `¬ MachineDecidable enc` goals, upgrading
-   the link through its `fun_prop` lemma.
+   the link through its `fun_prop` lemma. Once `X` has a `HaltReduction`, state its negative
+   results with `halt_results` (§3, *Stating the results*), not with hand-written wrappers.
 5. **Alphabets.** If instances are built from letters, give a `CodeFunctor` and use
    `code_lift F from h` for every nontrivial alphabet (`…Over b0 b1 hne`, `…Bool`).
 6. **Register it.** Import the new modules from `DiagonaLean.lean`: the check covers only what the
@@ -122,6 +123,68 @@ extract them from `Nontrivial α` (a `Prop`).
 
 Commands that add declarations are allowed only by name (`Synthetic/MetaprogramCheck.lean`);
 never use `run_cmd`, `#eval`, `initialize`, `addDecl` or `debug.` options in the library.
+
+### Stating the results: `halt_results`
+
+Once a problem has a proved halting reduction, one command states its consequences:
+
+```lean
+halt_results P from r        -- r : HaltReduction P
+```
+
+declares, in the current namespace,
+
+| theorem | statement |
+|---|---|
+| `haltHard` | `HaltHard P` |
+| `not_computablePred` | `¬ ComputablePred P` |
+| `not_machineDecidable` | `{enc} → Computable enc → ¬ MachineDecidable enc P` |
+
+**Where.** In the file that defines the `HaltReduction` (`X/Hardness.lean` or
+`X/MachineLevel.lean`), after the `def`, inside `namespace DiagonaLean.X`, so the names are
+`X.haltHard`, `X.not_computablePred` and `X.not_machineDecidable`. Add
+`import DiagonaLean.Foundations.Computability.HaltResults`: so far only the root imports it.
+
+**How.** For a new problem with a reduction over every pair of letters and one over `Bool`:
+
+```lean
+namespace DiagonaLean.X
+
+variable {α : Type} [Primcodable α] [Nontrivial α]
+
+-- over every nontrivial alphabet, from `fromHaltOver b0 b1 hne : HaltReduction …`
+halt_results (@DecisionProblem α) over_letters from fromHaltOver
+
+-- a second statement in the same namespace needs a name: `X.OverBool.not_computablePred`
+halt_results OverBool for (@DecisionProblem Bool) from fromHaltBool
+
+end DiagonaLean.X
+```
+
+* `over_letters`: the source is the function itself, `fromHaltOver`, not applied to letters. The
+  letters come from `Nontrivial α` (`HaltHard.of_letters`), which is possible because the three
+  statements are propositions. The reduction stays data and still takes `b0 b1 hne`.
+* `Name for`: a second problem (`halt_results Pos for (@DecisionProblemPos α) …`) or a second
+  alphabet. Without it Lean reports "already declared". `MPCP`, `SemiThue` and `GrammarMem` already
+  have a hand-written `haltHard`, so a new call there needs a name.
+* The section's `variable`s become arguments when `P` mentions them. `P` may be a lambda:
+  `halt_results (fun c : CFGCode (α ⊕ ℕ) => …) over_letters from …`.
+* A source of the wrong kind or for another problem reports a type mismatch, once per theorem.
+
+**When not to use it.**
+
+* There is only a synthetic reduction (`SynthHaltReduction`): it proves none of the three. Make the
+  chain proved from a `HaltCanon` root first.
+* There is only `HaltHard P` and no `HaltReduction P`: use `.not_computablePred` and
+  `.not_machineDecidable` on the fact.
+* The result is `¬ ComputablePred` with no halting reduction (SKI, β, KAComm, Rice), or about a
+  complement: state it by hand or with `hard_reduce_from`.
+* `P` has no `Primcodable` instance type (`HaltProblem`): `HaltReduction P` cannot be stated.
+* Existing theorems (`not_computablePred_pcp` and the like) keep their names; do not rename or
+  duplicate them unless asked.
+
+The generated docstrings are generic. Put the citation for the result on the `HaltReduction`
+`def`. Tests: `scripts/HaltResultsTest.lean`.
 
 ## 4. Compliance: what the checks reject
 
