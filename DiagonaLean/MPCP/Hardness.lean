@@ -4,7 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.MPCP.MachineLevel
-import DiagonaLean.Foundations.Computability.HaltCanon
+import DiagonaLean.Foundations.Computability.HaltResults
 
 @[expose] public section
 
@@ -19,12 +19,12 @@ the table of `c.toTM`. So `canonInst (c, w) = instOf c.start c.table w` is a red
 
 ## Main statements
 
-* `MPCP.fromHalt`, `MPCP.haltHard`: MPCP over `Alpha ℕ Sym2` is halting-hard.
+* `MPCP.fromHalt`: MPCP over `Alpha ℕ Sym2` is halting-hard.
 * `MPCP.fromHaltOver b0 b1 hne`, `MPCP.fromHaltBool`: over any alphabet with two distinct letters.
-* `not_computablePred_mpcp`, `not_machineDecidable_mpcp`: so it is not a computable predicate, and
-  no Turing machine decides it under any computable encoding.
-* `not_computablePred_mpcpOf`, `not_machineDecidable_mpcpOf`: the same over any nontrivial
-  alphabet; `mpcp_manyOneEquiv`: MPCP is many-one equivalent over all of them.
+* `MPCP.haltHard`, `MPCP.not_computablePred`, `MPCP.not_machineDecidable` (`halt_results`): over
+  every nontrivial alphabet, MPCP is halting-hard, so it is not a computable predicate, and no
+  Turing machine decides it under any computable encoding.
+* `mpcp_manyOneEquiv`: MPCP is many-one equivalent over all nontrivial alphabets.
 -/
 
 namespace DiagonaLean.MPCP.MachineLevel
@@ -89,9 +89,6 @@ on canonical machines, proved computable. -/
 def fromHalt : HaltReduction (@MPCP.DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
   ⟨canonInst, canonInst_prim.to_comp, haltCanon_iff_mpcp⟩
 
-theorem haltHard : HaltHard (@MPCP.DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
-  ⟨fromHalt⟩
-
 /-- **MPCP is halting-hard over any alphabet with two distinct letters**: `fromHalt`, then the
 change of alphabet along `mpcpFunctor`, proved computable. -/
 def fromHaltOver {α : Type} [Primcodable α] (b0 b1 : α) (hne : b0 ≠ b1) :
@@ -105,40 +102,19 @@ def fromHaltBool : HaltReduction MPCProblem :=
 /-- MPCP over `Bool` is registered as halting-hard, so `hard_reduce_from MPCProblem …` finds it. -/
 instance : HaltSource MPCProblem := ⟨fromHaltBool⟩
 
+section
+variable {α : Type} [Primcodable α] [Nontrivial α]
+
+halt_results (@MPCP.DecisionProblem α) over_letters from fromHaltOver
+
+end
+
 end DiagonaLean.MPCP
 
 namespace DiagonaLean.MPCP.MachineLevel
 
 open DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Computability
   DiagonaLean.Synthetic.Definitions
-
-/-- **MPCP is not a computable predicate**, over the alphabet `Alpha ℕ Sym2`: it is halting-hard
-(`MPCP.haltHard`). -/
-theorem not_computablePred_mpcp :
-    ¬ ComputablePred (@MPCP.DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
-  MPCP.haltHard.not_computablePred
-
-/-- **No Turing machine decides MPCP**, over the alphabet `Alpha ℕ Sym2`, under any computable
-encoding of instances as bit strings. -/
-theorem not_machineDecidable_mpcp
-    {enc : Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) →
-      List Bool}
-    (henc : Computable enc) : ¬ MachineDecidable enc MPCP.DecisionProblem :=
-  MPCP.haltHard.not_machineDecidable henc
-
-/-- **MPCP is not a computable predicate over any nontrivial alphabet**: it is halting-hard there
-(`MPCP.fromHaltOver`). -/
-theorem not_computablePred_mpcpOf {α : Type} [Primcodable α] [Nontrivial α] :
-    ¬ ComputablePred (@MPCP.DecisionProblem α) := by
-  obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
-  exact (MPCP.fromHaltOver b0 b1 hne).not_computablePred
-
-/-- **No Turing machine decides MPCP over any nontrivial alphabet**, under any computable
-encoding. -/
-theorem not_machineDecidable_mpcpOf {α : Type} [Primcodable α] [Nontrivial α]
-    {enc : Tile α × Stack α → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc MPCP.DecisionProblem :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_mpcpOf
 
 open Foundations.Codes in
 /-- **Alphabet invariance of MPCP**: over any two nontrivial `Primcodable` alphabets, MPCP is
