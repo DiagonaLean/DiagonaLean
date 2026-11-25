@@ -60,7 +60,4 @@ theorem matImage_eq (K : Stack S23) : matImage K =
     fun_prop
   exact h.of_eq fun K => (matImage_eq K).symm
 
-/-- The function of the reduction `MatMort.synthFromPCP` is primitive recursive. -/
-theorem synthFromPCP_primrec : Primrec MatMort.synthFromPCP.f := matImage_primrec
-
 end DiagonaLean.MatMort.Reduction

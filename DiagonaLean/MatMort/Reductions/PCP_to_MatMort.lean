@@ -25,8 +25,8 @@ A pair of words `(U, V)` becomes the matrix `stringPairToW U V`, which appends `
 as base-10 numerals, to the first two coordinates of a row vector. Each tile of a PCP instance `K`
 gives two such matrices, one with a marker digit on its bottom word (`tileMats`). `S * P * T = 0`
 when `[1, 0, 1] * P = [h, h, 1]` (`S_prod_T_eq_zero`), and every zero product
-contains such a run (`mortal_iff_exists_prod_of_Ws`). The main results are `pcp_iff_matmort` and
-the reduction `MatMort.synthFromPCP`.
+contains such a run (`mortal_iff_exists_prod_of_Ws`). The main result is the correctness of the
+link function `matImage`, `pcp_reducesto_matMort_spec`.
 
 ## References
 
@@ -51,26 +51,6 @@ def T : Matrix (Fin 3) (Fin 3) ℤ :=
   integers. -/
 def W' (p q r s : ℤ) (_hpq : p > q ∧ q ≥ 0) (_hrs : r > s ∧ s ≥ 0) : Matrix (Fin 3) (Fin 3) ℤ :=
   !![p, 0, 0; 0, r, 0; q, s, 1]
-
-variable (a b c : ℤ)
-
-/-- Multiplying a row vector by `S` results in a scaled version of `[1, 0, 1]` based on the first
-  coordinate. -/
-theorem row_prod_S : a • !![1, 0, 1] = !![a, b, c] * S := by simp [S]
-
-/-- Multiplying a row vector by `T` computes the difference of the first two coordinates. -/
-theorem row_prod_T : (a - b) • !![1, -1, 0] = !![a, b, c] * T := by simp [T]; grind
-
-/-- The tile matrix `W'` is non-singular because its determinant `p * r` is non-zero. -/
-theorem non_singular_W (p q r s : ℤ) (hpq : p > q ∧ q ≥ 0) (hrs : r > s ∧ s ≥ 0) :
-    det (W' p q r s hpq hrs) ≠ 0 := by
-  have hp : p ≠ 0 := by linarith [hpq.1, hpq.2]
-  have hr : r ≠ 0 := by linarith [hrs.1, hrs.2]
-  have hdet : det (W' p q r s hpq hrs) = p * r := by
-    unfold W'
-    simp [Matrix.det_fin_three]
-  simp only [hdet]
-  exact mul_ne_zero hp hr
 
 /-- Nonempty finite sequences of matrices drawn from `Ws`. -/
 def wSeq (Ws : Finset (Matrix (Fin 3) (Fin 3) ℤ)) :=
@@ -513,26 +493,10 @@ theorem matmort_of_pcp (h : PCP.DecisionProblem K) :
 theorem pcp_of_matmort (h : DecisionProblem (matImage K)) : PCP.DecisionProblem K :=
   pcp_if_exists_prod K ((mortal_iff_exists_prod_of_Ws _ (tileMats_W' K)).1 h)
 
-/-- A PCP instance `K` over `{2, 3}` has a solution iff its matrix set
-  `{S, T} ∪ {W(U, V), W(U, 1 :: V) | (U, V) ∈ K}` is mortal. -/
-theorem pcp_iff_matmort (K : Stack S23) :
-    PCP.DecisionProblem K ↔
-    DecisionProblem (matImage K) :=
-  ⟨matmort_of_pcp, pcp_of_matmort⟩
-
-/-- `matImage` reduces PCP over `S23` to matrix mortality: `K` has a solution iff `matImage K` is
-  mortal. -/
+/-- **`matImage` reduces PCP over `S23` to matrix mortality**: a PCP instance `K` over `{2, 3}` has
+  a solution iff its matrix set `{S, T} ∪ {W(U, V), W(U, 1 :: V) | (U, V) ∈ K}` is mortal. -/
 theorem pcp_reducesto_matMort_spec :
     @PCP.DecisionProblem S23 ⪯_s[matImage] MatMort.DecisionProblem :=
-  pcp_iff_matmort
-
-/-- **The reduction.** PCP over `S23` many-one reduces to matrix mortality through `matImage`. -/
-def _root_.DiagonaLean.MatMort.synthFromPCP :
-    @PCP.DecisionProblem S23 ⪯_s MatMort.DecisionProblem :=
-  ⟨matImage, pcp_reducesto_matMort_spec⟩
-
-/-- The former name of `MatMort.synthFromPCP`. -/
-@[deprecated DiagonaLean.MatMort.synthFromPCP (since := "2026-11-23")]
-abbrev pcpReducesMatMort := @DiagonaLean.MatMort.synthFromPCP
+  fun _ => ⟨matmort_of_pcp, pcp_of_matmort⟩
 
 end DiagonaLean.MatMort.Reduction
