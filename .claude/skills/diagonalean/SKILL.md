@@ -200,8 +200,10 @@ mean something:
 * every module imported from `DiagonaLean.lean`;
 * a new reduction structure or relation registered in `reductionStructs` / `reductionRelations`
   (`⪯_s[f]` is there, `⪯[f]` must not be), with a cheating case in `scripts/CheckReductionsTest.lean`;
-* headline results depend only on `propext`, `Classical.choice`, `Quot.sound`
-  (`#print axioms`).
+* every declaration depends only on `propext`, `Classical.choice`, `Quot.sound`
+  (`scripts/CheckAxioms.lean`): no `axiom`, `sorry` or `native_decide`, in the proved layer too.
+  A work-in-progress file may use `sorry` only if listed in `sorryAllowances`
+  (`Synthetic/AxiomCheck.lean`); code outside the list that uses it is still reported.
 
 Style: lines at most 100 characters (`scripts/ci-local.sh --style-only`), module docstrings with
 `## Main statements` and `## References` (`bibliography.bib`), docstrings on every declaration.
