@@ -5,18 +5,25 @@ Authors: Aalok Thakkar, Prathamesh Turaga
 
 import DiagonaLean.PCP.Primrec
 import DiagonaLean.MPCP.Hardness
+import DiagonaLean.PCP.AlphabetLift
 
 @[expose] public section
 
-/-! # PCP is not a computable predicate
+/-! # PCP is halting-hard
 
-The reductions `PCP.synthFromMPCP` (`mpcpToPcp_primrec`) and `PCP.synthAlphabetLift`
-(`synthAlphabetLift_primrec`) are proved computable, so `MPCP.fromHalt` gives the halting reductions
-`PCP.fromHalt`, `PCP.fromHaltOver b0 b1 hne` and `PCP.fromHaltBool`, through the proved link
-`PCP.fromMPCP`. So PCP is not a computable predicate over any nontrivial alphabet
-(`not_computablePred_pcp`), and no Turing machine decides it under any computable encoding
-(`not_machineDecidable_pcp`).
+MPCP is halting-hard (`MPCP.fromHalt`), and the reduction `mpcpToPcp` from MPCP to PCP is primitive
+recursive (`mpcpToPcp_primrec`), so PCP is halting-hard over `Ext (Alpha ℕ Sym2)` (`PCP.fromHalt`).
+The change of alphabet `liftInstance b0 b1` is primitive recursive too (`liftInstance_primrec`), so
+PCP is halting-hard over every alphabet with two distinct letters (`PCP.fromHaltOver b0 b1 hne`,
+`PCP.fromHaltBool`). So over every nontrivial alphabet PCP is not a computable predicate, and no
+Turing machine decides it under any computable encoding.
 
+## Main statements
+
+* `PCP.fromHalt`, `PCP.fromHaltOver`, `PCP.fromHaltBool`: reductions from the halting problem,
+  proved computable.
+* `PCP.haltHard`, `PCP.not_computablePred`, `PCP.not_machineDecidable` (`halt_results`): over every
+  nontrivial alphabet.
 
 ## References
 
@@ -28,23 +35,19 @@ The reductions `PCP.synthFromMPCP` (`mpcpToPcp_primrec`) and `PCP.synthAlphabetL
 
 namespace DiagonaLean.PCP
 
-open DiagonaLean.PCP.Reduction DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Computability
-
-/-- **The reduction from MPCP to PCP, proved computable** (`mpcpToPcp_primrec`). -/
-def fromMPCP {α : Type} [Primcodable α] :
-    @MPCP.DecisionProblem α ⪯ @PCP.DecisionProblem (Ext α) :=
-  .ofSynth PCP.synthFromMPCP mpcpToPcp_primrec.to_comp
+open DiagonaLean.PCP.Reduction DiagonaLean.PCP.AlphabetLift DiagonaLean.MPCP.Reduction
+  DiagonaLean.Foundations.Computability
 
 /-- **PCP is halting-hard**, over the alphabet `Ext (Alpha ℕ Sym2)`: `MPCP.fromHalt`, then
-`fromMPCP`. -/
+`mpcpToPcp` (`mpcp_reducesto_pcp_spec`, `mpcpToPcp_primrec`). -/
 def fromHalt : HaltReduction (@PCP.DecisionProblem (Ext (Alpha ℕ Normalize.Sym2))) := by
-  reduce_from MPCP.fromHalt via PCP.synthFromMPCP
+  hard_reduce_from MPCP.fromHalt with (fun x => mpcpToPcp x.1 x.2) using mpcp_reducesto_pcp_spec
 
 /-- **PCP is halting-hard over any alphabet with two distinct letters**: `fromHalt`, then the
-change of alphabet `synthAlphabetLift`, proved computable (`liftMap_primrec`). -/
+change of alphabet `liftInstance b0 b1` (`pcp_alphabet_lift_spec`, `liftInstance_primrec`). -/
 def fromHaltOver {α : Type} [Primcodable α] (b0 b1 : α) (hne : b0 ≠ b1) :
     HaltReduction (@PCP.DecisionProblem α) := by
-  reduce_from fromHalt via (PCP.synthAlphabetLift b0 b1 hne)
+  hard_reduce_from fromHalt with (liftInstance b0 b1) using (pcp_alphabet_lift_spec b0 b1 hne)
 
 /-- **PCP over `Bool` is halting-hard.** -/
 def fromHaltBool : HaltReduction (@PCP.DecisionProblem Bool) :=
@@ -53,31 +56,11 @@ def fromHaltBool : HaltReduction (@PCP.DecisionProblem Bool) :=
 /-- PCP over `Bool` is registered as halting-hard. -/
 instance : HaltSource (@PCP.DecisionProblem Bool) := ⟨fromHaltBool⟩
 
+section
+variable {α : Type} [Primcodable α] [Nontrivial α]
+
+halt_results (@PCP.DecisionProblem α) over_letters from fromHaltOver
+
+end
+
 end DiagonaLean.PCP
-
-namespace DiagonaLean.PCP.MachineLevel
-
-open DiagonaLean.PCP.Reduction DiagonaLean.PCP.AlphabetLift DiagonaLean.MPCP.Reduction
-  DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
-
-/-- PCP over the alphabet `Ext (Alpha ℕ Sym2)` is not a computable predicate: it is halting-hard
-(`PCP.fromHalt`). -/
-theorem not_computablePred_pcp_ext :
-    ¬ ComputablePred (@DecisionProblem (Ext (Alpha ℕ Normalize.Sym2))) :=
-  PCP.fromHalt.not_computablePred
-
-/-- **PCP is not a computable predicate** over any alphabet with two distinct letters: it is
-halting-hard there (`PCP.fromHaltOver`). -/
-theorem not_computablePred_pcp {α : Type} [Primcodable α] [Nontrivial α] :
-    ¬ ComputablePred (@DecisionProblem α) := by
-  obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
-  exact (PCP.fromHaltOver b0 b1 hne).not_computablePred
-
-/-- **No Turing machine decides PCP** over any alphabet with two distinct letters, under any
-computable encoding of instances as bit strings. -/
-theorem not_machineDecidable_pcp {α : Type} [Primcodable α] [Nontrivial α]
-    {enc : Stack α → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc (@DecisionProblem α) :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_pcp
-
-end DiagonaLean.PCP.MachineLevel

@@ -79,11 +79,6 @@ with `fun_prop`, so `reduce_from` upgrades `PCP.synthAlphabetLift` with no goal 
     Primrec (pcpFunctor.liftMap (α := γ₁) b0 b1) :=
   liftInstance_primrec b0 b1
 
-/-- The function of the reduction `PCP.synthAlphabetLift` is primitive recursive. -/
-theorem synthAlphabetLift_primrec {b0 b1 : γ₂} (hne : b0 ≠ b1) :
-    Primrec (PCP.synthAlphabetLift (γ₁ := γ₁) b0 b1 hne).f :=
-  liftInstance_primrec b0 b1
-
 end AlphabetLift
 
 end DiagonaLean.PCP
