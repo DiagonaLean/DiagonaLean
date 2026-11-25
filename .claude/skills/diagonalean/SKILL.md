@@ -43,23 +43,26 @@ trivial and is rejected by the check. `∃ f, p ⪯[f] q` (Mathlib's `ManyOneRed
    by `rfl`; never write `fun x => … x.1 x.2` at use sites.
 2. **The link.** `X/Reductions/Src_to_X.lean`:
    * the function, a `def` (not an `abbrev`, see §5), e.g. `srcToX`;
-   * correctness, `theorem src_reducesto_x_spec : Src.DecisionProblem ⪯_s[srcToX] X.DecisionProblem`;
-   * the package, `def X.synthFromSrc : Src.DecisionProblem ⪯_s X.DecisionProblem := ⟨srcToX, src_reducesto_x_spec⟩`.
-   Inside another namespace, declare it as `def _root_.DiagonaLean.X.synthFromSrc`, which keeps the
-   file's `variable`s and `open`s.
+   * correctness, `theorem src_reducesto_x_spec : Src.DecisionProblem ⪯_s[srcToX] X.DecisionProblem`.
+   No bundled package `X.synthFromSrc := ⟨srcToX, spec⟩` is needed: the tactics take the function
+   and the spec. Define one only if several results compose it.
 3. **Computability of the link** (needed for the proved layer and for machine-level results):
    `derive_primrec srcToX` if `fun_prop` can read its body, or a hand-stated
    `@[fun_prop] theorem srcToX_primrec : Primrec srcToX` (with `primrec_rec` for structural
    recursion). Instances need `Primcodable`: `derive_primcodable` for inductive types.
-4. **The result.** `X/Undecidable.lean`, a `def` the compiler accepts:
+4. **The results.** The synthetic one in `X/Undecidable.lean`, the proved ones in
+   `X/MachineLevel.lean` (MatMort is the model):
    ```lean
    def X.synthFromHalt : SynthHaltReduction X.DecisionProblem := by
-     reduce_from (Src.synthFromHaltOver b0 b1 hne) via X.synthFromSrc
+     synth_reduce_from (Src.synthFromHaltOver b0 b1 hne) with srcToX using src_reducesto_x_spec
+
+   def X.fromHalt : HaltReduction X.DecisionProblem := by
+     hard_reduce_from (Src.fromHaltOver b0 b1 hne) with srcToX using src_reducesto_x_spec
+
+   halt_results X.DecisionProblem from X.fromHalt   -- X.haltHard, …
    ```
-   With a proved source (`MPCP.fromHalt`, or another `HaltReduction`), the same tactic proves
-   `HaltReduction`, `HaltHard`, `¬ ComputablePred` and `¬ MachineDecidable enc` goals, upgrading
-   the link through its `fun_prop` lemma. Once `X` has a `HaltReduction`, state its negative
-   results with `halt_results` (§3, *Stating the results*), not with hand-written wrappers.
+   `hard_reduce_from` closes `Computable srcToX` with its `fun_prop` lemma. From PCP,
+   `reduce_from_pcp over_letters b0 b1 with srcToX using spec` does the synthetic one.
 5. **Alphabets.** If instances are built from letters, give a `CodeFunctor` and use
    `code_lift F from h` for every nontrivial alphabet (`…Over b0 b1 hne`, `…Bool`).
 6. **Register it.** Import the new modules from `DiagonaLean.lean`: the check covers only what the
@@ -180,8 +183,10 @@ end DiagonaLean.X
 * The result is `¬ ComputablePred` with no halting reduction (SKI, β, KAComm, Rice), or about a
   complement: state it by hand or with `hard_reduce_from`.
 * `P` has no `Primcodable` instance type (`HaltProblem`): `HaltReduction P` cannot be stated.
-* Existing theorems (`not_computablePred_pcp` and the like) keep their names; do not rename or
-  duplicate them unless asked.
+* Every problem with a `HaltReduction` already uses it (2026-11-25): MPCP, PCP, MatMort, SemiThue
+  (`SemiThue.Pos.`, `SemiThue.ToEmpty.`), GrammarMem (`GrammarMem.EmptyWord.`), EmpCFG and AmbigCFG
+  on grammar codes (`EmpCFG.Code.`, `AmbigCFG.Code.`). The former wrappers
+  (`not_computablePred_pcp` and the like) were deleted, not aliased; do not add new ones.
 
 The generated docstrings are generic. Put the citation for the result on the `HaltReduction`
 `def`. Tests: `scripts/HaltResultsTest.lean`.
@@ -211,6 +216,12 @@ When wrapping prose, never split a backticked code span across lines.
 
 ## 5. Pitfalls (each cost real time)
 
+* **`with` and `using` take one term each**: an applied function or lemma needs parentheses,
+  `with (liftInstance b0 b1) using (pcp_alphabet_lift_spec b0 b1 hne)`; without them the
+  arguments are read as the next command.
+* **No bundled link only for the tactics**: build the reduction from the function and its
+  `_spec` (`hard_reduce_from h with f using spec`) rather than defining `X.synthFromY := ⟨f, spec⟩`;
+  the bundled links of the library were deleted where nothing else used them.
 * **`abbrev` link functions defeat `fun_prop`**: it unfolds them before looking up their lemma.
   Use `def` + `@[fun_prop]` lemma.
 * **`Primrec₂ f` lemmas are not what `fun_prop` matches**; state or derive the uncurried form and

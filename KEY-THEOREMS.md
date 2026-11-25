@@ -110,9 +110,12 @@ duplicates `MatMortProblem`, `AmbigCFGProblem` and `EmpCFGProblem` are deprecate
 **Proved halting reductions** (`HaltReduction`, 2026-11-23): the root `MPCP.fromHalt` (over
 `Alpha ℕ Sym2`, through `canonInst = instOf c.start c.table w`, `MPCP/Hardness.lean`), and from it
 `MPCP.fromHaltOver`/`…Bool`, `PCP.fromHalt`/`…Over`/`…Bool`, `MatMort.fromHalt`,
-`EmpCFG.codeFromHaltOver`, `AmbigCFG.codeFromHaltOver`, with the proved links `PCP.fromMPCP`,
-`MatMort.fromPCP`, `EmpCFG.codeFromPCP`, `AmbigCFG.codeFromPCP`. A second root from `HaltCanon`,
-on the same table construction: `SemiThue.fromHalt`/`…Over`/`…Bool`, `SemiThue.posFromHalt`/`…Over`,
+`EmpCFG.codeFromHaltTerm`, `AmbigCFG.codeFromHaltSum` (fixed terminal shapes) and, lifted to grammar
+codes over every alphabet with two letters, `EmpCFG.codeFromHaltOver`, `AmbigCFG.codeFromHaltOver`.
+Each problem states its consequences with `halt_results` (`X.haltHard`, `X.not_computablePred`,
+`X.not_machineDecidable`, with a prefix such as `SemiThue.Pos.` or `EmpCFG.Code.` for a second
+problem in the namespace). A second root from `HaltCanon`,
+on the same table construction: `SemiThue.posFromHalt`/`…Over`, `SemiThue.fromHaltOver`/`…Bool`,
 `SemiThue.toEmptyFromHalt` (`SemiThue/Hardness.lean`, through `canonToEmpty`), and from it
 `GrammarMem.emptyWordFromHalt`, `GrammarMem.fromHalt`. Constructions on tables share
 `MPCP.MachineLevel.SameTable` (same lookup, same state numbers) and `CanonTM.sameTable`. Still only

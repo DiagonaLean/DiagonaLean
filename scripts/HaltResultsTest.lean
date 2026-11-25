@@ -85,7 +85,7 @@ halt_results (fun g : { g : GrammarCode T // IsType0 g } => GrammarMem.EmptyWord
 variable {α : Type} [DecidableEq α] [Primcodable α] [Nontrivial α]
 
 halt_results Ambig for (fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG)
-  over_letters from AmbigCFG.codeFromHaltOver
+  over_letters from AmbigCFG.codeFromHaltSum
 
 example : ¬ ComputablePred fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG :=
   Ambig.not_computablePred

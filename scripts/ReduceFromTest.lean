@@ -17,8 +17,17 @@ open DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions Dia
 /-- The alphabet of the MPCP and PCP instances built from machines. -/
 abbrev A := Alpha ℕ DiagonaLean.Foundations.Computability.Normalize.Sym2
 
-/-- PCP over the alphabet of `PCP.synthFromMPCP`'s target. -/
+/-- PCP over the alphabet of the target of `mpcpToPcp`. -/
 abbrev PCPA := @DiagonaLean.PCP.DecisionProblem (Ext A)
+
+/-- A bundled link from MPCP to PCP, for the tests of `via`. The library builds its reductions from
+the function and its correctness (`mpcp_reducesto_pcp_spec`) instead. -/
+def mpcpLink : @DiagonaLean.MPCP.DecisionProblem A ⪯_s PCPA :=
+  ⟨fun x => mpcpToPcp x.1 x.2, mpcp_reducesto_pcp_spec⟩
+
+/-- MPCP over `A` is not a computable predicate: a negative source for the tests. -/
+theorem mpcpNeg : ¬ ComputablePred (@DiagonaLean.MPCP.DecisionProblem A) :=
+  DiagonaLean.MPCP.fromHalt.not_computablePred
 
 /-! ### Proved goals -/
 
@@ -28,23 +37,23 @@ example : HaltReduction HaltCanon := by
 
 /-- MPCP to PCP: `mpcpToPcp`'s `fun_prop` lemma closes the computability of the link. -/
 example : HaltReduction PCPA := by
-  reduce_from DiagonaLean.MPCP.fromHalt via (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from DiagonaLean.MPCP.fromHalt via mpcpLink
 
 example : HaltHard PCPA := by
-  reduce_from DiagonaLean.MPCP.fromHalt via (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from DiagonaLean.MPCP.fromHalt via mpcpLink
 
 example : ¬ ComputablePred PCPA := by
-  reduce_from DiagonaLean.MPCP.fromHalt via (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from DiagonaLean.MPCP.fromHalt via mpcpLink
 
 /-- The encoding's computability is closed by `assumption`. -/
 example {enc : DiagonaLean.PCP.Stack (Ext A) → List Bool} (henc : Computable enc) :
     ¬ MachineDecidable enc PCPA := by
-  reduce_from DiagonaLean.MPCP.fromHalt via (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from DiagonaLean.MPCP.fromHalt via mpcpLink
 
 /-- A proved link needs nothing more. -/
 example : HaltReduction PCPA := by
   reduce_from DiagonaLean.MPCP.fromHalt via
-    (ComputableReduction.ofSynth (DiagonaLean.PCP.synthFromMPCP (α := A)) mpcpToPcp_primrec.to_comp)
+    (ComputableReduction.ofSynth mpcpLink mpcpToPcp_primrec.to_comp)
 
 /-! ### Link upgrades by `fun_prop`
 
@@ -53,18 +62,23 @@ Each link's function has a `fun_prop` lemma, so `reduce_from` reduces `r.f` to t
 
 example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem DiagonaLean.MatMort.Reduction.S23)) :
     HaltHard DiagonaLean.MatMort.DecisionProblem := by
-  reduce_from h via DiagonaLean.MatMort.synthFromPCP
+  reduce_from h via (⟨DiagonaLean.MatMort.Reduction.matImage,
+    DiagonaLean.MatMort.Reduction.pcp_reducesto_matMort_spec⟩ :
+    @DiagonaLean.PCP.DecisionProblem DiagonaLean.MatMort.Reduction.S23 ⪯_s
+      DiagonaLean.MatMort.DecisionProblem)
 
 example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem Bool)) :
     HaltHard (fun c : DiagonaLean.Foundations.Grammar.CFGCode (DiagonaLean.EmpCFG.Reduction.Term Bool) ×
         DiagonaLean.Foundations.Grammar.CFGCode (DiagonaLean.EmpCFG.Reduction.Term Bool) =>
       DiagonaLean.EmpCFG.IntersectionNonempty c.1.toCFG c.2.toCFG) := by
-  reduce_from h via (DiagonaLean.EmpCFG.synthCodeFromPCP (α := Bool))
+  reduce_from h via (SynthReduction.mk DiagonaLean.EmpCFG.MachineLevel.empCode
+    (DiagonaLean.EmpCFG.MachineLevel.pcp_reducesto_empCFGCode_spec (α := Bool)))
 
 example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem Bool)) :
     HaltHard (fun c : DiagonaLean.Foundations.Grammar.CFGCode (Bool ⊕ ℕ) =>
       DiagonaLean.AmbigCFG.DecisionProblem c.toCFG) := by
-  reduce_from h via (DiagonaLean.AmbigCFG.synthCodeFromPCP (α := Bool))
+  reduce_from h via (SynthReduction.mk DiagonaLean.AmbigCFG.MachineLevel.ambCode
+    (DiagonaLean.AmbigCFG.MachineLevel.pcp_reducesto_ambigCFGCode_spec (α := Bool)))
 
 example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem (Ext Bool))) :
     HaltHard (@DiagonaLean.PCP.DecisionProblem Bool) := by
@@ -92,16 +106,19 @@ example {α : Type} (b0 b1 : α) (hne : b0 ≠ b1) :
 
 /-- A proved source and a synthetic link give a synthetic result, through the bridge. -/
 def synthFromProved : SynthHaltReduction PCPA := by
-  reduce_from DiagonaLean.MPCP.fromHalt via (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from DiagonaLean.MPCP.fromHalt via mpcpLink
 
 /-- Both synthetic. -/
 def synthFromSynth : SynthHaltReduction PCPA := by
-  reduce_from DiagonaLean.MPCP.synthFromHalt via (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from DiagonaLean.MPCP.synthFromHalt via mpcpLink
 
 /-- A link out of a subtype (type 0 grammar codes): `prim_subtype_val` with the predicate's
 `@[fun_prop]` lemma `isType0_prim`. -/
 def fromSubtypeLink : HaltReduction (@DiagonaLean.GrammarMem.DecisionProblem Bool) := by
-  reduce_from DiagonaLean.GrammarMem.emptyWordFromHalt via DiagonaLean.GrammarMem.synthFromEmptyWord
+  reduce_from DiagonaLean.GrammarMem.emptyWordFromHalt via
+    (⟨fun g => (g.1, []), fun _ => Iff.rfl⟩ :
+      (fun g : { g : DiagonaLean.GrammarMem.GrammarCode Bool // DiagonaLean.GrammarMem.IsType0 g } =>
+        DiagonaLean.GrammarMem.EmptyWordProblem g.1) ⪯_s @DiagonaLean.GrammarMem.DecisionProblem Bool)
 
 /-! ### Negative sources
 
@@ -109,27 +126,27 @@ A source `h : ¬ ComputablePred p` transfers along a link, so no halting reducti
 
 /-- A synthetic link, upgraded: its computability is closed by `fun_prop`. -/
 example : ¬ ComputablePred PCPA := by
-  reduce_from DiagonaLean.MPCP.MachineLevel.not_computablePred_mpcp via (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from mpcpNeg via mpcpLink
 
 /-- A proved link needs nothing more. -/
 example : ¬ ComputablePred PCPA := by
-  reduce_from DiagonaLean.MPCP.MachineLevel.not_computablePred_mpcp via
-    (ComputableReduction.ofSynth (DiagonaLean.PCP.synthFromMPCP (α := A)) mpcpToPcp_primrec.to_comp)
+  reduce_from mpcpNeg via
+    (ComputableReduction.ofSynth mpcpLink mpcpToPcp_primrec.to_comp)
 
 /-- The encoding's computability is closed by `assumption`. -/
 example {enc : DiagonaLean.PCP.Stack (Ext A) → List Bool} (henc : Computable enc) :
     ¬ MachineDecidable enc PCPA := by
-  reduce_from DiagonaLean.MPCP.MachineLevel.not_computablePred_mpcp via (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from mpcpNeg via mpcpLink
 
 /-! ### Errors -/
 
 /--
-error: reduce_from: the source `DiagonaLean.MPCP.MachineLevel.not_computablePred_mpcp` is a negative result (`¬ ComputablePred`), so it proves only a goal `¬ ComputablePred q` or `¬ MachineDecidable enc q`; the other goals need a halting reduction as the source.
+error: reduce_from: the source `mpcpNeg` is a negative result (`¬ ComputablePred`), so it proves only a goal `¬ ComputablePred q` or `¬ MachineDecidable enc q`; the other goals need a halting reduction as the source.
 -/
 #guard_msgs in
 example : HaltHard PCPA := by
-  reduce_from DiagonaLean.MPCP.MachineLevel.not_computablePred_mpcp via
-    (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from mpcpNeg via
+    mpcpLink
 
 /--
 error: reduce_from: the source `(1 : ℕ)` is neither a reduction nor a negative result: its type is
@@ -138,14 +155,14 @@ expected a `SynthReduction` (`⪯_s`, `SynthHaltReduction`), a `ComputableReduct
 -/
 #guard_msgs in
 example : ¬ ComputablePred PCPA := by
-  reduce_from (1 : ℕ) via (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from (1 : ℕ) via mpcpLink
 
 /--
 error: reduce_from: the source `DiagonaLean.MPCP.synthFromHalt` is a synthetic halting reduction, but the goal needs a proved one. A halting reduction is upgraded at its root, by a reduction from `HaltCanon` proved computable, not by a computability proof of the link.
 -/
 #guard_msgs in
 example : HaltHard PCPA := by
-  reduce_from DiagonaLean.MPCP.synthFromHalt via (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from DiagonaLean.MPCP.synthFromHalt via mpcpLink
 
 /--
 error: reduce_from: the goal
@@ -154,12 +171,12 @@ is not one of `SynthHaltReduction q`, `HaltReduction q`, `HaltHard q`, `¬ Compu
 -/
 #guard_msgs in
 example : True := by
-  reduce_from DiagonaLean.MPCP.fromHalt via (DiagonaLean.PCP.synthFromMPCP (α := A))
+  reduce_from DiagonaLean.MPCP.fromHalt via mpcpLink
 
 /-! ### Adversarial cases -/
 
 /-- The link behind two layers of definitions is still read: `unfoldField` reaches the function. -/
-def layer1 : @DiagonaLean.MPCP.DecisionProblem A ⪯_s PCPA := DiagonaLean.PCP.synthFromMPCP (α := A)
+def layer1 : @DiagonaLean.MPCP.DecisionProblem A ⪯_s PCPA := mpcpLink
 def layer2 : @DiagonaLean.MPCP.DecisionProblem A ⪯_s PCPA := layer1
 
 example : HaltReduction PCPA := by
@@ -168,7 +185,7 @@ example : HaltReduction PCPA := by
 /-- A composite link: the function is a composition, and `fun_prop` reads it. -/
 example : HaltReduction PCPA := by
   reduce_from DiagonaLean.MPCP.fromHalt via
-    (SynthReduction.trans (SynthReduction.refl _) (DiagonaLean.PCP.synthFromMPCP (α := A)))
+    (SynthReduction.trans (SynthReduction.refl _) mpcpLink)
 
 /-- A classical link: the tactic does not close its computability, which is unprovable. -/
 noncomputable def cheat : HaltCanon ⪯_s (fun b : Bool => b = true) :=
@@ -248,7 +265,8 @@ example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
 /-- `via` composes with a bundled link, on a synthetic goal. -/
 example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
     SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
-  synth_reduce_from h via DiagonaLean.MatMort.synthFromPCP
+  synth_reduce_from h via (⟨matImage, pcp_reducesto_matMort_spec⟩ :
+    @DiagonaLean.PCP.DecisionProblem S23 ⪯_s DiagonaLean.MatMort.DecisionProblem)
 
 /-! ### A problem as the source: found by the naming convention -/
 
