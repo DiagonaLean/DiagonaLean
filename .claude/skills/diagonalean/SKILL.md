@@ -91,6 +91,16 @@ extract them from `Nontrivial α` (a `Prop`).
   tactic says so. The source `h` may be a **problem** (`@SemiThue.DecisionProblem Bool`): it is
   found in the problem's namespace as `synthFromHalt` or `synthFromHaltBool` (no explicit
   arguments), by name, in `reduce_from … via` too.
+  `reduce_from_pcp over_letters b0 b1 with f using spec` (also `using fwd bwd`, `with f`, `with f
+  unfold`) is the same with PCP as the source, the letters and `b0 ≠ b1` automatic.
+* **`hard_reduce_from h with f …`** is the same for hard goals (`HaltReduction q`, `HaltHard q`,
+  `¬ ComputablePred q`, `¬ MachineDecidable enc q`): the link is `⟨f, computable, proof⟩`,
+  `Computable f` is tried with `fun_prop` and left open if it fails (stated on `f`, no unfolding of a
+  bundled link). The source is a proved `HaltReduction`, the fact `HaltHard p` (not for the data
+  goal `HaltReduction q`), `¬ ComputablePred p` (for the two negative goals), or a problem with a
+  `HaltSource` / `HaltHardFact` instance (registered: MPCP, PCP and SemiThue over `Bool`, MatMort;
+  `instance : HaltSource P := ⟨fromHalt…⟩` next to the `HaltReduction`). `reduce_from h with …`
+  chooses between the two tactics by the goal.
 * **`code_lift F from h`**: a halting reduction `h` is composed with the lift by `reduce_from`
   (synthetic `F.lift` or proved `F.computableLift`, chosen by the goal), so it proves every goal
   `reduce_from` does, over any alphabet with two letters (`hne : b0 ≠ b1` in the context); a source

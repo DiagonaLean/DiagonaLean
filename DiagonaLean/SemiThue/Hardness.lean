@@ -112,6 +112,9 @@ def fromHaltOver {α : Type} [Primcodable α] (b0 b1 : α) (hne : b0 ≠ b1) :
 def fromHaltBool : HaltReduction (@DecisionProblem Bool) :=
   fromHaltOver false true Bool.false_ne_true
 
+/-- The word problem over `Bool` is registered as halting-hard. -/
+instance : HaltSource (@DecisionProblem Bool) := ⟨fromHaltBool⟩
+
 end DiagonaLean.SemiThue
 
 namespace DiagonaLean.SemiThue.MachineLevel

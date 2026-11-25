@@ -50,6 +50,9 @@ def fromHaltOver {α : Type} [Primcodable α] (b0 b1 : α) (hne : b0 ≠ b1) :
 def fromHaltBool : HaltReduction (@PCP.DecisionProblem Bool) :=
   fromHaltOver false true Bool.false_ne_true
 
+/-- PCP over `Bool` is registered as halting-hard. -/
+instance : HaltSource (@PCP.DecisionProblem Bool) := ⟨fromHaltBool⟩
+
 end DiagonaLean.PCP
 
 namespace DiagonaLean.PCP.MachineLevel

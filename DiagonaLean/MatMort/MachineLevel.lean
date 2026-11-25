@@ -35,6 +35,9 @@ def fromPCP : @PCP.DecisionProblem S23 ⪯ MatMort.DecisionProblem :=
 def fromHalt : HaltReduction MatMort.DecisionProblem := by
   reduce_from (PCP.fromHaltOver (0 : S23) 1 (by decide)) via MatMort.synthFromPCP
 
+/-- Matrix mortality is registered as halting-hard. -/
+instance : HaltSource MatMort.DecisionProblem := ⟨fromHalt⟩
+
 end DiagonaLean.MatMort
 
 namespace DiagonaLean.MatMort.MachineLevel

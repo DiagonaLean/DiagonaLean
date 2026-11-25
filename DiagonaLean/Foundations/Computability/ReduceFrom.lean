@@ -60,6 +60,21 @@ The function is checked at tactic time, for the message: it may not use a `nonco
 definition, `implemented_by`, `extern`, `opaque`, `partial`, `unsafe` or classical choice, one level
 deep; `#check_reductions` and the compiler check the rest. Proved goals take `reduce_from … via`.
 
+## Hard goals: `hard_reduce_from`
+
+On a hard goal (`HaltReduction q`, `HaltHard q`, `¬ ComputablePred q`, `¬ MachineDecidable enc q`)
+the same forms build a proved link `⟨f, computable, proof⟩`: `hard_reduce_from h with f`,
+`with f unfold`, `with f using spec`, `with f using fwd bwd`. `Computable f` is its own goal, on
+the function named, tried with `assumption` and `fun_prop` (no unfolding of a bundled link) and
+left open if they fail; `with f` leaves `forward`, `backward`, then what is open.
+
+The source `h` is a proved halting reduction, the fact `HaltHard p` (unpacked, so not for the data
+goal `HaltReduction q`), a negative result `¬ ComputablePred p` (for the two negative goals), or a
+problem with a `HaltSource` instance (data) or a `HaltHardFact` instance (a proposition); a
+synthetic halting reduction is an error. `reduce_from h with …` picks `synth_reduce_from` or
+`hard_reduce_from` by the goal. After a `using` clause, a lemma on the next line is not read as a
+second lemma (`colGt`).
+
 ## A problem as the source
 
 A source that is a problem `X → Prop` rather than a reduction is looked up by the naming
@@ -67,6 +82,25 @@ convention: in the namespace of the problem's head constant, `synthFromHalt` and
 `synthFromHaltBool` (without explicit arguments) whose target unifies with the problem. No match, or
 several, is an error that says so.
 -/
+
+namespace DiagonaLean.Foundations.Computability
+
+/-- A registered proof that `P` is halting-hard, as data: `hard_reduce_from` finds it when the
+source is the problem `P` itself. An instance holds a `HaltReduction`, so it is in the proved
+layer, which `#check_reductions` does not check. -/
+class HaltSource {β : Type*} [Primcodable β] (P : β → Prop) where
+  /-- The proved reduction from halting. -/
+  red : HaltReduction P
+
+/-- A registered fact that `P` is halting-hard, for a problem with no `HaltReduction` as data. -/
+class HaltHardFact {β : Type*} [Primcodable β] (P : β → Prop) : Prop where
+  /-- The fact. -/
+  hard : HaltHard P
+
+instance (priority := low) {β : Type*} [Primcodable β] (P : β → Prop) [HaltSource P] :
+    HaltHardFact P := ⟨⟨HaltSource.red⟩⟩
+
+end DiagonaLean.Foundations.Computability
 
 namespace DiagonaLean.Foundations.Computability.ReduceFrom
 
@@ -377,6 +411,129 @@ def runWith (h f : Term) (how : LinkProof) : TacticM Unit := withMainContext do
       | _ => pure ()
   | _ => pure ()
 
+/-- The kinds of source of a hard goal. -/
+inductive HardSource | red | hard | neg
+
+/-- The kind of the source `stx` of a hard goal: a proved halting reduction, the fact `HaltHard p`,
+or a negative result `¬ ComputablePred p`. A synthetic halting reduction is an error. -/
+def hardSourceOf (stx : Term) : TacticM HardSource := withoutModifyingState do
+  let e ← withoutRecover <| elabTerm stx none (mayPostpone := true)
+  let ty ← instantiateMVars (← inferType e)
+  if ty.isAppOfArity ``Not 1 then
+    if (← whnfR ty.appArg!).isAppOf ``ComputablePred then return .neg
+  let ty' ← whnfR ty
+  if ty'.isAppOfArity ``Nonempty 1 then
+    if (← whnfR ty'.appArg!).isAppOf ``ComputableReduction then return .hard
+  match ← layerOf? ty with
+  | some .proved => return .red
+  | some .synth => throwError "hard_reduce_from: the source `{stx}` is a synthetic halting \
+      reduction, but a hard goal needs a proved one. A halting reduction is upgraded at its root, \
+      from `HaltCanon`, not by a computability proof of the link."
+  | none => throwError "hard_reduce_from: the source `{stx}` is not a proved halting reduction, \
+      `HaltHard p`, `¬ ComputablePred p` or a registered problem; its type is{indentExpr ty}"
+
+/-- If the source is a problem, the registered proof that it is halting-hard (`HaltSource`, then
+`HaltHardFact`); otherwise the source itself. -/
+def resolveHardSource (h : Term) : TacticM Term := do
+  let isProblem ← withoutModifyingState do
+    let e ← withoutRecover <| elabTerm h none (mayPostpone := true)
+    isProblemType (← inferType e)
+  unless isProblem do return h
+  let cands : List Term := [
+    ← `(DiagonaLean.Foundations.Computability.HaltSource.red (P := $h)),
+    ← `(DiagonaLean.Foundations.Computability.HaltHardFact.hard (P := $h))]
+  for stx in cands do
+    let ok ← try
+        withoutModifyingState do
+          discard <| Term.withSynthesize <| withoutRecover <| elabTerm stx none
+        pure true
+      catch _ => pure false
+    if ok then return stx
+  throwError "hard_reduce_from: `{h}` is a problem, so the tactic looks for an instance of \
+    `HaltSource` or `HaltHardFact` for it, and finds none. Register one, or give the source \
+    explicitly."
+
+/-- `hard_reduce_from h with f …` on a hard goal (`HaltReduction q`, `HaltHard q`,
+`¬ ComputablePred q`, `¬ MachineDecidable enc q`): the link is `⟨f, computable, proof⟩`. The goal
+`computable : Computable f` is tried with `assumption` and `fun_prop`; what they do not close
+stays open. -/
+def runHard (h f : Term) (how : LinkProof) : TacticM Unit := withMainContext do
+  let some goal ← goalOf? (← getMainTarget) | throwError "hard_reduce_from: the goal{indentExpr
+      (← getMainTarget)}\nis not one of `HaltReduction q`, `HaltHard q`, `¬ ComputablePred q`, \
+      `¬ MachineDecidable enc q`"
+  if let .synth := goal then
+    throwError "hard_reduce_from: the goal{indentExpr (← getMainTarget)}\nis synthetic; use \
+      `synth_reduce_from`."
+  let h ← resolveHardSource h
+  let kind ← hardSourceOf h
+  let link : Term ← match how with
+    | .open_ | .unfold => `(⟨$f, ?computable, ?spec⟩)
+    | .spec s => `(⟨$f, ?computable, $s⟩)
+    | .lemmas a b => `(⟨$f, ?computable, fun _ => ⟨$a, $b⟩⟩)
+  let term : Term ← match kind with
+  | .neg =>
+    let neg ← `(DiagonaLean.Foundations.Computability.ComputableReduction.not_computablePred
+      $link $h)
+    match goal with
+    | .notComputable => pure neg
+    | .notMachine =>
+      `(DiagonaLean.Foundations.Computability.not_machineDecidable_of_not_computablePred ?_ $neg)
+    | _ => throwError "hard_reduce_from: the source `{h}` is a negative result \
+        (`¬ ComputablePred`), so it proves only a goal `¬ ComputablePred q` or \
+        `¬ MachineDecidable enc q`."
+  | .red | .hard =>
+    let mk (src : Term) : TacticM Term := do
+      let core ← `(DiagonaLean.Foundations.Computability.HaltReduction.trans $src $link)
+      match goal with
+      | .proved => pure core
+      | .hard => `(⟨$core⟩)
+      | .notComputable =>
+        `(DiagonaLean.Foundations.Computability.HaltHard.not_computablePred ⟨$core⟩)
+      | _ => `(DiagonaLean.Foundations.Computability.HaltHard.not_machineDecidable ⟨$core⟩ ?_)
+    match kind, goal with
+    | .hard, .proved => throwError "hard_reduce_from: the source `{h}` is a proposition \
+        (`HaltHard`), but the goal `HaltReduction q` is data. Use a source that is a \
+        `HaltReduction`."
+    | .hard, _ =>
+      let hr := mkIdent `hr
+      `(Nonempty.elim $h fun $hr => $(← mk hr))
+    | _, _ => mk h
+  let others := (← getGoals).drop 1
+  let before := (← getGoals).length
+  try withoutRecover <| evalTactic (← `(tactic| refine $term))
+  catch e =>
+    match how with
+    | .lemmas a b => throwError "hard_reduce_from: the lemmas `{a}` and `{b}` do not prove that \
+        `{f}` reduces the source `{h}` to the goal. They must state `p x → q ({f} x)` and the \
+        converse, in this order; or give the whole statement with `using`.\n{e.toMessageData}"
+    | .spec s => throwError "hard_reduce_from: `{s}` does not prove that `{f}` reduces the \
+        source `{h}` to the goal.\n{e.toMessageData}"
+    | _ => throw e
+  let new := (← getGoals).take ((← getGoals).length - (before - 1))
+  let mut specG : Option MVarId := none
+  let mut side : List MVarId := []
+  for g in new do
+    if (← g.getTag).eraseMacroScopes == `spec then specG := some g
+    else side := side ++ [g]
+  let open_ ← tryOn side do
+    try evalTactic (← `(tactic| first | assumption | fun_prop))
+    catch _ =>
+      unfoldFunction
+      evalTactic (← `(tactic| fun_prop))
+  let mut split : List MVarId := []
+  if let some g := specG then
+    setGoals [g]
+    evalTactic (← `(tactic| intro $(mkIdent `x):ident))
+    evalTactic (← `(tactic| refine ⟨fun $(mkIdent `hp):ident => ?forward,
+      fun $(mkIdent `hq):ident => ?backward⟩))
+    split ← getGoals
+    if let .unfold := how then
+      match split with
+      | gf :: gb :: rest =>
+        split := (← unfoldSplitGoal gf `hp) :: (← unfoldSplitGoal gb `hq) :: rest
+      | _ => pure ()
+  setGoals (split ++ open_ ++ others)
+
 end DiagonaLean.Foundations.Computability.ReduceFrom
 
 open DiagonaLean.Foundations.Computability.ReduceFrom Lean Elab Tactic in
@@ -452,7 +609,7 @@ syntax (name := srfUsing) "synth_reduce_from " term:max " with " term:max " usin
   : tactic
 @[tactic_alt srfWith]
 syntax (name := srfLemmas) "synth_reduce_from " term:max " with " term:max " using " term:max
-  term:max : tactic
+  colGt term:max : tactic
 @[tactic_alt srfWith]
 syntax (name := srfVia) "synth_reduce_from " term:max " via " term:max : tactic
 
@@ -466,3 +623,56 @@ elab_rules : tactic
     | some .synth => evalTactic (← `(tactic| reduce_from $h via $r))
     | _ => throwError "synth_reduce_from: the goal{indentExpr (← getMainTarget)}\nis not \
         `SynthHaltReduction q`. For a proved goal, use `reduce_from … via`."
+
+/-- `hard_reduce_from h with f`: on a hard goal (`HaltReduction q`, `HaltHard q`,
+`¬ ComputablePred q`, `¬ MachineDecidable enc q`), build the link `⟨f, computable, proof⟩` from the
+function `f`. `Computable f` is tried with `fun_prop` and stays open if it fails; the correctness is
+left as `forward` (`hp : p x ⊢ q (f x)`) and `backward` (`hq : q (f x) ⊢ p x`). `with f unfold` also
+unfolds both problems one step; `with f using spec` or `using fwd bwd` closes the link with a known
+theorem. The source `h` is a proved halting reduction, `HaltHard p`, a negative result
+`¬ ComputablePred p` (for the two negative goals), or a problem with a `HaltSource` or
+`HaltHardFact` instance. -/
+syntax (name := hrfWith) "hard_reduce_from " term:max " with " term:max : tactic
+@[tactic_alt hrfWith]
+syntax (name := hrfUnfold) "hard_reduce_from " term:max " with " term:max &" unfold" : tactic
+@[tactic_alt hrfWith]
+syntax (name := hrfUsing) "hard_reduce_from " term:max " with " term:max " using " term:max
+  : tactic
+@[tactic_alt hrfWith]
+syntax (name := hrfLemmas) "hard_reduce_from " term:max " with " term:max " using " term:max
+  colGt term:max : tactic
+
+@[tactic_alt tacticReduce_from_Via_]
+syntax (name := rfWith) "reduce_from " term:max " with " term:max : tactic
+@[tactic_alt tacticReduce_from_Via_]
+syntax (name := rfUnfold) "reduce_from " term:max " with " term:max &" unfold" : tactic
+@[tactic_alt tacticReduce_from_Via_]
+syntax (name := rfUsing) "reduce_from " term:max " with " term:max " using " term:max : tactic
+@[tactic_alt tacticReduce_from_Via_]
+syntax (name := rfLemmas) "reduce_from " term:max " with " term:max " using " term:max
+  colGt term:max : tactic
+
+/-- Whether the main goal is `SynthHaltReduction q`, so that `reduce_from … with` goes to
+`synth_reduce_from`; every other goal goes to `hard_reduce_from`. -/
+def isSynthGoal : TacticM Bool := withMainContext do
+  match ← goalOf? (← getMainTarget) with
+  | some .synth => return true
+  | _ => return false
+
+elab_rules : tactic
+  | `(tactic| hard_reduce_from $h with $f) => runHard h f .open_
+  | `(tactic| hard_reduce_from $h with $f unfold) => runHard h f .unfold
+  | `(tactic| hard_reduce_from $h with $f using $s) => runHard h f (.spec s)
+  | `(tactic| hard_reduce_from $h with $f using $a $b) => runHard h f (.lemmas a b)
+  | `(tactic| reduce_from $h with $f) => do
+    if ← isSynthGoal then evalTactic (← `(tactic| synth_reduce_from $h with $f))
+    else evalTactic (← `(tactic| hard_reduce_from $h with $f))
+  | `(tactic| reduce_from $h with $f unfold) => do
+    if ← isSynthGoal then evalTactic (← `(tactic| synth_reduce_from $h with $f unfold))
+    else evalTactic (← `(tactic| hard_reduce_from $h with $f unfold))
+  | `(tactic| reduce_from $h with $f using $s) => do
+    if ← isSynthGoal then evalTactic (← `(tactic| synth_reduce_from $h with $f using $s))
+    else evalTactic (← `(tactic| hard_reduce_from $h with $f using $s))
+  | `(tactic| reduce_from $h with $f using $a $b) => do
+    if ← isSynthGoal then evalTactic (← `(tactic| synth_reduce_from $h with $f using $a $b))
+    else evalTactic (← `(tactic| hard_reduce_from $h with $f using $a $b))

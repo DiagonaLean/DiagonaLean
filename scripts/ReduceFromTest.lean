@@ -7,6 +7,7 @@ import DiagonaLean.EmpCFG.MachineLevel
 import DiagonaLean.AmbigCFG.MachineLevel
 import DiagonaLean.Foundations.Codes.Tactic
 import DiagonaLean.GrammarMem.Hardness
+import DiagonaLean.MatMort.MachineLevel
 import DiagonaLean.SemiThue.Undecidable
 
 /-! Tests for `reduce_from`, run by CI: one case per goal shape, the link upgrade, and the errors. -/
@@ -317,3 +318,137 @@ error: reduce_from: `DiagonaLean.MatMort.DecisionProblem` is a problem, not a re
 example : SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
   synth_reduce_from DiagonaLean.MatMort.DecisionProblem with matImage
     using pcp_reducesto_matMort_spec
+
+/-! ### `reduce_from_pcp … with`: the letters and the proof that they differ stay automatic -/
+
+example : SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  reduce_from_pcp over_letters (0 : S23) (1 : S23) with matImage
+    using pcp_reducesto_matMort_spec
+
+example : SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  reduce_from_pcp over_letters (0 : S23) (1 : S23) with matImage
+    using matmort_of_pcp pcp_of_matmort
+
+example : SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  reduce_from_pcp over_letters (0 : S23) (1 : S23) with matImage
+  · exact matmort_of_pcp hp
+  · exact pcp_of_matmort hq
+
+example : SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  reduce_from_pcp over_letters (0 : S23) (1 : S23) with matImage unfold
+  · obtain ⟨A, hne, hmem, heq⟩ := hp
+    exact matmort_of_pcp (by unfold DiagonaLean.PCP.DecisionProblem; exact ⟨A, hne, hmem, heq⟩)
+  · exact pcp_of_matmort hq
+
+/-! ### Hard goals: `hard_reduce_from … with`, and `reduce_from … with` choosing by the goal
+
+The link is `⟨f, computable, proof⟩`; `Computable f` is tried with `fun_prop` and left open if that
+fails. The source is a proved halting reduction, `HaltHard p`, a negative result, or a problem with
+a `HaltSource` instance. -/
+
+example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    HaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with matImage using matmort_of_pcp pcp_of_matmort
+
+/-- The function alone leaves `forward` and `backward`; `Computable matImage` is closed. -/
+example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    ¬ ComputablePred DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with matImage
+  · exact matmort_of_pcp hp
+  · exact pcp_of_matmort hq
+
+example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    ¬ ComputablePred DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with matImage unfold
+  · obtain ⟨A, hne, hmem, heq⟩ := hp
+    exact matmort_of_pcp (by unfold DiagonaLean.PCP.DecisionProblem; exact ⟨A, hne, hmem, heq⟩)
+  · exact pcp_of_matmort hq
+
+/-- A source that is only the fact `HaltHard p`. -/
+example (h : HaltHard (@DiagonaLean.PCP.DecisionProblem S23)) :
+    ¬ ComputablePred DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+/-- A negative source. -/
+example (h : ¬ ComputablePred (@DiagonaLean.PCP.DecisionProblem S23)) :
+    ¬ ComputablePred DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem S23))
+    {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+/-- `reduce_from … with` goes to `synth_reduce_from` or `hard_reduce_from` by the goal. -/
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+/-- A function without a `fun_prop` lemma leaves `Computable` open, stated on the function. -/
+def plainF : DiagonaLean.PCP.Stack S23 → Finset (Matrix (Fin 3) (Fin 3) ℤ) := matImage
+
+example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with plainF using pcp_reducesto_matMort_spec
+  exact matImage_primrec.to_comp
+
+/-! #### A problem as the source, through `HaltSource` -/
+
+example : HaltHard (@DiagonaLean.SemiThue.DecisionProblem Bool) := by
+  hard_reduce_from (@DiagonaLean.SemiThue.DecisionProblem Bool) with id using (fun _ => Iff.rfl)
+
+example : ¬ ComputablePred DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from DiagonaLean.MatMort.DecisionProblem with id using (fun _ => Iff.rfl)
+
+/-! #### Errors of `hard_reduce_from` -/
+
+abbrev PCPS23 := @DiagonaLean.PCP.DecisionProblem S23
+
+/--
+error: hard_reduce_from: the source `h` is a synthetic halting reduction, but a hard goal needs a proved one. A halting reduction is upgraded at its root, from `HaltCanon`, not by a computability proof of the link.
+-/
+#guard_msgs in
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+/--
+error: hard_reduce_from: the source `h` is a proposition (`HaltHard`), but the goal `HaltReduction q` is data. Use a source that is a `HaltReduction`.
+-/
+#guard_msgs in
+example (h : HaltHard (@DiagonaLean.PCP.DecisionProblem S23)) :
+    HaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+/--
+error: hard_reduce_from: the source `h` is a negative result (`¬ ComputablePred`), so it proves only a goal `¬ ComputablePred q` or `¬ MachineDecidable enc q`.
+-/
+#guard_msgs in
+example (h : ¬ ComputablePred (@DiagonaLean.PCP.DecisionProblem S23)) :
+    HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+/--
+error: hard_reduce_from: the goal
+  SynthHaltReduction DiagonaLean.MatMort.DecisionProblem
+is synthetic; use `synth_reduce_from`.
+-/
+#guard_msgs in
+example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from h with matImage using pcp_reducesto_matMort_spec
+
+/--
+error: hard_reduce_from: `PCPS23` is a problem, so the tactic looks for an instance of `HaltSource` or `HaltHardFact` for it, and finds none. Register one, or give the source explicitly.
+-/
+#guard_msgs in
+example : HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from PCPS23 with matImage using pcp_reducesto_matMort_spec

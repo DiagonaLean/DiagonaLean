@@ -102,6 +102,9 @@ def fromHaltOver {α : Type} [Primcodable α] (b0 b1 : α) (hne : b0 ≠ b1) :
 def fromHaltBool : HaltReduction MPCProblem :=
   fromHaltOver false true Bool.false_ne_true
 
+/-- MPCP over `Bool` is registered as halting-hard, so `hard_reduce_from MPCProblem …` finds it. -/
+instance : HaltSource MPCProblem := ⟨fromHaltBool⟩
+
 end DiagonaLean.MPCP
 
 namespace DiagonaLean.MPCP.MachineLevel

@@ -34,7 +34,7 @@ letters `b0`, `b1`, through `EmpCFG.synthFromPCP`. -/
 def _root_.DiagonaLean.EmpCFG.synthFromHaltTerm {α : Type} [DecidableEq α] (b0 b1 : α)
     (hne : b0 ≠ b1) :
     SynthHaltReduction (@DiagonaLean.EmpCFG.DecisionProblem (Term α)) := by
-  reduce_from_pcp over_letters b0 b1 via EmpCFG.synthFromPCP
+  reduce_from_pcp over_letters b0 b1 with pcpToEmpCFG using pcp_reducesto_empCFG_spec
 
 /-- The former name of `EmpCFG.synthFromHaltTerm`. -/
 @[deprecated DiagonaLean.EmpCFG.synthFromHaltTerm (since := "2026-11-23")]

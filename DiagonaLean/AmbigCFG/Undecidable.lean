@@ -30,7 +30,7 @@ open DiagonaLean.PCP DiagonaLean.AmbigCFG DiagonaLean.Synthetic.Definitions
 letters `b0`, `b1`, through `AmbigCFG.synthFromPCP`. -/
 def _root_.DiagonaLean.AmbigCFG.synthFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
     SynthHaltReduction (fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2) := by
-  reduce_from_pcp over_letters b0 b1 via AmbigCFG.synthFromPCP
+  reduce_from_pcp over_letters b0 b1 with pcpToAmbigCFG using pcp_reducesto_ambigCFG_spec
 
 /-- The former name of `AmbigCFG.synthFromHaltOver`. -/
 @[deprecated DiagonaLean.AmbigCFG.synthFromHaltOver (since := "2026-11-23")]
