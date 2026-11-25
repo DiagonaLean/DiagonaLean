@@ -19,7 +19,7 @@ matches inside a block.
 
 The reductions from the halting problem produce systems with non-empty left sides, so the restricted
 problem is halting-hard over `Alpha ℕ Sym2`. The lifting of `Foundations.Codes.Functor` moves it
-to every alphabet with two distinct letters, and `SemiThue.synthFromPos` returns to the plain word
+to every alphabet with two distinct letters, and `posToWord` returns to the plain word
 problem, sending a system with an empty left side to a fixed instance without solution. The
 `SynthHaltReduction` statements obtained this way are in `Undecidable.lean`
 (`SemiThue.synthPosFromHaltOver`, `SemiThue.synthFromHaltOver`, `SemiThue.synthFromHaltBool`), the
@@ -27,9 +27,9 @@ proved ones in `Hardness.lean`.
 
 ## Main statements
 
-* `semiThueFunctor`, `SemiThue.synthFromPos`.
-* The negative results over every nontrivial alphabet (`not_computablePred_semiThueOf`, …) are in
-  `Hardness.lean`, from `SemiThue.posFromHaltOver` and `SemiThue.fromHaltOver`.
+* `semiThueFunctor`, `posToWord_spec`.
+* The results over every nontrivial alphabet (`SemiThue.haltHard`, `SemiThue.Pos.haltHard`, …) are
+  in `Hardness.lean`, from `SemiThue.posFromHaltOver` and `SemiThue.fromHaltOver`.
 * `semiThuePos_manyOneEquiv`: the restricted problem is many-one equivalent over any two such
   alphabets.
 -/
@@ -77,15 +77,6 @@ theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯_s[posToWord a] @Decis
 @[fun_prop] theorem posToWord_prim [Primcodable T] (a : T) : Primrec (posToWord a) := by
   unfold posToWord
   fun_prop
-
-/-- The restricted word problem many-one reduces to the plain one, given a letter. -/
-def _root_.DiagonaLean.SemiThue.synthFromPos (a : T) :
-    @DecisionProblemPos T ⪯_s @DecisionProblem T :=
-  ⟨posToWord a, posToWord_spec a⟩
-
-/-- The former name of `SemiThue.synthFromPos`. -/
-@[deprecated DiagonaLean.SemiThue.synthFromPos (since := "2026-11-23")]
-abbrev posReduces := @DiagonaLean.SemiThue.synthFromPos
 
 namespace MachineLevel
 

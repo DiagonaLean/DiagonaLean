@@ -5,6 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.SemiThue.AlphabetLift
 import DiagonaLean.MPCP.Hardness
+import DiagonaLean.Foundations.Computability.HaltResults
 
 @[expose] public section
 
@@ -20,15 +21,15 @@ is a reduction from `HaltCanon`, proved computable.
 ## Main statements
 
 * `SemiThue.toEmptyFromHalt`: rewriting to the empty string is halting-hard.
-* `SemiThue.fromHalt`, `SemiThue.posFromHalt`: the word problem, and the word problem for systems
-  with non-empty left sides, are halting-hard, over `Alpha ℕ Sym2`.
+* `SemiThue.posFromHalt`: the word problem for systems with non-empty left sides is halting-hard,
+  over `Alpha ℕ Sym2`, through Post's and Markov's reduction `canonWord`.
 * `SemiThue.posFromHaltOver`, `SemiThue.fromHaltOver b0 b1 hne`, `SemiThue.fromHaltBool`: over any
   alphabet with two distinct letters.
-* `not_computablePred_semiThue`, `not_machineDecidable_semiThue`, `not_computablePred_toEmpty`,
-  `not_computablePred_semiThuePos`, and over every nontrivial alphabet
-  `not_computablePred_semiThueOf`, `not_machineDecidable_semiThueOf`,
-  `not_computablePred_semiThuePosOf`: the word problem (Post, Markov 1947) and its variants are not
-  computable predicates, and no Turing machine decides them under any computable encoding.
+* By `halt_results`: `SemiThue.haltHard`, `SemiThue.not_computablePred`,
+  `SemiThue.not_machineDecidable` for the word problem (Post, Markov 1947) over every nontrivial
+  alphabet; the same under `SemiThue.Pos` for systems with non-empty left sides, and under
+  `SemiThue.ToEmpty` for rewriting to the empty string over `Alpha ℕ Sym2`. They are halting-hard,
+  not computable predicates, and no Turing machine decides them under any computable encoding.
 -/
 
 namespace DiagonaLean.SemiThue.MachineLevel
@@ -82,16 +83,10 @@ reduction from the halting problem on canonical machines, proved computable. -/
 def toEmptyFromHalt : HaltReduction (@ToEmptyProblem (Alpha ℕ Normalize.Sym2)) :=
   ⟨canonToEmpty, canonToEmpty_prim.to_comp, haltCanon_iff_toEmpty⟩
 
-/-- **The word problem for string rewriting systems is halting-hard** (Post, Markov 1947), over
-`Alpha ℕ Sym2`. -/
-def fromHalt : HaltReduction (@DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
-  ⟨canonWord, canonWord_prim.to_comp, haltCanon_iff_toEmpty⟩
-
-theorem haltHard : HaltHard (@DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
-  ⟨fromHalt⟩
-
 /-- **The word problem for systems with non-empty left sides is halting-hard**, over
-`Alpha ℕ Sym2`: the systems of `canonWord` have non-empty left sides (`codeRules_lhs_ne`). -/
+`Alpha ℕ Sym2`: the reduction `canonWord` of Post and Markov (1947), whose systems have non-empty
+left sides (`codeRules_lhs_ne`). The plain word problem over `Alpha ℕ Sym2` follows, with the same
+function, and over every alphabet with two letters from `fromHaltOver`. -/
 def posFromHalt : HaltReduction (@DecisionProblemPos (Alpha ℕ Normalize.Sym2)) :=
   ⟨canonWord, canonWord_prim.to_comp,
     fun x => (haltCanon_iff_toEmpty x).trans (and_iff_right (codeRules_lhs_ne _)).symm⟩
@@ -103,10 +98,10 @@ def posFromHaltOver {α : Type} [Primcodable α] (b0 b1 : α) (hne : b0 ≠ b1) 
   code_lift semiThueFunctor from posFromHalt
 
 /-- **The word problem for string rewriting systems is halting-hard over any alphabet with two
-distinct letters**: `posFromHaltOver`, then `synthFromPos`, proved computable (`posToWord_prim`). -/
+distinct letters**: `posFromHaltOver`, then `posToWord b0` (`posToWord_spec`, `posToWord_prim`). -/
 def fromHaltOver {α : Type} [Primcodable α] (b0 b1 : α) (hne : b0 ≠ b1) :
     HaltReduction (@DecisionProblem α) := by
-  reduce_from (posFromHaltOver b0 b1 hne) via (SemiThue.synthFromPos b0)
+  hard_reduce_from (posFromHaltOver b0 b1 hne) with (posToWord b0) using (posToWord_spec b0)
 
 /-- **The word problem for string rewriting systems over `Bool` is halting-hard.** -/
 def fromHaltBool : HaltReduction (@DecisionProblem Bool) :=
@@ -115,70 +110,15 @@ def fromHaltBool : HaltReduction (@DecisionProblem Bool) :=
 /-- The word problem over `Bool` is registered as halting-hard. -/
 instance : HaltSource (@DecisionProblem Bool) := ⟨fromHaltBool⟩
 
+section
+variable {α : Type} [Primcodable α] [Nontrivial α]
+
+halt_results (@DecisionProblem α) over_letters from fromHaltOver
+
+halt_results Pos for (@DecisionProblemPos α) over_letters from posFromHaltOver
+
+halt_results ToEmpty for (@ToEmptyProblem (Alpha ℕ Normalize.Sym2)) from toEmptyFromHalt
+
+end
+
 end DiagonaLean.SemiThue
-
-namespace DiagonaLean.SemiThue.MachineLevel
-
-open DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Computability
-  DiagonaLean.Foundations.Grammar DiagonaLean.Synthetic.Definitions
-
-variable {α : Type}
-
-/-- **Whether a string rewrites to the empty string is not a computable predicate**, for string
-rewriting systems over `Alpha ℕ Sym2`: it is halting-hard (`SemiThue.toEmptyFromHalt`). -/
-theorem not_computablePred_toEmpty :
-    ¬ ComputablePred fun x :
-      SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) =>
-        ToEmptyProblem x :=
-  SemiThue.toEmptyFromHalt.not_computablePred
-
-/-- **No Turing machine decides whether a string rewrites to the empty string**, under any
-computable encoding. -/
-theorem not_machineDecidable_toEmpty
-    {enc : SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) →
-      List Bool}
-    (henc : Computable enc) : ¬ MachineDecidable enc ToEmptyProblem :=
-  SemiThue.toEmptyFromHalt.not_machineDecidable henc
-
-/-- **The word problem for string rewriting systems is not a computable predicate** (Post, Markov
-1947), over `Alpha ℕ Sym2`: it is halting-hard (`SemiThue.fromHalt`). -/
-theorem not_computablePred_semiThue :
-    ¬ ComputablePred (@DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
-  SemiThue.fromHalt.not_computablePred
-
-/-- **No Turing machine decides the word problem for string rewriting systems**, under any
-computable encoding. -/
-theorem not_machineDecidable_semiThue
-    {enc : SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) ×
-      List (Alpha ℕ Normalize.Sym2) → List Bool}
-    (henc : Computable enc) : ¬ MachineDecidable enc DecisionProblem :=
-  SemiThue.fromHalt.not_machineDecidable henc
-
-/-- **The restricted word problem is not a computable predicate** over `Alpha ℕ Sym2`: it is
-halting-hard (`SemiThue.posFromHalt`). -/
-theorem not_computablePred_semiThuePos :
-    ¬ ComputablePred (@DecisionProblemPos (Alpha ℕ Normalize.Sym2)) :=
-  SemiThue.posFromHalt.not_computablePred
-
-/-- **The restricted word problem is not a computable predicate over any nontrivial alphabet**: it
-is halting-hard there (`SemiThue.posFromHaltOver`). -/
-theorem not_computablePred_semiThuePosOf [Primcodable α] [Nontrivial α] :
-    ¬ ComputablePred (@DecisionProblemPos α) := by
-  obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
-  exact (SemiThue.posFromHaltOver b0 b1 hne).not_computablePred
-
-/-- **The word problem for string rewriting systems is not a computable predicate over any
-nontrivial alphabet**: it is halting-hard there (`SemiThue.fromHaltOver`). -/
-theorem not_computablePred_semiThueOf [Primcodable α] [Nontrivial α] :
-    ¬ ComputablePred (@DecisionProblem α) := by
-  obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
-  exact (SemiThue.fromHaltOver b0 b1 hne).not_computablePred
-
-/-- **No Turing machine decides the word problem for string rewriting systems over any nontrivial
-alphabet**, under any computable encoding. -/
-theorem not_machineDecidable_semiThueOf [Primcodable α] [Nontrivial α]
-    {enc : SRS α × List α × List α → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc (@DecisionProblem α) :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_semiThueOf
-
-end DiagonaLean.SemiThue.MachineLevel

@@ -24,8 +24,9 @@ rewrites to the empty string (`halts_iff_toEmptyN`).
 ## Main statements
 
 * `halts_iff_toEmptyN`, `codeRules_lhs_ne`: used in `Hardness.lean` for the halting reductions
-  `SemiThue.fromHalt`, `SemiThue.toEmptyFromHalt`, `SemiThue.posFromHalt`, from which the negative
-  results there (`not_computablePred_semiThue`, `not_machineDecidable_semiThue`, …) follow.
+  `SemiThue.toEmptyFromHalt`, `SemiThue.posFromHalt`, `SemiThue.fromHaltOver`, from which the
+  negative results there (`SemiThue.not_computablePred`, `SemiThue.not_machineDecidable`, …)
+  follow.
 -/
 
 namespace DiagonaLean.SemiThue.MachineLevel

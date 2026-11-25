@@ -4,6 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.SemiThue.AlphabetLift
+import DiagonaLean.Foundations.Computability.ReduceFrom
 
 @[expose] public section
 
@@ -14,7 +15,7 @@ to the word problem over the fixed alphabet `Alpha ℕ Sym2`, so the word proble
 halting-hard there. Its systems have non-empty left sides (`SemiThue.synthPosFromHalt`), and on such
 systems the word problem is a functor on synchronizing codes (`AlphabetLift.lean`), so it is
 synthetically halting-hard over every alphabet with two distinct letters
-(`SemiThue.synthPosFromHaltOver`). `SemiThue.synthFromPos` returns to the plain word problem
+(`SemiThue.synthPosFromHaltOver`). `posToWord` returns to the plain word problem
 (`SemiThue.synthFromHaltOver`, `SemiThue.synthFromHaltBool`). The machine-level statements are in
 `MachineLevel.lean` and `AlphabetLift.lean`.
 
@@ -51,8 +52,9 @@ abbrev undecidableSemiThuePosOf := @DiagonaLean.SemiThue.synthPosFromHaltOver
 `α` with two
 distinct letters `b0`, `b1`.** -/
 def _root_.DiagonaLean.SemiThue.synthFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
-    SynthHaltReduction (@DecisionProblem α) :=
-  SynthHaltReduction.comp (SemiThue.synthPosFromHaltOver b0 b1 hne) (SemiThue.synthFromPos b0)
+    SynthHaltReduction (@DecisionProblem α) := by
+  synth_reduce_from (SemiThue.synthPosFromHaltOver b0 b1 hne) with (posToWord b0)
+    using (posToWord_spec b0)
 
 /-- The former name of `SemiThue.synthFromHaltOver`. -/
 @[deprecated DiagonaLean.SemiThue.synthFromHaltOver (since := "2026-11-23")]
