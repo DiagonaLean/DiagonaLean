@@ -523,9 +523,11 @@ def encodingViolations (mc : ModuleClass) (env : Environment) (tainted : NameSet
           if ci matches .defnInfo _ then
             if ← isEncodingType ci.type then continue
       if let some why := programViolationIn mc env c then
-        out := out.push m!"{what} about an encoding that uses `{c}`, which {why}"
+        out := out.push m!"{what} about an encoding that uses `{c}`, which {why}; use a compiled \
+          encoding, or quantify over it"
       else if let some (path, why) := hatchInDeps mc env tainted c then
-        out := out.push m!"{what} about an encoding that depends on {hatchMessage path why}"
+        out := out.push m!"{what} about an encoding that depends on {hatchMessage path why}\
+          ; use a compiled encoding, or quantify over it"
   return out
 
 /-- The violations of the declaration `c` other than those of its type under rule 4: rules 1–3,
@@ -538,26 +540,38 @@ def declViolationsCore (mc : ModuleClass) (env : Environment) (tainted carriers 
   | .defnInfo d =>
     if ← isPropType d.type then return ← statementViolations carriers d.type
     if ← isEncodingType d.type then
-      if let some why := compiledViolation mc env c then return #[m!"is an encoding but {why}"]
+      if let some why := compiledViolation mc env c then
+        return #[m!"is an encoding but {why}; build the encoding from compiled definitions, or \
+          take it as a parameter"]
       if let some (path, why) := hatchInDeps mc env tainted c then
-        return #[m!"is an encoding that depends on {hatchMessage path why}"]
+        return #[m!"is an encoding that depends on {hatchMessage path why}; build the encoding \
+          from compiled definitions, or take it as a parameter"]
       return #[]
     let isReduction ← isReductionType d.type
     if mentionsAny carriers (conclusion d.type) && !isReduction then
-      return #[m!"returns a reduction inside another type"]
+      return #[m!"returns a reduction inside another type; return the reduction itself, and the \
+        other data from separate definitions"]
     if !isReduction then return #[]
-    if d.safety != .safe then return #[m!"builds a reduction but is not safe"]
-    if let some why := compiledViolation mc env c then return #[m!"builds a reduction but {why}"]
+    if d.safety != .safe then return #[m!"builds a reduction but is not safe; remove `unsafe` or \
+      `partial`"]
+    if let some why := compiledViolation mc env c then
+      return #[m!"builds a reduction but {why}; build its function from compiled definitions, \
+        or, for a result proved classically, prove `Computable` of it and state a proved \
+        reduction (`⪯`, `HaltReduction`) instead"]
     if let some (path, why) := hatchInDeps mc env tainted c then
-      return #[m!"builds a reduction that depends on {hatchMessage path why}"]
-    return (← badAxioms c).map fun a => m!"builds a reduction that depends on {axiomMessage a}"
+      return #[m!"builds a reduction that depends on {hatchMessage path why}; remove the escape \
+        hatch from that dependency, or state a proved reduction (`⪯`), which needs none"]
+    return (← badAxioms c).map fun a =>
+      m!"builds a reduction that depends on {axiomMessage a}; remove it from the proofs it reaches"
   | .opaqueInfo o =>
     return if mentionsAny carriers o.type then #[m!"is an opaque or partial declaration about \
-      reductions"] else #[]
+      reductions; use a `def` or a `theorem`"] else #[]
   | .axiomInfo a =>
-    return if mentionsAny carriers a.type then #[m!"is an axiom about reductions"] else #[]
+    return if mentionsAny carriers a.type then
+      #[m!"is an axiom about reductions; prove it, or take it as a hypothesis"] else #[]
   | .ctorInfo k =>
-    return if mentionsAny carriers k.type then #[m!"stores a reduction inside another type"]
+    return if mentionsAny carriers k.type then #[m!"stores a reduction inside another type; \
+      pass the reduction as a parameter (a registry records names, through an attribute)"]
       else #[]
   | _ => return #[]
 
@@ -692,7 +706,8 @@ def elabCheckReductions : CommandElab := fun stx => do
     if !mc.inScope env onlyLocal e.thmName then continue
     for a in ← liftCoreM (badAxioms e.thmName) do
       logError m!"`{userName e.thmName}` is a `@[csimp]` lemma that depends on {axiomMessage a}, \
-        so the compiled code of `{userName e.fromDeclName}` may differ from its meaning"
+        so the compiled code of `{userName e.fromDeclName}` may differ from its meaning; prove it \
+        without `sorry` or a new axiom"
       failures := failures + 1
   -- rule 5: no term or command syntax that shares its first token with other syntax
   for (k, msg) in syntaxOverlaps mc env onlyLocal do
