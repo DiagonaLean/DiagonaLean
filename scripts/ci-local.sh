@@ -80,6 +80,7 @@ checks=(
   "upgrade-test|lake env lean scripts/UpgradeTest.lean"
   "halt-results-test|lake env lean scripts/HaltResultsTest.lean"
   "reserved-words-test|lake env lean scripts/ReservedWordsTest.lean"
+  "headline-test|lake env lean scripts/HeadlineTest.lean"
   "axioms|lake env lean --run scripts/CheckAxioms.lean"
   "axioms-test|lake env lean scripts/CheckAxiomsTest.lean"
   "metaprograms|lake env lean --run scripts/CheckMetaprograms.lean"

@@ -30,6 +30,8 @@ jobs:
         run: lake env lean scripts/HaltResultsTest.lean
       - name: Check that the library makes no new keyword by accident
         run: lake env lean scripts/ReservedWordsTest.lean
+      - name: Check that the headline results keep their statements
+        run: lake env lean scripts/HeadlineTest.lean
       - name: Check that every declaration uses only the standard axioms
         run: lake env lean --run scripts/CheckAxioms.lean
       - name: Test the axiom check
