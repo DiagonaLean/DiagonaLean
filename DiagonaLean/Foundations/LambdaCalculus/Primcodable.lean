@@ -70,6 +70,17 @@ theorem tcKids_primrec : Primrec tcKids := by unfold tcKids; fun_prop
 theorem tcBuild_primrec : Primrec fun q : ℕ × List (Term ℕ) => tcBuild q.1 q.2 := by
   unfold tcBuild; fun_prop
 
+/-- The decoder of `tc`. -/
+abbrev tcDec : ℕ → Option (Term ℕ) := TaggedCode.decode tcKids tcKids_lt tcBuild
+
+/-- **`tcDec` decodes `tc`.** -/
+theorem tcDec_tc (M : Term ℕ) : tcDec (tc M) = some M :=
+  TaggedCode.decode_code tcKids tcKids_lt tcBuild tc_spec M
+
+/-- **The decoder of `tc` is primitive recursive.** -/
+theorem tcDec_primrec : Primrec tcDec :=
+  TaggedCode.decode_primrec tcKids tcKids_lt tcBuild tcKids_primrec tcBuild_primrec
+
 /-- **`tc` is a correct encoding.** A function into λ-terms is primitive recursive exactly when it
 is so through `tc`. -/
 theorem primrec_iff_tc {β : Type} [Primcodable β] {f : β → Term ℕ} :

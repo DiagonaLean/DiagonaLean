@@ -25,6 +25,10 @@ through a primitive recursive function (`ambCode_prim`), and
 The statements are about grammar codes (`Foundations.Grammar.CFGCode`): a machine reads a finite
 description, and `CFGCode.toCFG` is the grammar a code describes.
 
+The reductions are also proved computable: `AmbigCFG.codeFromPCP`, and the halting reduction
+`AmbigCFG.codeFromHaltOver b0 b1 hne` (from `PCP.fromHaltOver`).
+
+
 ## Main statements
 
 * `not_computablePred_ambigCFGCode`, `not_machineDecidable_ambigCFGCode`: whether a grammar code is
@@ -164,3 +168,24 @@ theorem not_machineDecidable_ambigCFGCode [Nontrivial α] {enc : CFGCode (α ⊕
   not_machineDecidable_of_not_computablePred henc not_computablePred_ambigCFGCode
 
 end DiagonaLean.AmbigCFG.MachineLevel
+
+namespace DiagonaLean.AmbigCFG
+
+open DiagonaLean.AmbigCFG.MachineLevel DiagonaLean.Foundations.Computability
+  DiagonaLean.Foundations.Grammar
+
+variable {α : Type} [DecidableEq α] [Primcodable α]
+
+/-- **The reduction from PCP to ambiguity of grammar codes, proved computable** (`ambCode_prim`). -/
+def codeFromPCP [Nonempty α] : @PCP.DecisionProblem α ⪯
+    fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG :=
+  .ofSynth AmbigCFG.synthCodeFromPCP ambCode_prim.to_comp
+
+/-- **Ambiguity of grammar codes is halting-hard**, over the terminals `α ⊕ ℕ` for any alphabet `α`
+with two distinct letters: `PCP.fromHaltOver`, then `codeFromPCP`. -/
+def codeFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
+    HaltReduction fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG := by
+  haveI : Nonempty α := ⟨b0⟩
+  reduce_from (PCP.fromHaltOver b0 b1 hne) via AmbigCFG.synthCodeFromPCP
+
+end DiagonaLean.AmbigCFG

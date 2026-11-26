@@ -64,6 +64,17 @@ theorem skcKids_primrec : Primrec skcKids := by unfold skcKids; fun_prop
 theorem skcBuild_primrec : Primrec fun q : ℕ × List SKI => skcBuild q.1 q.2 := by
   unfold skcBuild; fun_prop
 
+/-- The decoder of `skc`. -/
+abbrev skcDec : ℕ → Option SKI := TaggedCode.decode skcKids skcKids_lt skcBuild
+
+/-- **`skcDec` decodes `skc`.** -/
+theorem skcDec_skc (x : SKI) : skcDec (skc x) = some x :=
+  TaggedCode.decode_code skcKids skcKids_lt skcBuild skc_spec x
+
+/-- **The decoder of `skc` is primitive recursive.** -/
+theorem skcDec_primrec : Primrec skcDec :=
+  TaggedCode.decode_primrec skcKids skcKids_lt skcBuild skcKids_primrec skcBuild_primrec
+
 /-- **`skc` is a correct encoding.** A function into SKI terms is primitive recursive exactly when it
 is so through `skc`. -/
 theorem primrec_iff_skc {β : Type} [Primcodable β] {f : β → SKI} :

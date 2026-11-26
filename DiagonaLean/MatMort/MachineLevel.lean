@@ -16,6 +16,10 @@ Mortality of finite sets of `3 × 3` integer matrices is not a computable predic
 (`PCP.MachineLevel.not_computablePred_pcp`), and the reduction `matImage` is primitive recursive
 (`matImage_primrec`).
 
+The reduction is also proved computable: `MatMort.fromPCP`, and the halting reduction
+`MatMort.fromHalt` (from `PCP.fromHaltOver`).
+
+
 ## References
 
 * [M. S. Paterson, *Unsolvability in 3 × 3 Matrices*][Paterson1970]
@@ -38,3 +42,18 @@ theorem not_machineDecidable_matMort {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) 
   not_machineDecidable_of_not_computablePred henc not_computablePred_matMort
 
 end DiagonaLean.MatMort.MachineLevel
+
+namespace DiagonaLean.MatMort
+
+open DiagonaLean.MatMort.Reduction DiagonaLean.Foundations.Computability
+
+/-- **The reduction from PCP to matrix mortality, proved computable** (`matImage_primrec`). -/
+def fromPCP : @PCP.DecisionProblem S23 ⪯ MatMort.DecisionProblem :=
+  .ofSynth MatMort.synthFromPCP matImage_primrec.to_comp
+
+/-- **Matrix mortality of `3 × 3` integer matrices is halting-hard**: PCP over `S23` is
+(`PCP.fromHaltOver`), and `fromPCP`. -/
+def fromHalt : HaltReduction MatMort.DecisionProblem := by
+  reduce_from (PCP.fromHaltOver (0 : S23) 1 (by decide)) via MatMort.synthFromPCP
+
+end DiagonaLean.MatMort
