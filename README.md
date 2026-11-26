@@ -271,7 +271,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) first. It covers:
 * the folder layout: each problem `X` has `Basic.lean` (the problem), `Reductions/Y_to_X.lean` (the reductions) and `Undecidable.lean` (the results), and where they apply `MachineLevel.lean` (the results about machines) and `AlphabetLift.lean` (the lifting to other alphabets); problems from one larger result are subfolders of a shared folder, as in `KAComm/`; and `Foundations/` may depend only on `Foundations`, `Synthetic` and `Halt`;
 * the conventions for reductions that `#check_reductions` relies on.
 
-CI runs `lake build`, `lake lint`, `#check_reductions` with its tests, `scripts/CheckAxioms.lean` (only the standard axioms, everywhere) with its tests, `scripts/CheckMetaprograms.lean` (no metaprogram that edits the environment) with its tests in `scripts/CheckMetaprogramsTest.lean`, the tactic tests `scripts/FunPropTest.lean`, `scripts/ReduceFromTest.lean` and `scripts/HaltResultsTest.lean`, and `scripts/CheckLayering.lean`.
+CI runs `lake build`, `lake lint`, `#check_reductions` with its tests, `scripts/CheckAxioms.lean` (only the standard axioms, everywhere) with its tests, `scripts/CheckMetaprograms.lean` (no metaprogram that edits the environment) with its tests in `scripts/CheckMetaprogramsTest.lean`, the tactic tests `scripts/FunPropTest.lean` (with `FunPropDeriveTest.lean` and `FunPropNestedTest.lean`), `scripts/ReduceFromTest.lean` and `scripts/HaltResultsTest.lean`, and `scripts/CheckLayering.lean`.
 
 ## Roadmap
 
