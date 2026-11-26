@@ -42,8 +42,4 @@ def _root_.DiagonaLean.KAComm.KATermEq.synthFromHalt (B : Base) (C : Code) (hB :
     HaltProblem ⪯_s KATermEqProblem :=
   ⟨reduction B C, halt_reducesto_kaTermEq_spec hB hC⟩
 
-/-- The former name of `KAComm.KATermEq.synthFromHalt`. -/
-@[deprecated DiagonaLean.KAComm.KATermEq.synthFromHalt (since := "2026-11-23")]
-abbrev haltReducesKATermEq := @DiagonaLean.KAComm.KATermEq.synthFromHalt
-
 end DiagonaLean.KAComm.KATermEq.Reduction

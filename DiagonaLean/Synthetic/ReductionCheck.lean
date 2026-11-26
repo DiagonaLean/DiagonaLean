@@ -140,9 +140,7 @@ def reductionStructSet : NameSet :=
 /-- The relations `p ⪯_s[f] q` that say a given function is a reduction, with the index of the
 function among their arguments. With `f` quantified, they say that a reduction exists. -/
 def reductionRelations : List (Name × Nat) :=
-  [(`DiagonaLean.Synthetic.Definitions.ReducesVia, 2),
-   -- the former name, an alias of `ReducesVia`, until existing uses are renamed
-   (`DiagonaLean.Synthetic.Definitions.Reduction, 2)]
+  [(`DiagonaLean.Synthetic.Definitions.ReducesVia, 2)]
 
 /-- `e` mentions a constant in `s`. -/
 def mentionsAny (s : NameSet) (e : Expr) : Bool :=

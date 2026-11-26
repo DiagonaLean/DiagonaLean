@@ -41,8 +41,4 @@ def _root_.DiagonaLean.KAComm.ModelLeBool.synthComplFromHalt :
     HaltProblem ⪯_s Complement ModelLeBoolProblem :=
   ⟨haltRedB, halt_reducesto_not_modelLeBool_spec⟩
 
-/-- The former name of `KAComm.ModelLeBool.synthComplFromHalt`. -/
-@[deprecated DiagonaLean.KAComm.ModelLeBool.synthComplFromHalt (since := "2026-11-23")]
-abbrev haltReducesNotModelLeBool := @DiagonaLean.KAComm.ModelLeBool.synthComplFromHalt
-
 end DiagonaLean.KAComm.ModelLeBool.Reduction

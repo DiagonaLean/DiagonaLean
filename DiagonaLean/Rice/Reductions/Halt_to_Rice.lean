@@ -107,8 +107,4 @@ def _root_.DiagonaLean.Rice.synthFromHalt {C : Set (ℕ →. ℕ)} (w cT : Code)
     HaltProblem ⪯_s RiceProblem C :=
   ⟨reduction w cT, halt_reducesto_rice_spec hw hT hbot⟩
 
-/-- The former name of `Rice.synthFromHalt`. -/
-@[deprecated DiagonaLean.Rice.synthFromHalt (since := "2026-11-23")]
-abbrev haltReducesRice := @DiagonaLean.Rice.synthFromHalt
-
 end DiagonaLean.Rice.Reduction

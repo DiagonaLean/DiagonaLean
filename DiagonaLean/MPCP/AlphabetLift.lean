@@ -84,10 +84,6 @@ def _root_.DiagonaLean.MPCP.synthAlphabetLift {γ : Type} [DecidableEq γ] (b0 b
       (@MPCP.DecisionProblem α) :=
   mpcpFunctor.lift b0 b1 hne
 
-/-- The former name of `MPCP.synthAlphabetLift`. -/
-@[deprecated DiagonaLean.MPCP.synthAlphabetLift (since := "2026-11-23")]
-abbrev mpcpAlphabetLift := @DiagonaLean.MPCP.synthAlphabetLift
-
 end Reduction
 
 end DiagonaLean.MPCP

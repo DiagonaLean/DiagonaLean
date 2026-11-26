@@ -155,15 +155,6 @@ theorem _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.toManyOneReducib
     (hr : Computable r.f) : ManyOneReducible p q :=
   ⟨r.f, hr, r.hf⟩
 
-/-- The former name of `SynthReduction.toManyOneReducible`. Its parameter is typed with the former
-name `ManyOneReduces`, so that field notation finds it on terms whose type uses that name. -/
-@[deprecated SynthReduction.toManyOneReducible (since := "2026-11-22")]
-theorem _root_.DiagonaLean.Synthetic.Definitions.ManyOneReduces.toManyOneReducible
-    {X Y : Type*} [Primcodable X] [Primcodable Y] {p : X → Prop} {q : Y → Prop}
-    (r : DiagonaLean.Synthetic.Definitions.ManyOneReduces p q)
-    (hr : Computable r.f) : ManyOneReducible p q :=
-  DiagonaLean.Synthetic.Definitions.SynthReduction.toManyOneReducible r hr
-
 /-- **Not being a computable predicate transfers along a computable reduction.** If `p` is not a
 computable predicate and `r : p ⪯_s q` has a computable function, then `q` is not one either. -/
 theorem not_computablePred_of_reduces {X Y : Type*} [Primcodable X] [Primcodable Y]

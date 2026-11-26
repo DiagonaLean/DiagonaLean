@@ -2,8 +2,8 @@
 
 A map of what you reach for when proving a problem undecidable in DiagonaLean: the notions,
 the theorems that connect them, the tactics, and the pitfalls that cost time. Names are as on
-`feat/phase3` (2026-11-23); `scripts/rename-packages.tsv` lists the former names, which remain as
-deprecated aliases. The rules a result must follow are in [CONTRIBUTING.md](CONTRIBUTING.md).
+`feat/phase3` (2026-11-23); `scripts/rename-packages.tsv` lists the former names (their deprecated
+aliases were removed on 2026-11-27). The rules a result must follow are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 1. Two layers of reductions
 
@@ -105,7 +105,7 @@ Every problem has a one-argument predicate `X.DecisionProblem` (an object of the
 problems); proofs may use a curried form. MPCP: `MPCP.Solvable c P` (curried, used by the proofs)
 and `MPCP.DecisionProblem (c, P)` (`decisionProblem_iff`, by `rfl`). Headline abbreviations at a
 fixed type remain (`HaltProblem`, `MPCProblem`, `PCProblem`, KAComm `…BoolProblem`); the
-duplicates `MatMortProblem`, `AmbigCFGProblem` and `EmpCFGProblem` are deprecated.
+duplicates `MatMortProblem`, `AmbigCFGProblem` and `EmpCFGProblem` were removed.
 
 **Package names** live in the target's namespace: `Tgt.synthFromSrc` (a link), `Tgt.synthFromHalt`
 (a halting reduction), `…Over b0 b1 hne`, `…Bool`, `synthCompl…` (the complement),

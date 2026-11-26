@@ -250,7 +250,8 @@ When wrapping prose, never split a backticked code span across lines.
 * **`variable`s are scoped to the namespace block**: after `end Reduction … namespace Reduction`,
   restate them.
 * **`Nat.pair` on literals** blows up unification: `attribute [local irreducible] Nat.pair`.
-* **Renaming**: keep the old name as `@[deprecated New (since := "YYYY-MM-DD")] abbrev old := @New`
+* **Renaming**: keep the old name as `@[deprecated New (since := "YYYY-MM-DD")] abbrev old := @New`,
+  removed once no active branch uses it (the aliases of the phase 3 renaming went on 2026-11-27),
   and move use sites from the build's deprecation warnings (`scripts/rename_packages.py uses`
   does this from `scripts/rename-packages.tsv`). A warning inside a macro expansion points at the
   macro call; check the token before replacing it. When an alias replaces a declaration, move its

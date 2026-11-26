@@ -46,10 +46,6 @@ def _root_.DiagonaLean.BetaConv.synthFromHalt {u : Code} (C : Code)
     SynthHaltReduction BetaConvProblem :=
   BetaConv.synthFromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC
 
-/-- The former name of `BetaConv.synthFromHalt`. -/
-@[deprecated DiagonaLean.BetaConv.synthFromHalt (since := "2026-11-23")]
-abbrev undecidableBetaConv := @DiagonaLean.BetaConv.synthFromHalt
-
 /-- A pair of λ-terms, as the binary digits of the pair of their codes. -/
 def encBeta (i : Term ℕ × Term ℕ) : List Bool :=
   bitsPair (tc i.1) (tc i.2)

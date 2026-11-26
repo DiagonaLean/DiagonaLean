@@ -26,8 +26,4 @@ open DiagonaLean.Synthetic.Definitions
 
 variable {T : Type}
 
-/-- The former name of `GrammarMem.synthFromHalt`. -/
-@[deprecated DiagonaLean.GrammarMem.synthFromHalt (since := "2026-11-23")]
-abbrev undecidableGrammarMem := @DiagonaLean.GrammarMem.synthFromHalt
-
 end DiagonaLean.GrammarMem.Reduction

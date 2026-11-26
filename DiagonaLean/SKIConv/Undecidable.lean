@@ -45,10 +45,6 @@ def _root_.DiagonaLean.SKIConv.synthFromHalt {u : Code} (C : Code) (hu : IsUnive
     (hC : RaceProg u.toSKI C) : SynthHaltReduction SKIConvProblem :=
   SKIConv.synthFromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC
 
-/-- The former name of `SKIConv.synthFromHalt`. -/
-@[deprecated DiagonaLean.SKIConv.synthFromHalt (since := "2026-11-23")]
-abbrev undecidableSKIConv := @DiagonaLean.SKIConv.synthFromHalt
-
 /-- A pair of SKI terms, as the binary digits of the pair of their codes. -/
 def encSKI (i : SKI × SKI) : List Bool := bitsPair (skc i.1) (skc i.2)
 

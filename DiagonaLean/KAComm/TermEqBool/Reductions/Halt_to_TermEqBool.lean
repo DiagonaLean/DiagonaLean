@@ -43,8 +43,4 @@ def _root_.DiagonaLean.KAComm.TermEqBool.synthFromHalt (B : Base) (C : Code) (hB
     HaltProblem ⪯_s TermEqBoolProblem :=
   ⟨reductionB B C, halt_reducesto_termEqBool_spec hB hC⟩
 
-/-- The former name of `KAComm.TermEqBool.synthFromHalt`. -/
-@[deprecated DiagonaLean.KAComm.TermEqBool.synthFromHalt (since := "2026-11-23")]
-abbrev haltReducesTermEqBool := @DiagonaLean.KAComm.TermEqBool.synthFromHalt
-
 end DiagonaLean.KAComm.TermEqBool.Reduction

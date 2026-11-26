@@ -87,10 +87,6 @@ def _root_.DiagonaLean.AmbigCFG.synthCodeFromHaltOver [DecidableEq α] (b0 b1 : 
   have u' : SynthHaltReduction (@CodeProblem α) := by code_lift ambCodeFunctor from u
   SynthHaltReduction.comp u' codeProblemReduces'
 
-/-- The former name of `AmbigCFG.synthCodeFromHaltOver`. -/
-@[deprecated DiagonaLean.AmbigCFG.synthCodeFromHaltOver (since := "2026-11-23")]
-abbrev undecidableAmbigCFGCodeOf := @DiagonaLean.AmbigCFG.synthCodeFromHaltOver
-
 /-- **Alphabet invariance of ambiguity on grammar codes**: over any two nontrivial `Primcodable`
 alphabets, ambiguity of grammar codes is many-one equivalent. -/
 theorem ambigCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]

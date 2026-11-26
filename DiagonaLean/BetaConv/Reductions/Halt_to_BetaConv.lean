@@ -53,10 +53,6 @@ def _root_.DiagonaLean.BetaConv.synthFromHaltWith {u : Code} (U : SKI) (C : Code
     (hC : RaceProg U C) : HaltProblem ⪯_s BetaConvProblem :=
   ⟨reduction U C, halt_reducesto_betaConv_spec hu hU hC⟩
 
-/-- The former name of `BetaConv.synthFromHaltWith`. -/
-@[deprecated DiagonaLean.BetaConv.synthFromHaltWith (since := "2026-11-23")]
-abbrev haltReducesBetaConv := @DiagonaLean.BetaConv.synthFromHaltWith
-
 /-- The separating instance of a machine: the λ-instance of the reader program `c` on the data
 of `M` on its own code, against `tr FF`. -/
 def sepRed (U : SKI) (c : Code) (M : EncodableTM Bool) : Term ℕ × Term ℕ :=

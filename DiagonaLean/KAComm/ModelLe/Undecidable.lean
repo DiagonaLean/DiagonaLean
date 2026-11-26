@@ -30,10 +30,6 @@ namespace DiagonaLean.KAComm.ModelLe.Reduction
 open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing DiagonaLean.Synthetic.Definitions
   DiagonaLean.Halt.Undecidable
 
-/-- The former name of `KAComm.ModelLe.synthComplFromHalt`. -/
-@[deprecated DiagonaLean.KAComm.ModelLe.synthComplFromHalt (since := "2026-11-23")]
-abbrev undecidableNotModelLe := @DiagonaLean.KAComm.ModelLe.synthComplFromHalt
-
 /-- **No Turing machine decides inclusion of languages over `ℕ`.** -/
 theorem not_machineDecidable_modelLe : ¬ MachineDecidable encNat ModelLeProblem :=
   not_machineDecidable_between _ (fun _ h => h.modelLe) fun _ h => h

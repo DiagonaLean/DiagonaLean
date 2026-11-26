@@ -53,10 +53,6 @@ def _root_.DiagonaLean.EmpCFG.synthAlphabetLift [Encodable T] (b0 b1 : α) (hne 
     @DecisionProblem T ⪯_s @DecisionProblem α :=
   ⟨empCFGLift b0 b1 hne, empCFGLift_spec b0 b1 hne⟩
 
-/-- The former name of `EmpCFG.synthAlphabetLift`. -/
-@[deprecated DiagonaLean.EmpCFG.synthAlphabetLift (since := "2026-11-23")]
-abbrev empCFGAlphabetLift := @DiagonaLean.EmpCFG.synthAlphabetLift
-
 end DiagonaLean.EmpCFG.Reduction
 
 namespace DiagonaLean.EmpCFG.MachineLevel

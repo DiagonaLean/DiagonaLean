@@ -110,8 +110,4 @@ def _root_.DiagonaLean.PCP.synthFromHalt :
     HaltProblem ⪯_s (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
   ⟨haltToPcp, halt_reducesto_pcp_spec⟩
 
-/-- The former name of `PCP.synthFromHalt`. -/
-@[deprecated DiagonaLean.PCP.synthFromHalt (since := "2026-11-23")]
-abbrev haltReducesPCP := @DiagonaLean.PCP.synthFromHalt
-
 end DiagonaLean.PCP.Reduction

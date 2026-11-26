@@ -50,10 +50,6 @@ def _root_.DiagonaLean.SKIConv.synthFromHaltWith {u : Code} (U : SKI) (C : Code)
     HaltProblem ⪯_s SKIConvProblem :=
   ⟨reduction U C, halt_reducesto_skiConv_spec hu hU hC⟩
 
-/-- The former name of `SKIConv.synthFromHaltWith`. -/
-@[deprecated DiagonaLean.SKIConv.synthFromHaltWith (since := "2026-11-23")]
-abbrev haltReducesSKIConv := @DiagonaLean.SKIConv.synthFromHaltWith
-
 /-- The separating instance of a machine: the instance of the reader program `c` on the data of
 `M` on its own code, against `FF`. -/
 def sepRed (U : SKI) (c : Code) (M : EncodableTM Bool) : SKI × SKI :=

@@ -3152,8 +3152,4 @@ def _root_.DiagonaLean.MPCP.synthFromHalt :
     HaltProblem ⪯_s (@MPCP.DecisionProblem (Alpha ℕ Sym2)) :=
   ⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩
 
-/-- The former name of `MPCP.synthFromHalt`. -/
-@[deprecated DiagonaLean.MPCP.synthFromHalt (since := "2026-11-23")]
-abbrev haltReducesMPCP := @DiagonaLean.MPCP.synthFromHalt
-
 end DiagonaLean.MPCP.Reduction

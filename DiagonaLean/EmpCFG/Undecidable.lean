@@ -36,10 +36,6 @@ def _root_.DiagonaLean.EmpCFG.synthFromHaltTerm {α : Type} [DecidableEq α] (b0
     SynthHaltReduction (@DiagonaLean.EmpCFG.DecisionProblem (Term α)) := by
   reduce_from_pcp over_letters b0 b1 with pcpToEmpCFG using pcp_reducesto_empCFG_spec
 
-/-- The former name of `EmpCFG.synthFromHaltTerm`. -/
-@[deprecated DiagonaLean.EmpCFG.synthFromHaltTerm (since := "2026-11-23")]
-abbrev undecidableEmpCFG := @DiagonaLean.EmpCFG.synthFromHaltTerm
-
 /-- **Non-emptiness of the intersection of two context-free grammars is synthetically halting-hard
 over any alphabet `α` with two distinct letters `b0`, `b1`.** -/
 def _root_.DiagonaLean.EmpCFG.synthFromHaltOver {α : Type} (b0 b1 : α) (hne : b0 ≠ b1) :
@@ -47,18 +43,10 @@ def _root_.DiagonaLean.EmpCFG.synthFromHaltOver {α : Type} (b0 b1 : α) (hne : 
   SynthHaltReduction.comp (EmpCFG.synthFromHaltTerm false true Bool.false_ne_true)
     (EmpCFG.synthAlphabetLift b0 b1 hne)
 
-/-- The former name of `EmpCFG.synthFromHaltOver`. -/
-@[deprecated DiagonaLean.EmpCFG.synthFromHaltOver (since := "2026-11-23")]
-abbrev undecidableEmpCFGOf := @DiagonaLean.EmpCFG.synthFromHaltOver
-
 /-- **Non-emptiness of the intersection of two context-free grammars over `Bool` is
 synthetically halting-hard.** -/
 def _root_.DiagonaLean.EmpCFG.synthFromHaltBool :
     SynthHaltReduction (@DiagonaLean.EmpCFG.DecisionProblem Bool) :=
   EmpCFG.synthFromHaltOver false true Bool.false_ne_true
-
-/-- The former name of `EmpCFG.synthFromHaltBool`. -/
-@[deprecated DiagonaLean.EmpCFG.synthFromHaltBool (since := "2026-11-23")]
-abbrev undecidableEmpCFGBool := @DiagonaLean.EmpCFG.synthFromHaltBool
 
 end DiagonaLean.EmpCFG.Reduction

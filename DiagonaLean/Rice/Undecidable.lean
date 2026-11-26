@@ -53,10 +53,6 @@ theorem not_machineDecidable_rice {C : Set (ℕ →. ℕ)} (h : IsNontrivial C)
     ¬ MachineDecidable enc (RiceProblem C) :=
   not_machineDecidable_of_not_computablePred henc (not_computablePred_rice h)
 
-/-- The former name of `Rice.synthFromHalt`. -/
-@[deprecated DiagonaLean.Rice.synthFromHalt (since := "2026-11-23")]
-abbrev undecidableRice := @DiagonaLean.Rice.synthFromHalt
-
 /-- **The complement of Rice's problem is synthetically halting-hard.** If `cF` computes a function
 not in `C` and the nowhere-defined function is in `C`, then the complement of `RiceProblem C` is
 synthetically halting-hard, given a waiter program `w` (`exists_isWaiter`). -/
@@ -64,9 +60,5 @@ def _root_.DiagonaLean.Rice.synthComplFromHalt {C : Set (ℕ →. ℕ)} (w cF : 
     (hF : cF.eval ∉ C) (hbot : (fun _ => Part.none : ℕ →. ℕ) ∈ C) :
     SynthHaltReduction fun c => ¬ RiceProblem C c :=
   Rice.synthFromHalt (C := Cᶜ) w cF hw hF (fun h => h hbot)
-
-/-- The former name of `Rice.synthComplFromHalt`. -/
-@[deprecated DiagonaLean.Rice.synthComplFromHalt (since := "2026-11-23")]
-abbrev undecidableRiceCompl := @DiagonaLean.Rice.synthComplFromHalt
 
 end DiagonaLean.Rice.Reduction

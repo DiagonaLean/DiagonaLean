@@ -263,12 +263,11 @@ axiom DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad29 :
 structure DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30 where
   r : HaltProblem ⪯_s fun n : ℕ => Even n
 
-/-! ### The renamed structure and relation, and the former names kept as aliases
+/-! ### The structure's own namespace
 
-`SynthReduction` is the reduction structure; `ManyOneReduces`, `Undecidable` and `Reduction` are
-its former names and those of `SynthHaltReduction` and `ReducesVia`, kept as deprecated aliases. The cases
-above use `ManyOneReduces.*` names, now the namespace of an alias; these use the structure's own
-namespace, and reach the structure and the relation through each alias. -/
+`SynthReduction` is the reduction structure. The cases above use `ManyOneReduces.*` names, the
+namespace of its former name (removed with the other deprecated aliases on 2026-11-27, but still a
+namespace a declaration can be put in); these use the structure's own namespace. -/
 
 /-- A definition inside the structure's namespace. -/
 noncomputable def DiagonaLean.Synthetic.Definitions.SynthReduction.bad50 :
@@ -282,24 +281,8 @@ theorem DiagonaLean.Synthetic.Definitions.SynthReduction.bad51 :
 structure DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52 where
   r : HaltProblem ⪯_s fun n : ℕ => Even n
 
-set_option linter.deprecated false in
-/-- A reduction typed through the alias `ManyOneReduces`. -/
-noncomputable def bad53 : ManyOneReduces HaltProblem fun n : ℕ => Even n :=
-  ⟨classicalF, classicalF_spec⟩
-
 /-- A reduction typed through `SynthHaltReduction` directly. -/
 noncomputable def bad54 : SynthHaltReduction fun n : ℕ => Even n := ⟨classicalF, classicalF_spec⟩
-
-set_option linter.deprecated false in
-/-- A claim that a reduction exists, through the former relation name `Reduction`. -/
-theorem bad55 :
-    ∃ f : EncodableTM Bool × List Bool → ℕ, Reduction f HaltProblem fun n => Even n :=
-  ⟨classicalF, classicalF_spec⟩
-
-set_option linter.deprecated false in
-/-- A reduction typed through the former name `Undecidable`, in its old namespace. -/
-noncomputable def bad56 : DiagonaLean.Synthetic.Notation.Undecidable fun n : ℕ => Even n :=
-  ⟨classicalF, classicalF_spec⟩
 
 /-! ### Aliases that are not literally types -/
 
@@ -609,13 +592,7 @@ error: `bad4` builds a reduction but is marked `noncomputable`; build its functi
 ---
 error: `bad5` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `bad53` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
----
 error: `bad54` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
----
-error: `bad55` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
----
-error: `bad56` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
 error: `bad6` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---

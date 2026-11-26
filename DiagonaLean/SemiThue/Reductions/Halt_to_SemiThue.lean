@@ -502,10 +502,6 @@ systems over `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
 def _root_.DiagonaLean.SemiThue.synthFromHalt : HaltProblem ⪯_s @DecisionProblem (Alpha ℕ Sym2) :=
   ⟨haltToSemiThue, halt_reducesto_semiThue_spec⟩
 
-/-- The former name of `SemiThue.synthFromHalt`. -/
-@[deprecated DiagonaLean.SemiThue.synthFromHalt (since := "2026-11-23")]
-abbrev haltReducesSemiThue := @DiagonaLean.SemiThue.synthFromHalt
-
 /-- Every rule of a system produced by the reduction has a non-empty left side. -/
 theorem haltToSemiThue_lhs_ne (p : EncodableTM Bool × List Bool) :
     ∀ lr ∈ (haltToSemiThue p).1, lr.1 ≠ [] := by
@@ -524,10 +520,6 @@ over `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
 def _root_.DiagonaLean.SemiThue.synthPosFromHalt :
     HaltProblem ⪯_s @DecisionProblemPos (Alpha ℕ Sym2) :=
   ⟨haltToSemiThue, halt_reducesto_semiThuePos_spec⟩
-
-/-- The former name of `SemiThue.synthPosFromHalt`. -/
-@[deprecated DiagonaLean.SemiThue.synthPosFromHalt (since := "2026-11-23")]
-abbrev haltReducesSemiThuePos := @DiagonaLean.SemiThue.synthPosFromHalt
 
 end Reduction
 

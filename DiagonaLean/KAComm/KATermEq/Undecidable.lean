@@ -32,10 +32,6 @@ open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing Nat.Partrec DiagonaLean.Found
   DiagonaLean.Halt.Encoding DiagonaLean.Synthetic.Definitions
   DiagonaLean.Halt.Undecidable
 
-/-- The former name of `KAComm.KATermEq.synthFromHalt`. -/
-@[deprecated DiagonaLean.KAComm.KATermEq.synthFromHalt (since := "2026-11-23")]
-abbrev undecidableKATermEq := @DiagonaLean.KAComm.KATermEq.synthFromHalt
-
 /-- **No Turing machine decides provable equality in Kleene algebra over `ℕ`.** -/
 theorem not_machineDecidable_kaTermEq : ¬ MachineDecidable encNat KATermEqProblem :=
   not_machineDecidable_of_family (ka := true) instCode instCode_prim rInst enc_nat iff_nat_ka

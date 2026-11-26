@@ -14,8 +14,8 @@ import DiagonaLean.Synthetic.ReductionChain
 `SynthHaltReduction p` is a synthetic many-one reduction from `HaltProblem` to `p`, kept as data. It
 composes with further synthetic reductions (`SynthHaltReduction.comp`). A reduction from the halting
 problem is halting-hardness, which is stronger than undecidability; the former name `Undecidable`
-undersold it. `Undecidable` and `undecidabilityFromReducibility` remain as deprecated aliases in the
-namespace `DiagonaLean.Synthetic.Notation`, where they used to live.
+undersold it. The deprecated aliases `Undecidable` and `undecidabilityFromReducibility` were removed
+on 2026-11-27.
 
 The reductions proved computable, and halting-hardness as a proposition, are in
 `Foundations/Computability/HaltCanon.lean` (`HaltReduction`, `HaltHard`).
@@ -54,13 +54,5 @@ end DiagonaLean.Synthetic.Definitions
 namespace DiagonaLean.Synthetic.Notation
 
 open DiagonaLean.Synthetic.Definitions
-
-/-- The former name of `SynthHaltReduction`. -/
-@[deprecated SynthHaltReduction (since := "2026-11-22")]
-abbrev Undecidable := @SynthHaltReduction
-
-/-- The former name of `SynthHaltReduction.comp`. -/
-@[deprecated SynthHaltReduction.comp (since := "2026-11-22")]
-abbrev undecidabilityFromReducibility := @SynthHaltReduction.comp
 
 end DiagonaLean.Synthetic.Notation

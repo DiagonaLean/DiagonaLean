@@ -29,8 +29,4 @@ def _root_.DiagonaLean.MatMort.synthFromHalt : SynthHaltReduction DecisionProble
   reduce_from_pcp over_letters (0 : S23) (1 : S23) with matImage
     using pcp_reducesto_matMort_spec
 
-/-- The former name of `MatMort.synthFromHalt`. -/
-@[deprecated DiagonaLean.MatMort.synthFromHalt (since := "2026-11-23")]
-abbrev undecidableMatMort := @DiagonaLean.MatMort.synthFromHalt
-
 end DiagonaLean.MatMort.Reduction

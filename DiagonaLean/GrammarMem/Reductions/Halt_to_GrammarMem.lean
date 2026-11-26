@@ -46,8 +46,4 @@ reduces to membership for grammar codes, through `haltToGrammarMem`. -/
 def _root_.DiagonaLean.GrammarMem.synthFromHalt : HaltProblem ⪯_s @DecisionProblem T :=
   ⟨haltToGrammarMem, halt_reducesto_grammarMem_spec⟩
 
-/-- The former name of `GrammarMem.synthFromHalt`. -/
-@[deprecated DiagonaLean.GrammarMem.synthFromHalt (since := "2026-11-23")]
-abbrev haltReducesGrammarMem := @DiagonaLean.GrammarMem.synthFromHalt
-
 end DiagonaLean.GrammarMem.Reduction

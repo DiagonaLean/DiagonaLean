@@ -30,10 +30,6 @@ namespace DiagonaLean.KAComm.LangEqBool.Reduction
 open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing TD FreePreKA DiagonaLean.Synthetic.Definitions
   DiagonaLean.Halt.Undecidable
 
-/-- The former name of `KAComm.LangEqBool.synthComplFromHalt`. -/
-@[deprecated DiagonaLean.KAComm.LangEqBool.synthComplFromHalt (since := "2026-11-23")]
-abbrev undecidableNotLangEqBool := @DiagonaLean.KAComm.LangEqBool.synthComplFromHalt
-
 /-- **No Turing machine decides equality of languages over `{0, 1}`.** -/
 theorem not_machineDecidable_langEqBool : ¬ MachineDecidable encBool LangEqBoolProblem :=
   not_machineDecidable_eq_between_bool _ (fun _ h => congrArg pl (mk_eq_mk.2 h)) fun _ h => h

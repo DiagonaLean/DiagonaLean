@@ -29,10 +29,6 @@ namespace DiagonaLean.KAComm.KATermEqBool.Reduction
 open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing Nat.Partrec DiagonaLean.Foundations.Computability
   DiagonaLean.Synthetic.Definitions DiagonaLean.Halt.Undecidable
 
-/-- The former name of `KAComm.KATermEqBool.synthFromHalt`. -/
-@[deprecated DiagonaLean.KAComm.KATermEqBool.synthFromHalt (since := "2026-11-23")]
-abbrev undecidableKATermEqBool := @DiagonaLean.KAComm.KATermEqBool.synthFromHalt
-
 /-- **No Turing machine decides provable equality in Kleene algebra over `{0, 1}`.** -/
 theorem not_machineDecidable_kaTermEqBool : ¬ MachineDecidable encBool KATermEqBoolProblem :=
   not_machineDecidable_of_family (ka := true) instCodeB instCodeB_prim
