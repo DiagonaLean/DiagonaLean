@@ -10,4 +10,4 @@ Given two locally nameless λ-terms `M N : Term ℕ`, are they β-convertible, t
 
 * `BetaConv.synthFromHalt` (`Undecidable.lean`): synthetic halting reduction, given a universal code and the race program as arguments.
 * `BetaConv.haltHard` (`Hardness.lean`): β-conversion is halting-hard. The reduction from canonical machines, `BetaConv.fromHaltWith U C …`, is proved computable (`canonRed_primrec`, through the code `tc`); the constants exist only classically, so `haltHard`, a proposition, obtains them in its proof. From it, `BetaConv.not_computablePred`, `BetaConv.not_machineDecidable` under every computable encoding, and a `HaltHardFact` instance for `hard_reduce_from`.
-* `not_machineDecidable_betaConv`, `not_computablePred_betaConv` (`Undecidable.lean`): the same two negative statements by a machine-level race and the binary encoding `encBeta`.
+* `not_machineDecidable_betaConv`, `BetaConv.not_computablePred` (`Undecidable.lean`): the same two negative statements by a machine-level race and the binary encoding `encBeta`.

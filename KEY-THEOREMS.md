@@ -58,7 +58,7 @@ root (from `HaltCanon`); proving the last link computable does not upgrade a syn
 | `not_computablePred_of_reduces` | `r : p ⪯_s q`, `Computable r.f`, `¬ ComputablePred p` → `¬ ComputablePred q` |
 | `not_computablePred_of_selfHalt` | a computable map of machine codes that reduces self-halting gives `¬ ComputablePred` (the older route; new results go through `HaltHard`) |
 | `not_machineDecidable_of_not_computablePred` | `Computable enc → ¬ ComputablePred P → ¬ MachineDecidable enc P` |
-| `not_computablePred_of_bitsPair` | for an encoding `bitsPair (c a) (c b)` (the binary digits of a pair of codes) with a primitive recursive decoder `d` of `c`: `¬ MachineDecidable` under it gives `¬ ComputablePred` (used for SKI, β and KAComm; decoders `skcDec`, `tcDec`, `rcDec` from `TaggedCode.decode`, and `rcbDec` for KAComm over `Bool`, `KleeneAlgebra/BoolCode.lean`) |
+| `not_computablePred_of_bitsPair` | for an encoding `bitsPair (c a) (c b)` (the binary digits of a pair of codes) with a primitive recursive decoder `d` of `c`: `¬ MachineDecidable` under it gives `¬ ComputablePred` (used for the KAComm language problems `LangEq`, `ModelLe` and their `…Bool` forms; decoders `skcDec`, `tcDec`, `rcDec` from `TaggedCode.decode`, and `rcbDec` for KAComm over `Bool`, `KleeneAlgebra/BoolCode.lean`) |
 | `machineDecidable_iff` | `MachineDecidable enc P ↔ ComputablePred P`, for a computable `enc` with a computable decoder `dec` (`dec (enc x) = some x`; `MachineBridge.lean`) |
 | `ComputableReduction.manyOneReducible` | `p ⪯ q → ManyOneReducible p q` |
 | `REPred.of_reduces`, `REPred.of_manyOneReducible` | r.e.-ness pulls back along reductions |
@@ -124,10 +124,13 @@ on the same table construction: `SemiThue.posFromHalt`/`…Over`, `SemiThue.from
 `GrammarMem.emptyWordFromHalt`, `GrammarMem.fromHalt`. Constructions on tables share
 `MPCP.MachineLevel.SameTable` (same lookup, same state numbers) and `CanonTM.sameTable`. Still only
 synthetic: the grammar problems on
-Mathlib's `ContextFreeGrammar` (not `Primcodable`), and KAComm, Rice (their reductions take
-classically obtained constants). Their `¬ ComputablePred` results are kernel-checked all the same.
-SKI and β are halting-hard all the same (`SKIConv.haltHard`, `BetaConv.haltHard`, in their
-`Hardness.lean`): `HaltHard` is a
+Mathlib's `ContextFreeGrammar` (not `Primcodable`), Rice, and the KAComm language problems
+`LangEq`, `ModelLe` and their `…Bool` forms (their reduction `haltRed` is built from a machine's
+own state type, so making it computable on canonical machines is its own project). Their `¬ ComputablePred` results are kernel-checked all the same.
+SKI, β, and KAComm's `KATermEq`, `TermEq` and their `…Bool` forms are halting-hard all the same
+(`SKIConv.haltHard`, `BetaConv.haltHard`, `KAComm.KATermEq.haltHard`, …, in their
+`Hardness.lean`; the KAComm race on canonical data is `KAComm/KleeneAlgebra/CanonRace.lean`):
+`HaltHard` is a
 proposition, so the constants are obtained inside its proof, and the reduction from canonical
 machines (`SKIConv.fromHaltWith U C …`, through `dataCanon` and `ProofRace.haltCanon_iff` in
 `Foundations/Computability/CanonRace.lean`) is proved computable for each choice of them.

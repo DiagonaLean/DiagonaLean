@@ -16,8 +16,8 @@ halting-hard (`KAComm.TermEqBool.synthFromHalt`), given finite constants that ar
 exist. No Turing machine decides it under the encoding `encBool` of a pair of expressions as the
 binary digits of its code (`not_machineDecidable_termEqBool`), or under any encoding that a machine
 computes from `encBool` (`not_machineDecidable_termEqBool_of_conv`).
-Since the code of `encBool` has a primitive recursive decoder (`rcbDec`), it is not a computable
-predicate either (`not_computablePred_termEqBool`).
+It is halting-hard (`KAComm.TermEqBool.haltHard`, in `Hardness.lean`), so not a computable predicate
+either (`KAComm.TermEqBool.not_computablePred`).
 
 ## References
 
@@ -34,14 +34,6 @@ theorem not_machineDecidable_termEqBool : ¬ MachineDecidable encBool TermEqBool
   not_machineDecidable_of_family (ka := false) instCodeB instCodeB_prim
     (fun K l => sbI (rInst K l)) enc_bool iff_bool (fun _ _ h => pos_bool h)
     (fun _ _ h => neg_bool h)
-
-/-- **Provable equality in pre-Kleene algebra with commutativity over `{0, 1}` is not a computable
-predicate**: `encBool` writes the pair of codes `rc (toNat e)` in binary, which has a primitive
-recursive decoder (`rcbDec`), so this follows from `not_machineDecidable_termEqBool`
-(`not_computablePred_of_bitsPair`). -/
-theorem not_computablePred_termEqBool : ¬ ComputablePred TermEqBoolProblem :=
-  Foundations.Computability.not_computablePred_of_bitsPair rcb_prim rcbDec_prim rcbDec_rc
-    not_machineDecidable_termEqBool
 
 /-- **No Turing machine decides provable equality in pre-Kleene algebra over `{0, 1}`, under any
 encoding** that a machine computes from `encBool`. -/

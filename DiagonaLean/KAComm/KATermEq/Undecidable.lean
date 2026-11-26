@@ -16,10 +16,10 @@ Provable equality in Kleene algebra with commutativity over `ℕ` is synthetical
 (`KAComm.KATermEq.synthFromHalt`), given finite constants that are only known to exist. No Turing
 machine decides it under the encoding `encNat` of a pair of expressions as the binary digits of its
 code (`not_machineDecidable_kaTermEq`), or under any encoding that a machine computes from `encNat`
-(`not_machineDecidable_kaTermEq_of_conv`). Since `rc` has a primitive recursive decoder, it is not a
-computable predicate either (`not_computablePred_kaTermEq`). Nor does any machine decide it on the
-instances `eqRed M` given the code of `M` (`not_machineDecidable_kaTermEq_eqRed`), by computable
-inseparability.
+(`not_machineDecidable_kaTermEq_of_conv`). It is halting-hard (`KAComm.KATermEq.haltHard`, in
+`Hardness.lean`), so not a computable predicate either (`KAComm.KATermEq.not_computablePred`). Nor
+does any machine decide it on the instances `eqRed M` given the code of `M`
+(`not_machineDecidable_kaTermEq_eqRed`), by computable inseparability.
 
 ## References
 
@@ -36,14 +36,6 @@ open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing Nat.Partrec DiagonaLean.Found
 theorem not_machineDecidable_kaTermEq : ¬ MachineDecidable encNat KATermEqProblem :=
   not_machineDecidable_of_family (ka := true) instCode instCode_prim rInst enc_nat iff_nat_ka
     (fun _ _ h => rInst_pos_ka h) (fun _ _ h => rInst_neg_ka h)
-
-/-- **Provable equality in Kleene algebra with commutativity over `ℕ` is not a computable
-predicate**: `encNat` writes the pair of codes `rc` in binary, and `rc` has a primitive recursive
-decoder (`rcDec`), so this follows from `not_machineDecidable_kaTermEq`
-(`not_computablePred_of_bitsPair`). -/
-theorem not_computablePred_kaTermEq : ¬ ComputablePred KATermEqProblem :=
-  Foundations.Computability.not_computablePred_of_bitsPair RExp.rc_primrec RExp.rcDec_primrec
-    RExp.rcDec_rc not_machineDecidable_kaTermEq
 
 /-- **No Turing machine decides provable equality in Kleene algebra over `ℕ`, under any encoding**
 that a machine computes from `encNat`. -/

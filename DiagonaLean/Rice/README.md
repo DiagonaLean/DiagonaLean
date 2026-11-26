@@ -11,6 +11,6 @@ Fix a set `C : Set (ℕ →. ℕ)` of partial functions. Given a program `c : Na
 
 ## Results
 
-* `not_computablePred_rice`: for non-trivial `C`, `RiceProblem C` is not a `ComputablePred` (Mathlib's `ComputablePred.rice`).
-* `not_machineDecidable_rice`: for non-trivial `C`, no `SingleTapeTM Bool` decides `RiceProblem C` under any computable encoding of programs, such as `encUnary` (through `Foundations/Computability/MachineBridge.lean`).
+* `Rice.not_computablePred`: for non-trivial `C`, `RiceProblem C` is not a `ComputablePred` (Mathlib's `ComputablePred.rice`).
+* `Rice.not_machineDecidable`: for non-trivial `C`, no `SingleTapeTM Bool` decides `RiceProblem C` under any computable encoding of programs, such as `encUnary` (through `Foundations/Computability/MachineBridge.lean`).
 * `Rice.synthFromHalt`, `Rice.synthComplFromHalt`: `HaltProblem` reduces to `RiceProblem C` when the nowhere-defined function is not in `C`, and to its complement when it is.

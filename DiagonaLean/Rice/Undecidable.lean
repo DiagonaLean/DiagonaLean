@@ -12,8 +12,8 @@ import DiagonaLean.Foundations.Computability.MachineBridge
 /-! # Rice's theorem
 
 If `C` is non-trivial (`IsNontrivial`), then `RiceProblem C` is not a computable predicate
-(`not_computablePred_rice`, from Mathlib's `ComputablePred.rice`). So no machine decides it, under
-any computable encoding of programs (`not_machineDecidable_rice`, through
+(`Rice.not_computablePred`, from Mathlib's `ComputablePred.rice`). So no machine decides it, under
+any computable encoding of programs (`Rice.not_machineDecidable`, through
 `not_machineDecidable_of_not_computablePred`).
 
 The undecidability results split on whether `C` contains the nowhere-defined function, which is
@@ -40,7 +40,7 @@ open Nat.Partrec DiagonaLean.Synthetic.Definitions
 
 /-- **Rice's theorem.** If `C` is non-trivial, then `RiceProblem C` is not a computable
 predicate. -/
-theorem not_computablePred_rice {C : Set (ℕ →. ℕ)} (h : IsNontrivial C) :
+theorem _root_.DiagonaLean.Rice.not_computablePred {C : Set (ℕ →. ℕ)} (h : IsNontrivial C) :
     ¬ ComputablePred (RiceProblem C) := fun hc => by
   obtain ⟨⟨c, hc₁⟩, d, hd⟩ := h
   exact hd (ComputablePred.rice C hc (Code.exists_code.2 ⟨c, rfl⟩) (Code.exists_code.2 ⟨d, rfl⟩)
@@ -48,10 +48,10 @@ theorem not_computablePred_rice {C : Set (ℕ →. ℕ)} (h : IsNontrivial C) :
 
 /-- **No machine decides Rice's problem.** If `C` is non-trivial, no `SingleTapeTM Bool` decides
 `RiceProblem C` under a computable encoding `enc` of programs, such as `encUnary`. -/
-theorem not_machineDecidable_rice {C : Set (ℕ →. ℕ)} (h : IsNontrivial C)
+theorem _root_.DiagonaLean.Rice.not_machineDecidable {C : Set (ℕ →. ℕ)} (h : IsNontrivial C)
     {enc : Code → List Bool} (henc : Computable enc) :
     ¬ MachineDecidable enc (RiceProblem C) :=
-  not_machineDecidable_of_not_computablePred henc (not_computablePred_rice h)
+  not_machineDecidable_of_not_computablePred henc (DiagonaLean.Rice.not_computablePred h)
 
 /-- **The complement of Rice's problem is synthetically halting-hard.** If `cF` computes a function
 not in `C` and the nowhere-defined function is in `C`, then the complement of `RiceProblem C` is

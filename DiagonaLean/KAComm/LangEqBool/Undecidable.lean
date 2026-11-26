@@ -16,9 +16,9 @@ The failure of equality of languages over `{0, 1}` is synthetically halting-hard
 encoding `encBool` of a pair of expressions as the binary digits of its code
 (`not_machineDecidable_langEqBool`), or under any encoding that a machine computes from `encBool`
 (`not_machineDecidable_langEqBool_of_conv`). The machine-level statement is the case of Theorem 18
-where the predicate is equality of languages itself (`not_machineDecidable_eq_between_bool`).
-Since the code of `encBool` has a primitive recursive decoder (`rcbDec`), it is not a computable
-predicate either (`not_computablePred_langEqBool`).
+where the predicate is equality of languages itself (`not_machineDecidable_eq_between_bool`). Since
+the code of `encBool` has a primitive recursive decoder (`rcbDec`), it is not a computable predicate
+either (`KAComm.LangEqBool.not_computablePred`).
 
 ## References
 
@@ -37,9 +37,16 @@ theorem not_machineDecidable_langEqBool : ¬ MachineDecidable encBool LangEqBool
 /-- **Equality of languages over `{0, 1}` is not a computable predicate**: `encBool` writes the pair
 of codes `rc (toNat e)` in binary, which has a primitive recursive decoder (`rcbDec`), so this
 follows from `not_machineDecidable_langEqBool` (`not_computablePred_of_bitsPair`). -/
-theorem not_computablePred_langEqBool : ¬ ComputablePred LangEqBoolProblem :=
+theorem _root_.DiagonaLean.KAComm.LangEqBool.not_computablePred : ¬ ComputablePred LangEqBoolProblem
+    :=
   Foundations.Computability.not_computablePred_of_bitsPair rcb_prim rcbDec_prim rcbDec_rc
     not_machineDecidable_langEqBool
+
+/-- **No Turing machine decides it under any computable encoding.** -/
+theorem _root_.DiagonaLean.KAComm.LangEqBool.not_machineDecidable {enc : InstB → List Bool}
+    (henc : Computable enc) : ¬ MachineDecidable enc LangEqBoolProblem :=
+  Foundations.Computability.not_machineDecidable_of_not_computablePred henc
+    DiagonaLean.KAComm.LangEqBool.not_computablePred
 
 /-- **No Turing machine decides equality of languages over `{0, 1}`, under any encoding** that a
 machine computes from `encBool`. -/

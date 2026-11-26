@@ -16,10 +16,10 @@ Provable equality in pre-Kleene algebra with commutativity over `ℕ` is synthet
 (`KAComm.TermEq.synthFromHalt`), given finite constants that are only known to exist. No Turing
 machine decides it under the encoding `encNat` of a pair of expressions as the binary digits of its
 code (`not_machineDecidable_termEq`), or under any encoding that a machine computes from `encNat`
-(`not_machineDecidable_termEq_of_conv`). Since `rc` has a primitive recursive decoder, it is not a
-computable predicate either (`not_computablePred_termEq`). Nor does any machine decide it on the
-instances `eqRed M` given the code of `M` (`not_machineDecidable_termEq_eqRed`), by computable
-inseparability.
+(`not_machineDecidable_termEq_of_conv`). It is halting-hard (`KAComm.TermEq.haltHard`, in
+`Hardness.lean`), so not a computable predicate either (`KAComm.TermEq.not_computablePred`). Nor
+does any machine decide it on the instances `eqRed M` given the code of `M`
+(`not_machineDecidable_termEq_eqRed`), by computable inseparability.
 
 ## References
 
@@ -37,14 +37,6 @@ theorem not_machineDecidable_termEq : ¬ MachineDecidable encNat TermEqProblem :
   not_machineDecidable_of_family (ka := false) instCode instCode_prim rInst enc_nat iff_nat
     (fun _ _ h => rInst_pos h) (fun _ _ h => rInst_neg h)
 
-/-- **Provable equality in pre-Kleene algebra with commutativity over `ℕ` is not a computable
-predicate**: `encNat` writes the pair of codes `rc` in binary, and `rc` has a primitive recursive
-decoder (`rcDec`), so this follows from `not_machineDecidable_termEq`
-(`not_computablePred_of_bitsPair`). -/
-theorem not_computablePred_termEq : ¬ ComputablePred TermEqProblem :=
-  Foundations.Computability.not_computablePred_of_bitsPair RExp.rc_primrec RExp.rcDec_primrec
-    RExp.rcDec_rc not_machineDecidable_termEq
-
 /-- **No Turing machine decides provable equality in pre-Kleene algebra over `ℕ`, under any
 encoding** that a machine computes from `encNat`. -/
 theorem not_machineDecidable_termEq_of_conv {enc : Inst → List Bool}
@@ -52,8 +44,8 @@ theorem not_machineDecidable_termEq_of_conv {enc : Inst → List Bool}
     ¬ MachineDecidable enc TermEqProblem :=
   Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_termEq hR
 
-/-- **No Turing machine decides provable equality in pre-Kleene algebra on the instances
-`eqRed M`**, given the code of `M`. This is the case `X = T Σ̈` of Theorem 18 on a model. -/
+/-- **No Turing machine decides provable equality in pre-Kleene algebra on the instances `eqRed
+M`**, given the code of `M`. This is the case `X = T Σ̈` of Theorem 18 on a model. -/
 theorem not_machineDecidable_termEq_eqRed :
     ¬ MachineDecidable encodeBoolTM fun M => TermEqProblem (eqRed M) := fun ⟨D, hD⟩ =>
   not_machineDecidable_selfEq factorT ⟨D, fun M =>

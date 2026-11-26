@@ -17,8 +17,8 @@ The failure of equality of languages over `ℕ` is synthetically halting-hard
 encoding `encNat` of a pair of expressions as the binary digits of its code
 (`not_machineDecidable_langEq`), or under any encoding that a machine computes from `encNat`
 (`not_machineDecidable_langEq_of_conv`). Since `rc` has a primitive recursive decoder, it is not a
-computable predicate either (`not_computablePred_langEq`). The machine-level statement is the case
-of Theorem 18 where the predicate is equality of languages itself
+computable predicate either (`KAComm.LangEq.not_computablePred`). The machine-level statement is the
+case of Theorem 18 where the predicate is equality of languages itself
 (`not_machineDecidable_eq_between`).
 
 ## References
@@ -38,9 +38,15 @@ theorem not_machineDecidable_langEq : ¬ MachineDecidable encNat LangEqProblem :
 /-- **Equality of languages over `ℕ` is not a computable predicate**: `encNat` writes the pair of
 codes `rc` in binary, and `rc` has a primitive recursive decoder (`rcDec`), so this follows from
 `not_machineDecidable_langEq` (`not_computablePred_of_bitsPair`). -/
-theorem not_computablePred_langEq : ¬ ComputablePred LangEqProblem :=
+theorem _root_.DiagonaLean.KAComm.LangEq.not_computablePred : ¬ ComputablePred LangEqProblem :=
   Foundations.Computability.not_computablePred_of_bitsPair RExp.rc_primrec RExp.rcDec_primrec
     RExp.rcDec_rc not_machineDecidable_langEq
+
+/-- **No Turing machine decides it under any computable encoding.** -/
+theorem _root_.DiagonaLean.KAComm.LangEq.not_machineDecidable {enc : Inst → List Bool}
+    (henc : Computable enc) : ¬ MachineDecidable enc LangEqProblem :=
+  Foundations.Computability.not_machineDecidable_of_not_computablePred henc
+    DiagonaLean.KAComm.LangEq.not_computablePred
 
 /-- **No Turing machine decides equality of languages over `ℕ`, under any encoding** that a machine
 computes from `encNat`. -/
