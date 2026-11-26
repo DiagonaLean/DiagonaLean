@@ -259,7 +259,7 @@ def unfoldFunction : TacticM Unit := withMainContext do
   if f' == f then throwError "nothing to unfold"
   replaceMainGoal [← g.change (mk f')]
 
-open DiagonaLean.Synthetic.ReductionCheck (isTrusted escapeHatch)
+open DiagonaLean.Synthetic.ReductionCheck (programViolation)
 
 /-- A problem: a predicate `X → Prop`. -/
 def isProblemType (ty : Expr) : MetaM Bool :=
@@ -335,24 +335,20 @@ def resolveSource (h : Term) : TacticM Term := do
       MessageData.joinSep (ns.toList.map (m!"`{·}`")) ", "}. Fix the alphabet or give the source \
       explicitly."
 
-/-- The link function of a synthetic result must be a program: a constant that is not
-`noncomputable`, and without an escape hatch (`implemented_by`, `extern`, `opaque`, `partial`,
-`unsafe`), or classical choice. One level only: `#check_reductions` and the compiler check the
-rest, so this check is for the message. -/
+/-- The link function of a synthetic result must be a program: every constant it uses passes
+`ReductionCheck.programViolation`, the one-level check that rule 1 of `#check_reductions` also
+uses (not `noncomputable`, not classical choice, no escape hatch). A link that is a local `let`
+(`let g := badF` before the tactic) is unfolded first, so its constants are seen. One level only:
+`#check_reductions` and the compiler check the rest, so this check is for the message. -/
 def checkLinkFunction (f : Term) : TacticM Unit := do
   let some e ← (do
       try withoutModifyingState do
-        return some (← instantiateMVars (← withoutRecover <| elabTerm f none (mayPostpone := true)))
+        let e ← instantiateMVars (← withoutRecover <| elabTerm f none (mayPostpone := true))
+        return some (← zetaReduce e)
       catch _ => return none) | return
   let env ← getEnv
   for c in e.getUsedConstants do
-    let classical := (`Classical).isPrefixOf c && !(env.find? c matches some (.thmInfo _))
-    if isTrusted env c && !classical then continue
-    let why? : Option String :=
-      if classical then some "has no compiled code (classical choice)"
-      else if isNoncomputable env c then some "is marked `noncomputable`"
-      else escapeHatch env c
-    if let some why := why? then
+    if let some why := programViolation env c then
       let who : MessageData :=
         if f.raw.isIdent && f.raw.getId == c then m!"the link function `{c}` {why}"
         else m!"the link function uses `{c}`, which {why}"

@@ -393,6 +393,177 @@ theorem goodComputableExists : ∃ f : ℕ → ℕ,
     (fun n : ℕ => Even n) ⪯[f] (fun n : ℕ => Even n) :=
   ⟨id, Computable.id, fun _ => Iff.rfl⟩
 
+/-! ### Rule 4: encodings are programs
+
+Under a classical encoding, `Computable`, `ComputablePred` and `MachineDecidable` are about the
+encoding, not about a program: with `encode := σ` for a classical bijection `σ` that sends the
+halting set to the even numbers, a decidable predicate is provably not computable (NOTIONS-style
+counterexample in the module docstring). The `σ` below is only `Classical.choice` of the identity,
+which is enough to test that the check sees it. Found by the attack round on the proved layer
+(2026-11-26), cases P1–P3 and P6–P8. -/
+
+/-- A type with the encodings below. -/
+def EncW := ℕ
+
+/-- A classical bijection. -/
+noncomputable def encσ : EncW ≃ ℕ := Classical.choice ⟨Equiv.refl ℕ⟩
+
+/-- A classical `Primcodable` instance (P1). -/
+noncomputable instance badEncInst : Primcodable EncW := Primcodable.ofEquiv ℕ encσ
+
+/-- An `encode` whose compiled code is swapped (P2). -/
+def badEncFn (n : ℕ) : ℕ := n
+/-- The code swapped in. -/
+def badEncImpl (n : ℕ) : ℕ := n + 1
+attribute [implemented_by badEncImpl] badEncFn
+
+/-- A type with the swapped encoding. -/
+def EncW2 := ℕ
+
+/-- An `Encodable` instance through the swapped `encode` (P2). -/
+instance badEncInst2 : Encodable EncW2 := ⟨badEncFn, fun n => some n, fun _ => rfl⟩
+
+/-- A classical machine encoding. -/
+noncomputable def badMachineEnc : ℕ → List Bool := fun n =>
+  if (Classical.propDecidable (n = 0)).decide then [] else [true]
+
+/-- A statement about the classical machine encoding (P3). -/
+theorem badEncMachine : MachineDecidable badMachineEnc (fun _ : ℕ => True) ∨ True := Or.inr trivial
+
+/-- The classical instance written inline (P6). -/
+theorem badEncInline : @Computable EncW ℕ (Primcodable.ofEquiv ℕ encσ) _ (fun _ => 0) :=
+  @Computable.const EncW ℕ (Primcodable.ofEquiv ℕ encσ) _ 0
+
+/-- The classical machine encoding in the body of a predicate that statements only name (P7). -/
+def badEncPred (P : ℕ → Prop) : Prop := MachineDecidable badMachineEnc P
+
+/-- A class that extends `Primcodable`. -/
+class EncCodes (α : Type) extends Primcodable α
+
+/-- An instance of it, built from the classical instance. -/
+noncomputable instance badEncCodes : EncCodes EncW := ⟨⟩
+
+/-- A statement through the projection to `Primcodable` (P8). -/
+theorem badEncExtends : @Computable EncW ℕ EncCodes.toPrimcodable _ (fun _ => 0) :=
+  @Computable.const EncW ℕ EncCodes.toPrimcodable _ 0
+
+/-- A type with an honest encoding. -/
+def EncW3 := ℕ
+
+/-- An honest `Encodable` instance: compiled, no escape hatch. -/
+instance goodEncInst : Encodable EncW3 := ⟨fun n => n, fun n => some n, fun _ => rfl⟩
+
+/-- A statement about every computable machine encoding: the encoding is a variable. -/
+theorem goodEncVariable (P : ℕ → Prop) (h : ∀ enc : ℕ → List Bool, Computable enc →
+    ¬ MachineDecidable enc P) : ∀ enc : ℕ → List Bool, Computable enc → ¬ MachineDecidable enc P :=
+  h
+
+/-! Rounds 2 and 3 of the attack (2026-11-26): encodings that a fixed list of machine-level
+predicates, or a check of closed encodings only, did not see. -/
+
+open Cslib.Turing in
+/-- `TMDeciderFor`, found from its type rather than a list (Q1). -/
+theorem badEncTMDecider (D : SingleTapeTM Bool) :
+    TMDeciderFor D badMachineEnc (fun _ => True) ∨ True := Or.inr trivial
+
+/-- A structure that bundles a machine encoding. -/
+structure EncBox (X : Type) where
+  /-- The encoding. -/
+  enc : X → List Bool
+
+/-- A predicate on such a structure. -/
+def EncBoxDecidable (E : EncBox ℕ) (P : ℕ → Prop) : Prop := MachineDecidable E.enc P
+
+/-- The classical encoding in a structure argument (Q2). -/
+theorem badEncBox : EncBoxDecidable ⟨badMachineEnc⟩ (fun _ => True) ∨ True := Or.inr trivial
+
+/-- A predicate on a curried encoding. -/
+def EncCurried (enc : ℕ → ℕ → List Bool) (P : ℕ → ℕ → Prop) : Prop :=
+  MachineDecidable (fun p : ℕ × ℕ => enc p.1 p.2) (fun p => P p.1 p.2)
+
+/-- A curried classical encoding (Q3). -/
+theorem badEncCurried : EncCurried (fun _ => badMachineEnc) (fun _ _ => True) ∨ True :=
+  Or.inr trivial
+
+/-- A predicate whose encoding is an implicit argument. -/
+def EncImplicit {enc : ℕ → List Bool} (P : ℕ → Prop) : Prop := MachineDecidable enc P
+
+/-- The classical encoding as an implicit argument (Q4). -/
+theorem badEncImplicit : @EncImplicit badMachineEnc (fun _ => True) ∨ True := Or.inr trivial
+
+/-- The classical encoding behind a beta-redex (Q6). -/
+theorem badEncBeta :
+    (fun e : ℕ → List Bool => MachineDecidable e (fun _ => True)) badMachineEnc ∨ True :=
+  Or.inr trivial
+
+/-- The classical encoding behind a `let` (Q7). -/
+theorem badEncLet : (let e := badMachineEnc; MachineDecidable e (fun _ => True)) ∨ True :=
+  Or.inr trivial
+
+/-- A classical decidability instance inside an encoding that mentions a bound variable (Q10). -/
+theorem badEncBound (p : ℕ → Prop) (hp : PrimrecPred p) :
+    @Computable {n // p n} ℕ (@Primcodable.subtype ℕ _ p (Classical.decPred p) hp) _ (fun _ => 0) :=
+  @Computable.const {n // p n} ℕ (@Primcodable.subtype ℕ _ p (Classical.decPred p) hp) _ 0
+
+/-- A predicate on an encoding inside a pair. -/
+def EncPair (p : (ℕ → List Bool) × Unit) (P : ℕ → Prop) : Prop := MachineDecidable p.1 P
+
+/-- The classical encoding inside a pair (R1). -/
+theorem badEncPair : EncPair (badMachineEnc, ()) (fun _ => True) ∨ True := Or.inr trivial
+
+/-- A predicate that takes a class extending `Primcodable`. -/
+def EncCodesPred (X : Type) [EncCodes X] (P : X → Prop) : Prop := ComputablePred P
+
+/-- The classical instance through such a predicate (R2). -/
+theorem badEncCodesPred : EncCodesPred EncW (fun _ => True) ∨ True := Or.inr trivial
+
+/-- A `Prop` structure whose constructor fixes the classical encoding (R3). -/
+structure BadEncStruct (P : ℕ → Prop) : Prop where
+  /-- The fact. -/
+  h : MachineDecidable badMachineEnc P
+
+/-- An inductive predicate whose constructor fixes the classical encoding (R4). -/
+inductive BadEncInd (P : ℕ → Prop) : Prop
+  | intro : MachineDecidable badMachineEnc P → BadEncInd P
+
+/-- An honest encoding in a structure argument, a quantified one, and a statement on
+`EncodableTM` (whose structure has an `Encodable` field): none is reported. -/
+def goodMachineEnc : ℕ → List Bool := fun n => List.replicate n false
+theorem goodEncBox : EncBoxDecidable ⟨goodMachineEnc⟩ (fun _ => True) ∨ True := Or.inr trivial
+theorem goodEncBoxVar : ∀ E : EncBox ℕ, EncBoxDecidable E (fun _ => True) ∨ True :=
+  fun _ => Or.inr trivial
+theorem goodEncHalt (M : EncodableTM Bool) (w : List Bool) : HaltProblem (M, w) ∨ True :=
+  Or.inr trivial
+
+/-! ### Registries (rule 2)
+
+A registry of synthetic reductions as a class stores a reduction in a structure, which rule 2
+rejects. A registry records names instead, through an attribute (NOTIONS §9.7, decided
+2026-11-26); the proved layer has one as a class, `HaltSource`, since it is not checked. -/
+
+/-- A class of synthetic sources (P9). -/
+class BadSynthSource (p : ℕ → Prop) where
+  /-- The source. -/
+  red : SynthHaltReduction p
+
+/-! ### Rule 5: statement and command syntax does not overlap existing syntax
+
+Found by the attack of 2026-11-26: Lean picks the longest parse and reports only a tie, so the
+first macro below makes `theorem t : ¬ A ∧ B` state `True ∨ (A ∧ B)` with no error, and leaves
+`¬ A` alone. These declarations come last, since they change how the rest of a file parses. -/
+
+/-- Takes over `¬ A ∧ B` (T4). -/
+macro (name := badSyntaxNotAnd) "¬" p:term:36 "∧" q:term:35 : term => `(True ∨ ($p ∧ $q))
+
+/-- A longer trailing `∧`. -/
+macro:35 (name := badSyntaxAnd) p:term:36 " ∧ " q:term:0 : term => `(True ∨ ($p ∧ $q))
+
+/-- Syntax that starts with an identifier: its first token cannot be read. -/
+syntax (name := badSyntaxIdent) ident " ↦↦ " term : term
+
+/-- A notation with a fresh first token: allowed. -/
+notation:50 (name := goodSyntaxFresh) a " ≈≈ " b => a = b
+
 /--
 error: `bad1` builds a reduction but is marked `noncomputable`
 ---
@@ -456,11 +627,47 @@ error: `bad9` is an opaque or partial declaration about reductions
 ---
 error: `badAxiom` is an axiom about reductions
 ---
+error: `badEncBeta` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`
+---
+error: `badEncBound` states a result about an encoding that uses `Classical.decPred`, which is marked `noncomputable`
+---
+error: `badEncBox` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`
+---
+error: `badEncCodesPred` states a result about an encoding that uses `badEncCodes`, which is marked `noncomputable`
+---
+error: `badEncCurried` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`
+---
+error: `badEncExtends` states a result about an encoding that uses `badEncCodes`, which is marked `noncomputable`
+---
+error: `badEncImplicit` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`
+---
+error: `badEncInline` states a result about an encoding that uses `encσ`, which is marked `noncomputable`
+---
+error: `badEncInst` is an encoding but is marked `noncomputable`
+---
+error: `badEncInst2` is an encoding that depends on `badEncFn`, which uses `implemented_by`, via badEncInst2 → badEncFn
+---
+error: `badEncLet` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`
+---
+error: `badEncMachine` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`
+---
+error: `badEncPair` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`
+---
+error: `badEncPred` defines a predicate about an encoding that uses `badMachineEnc`, which is marked `noncomputable`
+---
+error: `badEncTMDecider` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`
+---
 error: `classicalFn` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `dependent` returns a reduction inside another type
 ---
 error: `Bad10.mk` stores a reduction inside another type
+---
+error: `BadEncInd.intro` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`
+---
+error: `BadEncStruct.mk` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`
+---
+error: `BadSynthSource.mk` stores a reduction inside another type
 ---
 error: `Hidden._sizeOf_inst` builds a reduction but is marked `noncomputable`
 ---
@@ -515,6 +722,12 @@ error: `DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52.mk.injEq` states 
 error: `DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52.mk.sizeOf_spec` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `classicalF_eq` is a `@[csimp]` lemma that depends on `sorry`, so the compiled code of `classicalF` may differ from its meaning
+---
+error: `badSyntaxIdent` is term syntax whose first token cannot be read, so rule 5 cannot check that it does not overlap existing syntax; start it with a token
+---
+error: `badSyntaxNotAnd` is term syntax whose first token `¬` also starts 1 other parser(s), so a longer parse can take over existing notation without an error; start it with a fresh token, or add it to `syntaxOverlapAllowances` after review
+---
+error: `badSyntaxAnd` is term syntax whose first token `∧` also starts 1 other parser(s), so a longer parse can take over existing notation without an error; start it with a fresh token, or add it to `syntaxOverlapAllowances` after review
 -/
 #guard_msgs in
 #check_reductions local

@@ -290,7 +290,7 @@ example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
   synth_reduce_from h with badF using pcp_reducesto_matMort_spec
 
 /--
-error: synth_reduce_from: the link function uses `Classical.choice`, which has no compiled code (classical choice). The function of a synthetic reduction must be a compiled program. For a proved result, use a proved link, or prove `Computable` of the function.
+error: synth_reduce_from: the link function uses `Classical.choice`, which is classical choice, which has no compiled code. The function of a synthetic reduction must be a compiled program. For a proved result, use a proved link, or prove `Computable` of the function.
 -/
 #guard_msgs in
 example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
@@ -298,6 +298,32 @@ example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
   synth_reduce_from h with
     (fun K => (Classical.choice ⟨matImage K⟩ : Finset (Matrix (Fin 3) (Fin 3) ℤ)))
     using matmort_of_pcp pcp_of_matmort
+
+-- A noncomputable constant from a trusted package gets the tactic's message, not the compiler's:
+-- the one-level check is shared with `#check_reductions` (`ReductionCheck.programViolation`).
+/--
+error: synth_reduce_from: the link function uses `Exists.choose`, which is marked `noncomputable`. The function of a synthetic reduction must be a compiled program. For a proved result, use a proved link, or prove `Computable` of the function.
+-/
+#guard_msgs in
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from h with
+    (fun K => (⟨matImage K, rfl⟩ : ∃ M, M = matImage K).choose)
+    using matmort_of_pcp pcp_of_matmort
+
+-- A link that is a local `let` is unfolded, so the constant behind it is named. (A `have` hides its
+-- value; then only the compiler's message remains.) The `let` stays in the example, so the compiler
+-- reports it as well.
+/--
+error: synth_reduce_from: the link function uses `badF`, which is marked `noncomputable`. The function of a synthetic reduction must be a compiled program. For a proved result, use a proved link, or prove `Computable` of the function.
+---
+error: failed to compile definition, consider marking it as 'noncomputable' because it depends on 'badF', which is 'noncomputable'
+-/
+#guard_msgs in
+example (h : SynthHaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
+    SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  let g := badF
+  synth_reduce_from h with g using pcp_reducesto_matMort_spec
 
 def stubImpl : DiagonaLean.PCP.Stack S23 → Finset (Matrix (Fin 3) (Fin 3) ℤ) := matImage
 

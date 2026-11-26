@@ -68,13 +68,16 @@ def violations (decls : Array (Name × Bool)) : CoreM (Array String) := do
   return out
 
 /-- The declarations of the environment's modules whose names start with `root`, each with whether
-its file is in `sorryAllowances`. -/
+its file is in `sorryAllowances`. The module names are read from the environment once: each read
+of `Environment.header` costs about 100 µs, which over the half million constants that Mathlib
+brings was most of the check's time. -/
 def libraryDecls (env : Environment) (root : Name := `DiagonaLean) :
     Array (Name × Bool) := Id.run do
+  let mods := env.header.moduleNames
   let mut out := #[]
   for (c, _) in env.constants.map₁.toList do
     let some idx := env.getModuleIdxFor? c | continue
-    let m := env.header.moduleNames[idx.toNat]!
+    let m := mods[idx.toNat]!
     unless m.getRoot == root do continue
     out := out.push (c, sorryAllowances.contains (fileOfModule m))
   return out.qsort (·.1.toString < ·.1.toString)
