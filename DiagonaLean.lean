@@ -60,15 +60,19 @@ import DiagonaLean.MatMort.MachineLevel
 import DiagonaLean.KAComm.TermEq.Basic
 import DiagonaLean.KAComm.TermEq.Reductions.Halt_to_TermEq
 import DiagonaLean.KAComm.TermEq.Undecidable
+import DiagonaLean.KAComm.TermEq.Hardness
 import DiagonaLean.KAComm.TermEqBool.Basic
 import DiagonaLean.KAComm.TermEqBool.Reductions.Halt_to_TermEqBool
 import DiagonaLean.KAComm.TermEqBool.Undecidable
+import DiagonaLean.KAComm.TermEqBool.Hardness
 import DiagonaLean.KAComm.KATermEq.Basic
 import DiagonaLean.KAComm.KATermEq.Reductions.Halt_to_KATermEq
 import DiagonaLean.KAComm.KATermEq.Undecidable
+import DiagonaLean.KAComm.KATermEq.Hardness
 import DiagonaLean.KAComm.KATermEqBool.Basic
 import DiagonaLean.KAComm.KATermEqBool.Reductions.Halt_to_KATermEqBool
 import DiagonaLean.KAComm.KATermEqBool.Undecidable
+import DiagonaLean.KAComm.KATermEqBool.Hardness
 import DiagonaLean.KAComm.LangEq.Basic
 import DiagonaLean.KAComm.LangEq.Reductions.Halt_to_LangEq
 import DiagonaLean.KAComm.LangEq.Undecidable
@@ -195,6 +199,7 @@ import DiagonaLean.KAComm.KleeneAlgebra.InstanceCode
 import DiagonaLean.KAComm.KleeneAlgebra.BinarySubst
 import DiagonaLean.KAComm.KleeneAlgebra.Race
 import DiagonaLean.KAComm.KleeneAlgebra.BoolCode
+import DiagonaLean.KAComm.KleeneAlgebra.CanonRace
 import DiagonaLean.KAComm.KleeneAlgebra.Between
 
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Configurations
