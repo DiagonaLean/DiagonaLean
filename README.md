@@ -10,7 +10,7 @@ The project has three goals:
 
 * **A library of undecidable problems.** Each problem is stated once, and the reductions to it are proved correct. The classical problems from automata theory are covered, and so are results from current research, such as the undecidability of Kleene algebra with commutativity conditions (arXiv:2411.15979).
 * **Honest statements.** Lean's logic is classical, so a naive statement of undecidability can be proved by a case split on whether a machine halts. The library rules this out in two ways, described in [Two notions of undecidability](#two-notions-of-undecidability).
-* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. A reduction is written as its function and its correctness proof (`synth_reduce_from h with f using spec`, `hard_reduce_from h with f using spec`), with no bundled link; `reduce_from` composes with an existing link in either layer; `reduce_from_pcp` and `code_lift` handle the PCP source and the alphabet lift; `halt_results` states the consequences of a proved halting reduction under uniform names.
+* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. A reduction is written as its function and its correctness proof (`synth_reduce_from h with f using spec`, `hard_reduce_from h with f using spec`), with no bundled link, and several links chain in one call separated by commas; `reduce_from` composes with an existing link in either layer; `upgrade` turns a synthetic halting reduction into a proved one, cut at the last problem with a proved reduction, leaving one `Computable` goal per remaining link; `reduce_from_pcp` and `code_lift` handle the PCP source and the alphabet lift; `halt_results` states the consequences of a proved halting reduction under uniform names.
 
 DiagonaLean continues <https://github.com/aalok-thakkar/undecidability/>.
 
@@ -275,7 +275,7 @@ CI runs `lake build`, `lake lint`, `#check_reductions` with its tests, `scripts/
 
 ## Roadmap
 
-* **Core framework:** the problems above, `SynthHaltReduction`, `HaltHard` and `MachineDecidable`, the reduction and axiom checks, and the reduction tactics (`synth_reduce_from`, `hard_reduce_from`, `reduce_from_pcp`, `code_lift`, `halt_results`). Done, string rewriting included (`SemiThue/`, `GrammarMem/`).
-* **Next for the tactics:** a chain of several links in one call, and `upgrade`, which turns a synthetic halting reduction into a proved one where a proved reduction to an intermediate problem exists, leaving one `Computable` goal per remaining synthetic link.
+* **Core framework:** the problems above, `SynthHaltReduction`, `HaltHard` and `MachineDecidable`, the reduction and axiom checks, and the reduction tactics (`synth_reduce_from`, `hard_reduce_from`, chains of links, `upgrade`, `reduce_from_pcp`, `code_lift`, `halt_results`). Done, string rewriting included (`SemiThue/`, `GrammarMem/`).
+* **Next for the tactics:** proved roots for SKI, β, KAComm and Rice, so that `upgrade` and `halt_results` reach them; a way to force an earlier cut in `upgrade`.
 * **Base theorems:** Rice's theorem is done (`Rice/`). Still to come: the acceptance problem, Rice–Shapiro and Greibach; a reduction graph registered through attributes, and a tactic that searches it.
 * **Standard reduction library:** more models of computation (RAM machines, register machines, μ-recursive functions) and their equivalence with Turing machines, where Cslib does not already have them.
