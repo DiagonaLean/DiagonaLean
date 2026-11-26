@@ -124,8 +124,13 @@ on the same table construction: `SemiThue.posFromHalt`/`…Over`, `SemiThue.from
 `GrammarMem.emptyWordFromHalt`, `GrammarMem.fromHalt`. Constructions on tables share
 `MPCP.MachineLevel.SameTable` (same lookup, same state numbers) and `CanonTM.sameTable`. Still only
 synthetic: the grammar problems on
-Mathlib's `ContextFreeGrammar` (not `Primcodable`), and KAComm, SKI, β, Rice (their reductions take
+Mathlib's `ContextFreeGrammar` (not `Primcodable`), and KAComm, Rice (their reductions take
 classically obtained constants). Their `¬ ComputablePred` results are kernel-checked all the same.
+SKI and β are halting-hard all the same (`SKIConv.haltHard`, `BetaConv.haltHard`, in their
+`Hardness.lean`): `HaltHard` is a
+proposition, so the constants are obtained inside its proof, and the reduction from canonical
+machines (`SKIConv.fromHaltWith U C …`, through `dataCanon` and `ProofRace.haltCanon_iff` in
+`Foundations/Computability/CanonRace.lean`) is proved computable for each choice of them.
 
 ## 7. Pitfalls that cost time
 

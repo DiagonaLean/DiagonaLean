@@ -85,10 +85,12 @@ import DiagonaLean.KAComm.ModelLeBool.Undecidable
 import DiagonaLean.SKIConv.Basic
 import DiagonaLean.SKIConv.Reductions.Halt_to_SKIConv
 import DiagonaLean.SKIConv.Undecidable
+import DiagonaLean.SKIConv.Hardness
 
 import DiagonaLean.BetaConv.Basic
 import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
 import DiagonaLean.BetaConv.Undecidable
+import DiagonaLean.BetaConv.Hardness
 
 import DiagonaLean.Rice.Basic
 import DiagonaLean.Rice.Reductions.Halt_to_Rice
@@ -129,6 +131,7 @@ import DiagonaLean.Foundations.Computability.MachineBridge
 import DiagonaLean.Foundations.Computability.MachineComputes
 import DiagonaLean.Foundations.Computability.ComputableReduction
 import DiagonaLean.Foundations.Computability.HaltCanon
+import DiagonaLean.Foundations.Computability.CanonRace
 import DiagonaLean.Foundations.Computability.HaltResults
 import DiagonaLean.Foundations.Computability.ReduceFrom
 import DiagonaLean.Foundations.Computability.Upgrade

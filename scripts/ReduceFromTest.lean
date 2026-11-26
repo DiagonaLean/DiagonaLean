@@ -9,6 +9,8 @@ import DiagonaLean.Foundations.Codes.Tactic
 import DiagonaLean.GrammarMem.Hardness
 import DiagonaLean.MatMort.MachineLevel
 import DiagonaLean.SemiThue.Undecidable
+import DiagonaLean.SKIConv.Hardness
+import DiagonaLean.BetaConv.Hardness
 
 /-! Tests for `reduce_from`, run by CI: one case per goal shape, the link upgrade, and the errors. -/
 
@@ -451,6 +453,14 @@ example : HaltHard (@DiagonaLean.SemiThue.DecisionProblem Bool) := by
 
 example : ¬ ComputablePred DiagonaLean.MatMort.DecisionProblem := by
   hard_reduce_from DiagonaLean.MatMort.DecisionProblem with id using (fun _ => Iff.rfl)
+
+/-- A problem whose hardness is only a fact (`HaltHardFact`): SKI convertibility, whose reduction
+takes constants that are only known to exist. -/
+example : HaltHard DiagonaLean.SKIConv.SKIConvProblem := by
+  hard_reduce_from DiagonaLean.SKIConv.SKIConvProblem with id using (fun _ => Iff.rfl)
+
+example : ¬ ComputablePred DiagonaLean.BetaConv.BetaConvProblem := by
+  hard_reduce_from DiagonaLean.BetaConv.BetaConvProblem with id using (fun _ => Iff.rfl)
 
 /-! #### Errors of `hard_reduce_from` -/
 
