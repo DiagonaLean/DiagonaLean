@@ -18,7 +18,7 @@ nonterminals and in the terminals that index the tiles (`ambPres`). With `PCPNon
 it presents `Stack.toGrammar` (`toCFG_ambPres_abs`); with `0, 1, 2` and natural numbers it is a
 grammar code over `α ⊕ ℕ` (`ambCode`), the renaming of the first (`ambCode_eq_map`). Injective
 renamings keep and reflect ambiguity (`AmbigCFG.decisionProblem_map_iff`), so PCP many-one reduces
-to the ambiguity of grammar codes (`pcp_reducesto_ambigCFGCode_spec`, `pcpReducesAmbigCFGCode`),
+to the ambiguity of grammar codes (`pcp_reducesto_ambigCFGCode_spec`, `AmbigCFG.synthCodeFromPCP`),
 through a primitive recursive function (`ambCode_prim`), and
 `PCP.MachineLevel.not_computablePred_pcp` transfers.
 
@@ -126,7 +126,7 @@ theorem toCFG_ambPres_abs (P : Stack α) :
 
 /-- `ambCode` witnesses the reduction from PCP to the ambiguity of grammar codes. -/
 theorem pcp_reducesto_ambigCFGCode_spec [Nonempty α] :
-    @PCP.DecisionProblem α ⪯ₘ[ambCode]
+    @PCP.DecisionProblem α ⪯_s[ambCode]
       fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG := by
   intro P
   beta_reduce
@@ -134,15 +134,19 @@ theorem pcp_reducesto_ambigCFGCode_spec [Nonempty α] :
     decisionProblem_map_iff (Function.injective_id.sumMap Fin.val_injective) ntIdx_injective]
 
 /-- PCP many-one reduces to the ambiguity of grammar codes, through `ambCode`. -/
-def pcpReducesAmbigCFGCode [Nonempty α] :
-    @PCP.DecisionProblem α ⪯ₘ fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG :=
+def _root_.DiagonaLean.AmbigCFG.synthCodeFromPCP [Nonempty α] :
+    @PCP.DecisionProblem α ⪯_s fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG :=
   ⟨ambCode, pcp_reducesto_ambigCFGCode_spec⟩
+
+/-- The former name of `AmbigCFG.synthCodeFromPCP`. -/
+@[deprecated DiagonaLean.AmbigCFG.synthCodeFromPCP (since := "2026-11-23")]
+abbrev pcpReducesAmbigCFGCode := @DiagonaLean.AmbigCFG.synthCodeFromPCP
 
 variable [Primcodable α]
 
 omit [DecidableEq α] in
 /-- **The code of a PCP instance is primitive recursive in it.** -/
-theorem ambCode_prim : Primrec (ambCode (α := α)) := by
+@[fun_prop] theorem ambCode_prim : Primrec (ambCode (α := α)) := by
   unfold ambCode ambPres codeTs
   fun_prop
 
@@ -150,7 +154,7 @@ theorem ambCode_prim : Primrec (ambCode (α := α)) := by
 `α ⊕ ℕ`, for any alphabet `α` with two distinct letters. -/
 theorem not_computablePred_ambigCFGCode [Nontrivial α] :
     ¬ ComputablePred fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG :=
-  not_computablePred_of_reduces pcpReducesAmbigCFGCode ambCode_prim.to_comp
+  not_computablePred_of_reduces AmbigCFG.synthCodeFromPCP ambCode_prim.to_comp
     PCP.MachineLevel.not_computablePred_pcp
 
 /-- **No Turing machine decides whether a grammar code is ambiguous**, under any computable

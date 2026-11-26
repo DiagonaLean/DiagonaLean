@@ -8,7 +8,7 @@ import DiagonaLean.Foundations.Computability.OutputSearch
 
 @[expose] public section
 
-/-! # `HaltProblem ⪯ₘ` Rice's problem
+/-! # `HaltProblem ⪯_s` Rice's problem
 
 `wait n x` searches for a step at which the machine whose data has code `n` has halted, and then
 returns `x`. It is partial recursive (`wait_part`), so some program `w` computes it on `⟪n, x⟫`
@@ -90,7 +90,7 @@ theorem eval_reduction_of_not_halts {w : Code} (hw : IsWaiter w) (cT : Code)
 `reduction w cT` reduces `HaltProblem` to `RiceProblem C`. -/
 theorem halt_reducesto_rice_spec {C : Set (ℕ →. ℕ)} {w cT : Code} (hw : IsWaiter w)
     (hT : cT.eval ∈ C) (hbot : (fun _ => Part.none : ℕ →. ℕ) ∉ C) :
-    HaltProblem ⪯ₘ[reduction w cT] RiceProblem C := fun p => by
+    HaltProblem ⪯_s[reduction w cT] RiceProblem C := fun p => by
   by_cases h : HaltProblem p
   · refine iff_of_true h ?_
     show (reduction w cT p).eval ∈ C
@@ -99,9 +99,16 @@ theorem halt_reducesto_rice_spec {C : Set (ℕ →. ℕ)} {w cT : Code} (hw : Is
     show (reduction w cT p).eval ∉ C
     rwa [eval_reduction_of_not_halts hw cT h]
 
-/-- `HaltProblem` many-one reduces to `RiceProblem C`. -/
-def haltReducesRice {C : Set (ℕ →. ℕ)} (w cT : Code) (hw : IsWaiter w) (hT : cT.eval ∈ C)
-    (hbot : (fun _ => Part.none : ℕ →. ℕ) ∉ C) : HaltProblem ⪯ₘ RiceProblem C :=
+/-- **Rice's problem is synthetically halting-hard.** If `cT` computes a function in `C` and the
+nowhere-defined function is not in `C`, then `RiceProblem C` is synthetically halting-hard, given a
+waiter program `w` (`exists_isWaiter`). `HaltProblem` many-one reduces to `RiceProblem C`. -/
+def _root_.DiagonaLean.Rice.synthFromHalt {C : Set (ℕ →. ℕ)} (w cT : Code) (hw : IsWaiter w)
+    (hT : cT.eval ∈ C) (hbot : (fun _ => Part.none : ℕ →. ℕ) ∉ C) :
+    HaltProblem ⪯_s RiceProblem C :=
   ⟨reduction w cT, halt_reducesto_rice_spec hw hT hbot⟩
+
+/-- The former name of `Rice.synthFromHalt`. -/
+@[deprecated DiagonaLean.Rice.synthFromHalt (since := "2026-11-23")]
+abbrev haltReducesRice := @DiagonaLean.Rice.synthFromHalt
 
 end DiagonaLean.Rice.Reduction

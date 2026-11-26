@@ -4,7 +4,7 @@ Authors: Aalok Thakkar, Prathamesh Turaga
 -/
 
 import DiagonaLean.PCP.Primrec
-import DiagonaLean.MPCP.MachineLevel
+import DiagonaLean.MPCP.Hardness
 
 @[expose] public section
 
@@ -12,8 +12,9 @@ import DiagonaLean.MPCP.MachineLevel
 
 PCP is not a computable predicate over any nontrivial alphabet (`not_computablePred_pcp`), so no
 Turing machine decides it under any computable encoding (`not_machineDecidable_pcp`). This follows
-from `MPCP.MachineLevel.not_computablePred_mpcp` along the primitive recursive reductions
-`mpcpReducesPCP` (`mpcpToPcp_primrec`) and `pcpAlphabetLift` (`pcpAlphabetLift_primrec`).
+from `MPCP.MachineLevel.not_computablePred_mpcp` (`MPCP/Hardness.lean`) along the primitive
+recursive reductions `PCP.synthFromMPCP` (`mpcpToPcp_primrec`) and `PCP.synthAlphabetLift`
+(`pcpAlphabetLift_primrec`).
 
 ## References
 
@@ -31,7 +32,7 @@ open DiagonaLean.PCP.Reduction DiagonaLean.PCP.AlphabetLift DiagonaLean.MPCP.Red
 /-- PCP over the alphabet `Ext (Alpha ℕ Sym2)` is not a computable predicate. -/
 theorem not_computablePred_pcp_ext :
     ¬ ComputablePred (@DecisionProblem (Ext (Alpha ℕ Normalize.Sym2))) :=
-  not_computablePred_of_reduces mpcpReducesPCP
+  not_computablePred_of_reduces PCP.synthFromMPCP
     (mpcpToPcp_primrec (α := Alpha ℕ Normalize.Sym2)).to_comp
     MPCP.MachineLevel.not_computablePred_mpcp
 
@@ -40,7 +41,7 @@ theorem not_computablePred_pcp {α : Type} [Primcodable α] [Nontrivial α] :
     ¬ ComputablePred (@DecisionProblem α) := by
   obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
   exact not_computablePred_of_reduces
-    (pcpAlphabetLift (γ₁ := Ext (Alpha ℕ Normalize.Sym2)) b0 b1 hne)
+    (PCP.synthAlphabetLift (γ₁ := Ext (Alpha ℕ Normalize.Sym2)) b0 b1 hne)
     (pcpAlphabetLift_primrec hne).to_comp not_computablePred_pcp_ext
 
 /-- **No Turing machine decides PCP** over any alphabet with two distinct letters, under any

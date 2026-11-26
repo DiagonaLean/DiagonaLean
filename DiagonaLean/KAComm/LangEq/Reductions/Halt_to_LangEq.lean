@@ -8,7 +8,7 @@ import DiagonaLean.KAComm.KleeneAlgebra.Separation
 
 @[expose] public section
 
-/-! # `HaltProblem ⪯ₘ` the failure of equality on `L Σ̈`
+/-! # `HaltProblem ⪯_s` the failure of equality on `L Σ̈`
 
 `haltRed` sends `(M, w)` to an inequality that fails in the language model iff `M` halts on `w`, and
 `haltEqRed` turns it into the equality `(e + f, f)`. Equality in the language model is co-r.e., so
@@ -25,12 +25,17 @@ open DiagonaLean.KAComm.KleeneAlgebra DiagonaLean.Halt DiagonaLean.Synthetic.Def
 
 /-- `haltEqRed` reduces `HaltProblem` to the failure of language equality over `ℕ`. -/
 theorem halt_reducesto_not_langEq_spec :
-    HaltProblem ⪯ₘ[haltEqRed] Complement LangEqProblem :=
+    HaltProblem ⪯_s[haltEqRed] Complement LangEqProblem :=
   fun p => (halt_iff_not_modelLe p).trans (not_congr (modelLe_iff_langEq _))
 
-/-- **The reduction.** `HaltProblem` many-one reduces to the failure of language equality over
-`ℕ`. -/
-def haltReducesNotLangEq : HaltProblem ⪯ₘ Complement LangEqProblem :=
+/-- **The failure of equality of languages over `ℕ` is synthetically halting-hard.** `HaltProblem`
+many-one reduces to the failure of language equality over `ℕ`. -/
+def _root_.DiagonaLean.KAComm.LangEq.synthComplFromHalt :
+    HaltProblem ⪯_s Complement LangEqProblem :=
   ⟨haltEqRed, halt_reducesto_not_langEq_spec⟩
+
+/-- The former name of `KAComm.LangEq.synthComplFromHalt`. -/
+@[deprecated DiagonaLean.KAComm.LangEq.synthComplFromHalt (since := "2026-11-23")]
+abbrev haltReducesNotLangEq := @DiagonaLean.KAComm.LangEq.synthComplFromHalt
 
 end DiagonaLean.KAComm.LangEq.Reduction

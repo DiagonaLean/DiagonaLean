@@ -14,13 +14,14 @@ import DiagonaLean.Foundations.Codes.Tactic
 Encoding the terminals of a grammar by a code keeps and reflects ambiguity
 (`decisionProblem_grammarEncode_iff`), so on grammar codes ambiguity is a functor on codes
 (`ambCodeFunctor`), and the lifting of `Foundations.Codes.Functor` moves the results over the
-terminals `Bool ⊕ ℕ` (`not_computablePred_ambigCFGCode`, through `pcpReducesAmbigCFGCode`) to
+terminals `Bool ⊕ ℕ` (`not_computablePred_ambigCFGCode`, through `AmbigCFG.synthCodeFromPCP`) to
 grammar codes over any alphabet with two distinct letters: the classical statement, with a finite
 terminal alphabet.
 
 ## Main statements
 
-* `undecidableAmbigCFGCodeOf`: `Undecidable` over any alphabet with two distinct letters.
+* `AmbigCFG.synthCodeFromHaltOver`: `SynthHaltReduction` over any alphabet with two distinct
+  letters.
 * `not_computablePred_ambigCFGCodeOf`, `not_machineDecidable_ambigCFGCodeOf`: over every
   nontrivial `Primcodable` alphabet.
 * `ambigCFGCode_manyOneEquiv`: many-one equivalent over any two such alphabets.
@@ -29,8 +30,7 @@ terminal alphabet.
 namespace DiagonaLean.AmbigCFG.MachineLevel
 
 open DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Codes
-  DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Notation
-  DiagonaLean.Synthetic.Definitions
+  DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
 
 variable {T α : Type}
 
@@ -64,25 +64,30 @@ abbrev ambCodeFunctor : CodeFunctor IsCode where
 
 /-- The two forms of the problem reduce to each other by the identity. -/
 def codeProblemReduces [DecidableEq T] :
-    (fun p : CFGCode T => AmbigCFG.DecisionProblem p.toCFG) ⪯ₘ @CodeProblem T :=
+    (fun p : CFGCode T => AmbigCFG.DecisionProblem p.toCFG) ⪯_s @CodeProblem T :=
   ⟨id, fun p => (codeProblem_iff p).symm⟩
 
 /-- The two forms of the problem reduce to each other by the identity. -/
 def codeProblemReduces' [DecidableEq T] :
-    @CodeProblem T ⪯ₘ fun p : CFGCode T => AmbigCFG.DecisionProblem p.toCFG :=
+    @CodeProblem T ⪯_s fun p : CFGCode T => AmbigCFG.DecisionProblem p.toCFG :=
   ⟨id, fun p => codeProblem_iff p⟩
 
-/-- **Ambiguity of grammar codes is `Undecidable` over any alphabet `α` with two distinct letters
+/-- **Ambiguity of grammar codes is synthetically halting-hard over any alphabet `α` with two
+distinct letters
 `b0`, `b1`**: from PCP over `Bool` to codes over `Bool ⊕ ℕ`, then the lifting. -/
-def undecidableAmbigCFGCodeOf [DecidableEq α] (b0 b1 : α) (hne : b0 ≠ b1) :
-    Undecidable fun c : CFGCode α => AmbigCFG.DecisionProblem c.toCFG :=
-  have u : Undecidable (@CodeProblem (Bool ⊕ ℕ)) :=
-    undecidabilityFromReducibility
-      (undecidabilityFromReducibility
-        (PCP.Reduction.undecidablePCP false true Bool.false_ne_true) pcpReducesAmbigCFGCode)
+def _root_.DiagonaLean.AmbigCFG.synthCodeFromHaltOver [DecidableEq α] (b0 b1 : α) (hne : b0 ≠ b1) :
+    SynthHaltReduction fun c : CFGCode α => AmbigCFG.DecisionProblem c.toCFG :=
+  have u : SynthHaltReduction (@CodeProblem (Bool ⊕ ℕ)) :=
+    SynthHaltReduction.comp
+      (SynthHaltReduction.comp
+        (PCP.synthFromHaltOver false true Bool.false_ne_true) AmbigCFG.synthCodeFromPCP)
       codeProblemReduces
-  have u' : Undecidable (@CodeProblem α) := by code_lift ambCodeFunctor from u
-  undecidabilityFromReducibility u' codeProblemReduces'
+  have u' : SynthHaltReduction (@CodeProblem α) := by code_lift ambCodeFunctor from u
+  SynthHaltReduction.comp u' codeProblemReduces'
+
+/-- The former name of `AmbigCFG.synthCodeFromHaltOver`. -/
+@[deprecated DiagonaLean.AmbigCFG.synthCodeFromHaltOver (since := "2026-11-23")]
+abbrev undecidableAmbigCFGCodeOf := @DiagonaLean.AmbigCFG.synthCodeFromHaltOver
 
 /-- **Whether a grammar code is ambiguous is not a computable predicate over any nontrivial
 alphabet**: the lifting of `not_computablePred_ambigCFGCode` from the terminals `Bool ⊕ ℕ`. -/

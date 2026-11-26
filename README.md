@@ -10,7 +10,7 @@ The project has three goals:
 
 * **A library of undecidable problems.** Each problem is stated once, and the reductions to it are proved correct. The classical problems from automata theory are covered, and so are results from current research, such as the undecidability of Kleene algebra with commutativity conditions (arXiv:2411.15979).
 * **Honest statements.** Lean's logic is classical, so a naive statement of undecidability can be proved by a case split on whether a machine halts. The library rules this out in two ways, described in [Two notions of undecidability](#two-notions-of-undecidability).
-* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. `reduce_from_pcp` and `undec from` are the first such tactics.
+* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. `reduce_from` composes a halting reduction with a link, in either layer; `reduce_from_pcp` and `code_lift` handle the PCP source and the alphabet lift.
 
 DiagonaLean continues <https://github.com/aalok-thakkar/undecidability/>.
 
@@ -36,17 +36,17 @@ graph LR
 |---|---|---|---|
 | Halting | Does Turing machine $M$ halt on input $w$? | [`Halt/`](DiagonaLean/Halt/README.md) | `¬ MachineDecidable` (`halt_not_machinedecidable`); no machine decides it or self-halting (`halt_undecidable`, `self_halt_undecidable`) |
 | Universal machine halting | For a fixed weakly universal machine $U$, does $U$ halt on $w$? | [`UTMHalt/`](DiagonaLean/UTMHalt/README.md) | No machine decides it (`not_exists_haltDeciderFor_of_isWeaklyUniversal`) |
-| Modified PCP | Given tiles and a designated start tile, is there a match that begins with it? | [`MPCP/`](DiagonaLean/MPCP/README.md) | `Undecidable`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, over any alphabet with at least two letters |
-| Post Correspondence Problem | Given tiles $(u_i, v_i)$, is there a nonempty sequence with $u_{i_1}\cdots u_{i_n} = v_{i_1}\cdots v_{i_n}$? | [`PCP/`](DiagonaLean/PCP/README.md) | `Undecidable`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, over any alphabet with at least two letters |
-| String rewriting (semi-Thue) | Given rewriting rules `l → r` between strings, does `u` rewrite to `v`? | [`SemiThue/`](DiagonaLean/SemiThue/README.md) | `Undecidable`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, over any alphabet with at least two letters |
-| Membership for grammar codes | Given a grammar code and a word, is the word in its language? | [`GrammarMem/`](DiagonaLean/GrammarMem/README.md) | `Undecidable`; `¬ ComputablePred` and `¬ MachineDecidable` under every computable encoding, and for the empty word already over type 0 codes |
-| Ambiguity of CFGs | Does a context-free grammar have two parse trees for some word? | [`AmbigCFG/`](DiagonaLean/AmbigCFG/README.md) | `Undecidable`; for grammar codes, `¬ ComputablePred` and `¬ MachineDecidable` under every computable encoding |
-| Intersection of CFGs | Do the languages of two context-free grammars intersect? (Emptiness of the intersection is the complement.) | [`EmpCFG/`](DiagonaLean/EmpCFG/README.md) | `Undecidable` over any alphabet with at least two letters; for grammar codes, `¬ ComputablePred` and `¬ MachineDecidable` under every computable encoding, for the intersection and for its emptiness |
-| Matrix mortality | Given a finite set of $3 \times 3$ integer matrices, does some product of them equal $0$? | [`MatMort/`](DiagonaLean/MatMort/README.md) | `Undecidable`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding |
-| SKI convertibility | Do two SKI terms have a common reduct? | [`SKIConv/`](DiagonaLean/SKIConv/README.md) | `Undecidable`, `¬ MachineDecidable` |
-| β-conversion | Are two λ-terms β-convertible? | [`BetaConv/`](DiagonaLean/BetaConv/README.md) | `Undecidable`, `¬ MachineDecidable` |
-| Rice's problem | For a set $C$ of partial functions $\mathbb N \rightharpoonup \mathbb N$, does a program compute a function in $C$? | [`Rice/`](DiagonaLean/Rice/README.md) | `¬ ComputablePred` and `¬ MachineDecidable` for every non-trivial $C$; `Undecidable` when $C$ contains some computable function but not the nowhere-defined one; of the complement when $C$ contains the nowhere-defined function and misses some computable function |
-| Kleene algebra with commutativity | Is $e = f$ provable in Kleene algebra (`KATermEq`) or pre-Kleene algebra (`TermEq`) with commutativity conditions on letters? Is $\mathcal L(e) = \mathcal L(f)$ (`LangEq`), or $\mathcal L(e) \subseteq \mathcal L(f)$ (`ModelLe`), in the language model? Each over $\Sigma = \mathbb N$ and over $\Sigma = \{0, 1\}$ (`XBool`). | [`KAComm/`](DiagonaLean/KAComm/README.md) | `Undecidable` (for `LangEq`, `ModelLe`: of the complement), `¬ MachineDecidable`; also `¬ MachineDecidable` for every theory between pre-Kleene algebra and the language model (Theorem 18) |
+| Modified PCP | Given tiles and a designated start tile, is there a match that begins with it? | [`MPCP/`](DiagonaLean/MPCP/README.md) | `SynthHaltReduction`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, over any alphabet with at least two letters |
+| Post Correspondence Problem | Given tiles $(u_i, v_i)$, is there a nonempty sequence with $u_{i_1}\cdots u_{i_n} = v_{i_1}\cdots v_{i_n}$? | [`PCP/`](DiagonaLean/PCP/README.md) | `SynthHaltReduction`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, over any alphabet with at least two letters |
+| String rewriting (semi-Thue) | Given rewriting rules `l → r` between strings, does `u` rewrite to `v`? | [`SemiThue/`](DiagonaLean/SemiThue/README.md) | `SynthHaltReduction`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, over any alphabet with at least two letters |
+| Membership for grammar codes | Given a grammar code and a word, is the word in its language? | [`GrammarMem/`](DiagonaLean/GrammarMem/README.md) | `SynthHaltReduction`; `¬ ComputablePred` and `¬ MachineDecidable` under every computable encoding, and for the empty word already over type 0 codes |
+| Ambiguity of CFGs | Does a context-free grammar have two parse trees for some word? | [`AmbigCFG/`](DiagonaLean/AmbigCFG/README.md) | `SynthHaltReduction`; for grammar codes, `¬ ComputablePred` and `¬ MachineDecidable` under every computable encoding |
+| Intersection of CFGs | Do the languages of two context-free grammars intersect? (Emptiness of the intersection is the complement.) | [`EmpCFG/`](DiagonaLean/EmpCFG/README.md) | `SynthHaltReduction` over any alphabet with at least two letters; for grammar codes, `¬ ComputablePred` and `¬ MachineDecidable` under every computable encoding, for the intersection and for its emptiness |
+| Matrix mortality | Given a finite set of $3 \times 3$ integer matrices, does some product of them equal $0$? | [`MatMort/`](DiagonaLean/MatMort/README.md) | `SynthHaltReduction`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding |
+| SKI convertibility | Do two SKI terms have a common reduct? | [`SKIConv/`](DiagonaLean/SKIConv/README.md) | `SynthHaltReduction`, `¬ MachineDecidable` |
+| β-conversion | Are two λ-terms β-convertible? | [`BetaConv/`](DiagonaLean/BetaConv/README.md) | `SynthHaltReduction`, `¬ MachineDecidable` |
+| Rice's problem | For a set $C$ of partial functions $\mathbb N \rightharpoonup \mathbb N$, does a program compute a function in $C$? | [`Rice/`](DiagonaLean/Rice/README.md) | `¬ ComputablePred` and `¬ MachineDecidable` for every non-trivial $C$; `SynthHaltReduction` when $C$ contains some computable function but not the nowhere-defined one; of the complement when $C$ contains the nowhere-defined function and misses some computable function |
+| Kleene algebra with commutativity | Is $e = f$ provable in Kleene algebra (`KATermEq`) or pre-Kleene algebra (`TermEq`) with commutativity conditions on letters? Is $\mathcal L(e) = \mathcal L(f)$ (`LangEq`), or $\mathcal L(e) \subseteq \mathcal L(f)$ (`ModelLe`), in the language model? Each over $\Sigma = \mathbb N$ and over $\Sigma = \{0, 1\}$ (`XBool`). | [`KAComm/`](DiagonaLean/KAComm/README.md) | `SynthHaltReduction` (for `LangEq`, `ModelLe`: of the complement), `¬ MachineDecidable`; also `¬ MachineDecidable` for every theory between pre-Kleene algebra and the language model (Theorem 18) |
 
 The Kleene algebra folder formalises A. Azevedo de Amorim, C. Zhang and M. Gaboardi, *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979). Its main results hold with no hypotheses. It also finds and repairs an error in the paper's Theorem 6. Its [README](DiagonaLean/KAComm/README.md) states the results mathematically and explains how to audit them, and [STATUS.md](DiagonaLean/KAComm/STATUS.md) records what is open.
 
@@ -55,7 +55,7 @@ Shared machinery lives in `Foundations/`:
 * the computability infrastructure (`Foundations/Computability/`): a Turing-machine interpreter for Mathlib's partial recursive codes, machines computing primitive recursive functions, and a race between a halting search and a proof search, following Smullyan;
 * proof search for combinatory logic and the λ-calculus (`Foundations/CombinatoryLogic/`, `Foundations/LambdaCalculus/`);
 * grammars presented by lists, and grammar codes (`Foundations/Grammar/`): a `Primcodable` description of a context-free grammar, which a machine can read, and the theorem that renaming nonterminals keeps the language; string rewriting systems, which every grammar of the Chomsky hierarchy is, with derivability checked by a stack machine uniformly in the system;
-* codes between alphabets (`Foundations/Codes/`): letterwise codes, the problems that they preserve and reflect (PCP, MPCP, string rewriting, context-free grammars) as functors on codes, and the lifting of `Undecidable`, `¬ ComputablePred` and `¬ MachineDecidable` from one alphabet to every alphabet with two letters (`code_lift`);
+* codes between alphabets (`Foundations/Codes/`): letterwise codes, the problems that they preserve and reflect (PCP, MPCP, string rewriting, context-free grammars) as functors on codes, and the lifting of `SynthHaltReduction`, `¬ ComputablePred` and `¬ MachineDecidable` from one alphabet to every alphabet with two letters (`code_lift`);
 * the normalisation of Turing machines (`Foundations/Computability/Normalize/`): every machine over `{0, 1}` is equivalent, for halting, to one that never writes a blank and never moves left at the left end, as the reductions to MPCP, PCP and string rewriting assume;
 * proof systems checked by a stack machine (`Foundations/Computability/StackProof.lean`): running proof programs, the invariant, and the primitive recursive check, once for every system. SKI convertibility and string rewriting are instances.
 
@@ -63,23 +63,23 @@ Shared machinery lives in `Foundations/`:
 
 ## Two Notions of Undecidability
 
-Lean is classical, so every proposition is "decidable" in the sense of `Classical.propDecidable`. Undecidability therefore has to be stated relative to some notion of computation. The library uses two: `Undecidable p` and `¬ MachineDecidable enc p`. In the table above, a problem lists each notion that is proved for it.
+Lean is classical, so every proposition is "decidable" in the sense of `Classical.propDecidable`. Undecidability therefore has to be stated relative to some notion of computation. The library uses two: `SynthHaltReduction p` and `¬ MachineDecidable enc p`. In the table above, a problem lists each notion that is proved for it.
 
-### 1. `Undecidable p`: a compiled many-one reduction from halting
+### 1. `SynthHaltReduction p`: a compiled many-one reduction from halting
 
 ```lean
--- simplified from Synthetic/Definitions.lean and Synthetic/Undecidability.lean
-structure ManyOneReduces (p : X → Prop) (q : Y → Prop) where
+-- simplified from Synthetic/Definitions.lean and Synthetic/HaltReduction.lean
+structure SynthReduction (p : X → Prop) (q : Y → Prop) where
   f  : X → Y
-  hf : ∀ x, p x ↔ q (f x)          -- written p ⪯ₘ[f] q
+  hf : ∀ x, p x ↔ q (f x)          -- written p ⪯_s[f] q
 
-abbrev Undecidable (p : X → Prop) : Type := HaltProblem ⪯ₘ p
+abbrev SynthHaltReduction (p : X → Prop) : Type := HaltProblem ⪯_s p
 ```
 
-`Undecidable p` is a **type**, not a proposition. An undecidability result is a **definition** whose value is the reduction, and composing results composes their functions (`undecidabilityFromReducibility`). The point is that **Lean must compile the reduction**. The cheating "reduction" `fun x => if HaltProblem x then a else b` is classical, and Lean refuses to compile it. So a result means something because it is a definition that Lean compiles. `#check_reductions` enforces this in CI over every declaration in the library. It checks that the reduction is a compiled definition, that nothing in its dependencies is `sorry`, an axiom or `native_decide`, that no reduction is wrapped in a way that hides it, and that no `Prop` statement concludes that a reduction exists. The conventions it relies on are listed in [CONTRIBUTING.md](CONTRIBUTING.md#reductions).
+`SynthHaltReduction p` is a **type**, not a proposition. An undecidability result is a **definition** whose value is the reduction, and composing results composes their functions (`SynthHaltReduction.comp`). The point is that **Lean must compile the reduction**. The cheating "reduction" `fun x => if HaltProblem x then a else b` is classical, and Lean refuses to compile it. So a result means something because it is a definition that Lean compiles. `#check_reductions` enforces this in CI over every declaration in the library. It checks that the reduction is a compiled definition, that nothing in its dependencies is `sorry`, an axiom or `native_decide`, that no reduction is wrapped in a way that hides it, and that no `Prop` statement concludes that a reduction exists. The conventions it relies on are listed in [CONTRIBUTING.md](CONTRIBUTING.md#reductions).
 
 * *Strength:* reductions compose, and each one is visibly a program.
-* *Limitation:* "Lean compiles it" is not the same as "a Turing machine computes it on encoded inputs". Also, constants that exist only classically, such as a universal program obtained from Mathlib's recursion theorem, cannot be computed inside a definition, so they become explicit arguments of the result (for example `undecidableSKIConv C hu hC`).
+* *Limitation:* "Lean compiles it" is not the same as "a Turing machine computes it on encoded inputs". Also, constants that exist only classically, such as a universal program obtained from Mathlib's recursion theorem, cannot be computed inside a definition, so they become explicit arguments of the result (for example `SKIConv.synthFromHalt C hu hC`).
 
 ### 2. `¬ MachineDecidable enc P`: no Turing machine decides it
 
@@ -101,7 +101,7 @@ This statement quantifies over actual Turing machines (Cslib's `SingleTapeTM`) r
 * *Limitation:* it is relative to the encoding. An encoding that stores the answer in its first bit makes any predicate decidable. So the library's reference encodings are proved injective, and the Kleene algebra results come with `_of_conv` variants that hold for any encoding a machine computes from the reference one.
 
 ### Which to read
-For trust, read the `¬ MachineDecidable` theorem and the definitions it uses (see the [audit guide](DiagonaLean/KAComm/README.md#auditing-the-definitions)). For composing results and building the reduction graph, use `Undecidable`.
+For trust, read the `¬ MachineDecidable` theorem and the definitions it uses (see the [audit guide](DiagonaLean/KAComm/README.md#auditing-the-definitions)). For composing results and building the reduction graph, use `SynthHaltReduction`.
 
 ## How to Use It
 
@@ -131,8 +131,7 @@ Reduce from a problem that is already undecidable, and give the reduction as a n
 ```lean
 import DiagonaLean
 
-open DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation DiagonaLean.PCP
-  DiagonaLean.PCP.Reduction
+open DiagonaLean DiagonaLean.Synthetic.Definitions DiagonaLean.PCP
 
 /-- A toy problem: PCP with the two rows of every tile swapped. -/
 def SwappedPCP (A : Stack Bool) : Prop := DecisionProblem (A.map fun t => ⟨t.bot, t.top⟩)
@@ -141,18 +140,18 @@ def SwappedPCP (A : Stack Bool) : Prop := DecisionProblem (A.map fun t => ⟨t.b
 def swap (A : Stack Bool) : Stack Bool := A.map fun t => ⟨t.bot, t.top⟩
 
 /-- Correctness of the reduction. -/
-theorem swap_spec : (@DecisionProblem Bool) ⪯ₘ[swap] SwappedPCP := fun A => by
+theorem swap_spec : (@DecisionProblem Bool) ⪯_s[swap] SwappedPCP := fun A => by
   simp [SwappedPCP, swap, List.map_map, Function.comp_def]
 
-/-- The reduction, as data. -/
-def pcpReducesSwapped : (@DecisionProblem Bool) ⪯ₘ SwappedPCP := ⟨swap, swap_spec⟩
+/-- The reduction, as data: a link from PCP. -/
+def SwappedPCP.synthFromPCP : (@DecisionProblem Bool) ⪯_s SwappedPCP := ⟨swap, swap_spec⟩
 
-/-- `SwappedPCP` is undecidable. -/
-def swappedUndecidable : Undecidable SwappedPCP :=
-  undecidabilityFromReducibility (undecidablePCP true false (by decide)) pcpReducesSwapped
+/-- `SwappedPCP` is synthetically halting-hard: PCP's halting reduction, then the link. -/
+def SwappedPCP.synthFromHalt : SynthHaltReduction SwappedPCP := by
+  reduce_from (PCP.synthFromHaltOver true false (by decide)) via SwappedPCP.synthFromPCP
 
-#check_reductions local          -- checks the definitions in this file
-#print axioms swappedUndecidable  -- propext, Classical.choice, Quot.sound
+#check_reductions local              -- checks the definitions in this file
+#print axioms SwappedPCP.synthFromHalt  -- propext, Classical.choice, Quot.sound
 ```
 
 ### Prove a function primitive recursive, computable, or computed by a Turing machine
@@ -198,15 +197,14 @@ checks.
 
 | Tactic or command | What it does | Defined in |
 |---|---|---|
-| `reduce_from_pcp over_letters b0 b1 via R` | Proves `Undecidable Q` from a reduction `R : PCP ⪯ₘ Q`, over the alphabet of the letters `b0 ≠ b1` | [`Synthetic/Tactics/ReduceFromPCP.lean`](DiagonaLean/Synthetic/Tactics/ReduceFromPCP.lean) |
-| `undec from H` | Reduces `Undecidable Q` to a reduction `P ⪯ₘ Q`, given `H : Undecidable P` | [`Synthetic/Undecidability.lean`](DiagonaLean/Synthetic/Undecidability.lean) |
-| `reduce_chain H` | Proves a reduction by composing with `H` and reflexivity | [`Synthetic/ReductionChain.lean`](DiagonaLean/Synthetic/ReductionChain.lean) |
+| `reduce_from_pcp over_letters b0 b1 via R` | Proves `SynthHaltReduction Q` from a reduction `R : PCP ⪯_s Q`, over the alphabet of the letters `b0 ≠ b1` | [`Synthetic/Tactics/ReduceFromPCP.lean`](DiagonaLean/Synthetic/Tactics/ReduceFromPCP.lean) |
+| `reduce_from h via r` | Composes a halting reduction `h` with a link `r`; the goal (`SynthHaltReduction Q`, `HaltReduction Q`, `HaltHard Q`, `¬ ComputablePred Q`, `¬ MachineDecidable enc Q`) decides whether the result is synthetic or proved, and a synthetic link is upgraded when its computability can be proved | [`Foundations/Computability/ReduceFrom.lean`](DiagonaLean/Foundations/Computability/ReduceFrom.lean) |
 | `#check_reductions` / `#check_reductions local` | Checks that every reduction (in the library, or in the current file) is a definition Lean compiles, with no classical escape hatch | [`Synthetic/ReductionCheck.lean`](DiagonaLean/Synthetic/ReductionCheck.lean) |
 
 For example, the last definition in *Prove a new problem undecidable* above can be written
 
 ```lean
-def swappedUndecidable : Undecidable SwappedPCP := by
+def swappedUndecidable : SynthHaltReduction SwappedPCP := by
   reduce_from_pcp over_letters true false via pcpReducesSwapped
 ```
 
@@ -242,6 +240,6 @@ CI runs `lake build`, `lake lint`, `#check_reductions`, `scripts/CheckMetaprogra
 
 ## Roadmap
 
-* **Core framework:** the problems above, `Undecidable` and `MachineDecidable`, the reduction check, and the `reduce_from_pcp` tactic. Done, string rewriting included (`SemiThue/`, `GrammarMem/`).
+* **Core framework:** the problems above, `SynthHaltReduction` and `MachineDecidable`, the reduction check, and the `reduce_from_pcp` tactic. Done, string rewriting included (`SemiThue/`, `GrammarMem/`).
 * **Base theorems:** Rice's theorem is done (`Rice/`). Still to come: the acceptance problem, Rice–Shapiro and Greibach; a reduction graph registered through attributes, and a tactic that searches it.
 * **Standard reduction library:** more models of computation (RAM machines, register machines, μ-recursive functions) and their equivalence with Turing machines, where Cslib does not already have them.

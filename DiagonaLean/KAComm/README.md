@@ -31,7 +31,7 @@ An instance is a pair of expressions `e₁ e₂ : RExp (Σ ⊕ Σ)` over the dou
 | Equality on `L Σ̈`: do `e₁` and `e₂` have the same language in the model `TD.pl`? | `LangEq` | `LangEqBool` |
 | Inclusion in `L Σ̈`: is the language of `e₁` contained in that of `e₂`? | `ModelLe` | `ModelLeBool` |
 
-The problem `X` is `KAComm.X.DecisionProblem`, named `XProblem`, and its results are in the namespace `DiagonaLean.KAComm.X.Reduction`, for example `KAComm.TermEq.Reduction.undecidableTermEq`.
+The problem `X` is `KAComm.X.DecisionProblem`, named `XProblem`, and its results are in the namespace `DiagonaLean.KAComm.X.Reduction`, for example `KAComm.TermEq.synthFromHalt`.
 
 ## Layout
 * `X/`, for each of the eight problems: `Basic.lean` (the problem), `Reductions/Halt_to_X.lean` (a reduction from `HaltProblem`, to the complement for the four language-model problems) and `Undecidable.lean` (the results).
@@ -98,7 +98,7 @@ This is the paper's form of Theorem 18. Taking $X = T\ddot\Sigma$, $K\ddot\Sigma
 > and $\{(e, f) : \mathcal L(e) \not\subseteq \mathcal L(f)\}$, for $\Sigma = \{0, 1\}$ and for $\Sigma = \mathbb N$. Each reduction is given as an explicit program.
 
 For the provability problems, the reduction depends on two finite constants that are known to exist only classically: a table for a fixed program interpreter and a "race" program, from the paper's Theorem 19. They are therefore parameters of the reduction. Theorems 1 and 2 do not need them.
-*Lean:* `undecidableKATermEq`, `undecidableTermEq`, `undecidableNotLangEq`, `undecidableNotModelLe` and their `Bool` versions.
+*Lean:* `KAComm.KATermEq.synthFromHalt`, `KAComm.TermEq.synthFromHalt`, `KAComm.LangEq.synthComplFromHalt`, `KAComm.ModelLe.synthComplFromHalt` and their `Bool` versions.
 
 > **Proposition 7** (the axioms are the paper's). Let $\mathsf{KA}'$ be Kleene algebra in Mathlib's formulation: $\mathsf{PKA}$ plus right unfolding $x^* x \le x^*$ and both induction axioms. Then for all $e, f$,
 > $$\mathsf{KA}' + H_\Sigma \vdash e = f \iff \mathsf{KA} + H_\Sigma \vdash e = f.$$
@@ -161,7 +161,7 @@ open DiagonaLean
 | `MachineDecidable`, `TMDeciderFor` | `Synthetic/Definitions.lean` | Some `SingleTapeTM Bool` outputs `[true]` on every yes-instance and `[false]` on every no-instance. |
 | `SingleTapeTM`, `SingleTapeTM.Outputs` | Cslib, `Cslib/Computability/Machines/Turing/SingleTape/Deterministic.lean` (revision pinned in `lake-manifest.json`) | A standard deterministic single-tape machine with finite state and alphabet. "Outputs" means it halts with exactly that list on the tape. |
 
-For Theorems 3–6, also read `Provable`, `ModelLe` (`KleeneAlgebra/Inequality.lean`), `LangFactor`, `EqVia` (`KleeneAlgebra/Separation.lean`), the eight `DecisionProblem`s (`X/Basic.lean`), and `Undecidable`, `ManyOneReduces` and `HaltProblem` (`Synthetic/Undecidability.lean`, `Synthetic/Definitions.lean`, `Halt/Basic.lean`). Use `#print X` to see a definition as Lean elaborated it.
+For Theorems 3–6, also read `Provable`, `ModelLe` (`KleeneAlgebra/Inequality.lean`), `LangFactor`, `EqVia` (`KleeneAlgebra/Separation.lean`), the eight `DecisionProblem`s (`X/Basic.lean`), and `SynthHaltReduction`, `SynthReduction` and `HaltProblem` (`Synthetic/HaltReduction.lean`, `Synthetic/Definitions.lean`, `Halt/Basic.lean`). Use `#print X` to see a definition as Lean elaborated it.
 
 **3. Check the axioms.**
 
@@ -172,6 +172,6 @@ For Theorems 3–6, also read `Provable`, `ModelLe` (`KleeneAlgebra/Inequality.l
 
 The result must list only these three, Lean's standard axioms. Any `sorryAx`, any `Lean.ofReduceBool` (from `native_decide`) or any user-declared axiom means the proof is incomplete or trusts the compiler. Do the same for each result you rely on.
 
-**4. Check the reductions are programs.** Lean is classical, so a value of `Undecidable p` (`HaltProblem ⪯ₘ p`) means something only if its function is computable. Otherwise it could case on whether a machine halts. CI checks every reduction in the library with `#check_reductions` (`scripts/CheckReductions.lean`; rules in [`CONTRIBUTING.md`](../../CONTRIBUTING.md#reductions)). `scripts/CheckMetaprograms.lean` rejects metaprograms that could bypass that check. This only concerns Theorem 6. Theorems 1–5 quantify over Turing machines directly, so they need no such check.
+**4. Check the reductions are programs.** Lean is classical, so a value of `SynthHaltReduction p` (`HaltProblem ⪯_s p`) means something only if its function is computable. Otherwise it could case on whether a machine halts. CI checks every reduction in the library with `#check_reductions` (`scripts/CheckReductions.lean`; rules in [`CONTRIBUTING.md`](../../CONTRIBUTING.md#reductions)). `scripts/CheckMetaprograms.lean` rejects metaprograms that could bypass that check. This only concerns Theorem 6. Theorems 1–5 quantify over Turing machines directly, so they need no such check.
 
 **5. Build from a fresh checkout.** Run `lake exe cache get && lake build` and confirm there are no errors and no `sorry` warnings. The commands in steps 1 and 3 can be run with `lake env lean <file>.lean`.

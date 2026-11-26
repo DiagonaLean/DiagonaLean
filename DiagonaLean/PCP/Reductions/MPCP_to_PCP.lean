@@ -9,7 +9,7 @@ import DiagonaLean.Synthetic.Definitions
 
 @[expose] public section
 
-/-! # MPCP ⪯ₘ PCP
+/-! # MPCP ⪯_s PCP
 
 Many-one reduction from the Modified Post Correspondence Problem to PCP,
 following the Hopcroft–Ullman construction and the Coq formalisation of
@@ -22,8 +22,8 @@ allows the end tile to close a solution. The three tile roles are:
 `tileStart` (forces every solution to begin with it), `tileReg` (encodes
 an MPCP card), and `tileEnd` (closes the match).
 
-`mpcp_iff_pcp` proves the equivalence, and `mpcp_reducesto_pcp_spec` and `mpcpReducesPCP` state it
-as a many-one reduction.
+`mpcp_iff_pcp` proves the equivalence, and `mpcp_reducesto_pcp_spec` and `PCP.synthFromMPCP` state
+it as a many-one reduction.
 
 ## References
 
@@ -497,7 +497,7 @@ theorem pcp_to_mpcp_solution (c : Tile α) (R : Stack α)
 /-- MPCP reduces many-one to PCP via `mpcpToPcp`: `(c, R)` has an MPCP solution
 iff `mpcpToPcp c R` has a PCP solution. -/
 theorem mpcp_iff_pcp (c : Tile α) (R : Stack α) :
-    MPCP.DecisionProblem c R ↔ PCP.DecisionProblem (mpcpToPcp c R) := by
+    MPCP.Solvable c R ↔ PCP.DecisionProblem (mpcpToPcp c R) := by
   constructor
   · rintro ⟨A, hA, heq⟩
     obtain ⟨B, hne, hB, heqB⟩ := mpcp_to_pcp_solution c R A hA heq
@@ -510,13 +510,17 @@ open DiagonaLean.Synthetic.Definitions
 
 /-- `mpcpToPcp` witnesses that MPCP many-one reduces to PCP over the extended alphabet. -/
 theorem mpcp_reducesto_pcp_spec :
-    (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2) ⪯ₘ[fun x => mpcpToPcp x.1 x.2]
+    (@MPCP.DecisionProblem α) ⪯_s[fun x => mpcpToPcp x.1 x.2]
       (@PCP.DecisionProblem (Ext α)) :=
   fun x => mpcp_iff_pcp x.1 x.2
 
 /-- MPCP many-one reduces to PCP over the extended alphabet, through `mpcpToPcp`. -/
-def mpcpReducesPCP :
-    (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2) ⪯ₘ (@PCP.DecisionProblem (Ext α)) :=
+def _root_.DiagonaLean.PCP.synthFromMPCP :
+    (@MPCP.DecisionProblem α) ⪯_s (@PCP.DecisionProblem (Ext α)) :=
   ⟨fun x => mpcpToPcp x.1 x.2, mpcp_reducesto_pcp_spec⟩
+
+/-- The former name of `PCP.synthFromMPCP`. -/
+@[deprecated DiagonaLean.PCP.synthFromMPCP (since := "2026-11-23")]
+abbrev mpcpReducesPCP := @DiagonaLean.PCP.synthFromMPCP
 
 end DiagonaLean.PCP.Reduction

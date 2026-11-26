@@ -10,28 +10,27 @@ import DiagonaLean.Foundations.Computability.MachineBridge
 
 @[expose] public section
 
-/-! # MPCP is not a computable predicate
+/-! # The MPCP instance of a transition table, numerically
 
-`haltToMpcpNorm` builds the MPCP instance of a machine from the machine itself, so its input is
-not `Primcodable` and it says nothing about machines. `instC` builds the same instance from the
-machine's *code* `encodeBoolTM M`, on input the code itself: it reads the transition table off the
-code (`rowsC`, as `dataC` does), computes the transitions of the normalised machine `normTM` from
-the table (`normTrN`), and lists the tiles of `haltTiles` with each state `(q, c)` renamed to the
-number `Nat.pair (encode q) (encode c)` (`stIdx`). `instC` is primitive recursive (`instC_prim`).
+`haltToMpcpNorm` builds the MPCP instance of a machine from the machine itself, so its input is not
+`Primcodable` and it says nothing about machines. `instOf q rows w` builds the same instance from a
+transition table `rows` in the format of `rowsE`, with start state number `q`, on input `w`: it
+computes the transitions of the normalised machine `normTM` from the table (`normTrN`), and lists
+the tiles of `haltTiles` with each state `(q, c)` renamed to the number
+`Nat.pair (encode q) (encode c)` (`stIdx`). `instOf` is primitive recursive.
 
-The tiles of `instC (encodeBoolTM M)` are those of `haltTiles` for `normTM M`, renamed
-(`mem_stackN`), and solvability depends only on the set of tiles (`mpcp_congr`). So `M` halts on its
-own code iff `instC (encodeBoolTM M)` is solvable (`selfHalt_iff_instC`), and a computable decision
-procedure for MPCP would decide self-halting, contradicting `self_halt_undecidable`.
+The tiles of `stackN (rowsE M)` are those of `haltTiles` for `normTM M`, renamed (`mem_stackN`), and
+solvability depends only on the set of tiles (`mpcp_congr`). So `M` halts on `w` iff
+`instOf (encode M.q₀) (rowsE M) w` is solvable (`halts_iff_mpcpN`). Two functions build on
+`instOf`: `instC` reads the table off a machine code (`rowsC`, as `dataC` does), on input the code
+itself (`selfHalt_iff_instC`); `canonInst` (`Hardness.lean`) reads it off a canonical machine, which
+gives the halting reduction `MPCP.fromHalt` and, from it, the negative results.
 
 ## Main statements
 
 * `instC_prim`: the instance of a code is primitive recursive in the code.
+* `halts_iff_mpcpN`: a machine halts on an input iff the instance of its table on it is solvable.
 * `selfHalt_iff_instC`: `M` halts on its own code iff the instance of its code is solvable.
-* `not_computablePred_mpcp`: MPCP over `Alpha ℕ Sym2` is not a computable predicate.
-* `not_machineDecidable_mpcp`: no Turing machine decides it under any computable encoding.
-* `not_computablePred_mpcpOf`, `not_machineDecidable_mpcpOf`: the same over any nontrivial
-  alphabet.
 -/
 
 derive_primcodable DiagonaLean.MPCP.Reduction.Alpha
@@ -110,11 +109,17 @@ the normalised machine on `encInput w`. -/
 def startN (q : ℕ) (w : List Bool) : Tile (Alpha ℕ Normalize.Sym2) :=
   ⟨[#], # :: ↟ₛ(Nat.pair q 0) :: (encInput w).map (fun s => ↟ₜ(some s)) ++ [#]⟩
 
+/-- **The MPCP instance of a transition table** `rows` with start state number `q`, on input `w`.
+-/
+def instOf (q : ℕ) (rows : List (ℕ × ℕ)) (w : List Bool) :
+    Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) :=
+  (startN q w, stackN rows)
+
 /-- **The MPCP instance of a machine code `w`**, on input `w` itself. The first token of a code is
 the start state's code plus one (`headI_tokens_code`). -/
 def instC (w : List Bool) :
     Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) :=
-  (startN ((tokens w).headI - 1) w, stackN (rowsC w))
+  instOf ((tokens w).headI - 1) (rowsC w) w
 
 derive_primrec markerN
 
@@ -129,6 +134,8 @@ derive_primrec stackN
 derive_primrec encInput
 
 derive_primrec startN
+
+derive_primrec instOf
 
 derive_primrec instC
 
@@ -246,64 +253,28 @@ theorem startTile_ren (w : List Bool) :
     liftTape, StackTape.mapSome, Tile.map, Alpha.map, stIdx, Function.comp_def]
   rfl
 
-end
-
-/-- **A machine halts on its own code iff the MPCP instance of its code is solvable.** -/
-theorem selfHalt_iff_instC (M : EncodableTM Bool) :
-    Halts M.toSingleTapeTM (encodeBoolTM M) ↔
-      MPCP.DecisionProblem (instC (encodeBoolTM M)).1 (instC (encodeBoolTM M)).2 := by
-  let := M.stateEncodable
-  have hq : (tokens (encodeBoolTM M)).headI - 1 = Encodable.encode M.q₀ := by
-    rw [headI_tokens_code]; rfl
-  rw [instC, hq, rowsC_eq_rowsE, halts_normTM_iff,
+/-- **A machine halts on an input iff the MPCP instance of its table on that input is solvable.**
+The construction does not use that the input is the machine's own code. -/
+theorem halts_iff_mpcpN (w : List Bool) :
+    Halts M.toSingleTapeTM w ↔
+      MPCP.DecisionProblem (instOf (Encodable.encode M.q₀) (rowsE M) w) := by
+  show _ ↔ MPCP.Solvable (startN _ w) (stackN (rowsE M))
+  rw [halts_normTM_iff,
     halt_iff_mpcp (normEnc M) (normTM_noBlankWrites _) _ (normTM_noLeftBoundary _ _),
     mpcp_map_iff _ (Alpha.map_injective (stIdx_injective M)), ← startTile_ren]
   exact mpcp_congr _ (mem_stackN M)
 
-open DiagonaLean.Synthetic.Definitions DiagonaLean.Halt.Undecidable in
-/-- **MPCP is not a computable predicate**, over the alphabet `Alpha ℕ Sym2`. A computable decision
-procedure, composed with the primitive recursive `instC`, would give a machine that decides whether
-a machine halts on its own code. -/
-theorem not_computablePred_mpcp :
-    ¬ ComputablePred fun x :
-      Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) =>
-      MPCP.DecisionProblem x.1 x.2 :=
-  not_computablePred_of_selfHalt instC_prim.to_comp selfHalt_iff_instC
+end
 
-open DiagonaLean.Synthetic.Definitions in
-/-- **No Turing machine decides MPCP**, over the alphabet `Alpha ℕ Sym2`, under any computable
-encoding of instances as bit strings. -/
-theorem not_machineDecidable_mpcp
-    {enc : Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) →
-      List Bool}
-    (henc : Computable enc) : ¬ MachineDecidable enc fun x => MPCP.DecisionProblem x.1 x.2 :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_mpcp
-
-open Foundations.Codes in
-/-- **MPCP is not a computable predicate over any nontrivial alphabet**: the lifting of
-`not_computablePred_mpcp` (`Foundations.Codes.CodeFunctor.not_computablePred_lift`).
--/
-theorem not_computablePred_mpcpOf {α : Type} [Primcodable α] [Nontrivial α] :
-    ¬ ComputablePred fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2 := by
-  code_lift mpcpFunctor from not_computablePred_mpcp
-
-open DiagonaLean.Synthetic.Definitions in
-/-- **No Turing machine decides MPCP over any nontrivial alphabet**, under any computable
-encoding. -/
-theorem not_machineDecidable_mpcpOf {α : Type} [Primcodable α] [Nontrivial α]
-    {enc : Tile α × Stack α → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc fun x => MPCP.DecisionProblem x.1 x.2 := by
-  code_lift Reduction.mpcpFunctor from not_computablePred_mpcp
-
-open Foundations.Codes in
-/-- **Alphabet invariance of MPCP**: over any two nontrivial `Primcodable` alphabets, MPCP is
-many-one equivalent, so every property closed under computable many-one reductions holds over all
-of them or none (`ComputablePred.computable_of_manyOneReducible`,
-`REPred.of_manyOneReducible`). -/
-theorem mpcp_manyOneEquiv {α β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
-    [Nontrivial β] :
-    ManyOneEquiv (fun x : Tile α × Stack α => MPCP.DecisionProblem x.1 x.2)
-      fun x : Tile β × Stack β => MPCP.DecisionProblem x.1 x.2 := by
-  code_lift mpcpFunctor
+/-- **A machine halts on its own code iff the MPCP instance of its code is solvable**: `instC`
+reads the start state and the table off the code (`headI_tokens_code`, `rowsC_eq_rowsE`). -/
+theorem selfHalt_iff_instC (M : EncodableTM Bool) :
+    Halts M.toSingleTapeTM (encodeBoolTM M) ↔
+      MPCP.DecisionProblem (instC (encodeBoolTM M)) := by
+  let := M.stateEncodable
+  have hq : (tokens (encodeBoolTM M)).headI - 1 = Encodable.encode M.q₀ := by
+    rw [headI_tokens_code]; rfl
+  rw [instC, hq, rowsC_eq_rowsE]
+  exact halts_iff_mpcpN M _
 
 end DiagonaLean.MPCP.MachineLevel

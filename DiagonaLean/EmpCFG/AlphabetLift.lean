@@ -12,12 +12,12 @@ import DiagonaLean.Foundations.Codes.Tactic
 
 /-! # Non-emptiness of CFG intersection over two letters
 
-`undecidableEmpCFG` holds over the terminals `Term α = α ⊕ Tile α`, which include the tiles of the
-PCP instance. Encoding the terminals of both grammars by a code preserves and reflects non-emptiness
-of the intersection (`Foundations.Codes.intersection_encode_iff`), and `Term Bool` is countable,
-so `Foundations.Codes.bitCode` moves the problem to any alphabet with two distinct letters
-(`empCFGAlphabetLift`). `Undecidable.lean` uses it for `undecidableEmpCFGOf` and
-`undecidableEmpCFGBool`.
+`EmpCFG.synthFromHaltTerm` holds over the terminals `Term α = α ⊕ Tile α`, which include the tiles
+of the PCP instance. Encoding the terminals of both grammars by a code preserves and reflects
+non-emptiness of the intersection (`Foundations.Codes.intersection_encode_iff`), and `Term Bool` is
+countable, so `Foundations.Codes.bitCode` moves the problem to any alphabet with two distinct
+letters (`EmpCFG.synthAlphabetLift`). `Undecidable.lean` uses it for `EmpCFG.synthFromHaltOver` and
+`EmpCFG.synthFromHaltBool`.
 
 Mathlib's grammars keep their rules in a `Finset`, so encoding them needs the proof that the code
 is a code, and is not the action of a functor. Grammar codes keep their rules in a list: on pairs
@@ -26,7 +26,7 @@ of grammar codes the problem is a functor on codes (`empCodeFunctor`), and the l
 (`not_computablePred_empCFGCodeOf`, `not_machineDecidable_empCFGCodeOf`).
 -/
 
-open DiagonaLean.Synthetic.Notation DiagonaLean.Foundations.Codes
+open DiagonaLean.Synthetic.Definitions DiagonaLean.Foundations.Codes
 
 namespace DiagonaLean.EmpCFG.Reduction
 
@@ -42,14 +42,18 @@ def empCFGLift [Encodable T] (b0 b1 : α) (hne : b0 ≠ b1)
 /-- `empCFGLift b0 b1 hne` witnesses the reduction from non-emptiness of CFG intersection over a
 countable alphabet to it over `α`. -/
 theorem empCFGLift_spec [Encodable T] (b0 b1 : α) (hne : b0 ≠ b1) :
-    @DecisionProblem T ⪯ₘ[empCFGLift b0 b1 hne] @DecisionProblem α := fun G =>
+    @DecisionProblem T ⪯_s[empCFGLift b0 b1 hne] @DecisionProblem α := fun G =>
   (intersection_encode_iff (hc := (isSync_bitCode hne).isCode) G.1 G.2).symm
 
 /-- Non-emptiness of CFG intersection over a countable alphabet many-one reduces to it over any
 alphabet with two distinct letters, by encoding the terminals of both grammars with `bitCode`. -/
-def empCFGAlphabetLift [Encodable T] (b0 b1 : α) (hne : b0 ≠ b1) :
-    @DecisionProblem T ⪯ₘ @DecisionProblem α :=
+def _root_.DiagonaLean.EmpCFG.synthAlphabetLift [Encodable T] (b0 b1 : α) (hne : b0 ≠ b1) :
+    @DecisionProblem T ⪯_s @DecisionProblem α :=
   ⟨empCFGLift b0 b1 hne, empCFGLift_spec b0 b1 hne⟩
+
+/-- The former name of `EmpCFG.synthAlphabetLift`. -/
+@[deprecated DiagonaLean.EmpCFG.synthAlphabetLift (since := "2026-11-23")]
+abbrev empCFGAlphabetLift := @DiagonaLean.EmpCFG.synthAlphabetLift
 
 end DiagonaLean.EmpCFG.Reduction
 

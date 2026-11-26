@@ -9,7 +9,7 @@ import DiagonaLean.KAComm.KleeneAlgebra.Separation
 
 @[expose] public section
 
-/-! # `HaltProblem ⪯ₘ` the failure of inclusion in `L Σ̈` over `{0, 1}`
+/-! # `HaltProblem ⪯_s` the failure of inclusion in `L Σ̈` over `{0, 1}`
 
 `haltRedB` sends `(M, w)` to the inequality of `haltRed` with each letter `n` replaced by the word
 `1ⁿ0`. `M` halts on `w` iff the inequality over `ℕ` fails in the language model
@@ -32,12 +32,17 @@ def haltRedB (p : EncodableTM Bool × List Bool) : InstB := sbI (haltRed p)
 /-- `haltRedB` reduces `HaltProblem` to the failure of inclusion in the language model over
 `{0, 1}`. -/
 theorem halt_reducesto_not_modelLeBool_spec :
-    HaltProblem ⪯ₘ[haltRedB] Complement ModelLeBoolProblem :=
+    HaltProblem ⪯_s[haltRedB] Complement ModelLeBoolProblem :=
   fun p => (halt_iff_not_modelLe p).trans (not_congr ⟨pl_sb_le wordOf, pl_le_of_sb cd_injective⟩)
 
-/-- **The reduction.** `HaltProblem` many-one reduces to the failure of inclusion in the language
-model over `{0, 1}`. -/
-def haltReducesNotModelLeBool : HaltProblem ⪯ₘ Complement ModelLeBoolProblem :=
+/-- **The failure of inclusion of languages over `{0, 1}` is synthetically halting-hard.**
+`HaltProblem` many-one reduces to the failure of inclusion in the language model over `{0, 1}`. -/
+def _root_.DiagonaLean.KAComm.ModelLeBool.synthComplFromHalt :
+    HaltProblem ⪯_s Complement ModelLeBoolProblem :=
   ⟨haltRedB, halt_reducesto_not_modelLeBool_spec⟩
+
+/-- The former name of `KAComm.ModelLeBool.synthComplFromHalt`. -/
+@[deprecated DiagonaLean.KAComm.ModelLeBool.synthComplFromHalt (since := "2026-11-23")]
+abbrev haltReducesNotModelLeBool := @DiagonaLean.KAComm.ModelLeBool.synthComplFromHalt
 
 end DiagonaLean.KAComm.ModelLeBool.Reduction

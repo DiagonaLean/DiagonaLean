@@ -26,7 +26,7 @@ variable {Good : ∀ {α β : Type}, (α → List β) → Prop} (F : CodeFunctor
 def CodeFunctor.computableLift [LiftableCodes Good] [DecidableEq α] [Primcodable (F.Inst α)]
     [Primcodable (F.Inst β)] (b0 b1 : β) (hne : b0 ≠ b1)
     (hmap : Computable (F.liftMap (α := α) b0 b1)) :
-    ComputableReduction (@F.Prob α) (@F.Prob β) :=
+    @F.Prob α ⪯ @F.Prob β :=
   .ofSynth (F.lift b0 b1 hne) hmap
 
 /-- A halting reduction to the problem over `α` gives one over any alphabet with two distinct

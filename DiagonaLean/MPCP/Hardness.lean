@@ -11,12 +11,19 @@ import DiagonaLean.Foundations.Computability.HaltCanon
 /-! # MPCP is halting-hard
 
 The machine-level construction of `MachineLevel.lean` builds an MPCP instance from a transition
-table (`startN`, `stackN`). Its correctness proof does not use that the input is the machine's own
-code, so it holds for every machine and input (`halts_iff_mpcpN`). On canonical machines the table
-is primitive recursive (`CanonTM.table`), and `stackN` depends on a table only through its lookup
-and its set of state numbers (`mem_stackN_congr`), which `c.table` shares with the table of
-`c.toTM`. So `(c, w) ↦ (startN c.start w, stackN c.table)` is a reduction from `HaltCanon` to MPCP,
-proved computable: `MPCP.fromHalt`, a kernel-checked halting reduction.
+table (`instOf`), and is correct for every machine and input (`halts_iff_mpcpN`). On canonical
+machines the table is primitive recursive (`CanonTM.table`), and `stackN` depends on a table only
+through its lookup and its set of state numbers (`mem_stackN_congr`), which `c.table` shares with
+the table of `c.toTM`. So `canonInst (c, w) = instOf c.start c.table w` is a reduction from
+`HaltCanon` to MPCP, proved computable: `MPCP.fromHalt`, a kernel-checked halting reduction.
+
+## Main statements
+
+* `MPCP.fromHalt`, `MPCP.haltHard`: MPCP over `Alpha ℕ Sym2` is halting-hard.
+* `not_computablePred_mpcp`, `not_machineDecidable_mpcp`: so it is not a computable predicate, and
+  no Turing machine decides it under any computable encoding.
+* `not_computablePred_mpcpOf`, `not_machineDecidable_mpcpOf`: the same over any nontrivial
+  alphabet; `mpcp_manyOneEquiv`: MPCP is many-one equivalent over all of them.
 -/
 
 namespace DiagonaLean.MPCP.MachineLevel
@@ -24,22 +31,6 @@ namespace DiagonaLean.MPCP.MachineLevel
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.PCP.Reduction DiagonaLean.MPCP.Reduction
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability
   DiagonaLean.Foundations.Computability.Normalize
-
-section
-
-attribute [local instance] EncodableTM.stateEncodable
-
-/-- **A machine halts on an input iff the MPCP instance of its table on that input is solvable**:
-the proof of `selfHalt_iff_instC`, for any input. -/
-theorem halts_iff_mpcpN (M : EncodableTM Bool) (w : List Bool) :
-    Halts M.toSingleTapeTM w ↔
-      MPCP.DecisionProblem (startN (Encodable.encode M.q₀) w) (stackN (rowsE M)) := by
-  rw [halts_normTM_iff,
-    halt_iff_mpcp (normEnc M) (normTM_noBlankWrites _) _ (normTM_noLeftBoundary _ _),
-    mpcp_map_iff _ (Alpha.map_injective (stIdx_injective M)), ← startTile_ren]
-  exact mpcp_congr _ (mem_stackN M)
-
-end
 
 /-- `normTrN` reads a table only through `lookup`. -/
 theorem normTrN_congr {r₁ r₂ : List (ℕ × ℕ)} (h : ∀ k, lookup r₁ k = lookup r₂ k) (i c : ℕ)
@@ -64,7 +55,7 @@ theorem mem_stackN_congr {r₁ r₂ : List (ℕ × ℕ)} (hl : ∀ k, lookup r�
 /-- The MPCP instance of a canonical machine on an input. -/
 def canonInst (x : CanonTM × List Bool) :
     Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) :=
-  (startN x.1.start x.2, stackN x.1.table)
+  instOf x.1.start x.1.table x.2
 
 theorem canonInst_prim : Primrec canonInst := by
   unfold canonInst
@@ -72,7 +63,7 @@ theorem canonInst_prim : Primrec canonInst := by
 
 /-- **A canonical machine halts on an input iff its MPCP instance is solvable.** -/
 theorem haltCanon_iff_mpcp (x : CanonTM × List Bool) :
-    HaltCanon x ↔ MPCP.DecisionProblem (canonInst x).1 (canonInst x).2 := by
+    HaltCanon x ↔ MPCP.DecisionProblem (canonInst x) := by
   obtain ⟨c, w⟩ := x
   refine (halts_iff_mpcpN c.toTM w).trans (mpcp_congr _ fun t => mem_stackN_congr ?_ ?_ t)
   · intro k
@@ -90,14 +81,57 @@ open DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Computab
 
 /-- **MPCP is halting-hard**, over the alphabet `Alpha ℕ Sym2`: a reduction from the halting problem
 on canonical machines, proved computable. -/
-def fromHalt : HaltReduction fun x :
-    Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) =>
-    MPCP.DecisionProblem x.1 x.2 :=
+def fromHalt : HaltReduction (@MPCP.DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
   ⟨canonInst, canonInst_prim.to_comp, haltCanon_iff_mpcp⟩
 
-theorem haltHard : HaltHard fun x :
-    Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) =>
-    MPCP.DecisionProblem x.1 x.2 :=
+theorem haltHard : HaltHard (@MPCP.DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
   ⟨fromHalt⟩
 
 end DiagonaLean.MPCP
+
+namespace DiagonaLean.MPCP.MachineLevel
+
+open DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Computability
+  DiagonaLean.Synthetic.Definitions
+
+/-- **MPCP is not a computable predicate**, over the alphabet `Alpha ℕ Sym2`: it is halting-hard
+(`MPCP.haltHard`). -/
+theorem not_computablePred_mpcp :
+    ¬ ComputablePred (@MPCP.DecisionProblem (Alpha ℕ Normalize.Sym2)) :=
+  MPCP.haltHard.not_computablePred
+
+/-- **No Turing machine decides MPCP**, over the alphabet `Alpha ℕ Sym2`, under any computable
+encoding of instances as bit strings. -/
+theorem not_machineDecidable_mpcp
+    {enc : Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) →
+      List Bool}
+    (henc : Computable enc) : ¬ MachineDecidable enc MPCP.DecisionProblem :=
+  MPCP.haltHard.not_machineDecidable henc
+
+open Foundations.Codes in
+/-- **MPCP is not a computable predicate over any nontrivial alphabet**: the lifting of
+`not_computablePred_mpcp` (`Foundations.Codes.CodeFunctor.not_computablePred_lift`).
+-/
+theorem not_computablePred_mpcpOf {α : Type} [Primcodable α] [Nontrivial α] :
+    ¬ ComputablePred (@MPCP.DecisionProblem α) := by
+  code_lift mpcpFunctor from not_computablePred_mpcp
+
+/-- **No Turing machine decides MPCP over any nontrivial alphabet**, under any computable
+encoding. -/
+theorem not_machineDecidable_mpcpOf {α : Type} [Primcodable α] [Nontrivial α]
+    {enc : Tile α × Stack α → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc MPCP.DecisionProblem := by
+  code_lift Reduction.mpcpFunctor from not_computablePred_mpcp
+
+open Foundations.Codes in
+/-- **Alphabet invariance of MPCP**: over any two nontrivial `Primcodable` alphabets, MPCP is
+many-one equivalent, so every property closed under computable many-one reductions holds over all
+of them or none (`ComputablePred.computable_of_manyOneReducible`,
+`REPred.of_manyOneReducible`). -/
+theorem mpcp_manyOneEquiv {α β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
+    [Nontrivial β] :
+    ManyOneEquiv (@MPCP.DecisionProblem α)
+      (@MPCP.DecisionProblem β) := by
+  code_lift mpcpFunctor
+
+end DiagonaLean.MPCP.MachineLevel

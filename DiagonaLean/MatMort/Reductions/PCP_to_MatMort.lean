@@ -10,12 +10,12 @@ import Mathlib.Tactic
 import DiagonaLean.PCP.Reductions.Halt_to_PCP
 import DiagonaLean.MatMort.Basic
 import DiagonaLean.PCP.Basic
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
 @[expose] public section
 
-/-! # PCP ⪯ₘ MatMort
+/-! # PCP ⪯_s MatMort
 
 Reduction from the Post Correspondence Problem (PCP) to the Matrix Mortality Problem (MatMort),
 following [Paterson1970]. The Matrix Mortality Problem asks whether a finite set of `3 × 3` integer
@@ -26,7 +26,7 @@ as base-10 numerals, to the first two coordinates of a row vector. Each tile of 
 gives two such matrices, one with a marker digit on its bottom word (`tileMats`). `S * P * T = 0`
 when `[1, 0, 1] * P = [h, h, 1]` (`S_prod_T_eq_zero`), and every zero product
 contains such a run (`mortal_iff_exists_prod_of_Ws`). The main results are `pcp_iff_matmort` and
-the reduction `pcpReducesMatMort`.
+the reduction `MatMort.synthFromPCP`.
 
 ## References
 
@@ -485,7 +485,7 @@ theorem pcp_if_exists_prod (K : Stack S23) :
   · exact wordToInt_injective (h₀.trans h₁.symm)
 
 /-- The matrix set of a PCP instance `K`: `S`, `T` and the tile matrices of `K`. -/
-abbrev matImage (K : Stack S23) := {S, T} ∪ tileMats K
+def matImage (K : Stack S23) := {S, T} ∪ tileMats K
 
 /-- If a PCP instance `K` has a solution, then its corresponding set of constructed matrices has a
   mortality solution: mark the first tile of the solution. -/
@@ -523,11 +523,16 @@ theorem pcp_iff_matmort (K : Stack S23) :
 /-- `matImage` reduces PCP over `S23` to matrix mortality: `K` has a solution iff `matImage K` is
   mortal. -/
 theorem pcp_reducesto_matMort_spec :
-    @PCP.DecisionProblem S23 ⪯ₘ[matImage] fun Ws => MatMort.DecisionProblem Ws :=
+    @PCP.DecisionProblem S23 ⪯_s[matImage] MatMort.DecisionProblem :=
   pcp_iff_matmort
 
 /-- **The reduction.** PCP over `S23` many-one reduces to matrix mortality through `matImage`. -/
-def pcpReducesMatMort : @PCP.DecisionProblem S23 ⪯ₘ fun Ws => MatMort.DecisionProblem Ws :=
+def _root_.DiagonaLean.MatMort.synthFromPCP :
+    @PCP.DecisionProblem S23 ⪯_s MatMort.DecisionProblem :=
   ⟨matImage, pcp_reducesto_matMort_spec⟩
+
+/-- The former name of `MatMort.synthFromPCP`. -/
+@[deprecated DiagonaLean.MatMort.synthFromPCP (since := "2026-11-23")]
+abbrev pcpReducesMatMort := @DiagonaLean.MatMort.synthFromPCP
 
 end DiagonaLean.MatMort.Reduction

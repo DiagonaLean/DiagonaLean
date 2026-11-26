@@ -10,12 +10,12 @@ import DiagonaLean.KAComm.KleeneAlgebra.Between
 
 /-! # Undecidability of inclusion in `L Σ̈` over `{0, 1}`
 
-The failure of inclusion of languages over `{0, 1}` is `Undecidable` (`undecidableNotModelLeBool`).
-No Turing machine decides inclusion of languages under the encoding `encBool` of a pair of
-expressions as the binary digits of its code (`not_machineDecidable_modelLeBool`), or under any
-encoding that a machine computes from `encBool` (`not_machineDecidable_modelLeBool_of_conv`). The
-machine-level statement is the case of Theorem 18 where the predicate is inclusion of languages
-itself (`not_machineDecidable_between_bool`).
+The failure of inclusion of languages over `{0, 1}` is synthetically halting-hard
+(`KAComm.ModelLeBool.synthComplFromHalt`). No Turing machine decides inclusion of languages under
+the encoding `encBool` of a pair of expressions as the binary digits of its code
+(`not_machineDecidable_modelLeBool`), or under any encoding that a machine computes from `encBool`
+(`not_machineDecidable_modelLeBool_of_conv`). The machine-level statement is the case of Theorem 18
+where the predicate is inclusion of languages itself (`not_machineDecidable_between_bool`).
 
 ## References
 
@@ -25,11 +25,11 @@ itself (`not_machineDecidable_between_bool`).
 namespace DiagonaLean.KAComm.ModelLeBool.Reduction
 
 open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing TD DiagonaLean.Synthetic.Definitions
-  DiagonaLean.Synthetic.Notation DiagonaLean.Halt.Undecidable
+  DiagonaLean.Halt.Undecidable
 
-/-- **The failure of inclusion of languages over `{0, 1}` is `Undecidable`.** -/
-def undecidableNotModelLeBool : Undecidable (Complement ModelLeBoolProblem) :=
-  haltReducesNotModelLeBool
+/-- The former name of `KAComm.ModelLeBool.synthComplFromHalt`. -/
+@[deprecated DiagonaLean.KAComm.ModelLeBool.synthComplFromHalt (since := "2026-11-23")]
+abbrev undecidableNotModelLeBool := @DiagonaLean.KAComm.ModelLeBool.synthComplFromHalt
 
 /-- **No Turing machine decides inclusion of languages over `{0, 1}`.** -/
 theorem not_machineDecidable_modelLeBool : ¬ MachineDecidable encBool ModelLeBoolProblem :=

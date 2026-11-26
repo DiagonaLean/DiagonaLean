@@ -135,7 +135,7 @@ theorem not_machineDecidable_toEmpty
   not_machineDecidable_of_not_computablePred henc not_computablePred_toEmpty
 
 /-- Rewriting to the empty string is the word problem with target `[]`. -/
-def toEmptyReducesSemiThue {T : Type} : @ToEmptyProblem T ⪯ₘ @DecisionProblem T :=
+def toEmptyReducesSemiThue {T : Type} : @ToEmptyProblem T ⪯_s @DecisionProblem T :=
   ⟨fun x => (x.1, x.2, []), fun _ => Iff.rfl⟩
 
 /-- **The word problem for string rewriting systems is not a computable predicate** (Post, Markov

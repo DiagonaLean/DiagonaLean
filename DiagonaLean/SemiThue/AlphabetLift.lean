@@ -17,16 +17,17 @@ functor on synchronizing codes (`semiThueFunctor`): encoding every word keeps le
 (`Foundations.Codes.derives_encode_iff`). The plain word problem is not: an empty left side
 matches inside a block.
 
-The reductions from the halting problem produce systems with non-empty left sides, so the
-restricted problem is undecidable over `Alpha ℕ Sym2`, both as `Undecidable` and at machine level.
-The lifting of `Foundations.Codes.Functor` moves it to every alphabet with two distinct letters,
-and `posReduces` returns to the plain word problem, sending a system with an empty left side to a
-fixed instance without solution. The `Undecidable` statements obtained this way are in
-`Undecidable.lean` (`undecidableSemiThuePosOf`, `undecidableSemiThueOf`, `undecidableSemiThueBool`).
+The reductions from the halting problem produce systems with non-empty left sides, so the restricted
+problem is undecidable over `Alpha ℕ Sym2`, both by a synthetic halting reduction and at machine
+level. The lifting of `Foundations.Codes.Functor` moves it to every alphabet with two distinct
+letters, and `SemiThue.synthFromPos` returns to the plain word problem, sending a system with an
+empty left side to a fixed instance without solution. The `SynthHaltReduction` statements obtained
+this way are in `Undecidable.lean` (`SemiThue.synthPosFromHaltOver`, `SemiThue.synthFromHaltOver`,
+`SemiThue.synthFromHaltBool`).
 
 ## Main statements
 
-* `semiThueFunctor`, `posReduces`.
+* `semiThueFunctor`, `SemiThue.synthFromPos`.
 * `not_computablePred_semiThuePosOf`, `not_computablePred_semiThueOf`,
   `not_machineDecidable_semiThueOf`: over every nontrivial `Primcodable` alphabet.
 * `semiThuePos_manyOneEquiv`: the restricted problem is many-one equivalent over any two such
@@ -35,7 +36,7 @@ fixed instance without solution. The `Undecidable` statements obtained this way 
 
 namespace DiagonaLean.SemiThue
 
-open Foundations.Grammar Foundations.Codes DiagonaLean.Synthetic.Notation
+open Foundations.Grammar Foundations.Codes DiagonaLean.Synthetic.Definitions
 
 variable {α T : Type}
 
@@ -60,7 +61,7 @@ def posToWord (a : T) (x : SRS T × List T × List T) : SRS T × List T × List 
   bif x.1.all (fun lr => !(lr.1.length == 0)) then x else ([], [a], [])
 
 /-- `posToWord a` witnesses the reduction from the restricted word problem to the plain one. -/
-theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯ₘ[posToWord a] @DecisionProblem T := by
+theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯_s[posToWord a] @DecisionProblem T := by
   intro x
   have hall : x.1.all (fun lr => !(lr.1.length == 0)) = true ↔ ∀ lr ∈ x.1, lr.1 ≠ [] := by
     simp [List.all_eq_true]
@@ -73,8 +74,13 @@ theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯ₘ[posToWord a] @Deci
   · exact and_iff_right (hall.1 h)
 
 /-- The restricted word problem many-one reduces to the plain one, given a letter. -/
-def posReduces (a : T) : @DecisionProblemPos T ⪯ₘ @DecisionProblem T :=
+def _root_.DiagonaLean.SemiThue.synthFromPos (a : T) :
+    @DecisionProblemPos T ⪯_s @DecisionProblem T :=
   ⟨posToWord a, posToWord_spec a⟩
+
+/-- The former name of `SemiThue.synthFromPos`. -/
+@[deprecated DiagonaLean.SemiThue.synthFromPos (since := "2026-11-23")]
+abbrev posReduces := @DiagonaLean.SemiThue.synthFromPos
 
 namespace MachineLevel
 
@@ -102,7 +108,7 @@ nontrivial alphabet.** -/
 theorem not_computablePred_semiThueOf [Primcodable α] [Nontrivial α] :
     ¬ ComputablePred (@DecisionProblem α) := by
   obtain ⟨a, -, -⟩ := exists_pair_ne α
-  refine not_computablePred_of_reduces (posReduces a) (Primrec.to_comp ?_)
+  refine not_computablePred_of_reduces (SemiThue.synthFromPos a) (Primrec.to_comp ?_)
     not_computablePred_semiThuePosOf
   show Primrec (posToWord a)
   unfold posToWord

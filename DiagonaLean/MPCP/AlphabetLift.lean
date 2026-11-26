@@ -17,8 +17,8 @@ renaming of letters is such a code (`mpcp_map_iff`).
 
 MPCP is thus a functor on codes (`mpcpFunctor`), and the lifting of `Foundations.Codes.Functor`
 applies: MPCP over an alphabet with decidable equality many-one reduces to MPCP over any alphabet
-with two distinct letters (`mpcpAlphabetLift`). `Undecidable.lean` and `MachineLevel.lean` apply
-it to the reduction from the halting problem.
+with two distinct letters (`MPCP.synthAlphabetLift`). `Undecidable.lean` and `MachineLevel.lean`
+apply it to the reduction from the halting problem.
 -/
 
 namespace DiagonaLean.MPCP
@@ -29,7 +29,7 @@ variable {α β : Type}
 
 /-- MPCP solvability as a correspondence of pairs after the start pair. -/
 theorem decisionProblem_iff_isCorr (c : Tile α) (P : Stack α) :
-    DecisionProblem c P ↔ ∃ B, IsCorr ((c :: P).map Tile.toPair) c.toPair B := by
+    Solvable c P ↔ ∃ B, IsCorr ((c :: P).map Tile.toPair) c.toPair B := by
   constructor
   · rintro ⟨A, hA, h⟩
     exact ⟨_, isCorr_map_toPair_iff.2 ⟨A, rfl, hA, h⟩⟩
@@ -40,7 +40,7 @@ theorem decisionProblem_iff_isCorr (c : Tile α) (P : Stack α) :
 /-- **Changing the alphabet of MPCP.** Encoding the tiles, the start tile included, by a code
 preserves and reflects solvability. -/
 theorem decisionProblem_encode_iff {e : α → List β} (he : IsCode e) (c : Tile α) (P : Stack α) :
-    DecisionProblem (c.encode e) (P.encode e) ↔ DecisionProblem c P := by
+    Solvable (c.encode e) (P.encode e) ↔ Solvable c P := by
   have h : (c.encode e :: P.encode e).map Tile.toPair =
       ((c :: P).map Tile.toPair).map (encodePair e) := by
     simp [Stack.encode, Tile.toPair_encode]
@@ -54,20 +54,20 @@ theorem decisionProblem_encode_iff {e : α → List β} (he : IsCode e) (c : Til
 
 /-- Renaming the letters of the tiles injectively preserves and reflects MPCP solvability. -/
 theorem mpcp_map_iff (g : α → β) (hg : Function.Injective g) (c : Tile α) (P : Stack α) :
-    DecisionProblem c P ↔ DecisionProblem (Tile.map g c) (P.map (Tile.map g)) := by
+    Solvable c P ↔ Solvable (Tile.map g c) (P.map (Tile.map g)) := by
   rw [← Tile.encode_unit_comp]
   exact (decisionProblem_encode_iff (isCode_unit.comp hg) c P).symm
 
 namespace Reduction
 
-open DiagonaLean.Synthetic.Notation
+open DiagonaLean.Synthetic.Definitions
 
 /-- **MPCP as a functor on codes**: an instance is a start tile and a stack, a code encodes every
 tile, and codes preserve and reflect solvability. -/
 abbrev mpcpFunctor : CodeFunctor IsCode where
   Inst α := Tile α × Stack α
   map c x := (x.1.encode c, x.2.encode c)
-  Prob x := DecisionProblem x.1 x.2
+  Prob x := DecisionProblem x
   map_unit _ := Prod.ext (Tile.encode_unit _) (Stack.encode_unit _)
   map_kcomp c₁ c₂ _ := Prod.ext (Tile.encode_kcomp c₁ c₂ _) (Stack.encode_kcomp c₁ c₂ _)
   natural hc x := decisionProblem_encode_iff hc x.1 x.2
@@ -78,10 +78,15 @@ abbrev mpcpFunctor : CodeFunctor IsCode where
 /-- MPCP over an alphabet `γ` with decidable equality many-one reduces to MPCP over any alphabet
 with two distinct letters, by encoding every tile with the code of the letters of the instance
 (`Foundations.Codes.CodeFunctor.lift`). -/
-def mpcpAlphabetLift {γ : Type} [DecidableEq γ] (b0 b1 : α) (hne : b0 ≠ b1) :
-    (fun x : Tile γ × Stack γ => DecisionProblem x.1 x.2) ⪯ₘ
-      fun x : Tile α × Stack α => DecisionProblem x.1 x.2 :=
+def _root_.DiagonaLean.MPCP.synthAlphabetLift {γ : Type} [DecidableEq γ] (b0 b1 : α)
+    (hne : b0 ≠ b1) :
+    (@MPCP.DecisionProblem γ) ⪯_s
+      (@MPCP.DecisionProblem α) :=
   mpcpFunctor.lift b0 b1 hne
+
+/-- The former name of `MPCP.synthAlphabetLift`. -/
+@[deprecated DiagonaLean.MPCP.synthAlphabetLift (since := "2026-11-23")]
+abbrev mpcpAlphabetLift := @DiagonaLean.MPCP.synthAlphabetLift
 
 end Reduction
 

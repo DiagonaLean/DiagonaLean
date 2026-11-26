@@ -3,11 +3,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Akhilesh Balaji
 ```
 # `PCP.Reductions`: Post's Correspondence Problem Reductions
-1. [`MPCP ⪯ₘ PCP`](#mpcp-ₘ-pcp)
-2. [`Halt ⪯ₘ PCP`](#halt-ₘ-pcp)
+1. [`MPCP ⪯_s PCP`](#mpcp-ₘ-pcp)
+2. [`Halt ⪯_s PCP`](#halt-ₘ-pcp)
 
-## `MPCP ⪯ₘ PCP`
-Given an MPCP instance `(c, R)` (a distinguished tile `c` and a stack `R`), we construct a PCP instance `mpcpToPcp c R` such that `MPCP.DecisionProblem c R ↔ PCP.DecisionProblem (mpcpToPcp c R)` (`mpcp_iff_pcp`). `mpcp_reducesto_pcp_spec` restates it as the many-one reduction `MPCP.DecisionProblem ⪯ₘ[fun x => mpcpToPcp x.1 x.2] PCP.DecisionProblem` on pairs `(c, R)`, and `mpcpReducesPCP` packages it.
+## `MPCP ⪯_s PCP`
+Given an MPCP instance `(c, R)` (a distinguished tile `c` and a stack `R`), we construct a PCP instance `mpcpToPcp c R` such that `MPCP.Solvable c R ↔ PCP.DecisionProblem (mpcpToPcp c R)` (`mpcp_iff_pcp`). `mpcp_reducesto_pcp_spec` restates it as the many-one reduction `MPCP.DecisionProblem ⪯_s[fun x => mpcpToPcp x.1 x.2] PCP.DecisionProblem` on pairs `(c, R)`, and `PCP.synthFromMPCP` packages it.
 
 ### Alphabet Extension
 The alphabet `α` is extended with two fresh markers, `Ext α = α | ⋕ | ₹`, where `{⋕,₹} ∩ α = ∅` by construction. A letter `a : α` is lifted to `↟a : Ext α`.
@@ -63,8 +63,8 @@ The generalized lemma proceeds by induction on the remaining stack, maintaining 
 - End tile: `hashR_append_rupee_inj` forces `u = v`, closing the match with an empty MPCP solution.
 - Regular tile `tileReg s`: extend `u ← u ++ s.top` and `v ← v ++ s.bot` and recurse.
 
-## `Halt ⪯ₘ PCP`
-`Halt_to_PCP.lean` composes `Halt ⪯ₘ MPCP` with `MPCP ⪯ₘ PCP`. The machine is first normalized (`Foundations/Computability/Normalize/`) so that it meets the side conditions of the MPCP reduction, and the states of the machine are encoded as natural numbers (`pcpRed`, `pcpRed_iff`). `AlphabetLift` then lifts the instance to the fixed alphabet `Ext (Alpha ℕ Bool)`. The reduction function is `haltToPcp`, `halt_reducesto_pcp_spec` gives `HaltProblem ⪯ₘ[haltToPcp] PCP.DecisionProblem`, and `haltReducesPCP` packages it.
+## `Halt ⪯_s PCP`
+`Halt_to_PCP.lean` composes `Halt ⪯_s MPCP` with `MPCP ⪯_s PCP`. The machine is first normalized (`Foundations/Computability/Normalize/`) so that it meets the side conditions of the MPCP reduction, and the states of the machine are encoded as natural numbers (`pcpRed`, `pcpRed_iff`). `AlphabetLift` then lifts the instance to the fixed alphabet `Ext (Alpha ℕ Bool)`. The reduction function is `haltToPcp`, `halt_reducesto_pcp_spec` gives `HaltProblem ⪯_s[haltToPcp] PCP.DecisionProblem`, and `PCP.synthFromHalt` packages it.
 
 ### Undecidability
-`Undecidable.lean` collects `undecidablePCP'`, which states that PCP over the fixed alphabet `Ext (Alpha ℕ Bool)` is `Undecidable`, and `undecidablePCP b0 b1 hne`, which transports it along `AlphabetLift.pcpAlphabetLift` to any alphabet with two distinct letters `b0` and `b1`. `MachineLevel.lean` collects `not_computablePred_pcp` and `not_machineDecidable_pcp`: over any nontrivial `Primcodable` alphabet, PCP is not a computable predicate, and no Turing machine decides it under any computable encoding. They follow from `MPCP.MachineLevel.not_computablePred_mpcp` along `mpcpReducesPCP` and `pcpAlphabetLift`, whose functions are primitive recursive (`mpcpToPcp_primrec`, `liftInstance_primrec`).
+`Undecidable.lean` collects `PCP.synthFromHalt`, which states that PCP over the fixed alphabet `Ext (Alpha ℕ Bool)` is synthetically halting-hard, and `PCP.synthFromHaltOver b0 b1 hne`, which transports it along `PCP.synthAlphabetLift` to any alphabet with two distinct letters `b0` and `b1`. `MachineLevel.lean` collects `not_computablePred_pcp` and `not_machineDecidable_pcp`: over any nontrivial `Primcodable` alphabet, PCP is not a computable predicate, and no Turing machine decides it under any computable encoding. They follow from `MPCP.MachineLevel.not_computablePred_mpcp` along `PCP.synthFromMPCP` and `PCP.synthAlphabetLift`, whose functions are primitive recursive (`mpcpToPcp_primrec`, `liftInstance_primrec`).

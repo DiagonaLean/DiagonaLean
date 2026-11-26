@@ -21,10 +21,14 @@ import DiagonaLean.Foundations.Computability.HaltCanon
 * `¬ MachineDecidable enc q`, with `h` proved: `HaltHard.not_machineDecidable ⟨h.trans r⟩ _`,
   leaving `Computable enc`.
 
-A proved goal with a synthetic source is an error: a halting reduction is upgraded at its root,
-from canonical machines (`HaltCanon`), not by a computability proof. The goals the tactic leaves,
-the computability of an upgraded link and of the encoding, are tried with `assumption` and
-`fun_prop`; whatever these do not close stays open.
+A proved goal with a synthetic source is an error: a halting reduction is upgraded at its root, from
+canonical machines (`HaltCanon`), not by a computability proof. The goals the tactic leaves, the
+computability of an upgraded link and of the encoding, are tried with `assumption` and `fun_prop`;
+whatever these do not close stays open. For a link `r`, `r.f` is first reduced to the function `r`
+was built from, with that function kept folded (`unfoldField`), so that its own `fun_prop` lemma
+applies: the links `PCP.synthFromMPCP`, `PCP.synthAlphabetLift`, `MatMort.synthFromPCP`,
+`EmpCFG.synthCodeFromPCP` and `AmbigCFG.synthCodeFromPCP` are upgraded with no goal left. A link
+function that is an `abbrev` is unfolded by `fun_prop` itself, so it should be a `def` with a lemma.
 
 `h` is a term, possibly applied, so a source needs no registration. Reductions are recognised by
 their type after unfolding abbreviations: `SynthReduction` (with `SynthHaltReduction` and the
@@ -65,13 +69,15 @@ def goalOf? (tgt : Expr) : MetaM (Option Goal) := do
     if (← whnfR t.appArg!).isAppOf ``ComputableReduction then return some .hard
   return none
 
-/-- The layer of the term `stx`, or an error naming it. -/
-def layerOfTerm (stx : Term) (role : String) : TacticM Layer := do
-  let e ← elabTerm stx none
+/-- The layer of the term `stx`, or an error naming it. Only the head of its type matters, so the
+term is elaborated with its instances postponed (a link's source alphabet may be implicit, fixed
+only by the goal) and the elaboration is discarded. -/
+def layerOfTerm (stx : Term) (role : String) : TacticM Layer := withoutModifyingState do
+  let e ← elabTerm stx none (mayPostpone := true)
   match ← layerOf? (← inferType e) with
   | some l => return l
   | none => throwError "reduce_from: the {role} `{stx}` is not a reduction: its type is{indentExpr
-      (← inferType e)}\nexpected a `SynthReduction` (`⪯ₘ`, `SynthHaltReduction`) or a \
+      (← inferType e)}\nexpected a `SynthReduction` (`⪯_s`, `SynthHaltReduction`) or a \
       `ComputableReduction` (`HaltReduction`)"
 
 /-- Run `tac` on each of `gs`, keeping the goals it does not close. -/
@@ -91,6 +97,28 @@ def tryOn (gs : List MVarId) (tac : TacticM Unit) : TacticM (List MVarId) := do
       left := left ++ [g]
   return left
 
+/-- Reduce a projection `r.f` of a reduction to the function it was built from, unfolding only the
+definitions that `r` is built from, one step at a time. The function itself stays folded (a named
+function such as `matImage`, not its body), so that `fun_prop` can use its lemma. -/
+partial def unfoldField (e : Expr) (fuel : Nat := 64) : MetaM Expr := do
+  if fuel = 0 then return e
+  let e ← whnfCore e
+  match e.getAppFn with
+  | .const n _ =>
+    -- a projection function applied to its structure: unfold it to a primitive projection
+    let some info ← getProjectionFnInfo? n | return e
+    if e.getAppNumArgs ≤ info.numParams then return e
+    let some e' ← delta? e (· == n) | return e
+    unfoldField e'.headBeta (fuel - 1)
+  | .proj S i r =>
+    -- a stuck primitive projection: unfold the structure by one step
+    let r' ← match ← unfoldDefinition? r with
+      | some r' => pure r'
+      | none => unfoldField r (fuel - 1)
+    if r' == r then return e
+    unfoldField (mkAppN (.proj S i r') e.getAppArgs) (fuel - 1)
+  | _ => return e
+
 /-- On a goal `Computable e` or `Primrec e`, unfold `e` to its function: a link's field `r.f`
 reduces to the function it was built from, which `fun_prop` can then read. -/
 def unfoldFunction : TacticM Unit := withMainContext do
@@ -99,7 +127,7 @@ def unfoldFunction : TacticM Unit := withMainContext do
   let some (f, mk) := (if tgt.isAppOf ``Computable || tgt.isAppOf ``Primrec then
       some (tgt.appArg!, fun e => mkApp tgt.appFn! e) else none)
     | throwError "not a computability goal"
-  let f' ← whnf f
+  let f' ← unfoldField f
   if f' == f then throwError "nothing to unfold"
   replaceMainGoal [← g.change (mk f')]
 
@@ -121,7 +149,7 @@ elab "reduce_from " h:term:max " via " r:term : tactic => withMainContext do
         `(DiagonaLean.Foundations.Computability.HaltReduction.toSynthHalt $h) else pure h
       let rS ← if rl == .proved then
         `(DiagonaLean.Foundations.Computability.ComputableReduction.toSynth $r) else pure r
-      `(DiagonaLean.Synthetic.Notation.SynthHaltReduction.comp $hS $rS)
+      `(DiagonaLean.Synthetic.Definitions.SynthHaltReduction.comp $hS $rS)
     | _ =>
       if hl == .synth then
         throwError "reduce_from: the source `{h}` is a synthetic halting reduction, but the goal \

@@ -5,15 +5,15 @@ Authors: Aalok Thakkar, Prathamesh Turaga
 
 import DiagonaLean.PCP.Reductions.MPCP_to_PCP
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
 import DiagonaLean.PCP.AlphabetLift
 
 @[expose] public section
 
-/-! # Halt ⪯ₘ PCP
+/-! # Halt ⪯_s PCP
 
-The composition `Halt ⪯ₘ MPCP ⪯ₘ PCP`, giving a direct equivalence between halting of a TM
+The composition `Halt ⪯_s MPCP ⪯_s PCP`, giving a direct equivalence between halting of a TM
 `tm` on input `w` and solvability of the PCP instance `mpcpToPcp (startTile tm w) (haltTiles tm)`.
 
 `MPCP_to_PCP` supplies the intermediate step; `Foundations.Computability.Normalize` removes the
@@ -34,7 +34,7 @@ namespace DiagonaLean.PCP.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.MPCP.Reduction DiagonaLean.Halt
   DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability.Normalize
-open DiagonaLean.PCP.AlphabetLift DiagonaLean.Synthetic.Notation
+open DiagonaLean.PCP.AlphabetLift DiagonaLean.Synthetic.Definitions
 
 variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
 
@@ -79,7 +79,7 @@ theorem pcpRed_iff (tm : EncodableTM Symbol) (w : List Symbol)
 
 variable (α : Type*) [Fintype α]
 
-/-- **The reduction.** The function witnessing `HaltProblem ⪯ₘ PCP.DecisionProblem`: it
+/-- **The reduction.** The function witnessing `HaltProblem ⪯_s PCP.DecisionProblem`: it
 normalizes the machine and input to satisfy `NoBlankWrites`/`NoLeftBoundary`, encodes states via
 `pcpRed` (using `tm.stateEncodable`, composed with the hand-written `Encodable` instance for the
 normalizer's `Ctrl` control states, to stay computable), and lifts the result to the fixed
@@ -91,7 +91,7 @@ def haltToPcp (p : EncodableTM Bool × List Bool) : Stack (Ext (Alpha ℕ Bool))
 alphabet `Ext (Alpha ℕ Bool)`. Combines TM normalization, MPCP reduction, and alphabet
 lifting. -/
 theorem halt_reducesto_pcp_spec :
-    HaltProblem ⪯ₘ[haltToPcp] (@DecisionProblem (Ext (Alpha ℕ Bool))) := by
+    HaltProblem ⪯_s[haltToPcp] (@DecisionProblem (Ext (Alpha ℕ Bool))) := by
   rintro ⟨tm, w⟩
   show Halts tm.toSingleTapeTM w ↔ _
   let normTMEnc := normEnc tm
@@ -104,9 +104,14 @@ theorem halt_reducesto_pcp_spec :
     (pcpRed normTMEnc (encInput w))
     (by decide)
 
-/-- The halting problem many-one reduces to PCP over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/
-def haltReducesPCP :
-    HaltProblem ⪯ₘ (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
+/-- **PCP is synthetically halting-hard over the fixed alphabet `Ext (Alpha ℕ Bool)`.** The halting
+problem many-one reduces to PCP over the fixed alphabet `Ext (Alpha ℕ Bool)`. -/
+def _root_.DiagonaLean.PCP.synthFromHalt :
+    HaltProblem ⪯_s (@DecisionProblem (Ext (Alpha ℕ Bool))) :=
   ⟨haltToPcp, halt_reducesto_pcp_spec⟩
+
+/-- The former name of `PCP.synthFromHalt`. -/
+@[deprecated DiagonaLean.PCP.synthFromHalt (since := "2026-11-23")]
+abbrev haltReducesPCP := @DiagonaLean.PCP.synthFromHalt
 
 end DiagonaLean.PCP.Reduction

@@ -3,9 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude Sonnet 4.6, Akhilesh Balaji
 ```
 # `AmbigCFG.Reductions`: Deciding the ambiguity of CFGs
-1. [`PCP ⪯ₘ AmbigCFG`](#pcp-ₘ-ambigcfg)
+1. [`PCP ⪯_s AmbigCFG`](#pcp-ₘ-ambigcfg)
 
-## `PCP ⪯ₘ AmbigCFG`
+## `PCP ⪯_s AmbigCFG`
 Given a PCP instance `P : Stack α`, construct a context-free grammar `P.toGrammar` such that `PCP.DecisionProblem P ↔ AmbigCFG.DecisionProblem P.toGrammar` (`pcp_iff_ambigcfg`).
 
 The grammar `P.toGrammar` has three nonterminals:
@@ -60,10 +60,10 @@ So one tree goes via `S → A` (child yielding `encodeA is₁`) and the other vi
 | `ptA_yield_inj` / `ptB_yield_inj` | `A`/`B`-trees determined by yield |
 | `rule_shape` | every rule has one of six explicit shapes |
 
-An instance bundles the grammar with the number of tiles of the PCP instance (`AmbigCFGInstance`), so that all instances share one type. The reduction `pcpToAmbigCFG` sends `P` to `⟨P.length, Stack.toGrammar P⟩`, `pcp_reducesto_ambigCFG_spec` states `PCP.DecisionProblem ⪯ₘ[pcpToAmbigCFG] (fun G => AmbigCFG.DecisionProblem G.2)`, and `pcpReducesAmbigCFG` packages the two.
+An instance bundles the grammar with the number of tiles of the PCP instance (`AmbigCFGInstance`), so that all instances share one type. The reduction `pcpToAmbigCFG` sends `P` to `⟨P.length, Stack.toGrammar P⟩`, `pcp_reducesto_ambigCFG_spec` states `PCP.DecisionProblem ⪯_s[pcpToAmbigCFG] (fun G => AmbigCFG.DecisionProblem G.2)`, and `AmbigCFG.synthFromPCP` packages the two.
 
 ### Undecidability
-`Undecidable.lean` collects `undecidableAmbigCFG b0 b1 hne`: CFG ambiguity is `Undecidable` over any alphabet with two distinct letters `b0` and `b1`. It is obtained with `reduce_from_pcp` from `pcpReducesAmbigCFG`.
+`Undecidable.lean` collects `AmbigCFG.synthFromHaltOver b0 b1 hne`: CFG ambiguity is synthetically halting-hard over any alphabet with two distinct letters `b0` and `b1`. It is obtained with `reduce_from_pcp` from `AmbigCFG.synthFromPCP`.
 
 ### Machine level
-Mathlib's `ContextFreeGrammar` is not `Primcodable`, so `MachineLevel.lean` states the results for grammar codes over the terminals `α ⊕ ℕ` (`Foundations.Grammar.CFGCode`). The construction is written once as a presentation polymorphic in the names of its three nonterminals and in the terminals that index the tiles (`ambPres`): with `PCPNonterm` and `Fin n` it presents `Stack.toGrammar` (`toCFG_ambPres_abs`), and with `0, 1, 2` and numbers it is the code `ambCode`, the renaming of the first (`ambCode_eq_map`). `Rename.lean` proves that injective renamings of terminals and nonterminals keep and reflect ambiguity (`decisionProblem_map_iff`): renaming maps parse trees to parse trees (`ParseTree.rename`) and their yields to the renamed yields, and is injective on trees when it is injective on the rules (`ParseTree.rename_inj`); the converse renames back with left inverses. The code is primitive recursive in the PCP instance (`ambCode_prim`), so PCP many-one reduces to the ambiguity of codes (`pcp_reducesto_ambigCFGCode_spec`, `pcpReducesAmbigCFGCode`), and `not_computablePred_ambigCFGCode` and `not_machineDecidable_ambigCFGCode` follow from `PCP.MachineLevel.not_computablePred_pcp`.
+Mathlib's `ContextFreeGrammar` is not `Primcodable`, so `MachineLevel.lean` states the results for grammar codes over the terminals `α ⊕ ℕ` (`Foundations.Grammar.CFGCode`). The construction is written once as a presentation polymorphic in the names of its three nonterminals and in the terminals that index the tiles (`ambPres`): with `PCPNonterm` and `Fin n` it presents `Stack.toGrammar` (`toCFG_ambPres_abs`), and with `0, 1, 2` and numbers it is the code `ambCode`, the renaming of the first (`ambCode_eq_map`). `Rename.lean` proves that injective renamings of terminals and nonterminals keep and reflect ambiguity (`decisionProblem_map_iff`): renaming maps parse trees to parse trees (`ParseTree.rename`) and their yields to the renamed yields, and is injective on trees when it is injective on the rules (`ParseTree.rename_inj`); the converse renames back with left inverses. The code is primitive recursive in the PCP instance (`ambCode_prim`), so PCP many-one reduces to the ambiguity of codes (`pcp_reducesto_ambigCFGCode_spec`, `AmbigCFG.synthCodeFromPCP`), and `not_computablePred_ambigCFGCode` and `not_machineDecidable_ambigCFGCode` follow from `PCP.MachineLevel.not_computablePred_pcp`.

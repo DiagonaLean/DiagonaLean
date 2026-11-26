@@ -7,7 +7,7 @@ import DiagonaLean.Foundations.Codes.Unary
 import DiagonaLean.Foundations.Computability.MachineBridge
 import DiagonaLean.Foundations.Computability.Prim
 import DiagonaLean.Foundations.Computability.DerivePrimrec
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 
 @[expose] public section
 
@@ -45,11 +45,11 @@ problem, from any alphabet with decidable equality to any alphabet with two dist
   `Primcodable (F.Inst α)` and `Primcodable (F.Inst β)`, the problem is many-one equivalent in
   Mathlib's sense, once the lift's function is computable both ways: its many-one degree does not
   depend on the alphabet. The reductions are data (`F.lift`); with a computable function they give
-  Mathlib's `ManyOneReducible` (`ManyOneReduces.toManyOneReducible`). Every property closed under
+  Mathlib's `ManyOneReducible` (`SynthReduction.toManyOneReducible`). Every property closed under
   computable many-one reductions transports, for instance being a computable predicate
   (`ComputablePred.computable_of_manyOneReducible`) or recursively enumerable
   (`REPred.of_manyOneReducible`); for a single reduction as data, `not_computablePred_of_reduces`
-  and `REPred.of_reduces` take `p ⪯ₘ q` directly.
+  and `REPred.of_reduces` take `p ⪯_s q` directly.
 
 The tactic `code_lift` (`Codes/Tactic.lean`) applies the matching theorem and closes its side
 goals, leaving what it cannot prove as named goals.
@@ -62,7 +62,7 @@ injectivity (`IsCode`: correspondence problems, grammars) and those that need sy
 
 namespace DiagonaLean.Foundations.Codes
 
-open DiagonaLean.Synthetic.Notation DiagonaLean.Foundations.Computability
+open DiagonaLean.Synthetic.Definitions DiagonaLean.Foundations.Computability
 
 /-! ### Computability of the encodings -/
 
@@ -167,14 +167,15 @@ def CodeFunctor.liftMap [DecidableEq α] (b0 b1 : β) (x : F.Inst α) : F.Inst �
 /-- **The lift.** The problem over an alphabet with decidable equality many-one reduces to it
 over any alphabet with two distinct letters. -/
 def CodeFunctor.lift [LiftableCodes Good] [DecidableEq α] (b0 b1 : β) (hne : b0 ≠ b1) :
-    @F.Prob α ⪯ₘ @F.Prob β :=
+    @F.Prob α ⪯_s @F.Prob β :=
   ⟨F.liftMap b0 b1, fun x => (F.natural_on x (good_localCode hne _)).symm⟩
 
 /-- **The lifting.** Undecidability over an alphabet with decidable equality transfers to every
 alphabet with two distinct letters. -/
-def CodeFunctor.undecidableOf [LiftableCodes Good] [DecidableEq α] (u : Undecidable (@F.Prob α))
-    (b0 b1 : β) (hne : b0 ≠ b1) : Undecidable (@F.Prob β) :=
-  undecidabilityFromReducibility u (F.lift b0 b1 hne)
+def CodeFunctor.undecidableOf [LiftableCodes Good] [DecidableEq α]
+    (u : SynthHaltReduction (@F.Prob α))
+    (b0 b1 : β) (hne : b0 ≠ b1) : SynthHaltReduction (@F.Prob β) :=
+  SynthHaltReduction.comp u (F.lift b0 b1 hne)
 
 /-- **The lifting at machine level, to every nontrivial alphabet**, once the lift's function is
 computable. -/

@@ -33,9 +33,9 @@ The reduction `haltToSemiThue` normalises the machine and its input
 (`Foundations.Computability.Normalize`), so that both conditions hold, takes `tmRules` of the
 normalised machine, and renames its states to their codes, over the fixed alphabet `Alpha ℕ Sym2`.
 `halt_iff_derives` and `Codes.derives_mapRules_iff` make it a reduction from `HaltProblem`
-(`halt_reducesto_semiThue_spec`, `haltReducesSemiThue`). The systems produced have non-empty left
+(`halt_reducesto_semiThue_spec`, `SemiThue.synthFromHalt`). The systems produced have non-empty left
 sides (`haltToSemiThue_lhs_ne`), so it is also a reduction to `DecisionProblemPos`
-(`haltReducesSemiThuePos`).
+(`SemiThue.synthPosFromHalt`).
 -/
 
 namespace DiagonaLean.SemiThue.Reduction
@@ -43,7 +43,7 @@ namespace DiagonaLean.SemiThue.Reduction
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Halt
   DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Grammar
   DiagonaLean.Foundations.Computability.Normalize
-  DiagonaLean.Synthetic.Notation Relation
+  DiagonaLean.Synthetic.Definitions Relation
 
 /-! ### Markers -/
 
@@ -486,7 +486,7 @@ def haltToSemiThue (p : EncodableTM Bool × List Bool) :
     [])
 
 /-- `haltToSemiThue` witnesses the reduction from the halting problem to the word problem. -/
-theorem halt_reducesto_semiThue_spec : HaltProblem ⪯ₘ[haltToSemiThue] DecisionProblem := by
+theorem halt_reducesto_semiThue_spec : HaltProblem ⪯_s[haltToSemiThue] DecisionProblem := by
   rintro ⟨M, w⟩
   show Halts M.toSingleTapeTM w ↔ _
   let := (normEnc M).stateEncodable
@@ -496,10 +496,15 @@ theorem halt_reducesto_semiThue_spec : HaltProblem ⪯ₘ[haltToSemiThue] Decisi
       tmRules_lhs_ne]
   rfl
 
-/-- The halting problem many-one reduces to the word problem for string rewriting systems over
-`Alpha ℕ Sym2`, through `haltToSemiThue`. -/
-def haltReducesSemiThue : HaltProblem ⪯ₘ @DecisionProblem (Alpha ℕ Sym2) :=
+/-- **The word problem for string rewriting systems is synthetically halting-hard**, over
+`Alpha ℕ Sym2`. The halting problem many-one reduces to the word problem for string rewriting
+systems over `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
+def _root_.DiagonaLean.SemiThue.synthFromHalt : HaltProblem ⪯_s @DecisionProblem (Alpha ℕ Sym2) :=
   ⟨haltToSemiThue, halt_reducesto_semiThue_spec⟩
+
+/-- The former name of `SemiThue.synthFromHalt`. -/
+@[deprecated DiagonaLean.SemiThue.synthFromHalt (since := "2026-11-23")]
+abbrev haltReducesSemiThue := @DiagonaLean.SemiThue.synthFromHalt
 
 /-- Every rule of a system produced by the reduction has a non-empty left side. -/
 theorem haltToSemiThue_lhs_ne (p : EncodableTM Bool × List Bool) :
@@ -511,14 +516,18 @@ theorem haltToSemiThue_lhs_ne (p : EncodableTM Bool × List Bool) :
 /-- `haltToSemiThue` witnesses the reduction from the halting problem to the word problem for
 systems with non-empty left sides. -/
 theorem halt_reducesto_semiThuePos_spec :
-    HaltProblem ⪯ₘ[haltToSemiThue] DecisionProblemPos := fun p =>
+    HaltProblem ⪯_s[haltToSemiThue] DecisionProblemPos := fun p =>
   (halt_reducesto_semiThue_spec p).trans (and_iff_right (haltToSemiThue_lhs_ne p)).symm
 
 /-- The halting problem many-one reduces to the word problem for systems with non-empty left sides
 over `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
-def haltReducesSemiThuePos :
-    HaltProblem ⪯ₘ @DecisionProblemPos (Alpha ℕ Sym2) :=
+def _root_.DiagonaLean.SemiThue.synthPosFromHalt :
+    HaltProblem ⪯_s @DecisionProblemPos (Alpha ℕ Sym2) :=
   ⟨haltToSemiThue, halt_reducesto_semiThuePos_spec⟩
+
+/-- The former name of `SemiThue.synthPosFromHalt`. -/
+@[deprecated DiagonaLean.SemiThue.synthPosFromHalt (since := "2026-11-23")]
+abbrev haltReducesSemiThuePos := @DiagonaLean.SemiThue.synthPosFromHalt
 
 end Reduction
 

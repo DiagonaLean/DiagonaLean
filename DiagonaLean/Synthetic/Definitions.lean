@@ -12,9 +12,9 @@ import DiagonaLean.Halt.Basic
 The basic notions of synthetic computability: Boolean deciders (`Decider`, `SDecidable`),
 Turing machine deciders (`TMDeciderFor`, `MachineDecidable`), enumerators (`Enumerator`,
 `SEnumerable`), semi-deciders (`SemiDecider`, `SemiDecidable`), many-one reductions by a fixed
-function (`ReducesVia`, notation `p ⪯ₘ[f] q`) and synthetic many-one reductions as data
-(`SynthReduction`, notation `p ⪯ₘ q`). `Reduction` and `ManyOneReduces` are their former names,
-kept as aliases until existing uses are renamed.
+function (`ReducesVia`, notation `p ⪯_s[f] q`) and synthetic many-one reductions as data
+(`SynthReduction`, notation `p ⪯_s q`). `Reduction` and `ManyOneReduces` are their former names,
+kept as deprecated aliases.
 
 ## References
 
@@ -73,18 +73,19 @@ def SemiDecidable (P : X → Prop) : Prop :=
 
 /-- `ReducesVia f P Q` means `f` many-one reduces `P` to `Q`. Unlike `SynthReduction`, `f` is a
 plain parameter here rather than structurally packaged: `ReducesVia f P Q` is a `Prop` (for a
-*fixed*, already-in-hand `f`), whereas `P ⪯ₘ Q` bundles the choice of `f` itself. It is the
+*fixed*, already-in-hand `f`), whereas `P ⪯_s Q` bundles the choice of `f` itself. It is the
 correctness statement shared by synthetic reductions and reductions proved computable. -/
 def ReducesVia (f : X → Y) (P : X → Prop) (Q : Y → Prop) : Prop :=
   ∀ x, P x ↔ Q (f x)
 
-/-- The former name of `ReducesVia`, kept as an alias until existing uses are renamed. -/
+/-- The former name of `ReducesVia`. -/
+@[deprecated ReducesVia (since := "2026-11-22")]
 abbrev Reduction := @ReducesVia
 
-/-- If `f` many-one reduces `p` to `q` then we write `p ⪯ₘ[f] q`. -/
-notation:50 p " ⪯ₘ[" f "] " q => ReducesVia f p q
+/-- If `f` many-one reduces `p` to `q` then we write `p ⪯_s[f] q`. -/
+notation:50 p " ⪯_s[" f "] " q => ReducesVia f p q
 
-/-- **A synthetic many-one reduction**: `f` witnesses `p ⪯ₘ q` when `p x ↔ q (f x)` for every
+/-- **A synthetic many-one reduction**: `f` witnesses `p ⪯_s q` when `p x ↔ q (f x)` for every
 `x`. *Synthetic* because its only guarantee of computability is that `f` is compiled Lean code,
 checked by `#check_reductions`, not a proof. Packaged as a structure (rather than `∃ f, ...`) so a
 reduction is data: `.f` projects out the witness function directly, without going through
@@ -92,7 +93,7 @@ reduction is data: `.f` projects out the witness function directly, without goin
 
 **Convention, checked by `#check_reductions`.** Lean's logic is classical, so a term of this
 structure exists for almost any non-trivial `p` and `q`: the case split `if p x then a else b`,
-with `q a` and `¬ q b`, is a valid `f` with no algorithmic content. To keep `⪯ₘ` meaningful, every
+with `q a` and `¬ q b`, is a valid `f` with no algorithmic content. To keep `⪯_s` meaningful, every
 reduction is built by a definition that Lean compiles: not `noncomputable`, and without
 `implemented_by`, `extern` or `unsafe`. Lean refuses to compile a case split on an undecided `p x`,
 since the `Decidable (p x)` instance can only come from classical choice. The definition may read
@@ -102,7 +103,7 @@ data carried by its input, such as a machine's `stateEncodable` field (see
 Proofs are never compiled, so a reduction is never stated as a proposition: an undecidability
 result is a definition whose value is the reduction (`Undecidable` is a type), and composing
 results composes their functions. A theorem may take reductions as hypotheses, but may not conclude
-that one exists, as `Nonempty (p ⪯ₘ q)` would.
+that one exists, as `Nonempty (p ⪯_s q)` would.
 
 `#check_reductions` (`Synthetic/ReductionCheck.lean`), run in CI by `scripts/CheckReductions.lean`,
 checks these rules over the library. A reduction that passes runs as a Lean program; that is not a
@@ -111,13 +112,14 @@ hypothesis of `not_machineDecidable_of_halt_reduces`. -/
 structure SynthReduction (p : X → Prop) (q : Y → Prop) where
   /-- The reduction function. -/
   f : X → Y
-  /-- `f` witnesses the reduction: `p ⪯ₘ[f] q`, i.e. `p x ↔ q (f x)` for every `x`. -/
-  hf : p ⪯ₘ[f] q
+  /-- `f` witnesses the reduction: `p ⪯_s[f] q`, i.e. `p x ↔ q (f x)` for every `x`. -/
+  hf : p ⪯_s[f] q
 
-/-- The former name of `SynthReduction`, kept as an alias until existing uses are renamed. -/
+/-- The former name of `SynthReduction`. -/
+@[deprecated SynthReduction (since := "2026-11-22")]
 abbrev ManyOneReduces := @SynthReduction
 
-/-- If `p` many-one reduces to `q` (synthetically) then we write `p ⪯ₘ q`. -/
-notation:50 p " ⪯ₘ " q => SynthReduction p q
+/-- If `p` many-one reduces to `q` (synthetically) then we write `p ⪯_s q`. -/
+notation:50 p " ⪯_s " q => SynthReduction p q
 
 end DiagonaLean.Synthetic.Definitions

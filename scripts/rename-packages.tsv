@@ -1,0 +1,61 @@
+# Phase 3.3: reduction packages under their new names (old → new, both without `DiagonaLean.`).
+# kind: `def` = the declaration is renamed in place (the old name becomes a deprecated alias);
+# `alias` = the old declaration was a copy of another package and is replaced by a deprecated alias.
+# Conventions: `Tgt.synthFromSrc` (a link), `Tgt.synthFromHalt` (a halting reduction), `…Over b0 b1 hne`
+# (any alphabet with two distinct letters), `…Bool`; `synthCompl…` for the complement of a problem.
+# group	old	new	kind
+MPCP	MPCP.Reduction.haltReducesMPCP	MPCP.synthFromHalt	def
+MPCP	MPCP.Reduction.undecidableMPCP	MPCP.synthFromHalt	alias
+MPCP	MPCP.Reduction.undecidableMPCPOf	MPCP.synthFromHaltOver	def
+MPCP	MPCP.Reduction.undecidableMPCPBool	MPCP.synthFromHaltBool	def
+MPCP	MPCP.Reduction.mpcpAlphabetLift	MPCP.synthAlphabetLift	def
+PCP	PCP.Reduction.haltReducesPCP	PCP.synthFromHalt	def
+PCP	PCP.Reduction.undecidablePCP'	PCP.synthFromHalt	alias
+PCP	PCP.Reduction.undecidablePCP	PCP.synthFromHaltOver	def
+PCP	PCP.Reduction.mpcpReducesPCP	PCP.synthFromMPCP	def
+PCP	PCP.AlphabetLift.pcpAlphabetLift	PCP.synthAlphabetLift	def
+MatMort	MatMort.Reduction.pcpReducesMatMort	MatMort.synthFromPCP	def
+MatMort	MatMort.Reduction.undecidableMatMort	MatMort.synthFromHalt	def
+EmpCFG	EmpCFG.Reduction.pcpReducesEmpCFG	EmpCFG.synthFromPCP	def
+EmpCFG	EmpCFG.Reduction.undecidableEmpCFG	EmpCFG.synthFromHaltTerm	def
+EmpCFG	EmpCFG.Reduction.undecidableEmpCFGOf	EmpCFG.synthFromHaltOver	def
+EmpCFG	EmpCFG.Reduction.undecidableEmpCFGBool	EmpCFG.synthFromHaltBool	def
+EmpCFG	EmpCFG.Reduction.empCFGAlphabetLift	EmpCFG.synthAlphabetLift	def
+EmpCFG	EmpCFG.MachineLevel.pcpReducesEmpCFGCode	EmpCFG.synthCodeFromPCP	def
+AmbigCFG	AmbigCFG.Reduction.pcpReducesAmbigCFG	AmbigCFG.synthFromPCP	def
+AmbigCFG	AmbigCFG.Reduction.undecidableAmbigCFG	AmbigCFG.synthFromHaltOver	def
+AmbigCFG	AmbigCFG.MachineLevel.pcpReducesAmbigCFGCode	AmbigCFG.synthCodeFromPCP	def
+AmbigCFG	AmbigCFG.MachineLevel.undecidableAmbigCFGCodeOf	AmbigCFG.synthCodeFromHaltOver	def
+SemiThue	SemiThue.Reduction.haltReducesSemiThue	SemiThue.synthFromHalt	def
+SemiThue	SemiThue.Reduction.undecidableSemiThue	SemiThue.synthFromHalt	alias
+SemiThue	SemiThue.Reduction.undecidableSemiThueOf	SemiThue.synthFromHaltOver	def
+SemiThue	SemiThue.Reduction.undecidableSemiThueBool	SemiThue.synthFromHaltBool	def
+SemiThue	SemiThue.Reduction.haltReducesSemiThuePos	SemiThue.synthPosFromHalt	def
+SemiThue	SemiThue.Reduction.undecidableSemiThuePosOf	SemiThue.synthPosFromHaltOver	def
+SemiThue	SemiThue.posReduces	SemiThue.synthFromPos	def
+GrammarMem	GrammarMem.Reduction.haltReducesGrammarMem	GrammarMem.synthFromHalt	def
+GrammarMem	GrammarMem.Reduction.undecidableGrammarMem	GrammarMem.synthFromHalt	alias
+GrammarMem	GrammarMem.MachineLevel.emptyWordReducesGrammarMem	GrammarMem.synthFromEmptyWord	def
+KAComm	KAComm.TermEq.Reduction.haltReducesTermEq	KAComm.TermEq.synthFromHalt	def
+KAComm	KAComm.TermEq.Reduction.undecidableTermEq	KAComm.TermEq.synthFromHalt	alias
+KAComm	KAComm.TermEqBool.Reduction.haltReducesTermEqBool	KAComm.TermEqBool.synthFromHalt	def
+KAComm	KAComm.TermEqBool.Reduction.undecidableTermEqBool	KAComm.TermEqBool.synthFromHalt	alias
+KAComm	KAComm.KATermEq.Reduction.haltReducesKATermEq	KAComm.KATermEq.synthFromHalt	def
+KAComm	KAComm.KATermEq.Reduction.undecidableKATermEq	KAComm.KATermEq.synthFromHalt	alias
+KAComm	KAComm.KATermEqBool.Reduction.haltReducesKATermEqBool	KAComm.KATermEqBool.synthFromHalt	def
+KAComm	KAComm.KATermEqBool.Reduction.undecidableKATermEqBool	KAComm.KATermEqBool.synthFromHalt	alias
+KAComm	KAComm.LangEq.Reduction.haltReducesNotLangEq	KAComm.LangEq.synthComplFromHalt	def
+KAComm	KAComm.LangEq.Reduction.undecidableNotLangEq	KAComm.LangEq.synthComplFromHalt	alias
+KAComm	KAComm.LangEqBool.Reduction.haltReducesNotLangEqBool	KAComm.LangEqBool.synthComplFromHalt	def
+KAComm	KAComm.LangEqBool.Reduction.undecidableNotLangEqBool	KAComm.LangEqBool.synthComplFromHalt	alias
+KAComm	KAComm.ModelLe.Reduction.haltReducesNotModelLe	KAComm.ModelLe.synthComplFromHalt	def
+KAComm	KAComm.ModelLe.Reduction.undecidableNotModelLe	KAComm.ModelLe.synthComplFromHalt	alias
+KAComm	KAComm.ModelLeBool.Reduction.haltReducesNotModelLeBool	KAComm.ModelLeBool.synthComplFromHalt	def
+KAComm	KAComm.ModelLeBool.Reduction.undecidableNotModelLeBool	KAComm.ModelLeBool.synthComplFromHalt	alias
+Combinators	BetaConv.Reduction.haltReducesBetaConv	BetaConv.synthFromHaltWith	def
+Combinators	BetaConv.Reduction.undecidableBetaConv	BetaConv.synthFromHalt	def
+Combinators	SKIConv.Reduction.haltReducesSKIConv	SKIConv.synthFromHaltWith	def
+Combinators	SKIConv.Reduction.undecidableSKIConv	SKIConv.synthFromHalt	def
+Rice	Rice.Reduction.haltReducesRice	Rice.synthFromHalt	def
+Rice	Rice.Reduction.undecidableRice	Rice.synthFromHalt	alias
+Rice	Rice.Reduction.undecidableRiceCompl	Rice.synthComplFromHalt	def

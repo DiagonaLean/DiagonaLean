@@ -17,7 +17,7 @@ and then runs a constant machine `W`. The transition table of `W` is the finite 
 through the plain arithmetic of `rowFn`.
 
 `NM` is not tagged `noncomputable`, so it is usable in a reduction under the convention on
-`ManyOneReduces`: the only classical choice is the finite constant `K`. `rowFn` is primitive
+`SynthReduction`: the only classical choice is the finite constant `K`. `rowFn` is primitive
 recursive in `l` (`prim_rowFn`).
 
 ## Main statements

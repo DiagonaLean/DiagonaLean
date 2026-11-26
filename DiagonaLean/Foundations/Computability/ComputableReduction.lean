@@ -9,9 +9,24 @@ import DiagonaLean.Foundations.Computability.MachineBridge
 
 /-! # Reductions proved computable
 
-A `ComputableReduction p q` is a many-one reduction whose function is proved `Computable`: the
-kernel checks its guarantee, unlike a synthetic reduction (`SynthReduction`, `p ⪯ₘ q`), whose only
-guarantee is that its function is compiled code (`#check_reductions`).
+A `ComputableReduction p q` (notation `p ⪯ q`) is a many-one reduction whose function is proved
+`Computable`: the kernel checks its guarantee, unlike a synthetic reduction (`SynthReduction`,
+`p ⪯_s q`), whose only guarantee is that its function is compiled code (`#check_reductions`).
+
+## Notation
+
+The plain symbol is the proved notion; `_s` marks that no proof of computability is attached.
+
+| notation | meaning |
+|---|---|
+| `p ⪯[f] q` | `ComputablyReducesVia f p q`: `f` is computable and `p x ↔ q (f x)` for every `x` |
+| `p ⪯_s[f] q` | `ReducesVia f p q`: `p x ↔ q (f x)` for every `x`, nothing said about `f` |
+| `p ⪯ q` | `ComputableReduction p q`: a function with `p ⪯[f] q`, as data |
+| `p ⪯_s q` | `SynthReduction p q`: a function with `p ⪯_s[f] q`, as data |
+
+A claim `∃ f, p ⪯[f] q` has content: it is Mathlib's `ManyOneReducible p q`
+(`manyOneReducible_iff_exists`). A claim `∃ f, p ⪯_s[f] q` holds classically for almost any `p` and
+`q`, which `#check_reductions` rejects.
 
 It is a separate structure, not an extension of `SynthReduction`. Extending would make every
 proved reduction a synthetic one inside it, which `#check_reductions` rejects (a constructor that
@@ -25,7 +40,8 @@ Since the computability is proved, the existence of a proved reduction has conte
 
 ## Main definitions
 
-* `ComputableReduction`: a function, a proof that it is computable, and its correctness.
+* `ComputablyReducesVia` (`p ⪯[f] q`): a given function is a computable reduction.
+* `ComputableReduction` (`p ⪯ q`): a function, a proof that it is computable, and its correctness.
 * `ComputableReduction.ofSynth`, `ComputableReduction.toSynth`: between the two layers.
 * `ComputableReduction.refl`, `ComputableReduction.trans`: identity and composition.
 * `ComputableReduction.not_computablePred`, `ComputableReduction.not_machineDecidable`:
@@ -38,6 +54,19 @@ open DiagonaLean.Synthetic.Definitions
 
 variable {α β γ : Type*} [Primcodable α] [Primcodable β] [Primcodable γ]
 
+/-- **`f` is a computable many-one reduction from `p` to `q`**: `f` is computable and
+`p x ↔ q (f x)` for every `x`. Unlike `p ⪯_s[f] q`, its existential has content
+(`manyOneReducible_iff_exists`). -/
+def ComputablyReducesVia (f : α → β) (p : α → Prop) (q : β → Prop) : Prop :=
+  Computable f ∧ p ⪯_s[f] q
+
+@[inherit_doc] notation:50 p " ⪯[" f "] " q => ComputablyReducesVia f p q
+
+/-- Mathlib's many-one reducibility is the existence of a computable reduction. -/
+theorem manyOneReducible_iff_exists {p : α → Prop} {q : β → Prop} :
+    ManyOneReducible p q ↔ ∃ f, p ⪯[f] q :=
+  ⟨fun ⟨f, hf, h⟩ => ⟨f, hf, h⟩, fun ⟨f, hf, h⟩ => ⟨f, hf, h⟩⟩
+
 /-- **A many-one reduction proved computable.** -/
 structure ComputableReduction (p : α → Prop) (q : β → Prop) where
   /-- The reduction function. -/
@@ -45,47 +74,54 @@ structure ComputableReduction (p : α → Prop) (q : β → Prop) where
   /-- Its computability, checked by the kernel. -/
   computable : Computable f
   /-- Its correctness: `p x ↔ q (f x)` for every `x`. -/
-  hf : p ⪯ₘ[f] q
+  hf : p ⪯_s[f] q
+
+@[inherit_doc] notation:50 p " ⪯ " q => ComputableReduction p q
 
 namespace ComputableReduction
 
 variable {p : α → Prop} {q : β → Prop} {r : γ → Prop}
 
+/-- The function of a proved reduction is a computable reduction. -/
+theorem red (c : p ⪯ q) : p ⪯[c.f] q := ⟨c.computable, c.hf⟩
+
+/-- A proved reduction from a computable reduction. -/
+def ofRed {f : α → β} (h : p ⪯[f] q) : p ⪯ q := ⟨f, h.1, h.2⟩
+
 /-- Upgrade a synthetic reduction, given a proof that its function is computable. -/
-def ofSynth (s : p ⪯ₘ q) (h : Computable s.f) : ComputableReduction p q :=
+def ofSynth (s : p ⪯_s q) (h : Computable s.f) : p ⪯ q :=
   ⟨s.f, h, s.hf⟩
 
 /-- Forget the proof of computability: a proved reduction is a synthetic one. -/
-def toSynth (c : ComputableReduction p q) : p ⪯ₘ q :=
+def toSynth (c : p ⪯ q) : p ⪯_s q :=
   ⟨c.f, c.hf⟩
 
 /-- The identity reduction. -/
-def refl (p : α → Prop) : ComputableReduction p p :=
+def refl (p : α → Prop) : p ⪯ p :=
   ⟨id, Computable.id, fun _ => Iff.rfl⟩
 
 /-- Proved reductions compose. -/
-def trans (c₁ : ComputableReduction p q) (c₂ : ComputableReduction q r) :
-    ComputableReduction p r :=
+def trans (c₁ : p ⪯ q) (c₂ : q ⪯ r) : p ⪯ r :=
   ⟨c₂.f ∘ c₁.f, c₂.computable.comp c₁.computable, fun x => (c₁.hf x).trans (c₂.hf (c₁.f x))⟩
 
 /-- A proved reduction gives Mathlib's many-one reducibility. -/
-theorem manyOneReducible (c : ComputableReduction p q) : ManyOneReducible p q :=
+theorem manyOneReducible (c : p ⪯ q) : ManyOneReducible p q :=
   ⟨c.f, c.computable, c.hf⟩
 
 /-- `ofSynth` keeps the function. -/
-@[simp] theorem ofSynth_f (s : p ⪯ₘ q) (h : Computable s.f) : (ofSynth s h).f = s.f := rfl
+@[simp] theorem ofSynth_f (s : p ⪯_s q) (h : Computable s.f) : (ofSynth s h).f = s.f := rfl
 
 /-- `toSynth` keeps the function. -/
-@[simp] theorem toSynth_f (c : ComputableReduction p q) : c.toSynth.f = c.f := rfl
+@[simp] theorem toSynth_f (c : p ⪯ q) : c.toSynth.f = c.f := rfl
 
 /-- **Undecidability transfers along a proved reduction.** -/
-theorem not_computablePred (c : ComputableReduction p q) (hp : ¬ ComputablePred p) :
+theorem not_computablePred (c : p ⪯ q) (hp : ¬ ComputablePred p) :
     ¬ ComputablePred q :=
   fun hq => hp (ComputablePred.computable_of_manyOneReducible c.manyOneReducible hq)
 
 /-- **No machine decides the target of a proved reduction from an undecidable predicate**, under
 any computable encoding. -/
-theorem not_machineDecidable (c : ComputableReduction p q) (hp : ¬ ComputablePred p)
+theorem not_machineDecidable (c : p ⪯ q) (hp : ¬ ComputablePred p)
     {enc : β → List Bool} (henc : Computable enc) : ¬ MachineDecidable enc q :=
   not_machineDecidable_of_not_computablePred henc (c.not_computablePred hp)
 

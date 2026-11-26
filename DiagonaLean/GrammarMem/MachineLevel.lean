@@ -132,14 +132,18 @@ theorem not_machineDecidable_emptyWord_type0
   not_machineDecidable_of_not_computablePred henc not_computablePred_emptyWord_type0
 
 /-- Membership of the empty word in a type 0 grammar is membership in a grammar. -/
-def emptyWordReducesGrammarMem :
-    (fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1) ⪯ₘ
+def _root_.DiagonaLean.GrammarMem.synthFromEmptyWord :
+    (fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1) ⪯_s
       @DecisionProblem T :=
   ⟨fun g => (g.1, []), fun _ => Iff.rfl⟩
 
+/-- The former name of `GrammarMem.synthFromEmptyWord`. -/
+@[deprecated DiagonaLean.GrammarMem.synthFromEmptyWord (since := "2026-11-23")]
+abbrev emptyWordReducesGrammarMem := @DiagonaLean.GrammarMem.synthFromEmptyWord
+
 /-- **Membership for grammar codes is not a computable predicate.** -/
 theorem not_computablePred_grammarMem : ¬ ComputablePred (@DecisionProblem T) :=
-  not_computablePred_of_reduces emptyWordReducesGrammarMem
+  not_computablePred_of_reduces GrammarMem.synthFromEmptyWord
     ((Primrec.subtype_val.pair (Primrec.const [])).to_comp) not_computablePred_emptyWord_type0
 
 /-- **No Turing machine decides membership for grammar codes**, under any computable encoding. -/

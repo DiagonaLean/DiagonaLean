@@ -10,7 +10,7 @@ import DiagonaLean.Foundations.Computability.OutputSearch
 
 @[expose] public section
 
-/-! # `HaltProblem ⪯ₘ` SKI convertibility
+/-! # `HaltProblem ⪯_s` SKI convertibility
 
 `reduction U C` sends a `HaltProblem` instance `p` to the pair `(inst U C d, FF)`, where `d` is
 the code of the data of `p` and `inst U C d` is the instance of the race program `C` on `d`. By
@@ -41,13 +41,18 @@ def reduction (U : SKI) (C : Code) (p : EncodableTM Bool × List Bool) : SKI × 
 /-- `reduction U C` reduces `HaltProblem` to SKI convertibility. -/
 theorem halt_reducesto_skiConv_spec {u : Code} {U : SKI} {C : Code} (hu : IsUniversal u)
     (hU : Computes U u.eval) (hC : RaceProg U C) :
-    HaltProblem ⪯ₘ[reduction U C] SKIConvProblem :=
+    HaltProblem ⪯_s[reduction U C] SKIConvProblem :=
   halt_iff_conv hu hU hC
 
 /-- `HaltProblem` many-one reduces to SKI convertibility. -/
-def haltReducesSKIConv {u : Code} (U : SKI) (C : Code) (hu : IsUniversal u)
-    (hU : Computes U u.eval) (hC : RaceProg U C) : HaltProblem ⪯ₘ SKIConvProblem :=
+def _root_.DiagonaLean.SKIConv.synthFromHaltWith {u : Code} (U : SKI) (C : Code)
+    (hu : IsUniversal u) (hU : Computes U u.eval) (hC : RaceProg U C) :
+    HaltProblem ⪯_s SKIConvProblem :=
   ⟨reduction U C, halt_reducesto_skiConv_spec hu hU hC⟩
+
+/-- The former name of `SKIConv.synthFromHaltWith`. -/
+@[deprecated DiagonaLean.SKIConv.synthFromHaltWith (since := "2026-11-23")]
+abbrev haltReducesSKIConv := @DiagonaLean.SKIConv.synthFromHaltWith
 
 /-- The separating instance of a machine: the instance of the reader program `c` on the data of
 `M` on its own code, against `FF`. -/

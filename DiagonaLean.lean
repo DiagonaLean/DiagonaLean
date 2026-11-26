@@ -94,6 +94,7 @@ import DiagonaLean.Rice.Undecidable
 
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
+import DiagonaLean.Synthetic.HaltReduction
 import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 import DiagonaLean.Synthetic.ReductionCheck

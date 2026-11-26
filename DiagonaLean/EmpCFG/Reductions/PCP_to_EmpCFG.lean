@@ -6,12 +6,12 @@ Authors: Aalok Thakkar
 import DiagonaLean.EmpCFG.Basic
 import DiagonaLean.PCP.Basic
 import DiagonaLean.Synthetic.Definitions
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
 @[expose] public section
 
-/-! # PCP ⪯ₘ EmpCFG
+/-! # PCP ⪯_s EmpCFG
 
 Reduction from PCP to EmpCFG following the Hopcroft–Ullman construction. Strings in the intersection
 of `topCFG P` and `botCFG P` encode valid solution tile sequences for the PCP instance `P`. The main
@@ -23,7 +23,7 @@ results are `pcp_iff_nempcfg` and `npcp_iff_empcfg`.
   *Introduction to Automata Theory, Languages, and Computation*][HopcroftMotwaniUllman2006]
 -/
 
-open DiagonaLean.Synthetic.Notation
+open DiagonaLean.Synthetic.Definitions
 
 namespace DiagonaLean.EmpCFG.Reduction
 
@@ -537,12 +537,17 @@ def pcpToEmpCFG (P : Stack α) : ContextFreeGrammar (Term α) × ContextFreeGram
 /-- `pcpToEmpCFG` reduces PCP to the non-emptiness of the intersection of two context-free
 grammars: `P` has a solution iff `topCFG P` and `botCFG P` share a word. -/
 theorem pcp_reducesto_empCFG_spec :
-    @PCP.DecisionProblem α ⪯ₘ[pcpToEmpCFG] @EmpCFG.DecisionProblem (Term α) :=
+    @PCP.DecisionProblem α ⪯_s[pcpToEmpCFG] @EmpCFG.DecisionProblem (Term α) :=
   pcp_iff_nempcfg
 
 /-- PCP many-one reduces to the non-emptiness of the intersection of two context-free grammars,
 through `pcpToEmpCFG`. -/
-def pcpReducesEmpCFG : @PCP.DecisionProblem α ⪯ₘ @EmpCFG.DecisionProblem (Term α) :=
+def _root_.DiagonaLean.EmpCFG.synthFromPCP :
+    @PCP.DecisionProblem α ⪯_s @EmpCFG.DecisionProblem (Term α) :=
   ⟨pcpToEmpCFG, pcp_reducesto_empCFG_spec⟩
+
+/-- The former name of `EmpCFG.synthFromPCP`. -/
+@[deprecated DiagonaLean.EmpCFG.synthFromPCP (since := "2026-11-23")]
+abbrev pcpReducesEmpCFG := @DiagonaLean.EmpCFG.synthFromPCP
 
 end DiagonaLean.EmpCFG.Reduction

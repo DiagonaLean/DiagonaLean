@@ -11,7 +11,7 @@ import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 
 @[expose] public section
 
-/-! # PCP ⪯ₘ AmbigCFG
+/-! # PCP ⪯_s AmbigCFG
 
 Reduction from PCP to CFG ambiguity. Given a PCP instance `P`, the grammar `P.toGrammar` is
 ambiguous iff `P` has a solution. The main result is `pcp_iff_ambigcfg`.
@@ -596,7 +596,7 @@ theorem pcp_iff_ambigcfg (P : Stack α) :
 /-- A context-free grammar over `PCPAlpha` for *some* tile-count `n`, bundled into one
   fixed type. `Stack.toGrammar P`'s own alphabet `PCPAlpha P = Sum α (Fin P.length)`
   depends on `P.length`, so it can't itself be the codomain of a many-one reduction
-  `Stack α → Y` for a single fixed `Y`, which `Undecidable` and `ManyOneReduces` need.
+  `Stack α → Y` for a single fixed `Y`, which `SynthHaltReduction` and `SynthReduction` need.
   Bundling the length alongside the grammar is the standard way to state "CFG
   ambiguity is undecidable" once instances don't all share one alphabet. -/
 abbrev AmbigCFGInstance (α : Type) : Type 1 :=
@@ -608,13 +608,17 @@ def pcpToAmbigCFG (P : Stack α) : AmbigCFGInstance α := ⟨P.length, Stack.toG
 /-- `pcpToAmbigCFG` reduces PCP to CFG ambiguity: `P` has a solution iff its grammar is
   ambiguous. -/
 theorem pcp_reducesto_ambigCFG_spec :
-    @PCP.DecisionProblem α ⪯ₘ[pcpToAmbigCFG]
+    @PCP.DecisionProblem α ⪯_s[pcpToAmbigCFG]
       fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2 :=
   fun P => pcp_iff_ambigcfg P
 
 /-- PCP many-one reduces to CFG ambiguity through `pcpToAmbigCFG`. -/
-def pcpReducesAmbigCFG :
-    @PCP.DecisionProblem α ⪯ₘ fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2 :=
+def _root_.DiagonaLean.AmbigCFG.synthFromPCP :
+    @PCP.DecisionProblem α ⪯_s fun G : AmbigCFGInstance α => AmbigCFG.DecisionProblem G.2 :=
   ⟨pcpToAmbigCFG, pcp_reducesto_ambigCFG_spec⟩
+
+/-- The former name of `AmbigCFG.synthFromPCP`. -/
+@[deprecated DiagonaLean.AmbigCFG.synthFromPCP (since := "2026-11-23")]
+abbrev pcpReducesAmbigCFG := @DiagonaLean.AmbigCFG.synthFromPCP
 
 end DiagonaLean.AmbigCFG.Reduction

@@ -3,9 +3,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Claude Sonnet 4.6, Akhilesh Balaji
 ```
 # `MatMort.Reductions`: The `3 × 3` Matrix Mortality Problem
-1. [`PCP ⪯ₘ MatMort`](#pcp-ₘ-matmort)
+1. [`PCP ⪯_s MatMort`](#pcp-ₘ-matmort)
 
-## `PCP ⪯ₘ MatMort`
+## `PCP ⪯_s MatMort`
 Given a PCP instance `K : Stack S23` (tiles over `{2, 3} = Fin 2`), define the matrix set
 ```
 H(K) = {S, T} ∪ {W(liftS23 t.top, liftS23 t.bot)   | t ∈ K}
@@ -54,8 +54,8 @@ Step 2 (`mortal_iff_exists_prod_of_Ws`): equivalence between mortality and the e
 
 Step 3 (`pcp_if_exists_prod`): from a `W`-sequence with `[1, 0, 1] · prod = [h, h, 1]`, recover the tile sequence. Each matrix is the matrix of a marked or unmarked tile (`exists_marked_of_mem_tileMats`), and the product computes `1` followed by the top words and the marked bottom words (`wProd_markedW`). The base-10 encoding makes `wordToInt` injective (`wordToInt_injective`), so the two words are equal. Removing every `1` from both leaves the lifted top and bottom words, since lifted words contain no `1` (`bots_eq_of_word`); `liftS23` is injective, so `τ1 A = τ2 A`.
 
-The main result is `pcp_iff_matmort`: for any PCP instance `K` over alphabet `{2, 3}`, `K` has a solution iff the matrix set `H(K)` is mortal. `pcp_reducesto_matMort_spec` restates it as `PCP.DecisionProblem ⪯ₘ[matImage] MatMort.DecisionProblem`, and `pcpReducesMatMort` packages it as a many-one reduction.
+The main result is `pcp_iff_matmort`: for any PCP instance `K` over alphabet `{2, 3}`, `K` has a solution iff the matrix set `H(K)` is mortal. `pcp_reducesto_matMort_spec` restates it as `PCP.DecisionProblem ⪯_s[matImage] MatMort.DecisionProblem`, and `MatMort.synthFromPCP` packages it as a many-one reduction.
 
 ### Undecidability
-- `undecidableMatMort`: mortality of finite sets of `3 × 3` integer matrices is `Undecidable`, by reduction from PCP over `{2, 3}`.
-- `not_computablePred_matMort`, `not_machineDecidable_matMort` (`MachineLevel.lean`): it is not a computable predicate, so no Turing machine decides it under any computable encoding. They follow from `PCP.MachineLevel.not_computablePred_pcp` along `pcpReducesMatMort`, whose function `matImage` is primitive recursive (`matImage_primrec`).
+- `MatMort.synthFromHalt`: mortality of finite sets of `3 × 3` integer matrices is synthetically halting-hard, by reduction from PCP over `{2, 3}`.
+- `not_computablePred_matMort`, `not_machineDecidable_matMort` (`MachineLevel.lean`): it is not a computable predicate, so no Turing machine decides it under any computable encoding. They follow from `PCP.MachineLevel.not_computablePred_pcp` along `MatMort.synthFromPCP`, whose function `matImage` is primitive recursive (`matImage_primrec`).

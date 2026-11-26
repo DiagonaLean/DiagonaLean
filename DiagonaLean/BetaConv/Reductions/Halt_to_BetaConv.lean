@@ -10,7 +10,7 @@ import DiagonaLean.Foundations.Computability.OutputSearch
 
 @[expose] public section
 
-/-! # `HaltProblem ⪯ₘ` β-conversion
+/-! # `HaltProblem ⪯_s` β-conversion
 
 `reduction U C` sends a `HaltProblem` instance `p` to the pair `(linst U C d, tr FF)`, where `d`
 is the code of the data of `p` and `linst U C d` is the translation of the SKI instance of the
@@ -44,14 +44,18 @@ def reduction (U : SKI) (C : Code) (p : EncodableTM Bool × List Bool) : Term �
 /-- `reduction U C` reduces `HaltProblem` to β-conversion. -/
 theorem halt_reducesto_betaConv_spec {u : Code} {U : SKI} {C : Code}
     (hu : Foundations.CombinatoryLogic.IsUniversal u) (hU : Computes U u.eval)
-    (hC : RaceProg U C) : HaltProblem ⪯ₘ[reduction U C] BetaConvProblem :=
+    (hC : RaceProg U C) : HaltProblem ⪯_s[reduction U C] BetaConvProblem :=
   halt_iff_betaConv hu hU hC
 
 /-- `HaltProblem` many-one reduces to β-conversion. -/
-def haltReducesBetaConv {u : Code} (U : SKI) (C : Code)
+def _root_.DiagonaLean.BetaConv.synthFromHaltWith {u : Code} (U : SKI) (C : Code)
     (hu : Foundations.CombinatoryLogic.IsUniversal u) (hU : Computes U u.eval)
-    (hC : RaceProg U C) : HaltProblem ⪯ₘ BetaConvProblem :=
+    (hC : RaceProg U C) : HaltProblem ⪯_s BetaConvProblem :=
   ⟨reduction U C, halt_reducesto_betaConv_spec hu hU hC⟩
+
+/-- The former name of `BetaConv.synthFromHaltWith`. -/
+@[deprecated DiagonaLean.BetaConv.synthFromHaltWith (since := "2026-11-23")]
+abbrev haltReducesBetaConv := @DiagonaLean.BetaConv.synthFromHaltWith
 
 /-- The separating instance of a machine: the λ-instance of the reader program `c` on the data
 of `M` on its own code, against `tr FF`. -/

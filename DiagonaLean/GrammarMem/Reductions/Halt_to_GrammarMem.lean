@@ -14,7 +14,7 @@ import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
 `SemiThue.Reduction.haltToSemiThue` (`MachineLevel.ofSRS`: a fresh start symbol and the symbols
 numbered from `1`), and the empty word. Every rule of that system has a non-empty left side
 (`SemiThue.Reduction.haltToSemiThue_lhs_ne`), so the empty word is in the language iff the machine
-halts (`halt_reducesto_grammarMem_spec`, `haltReducesGrammarMem`).
+halts (`halt_reducesto_grammarMem_spec`, `GrammarMem.synthFromHalt`).
 
 ## References
 
@@ -26,7 +26,7 @@ halts (`halt_reducesto_grammarMem_spec`, `haltReducesGrammarMem`).
 namespace DiagonaLean.GrammarMem.Reduction
 
 open DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.SemiThue.Reduction
-  DiagonaLean.GrammarMem.MachineLevel DiagonaLean.Synthetic.Notation
+  DiagonaLean.GrammarMem.MachineLevel DiagonaLean.Synthetic.Definitions
 
 variable {T : Type}
 
@@ -38,12 +38,16 @@ def haltToGrammarMem (p : EncodableTM Bool × List Bool) : GrammarCode T × List
 /-- `haltToGrammarMem` witnesses the reduction from the halting problem to membership for grammar
 codes. -/
 theorem halt_reducesto_grammarMem_spec :
-    HaltProblem ⪯ₘ[haltToGrammarMem] @DecisionProblem T := fun p =>
+    HaltProblem ⪯_s[haltToGrammarMem] @DecisionProblem T := fun p =>
   (halt_reducesto_semiThue_spec p).trans (emptyWord_ofSRS_iff _ _ (haltToSemiThue_lhs_ne p)).symm
 
-/-- The halting problem many-one reduces to membership for grammar codes, through
-`haltToGrammarMem`. -/
-def haltReducesGrammarMem : HaltProblem ⪯ₘ @DecisionProblem T :=
+/-- **Membership for grammar codes is synthetically halting-hard.** The halting problem many-one
+reduces to membership for grammar codes, through `haltToGrammarMem`. -/
+def _root_.DiagonaLean.GrammarMem.synthFromHalt : HaltProblem ⪯_s @DecisionProblem T :=
   ⟨haltToGrammarMem, halt_reducesto_grammarMem_spec⟩
+
+/-- The former name of `GrammarMem.synthFromHalt`. -/
+@[deprecated DiagonaLean.GrammarMem.synthFromHalt (since := "2026-11-23")]
+abbrev haltReducesGrammarMem := @DiagonaLean.GrammarMem.synthFromHalt
 
 end DiagonaLean.GrammarMem.Reduction
