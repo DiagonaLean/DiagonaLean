@@ -156,3 +156,60 @@ DiagonaLean/Foundations/Computability/DerivePrimrec.lean:3: `: command` defines 
 /-- info: T.lean:1: `: command` defines a command, which can change the environment -/
 #guard_msgs in
 #eval report "elab (name := derivePrimrec) \"a\" : command => pure ()"
+
+/-! ### Rules for existing command or term syntax (the `expander` rule)
+
+A `macro_rules` on `#check_reductions local` silenced the check, and one on `¬` made a theorem
+that reads `¬ ComputablePred P` state `True ∨ ComputablePred P`; neither was reported before
+2026-11-26. Rules on tactic syntax stay allowed: the kernel checks every proof. -/
+
+/-- info:
+T.lean:1: `macro_rules` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority
+T.lean:2: `macro_rules` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority
+T.lean:3: `elab_rules` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority -/
+#guard_msgs in
+#eval report "macro_rules | `(#check_reductions local) => `(#print \"x\")\n\
+  macro_rules | `(¬ $p) => `(True ∨ $p)\n\
+  elab_rules : term | `(¬ $p) => pure (Lean.mkConst ``True)"
+
+-- Wrapped in `open … in` or `set_option … in`, `local`, or as the second pattern of an alternative.
+/-- info:
+T.lean:1: `macro_rules` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority
+T.lean:2: `macro_rules` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority
+T.lean:3: `macro_rules` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority
+T.lean:4: `macro_rules` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority -/
+#guard_msgs in
+#eval report "open Lean in macro_rules | `(¬ $p) => `(True ∨ $p)\n\
+  set_option hygiene false in macro_rules | `(¬ $p) => `(True ∨ $p)\n\
+  local macro_rules | `(¬ $p) => `(True ∨ $p)\n\
+  macro_rules | `(tactic| rfl), `(¬ $p) => `(tactic| rfl)"
+
+-- A bare variable as the pattern matches any syntax of the `kind`.
+/-- info: T.lean:1: `macro_rules` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority -/
+#guard_msgs in
+#eval report "macro_rules (kind := Lean.Parser.Command.check) | stx => pure stx"
+
+-- The `macro` and `term_elab` attributes, also through the `attribute` command.
+/-- info:
+T.lean:1: `@[macro]` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority
+T.lean:2: `term_elab` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority
+T.lean:3: `@[macro]` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority -/
+#guard_msgs in
+#eval report "@[macro Lean.Parser.Term.paren] def m : Lean.Macro := fun _ => Lean.Macro.throwUnsupported\n\
+  @[term_elab Lean.Parser.Term.paren] def m2 : Lean.Elab.Term.TermElab := fun _ _ => throwError \"x\"\n\
+  attribute [macro Lean.Parser.Term.paren] m"
+
+-- New term syntax with a priority wins over existing syntax with the same tokens.
+/-- info:
+T.lean:1: `priority` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority
+T.lean:2: `priority` changes what existing command or term syntax means, which can silence a check or change what a statement says; only tactic syntax may get new rules or a priority -/
+#guard_msgs in
+#eval report "macro (priority := high) \"¬\" p:term:40 : term => `(True ∨ $p)\n\
+  notation (priority := high) \"¬\" p:40 => True ∨ p"
+
+-- Rules and priorities on tactic syntax, and new term syntax without a priority, are allowed.
+/-- info: clean -/
+#guard_msgs in
+#eval report "macro_rules | `(tactic| rfl) => `(tactic| exact rfl)\n\
+  syntax (priority := high) \"my_tac\" : tactic\n\
+  notation:50 a \" ≈≈ \" b => a = b"

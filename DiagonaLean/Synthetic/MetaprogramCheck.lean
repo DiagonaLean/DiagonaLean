@@ -16,7 +16,9 @@ classical definition (`run_cmd` with `addDecl` and `IR.declMapExt.addEntry`), wh
 this check reads the sources. It forbids the commands that run code at elaboration time and the
 functions that change the environment (`ruleOf`), except where `allowances` permits them. A new
 command is permitted only in the declarations that `commandAllowances` names, file by file, so an
-allowlisted file cannot gain a second command unnoticed.
+allowlisted file cannot gain a second command unnoticed. Rules for existing syntax are forbidden
+outside the tactic category (`expanderRule`): a `macro_rules` on `#check_reductions` silences the
+check, and one on `¬` changes what every statement written with it says.
 `scripts/CheckMetaprograms.lean` runs it over the library in CI.
 
 Each file is parsed by Lean's own parser (`parseFile`), not scanned as text, so comments, string
@@ -83,6 +85,17 @@ def extensionRule : Rule := ⟨"extension", "changes an environment extension"�
 /-- `evalConst` and `evalExpr` run code at elaboration time. -/
 def evalConstRule : Rule := ⟨"evalConst", "runs code at elaboration time"⟩
 
+/-- `macro_rules`, `elab_rules` and the attributes `macro` and `term_elab` add an expansion to
+syntax, including syntax declared elsewhere, and an added macro runs before the syntax's own
+elaborator; new syntax with a priority wins over existing syntax with the same tokens. On command
+syntax this silences a check (`macro_rules | `(#check_reductions local) => `(#print "")`); on term
+syntax it changes what a statement says (`macro_rules | `(¬ $p) => `(True ∨ $p)` makes a theorem
+that reads `¬ ComputablePred P` state `True ∨ ComputablePred P`). Tactic syntax is not affected:
+a proof is checked by the kernel whatever the tactic does. -/
+def expanderRule : Rule :=
+  ⟨"expander", "changes what existing command or term syntax means, which can silence a check or \
+    change what a statement says; only tactic syntax may get new rules or a priority"⟩
+
 /-- The rule that a keyword token breaks, if any. -/
 def ruleOfAtom : String → Option Rule
   | "run_cmd" | "run_elab" | "run_meta" => some runRule
@@ -102,6 +115,8 @@ def ruleOfComponent (c : String) : Option Rule :=
   | "modifyEnv" | "setEnv" => some modifyEnvRule
   | "addEntry" | "modifyState" | "setState" | "declMapExt" => some extensionRule
   | "evalConst" | "evalExpr" => some evalConstRule
+  | "term_elab" | "builtin_term_elab" | "builtin_macro" | "builtin_command_elab" =>
+    some expanderRule
   | _ => none
 
 /-- The string components of a name, outermost first. -/
@@ -157,6 +172,61 @@ def findingsAt (ls : Array Syntax) (i : Nat) : List Finding :=
 def findings (stx : Syntax) : Array Finding :=
   let ls := leaves stx
   (List.range ls.size).foldl (fun acc i => acc ++ (findingsAt ls i).toArray) #[]
+
+/-- The quotations that a `macro_rules` or `elab_rules` pattern may be: tactic syntax only. -/
+def tacticQuotKinds : List Name := [``Parser.Tactic.quot, ``Parser.Tactic.quotSeq]
+
+/-- The commands that declare new syntax. With a `(priority := …)`, new term or command syntax
+wins over existing syntax with the same tokens, as `macro (priority := high) "¬" p:term:40 : term`
+does over `¬`, which is the same hijack as a `macro_rules` (without a priority, the two parses are
+ambiguous, which is an error). -/
+def syntaxCommandKinds : List Name :=
+  [``Parser.Command.syntax, ``Parser.Command.macro, ``Parser.Command.elab,
+    ``Parser.Command.notation, ``Parser.Command.mixfix]
+
+/-- The category that the syntax command `s` declares into: the identifier after its last `:`,
+or `term` for `notation` and the `infix` family, which have none. -/
+def syntaxCategory (s : Syntax) : Name := Id.run do
+  let ls := leaves s
+  let mut cat := `term
+  for h : i in [0:ls.size] do
+    if let .atom _ ":" := ls[i] then
+      if let some (.ident _ _ n _) := ls[i + 1]? then cat := n
+  return cat
+
+/-- The findings of the `expander` rule in the command `cmd`, at any depth, so a command wrapped in
+`open … in` or `set_option … in` is seen: each pattern of a `macro_rules` or `elab_rules` that is
+not a tactic quotation (a term or command quotation, or a bare variable, which matches any syntax
+of its `kind`); each `@[macro k]` attribute, also in an `attribute` command; and each new syntax
+outside the tactic category declared with a priority (`syntaxCommandKinds`). Only the match
+alternatives of a rules command are read, not a `match` inside a right-hand side. -/
+partial def expanderFindings (cmd : Syntax) : Array Finding :=
+  go cmd
+where
+  /-- The position where `s` starts. -/
+  pos (s : Syntax) : String.Pos.Raw := (s.getPos? (canonicalOnly := true)).getD 0
+  /-- The patterns of an alternative, under the null nodes of `sepBy`, without the commas. -/
+  patterns (s : Syntax) : Array Syntax :=
+    if s.isOfKind nullKind then s.getArgs.foldl (fun acc a => acc ++ patterns a) #[]
+    else if s.isAtom then #[] else #[s]
+  /-- The findings in `s` and below. -/
+  go (s : Syntax) : Array Finding := Id.run do
+    let .node _ k args := s | return #[]
+    let mut out := #[]
+    let shown? := if k == ``Parser.Command.macro_rules then some "macro_rules"
+      else if k == ``Parser.Command.elab_rules then some "elab_rules" else none
+    if let some shown := shown? then
+      if let some alts := args.find? (·.isOfKind ``Parser.Term.matchAlts) then
+        for alt in alts[0].getArgs do
+          for pat in patterns alt[1] do
+            if !tacticQuotKinds.contains pat.getKind then
+              out := out.push ⟨expanderRule, shown, pos pat⟩
+    if k == ``Parser.Attr.macro then out := out.push ⟨expanderRule, "@[macro]", pos s⟩
+    if syntaxCommandKinds.contains k && syntaxCategory s != `tactic then
+      if let some p := s.find? (·.isOfKind ``Parser.Command.namedPrio) then
+        out := out.push ⟨expanderRule, "priority", pos p⟩
+    for a in args do out := out ++ go a
+    return out
 
 /-- The commands that are elaborated while parsing, because they change which notation is active
 or which namespace is current. They run no code of the file. -/
@@ -271,7 +341,7 @@ def violationsInSource (env : Environment) (rel src : String) : IO (Array String
       | some n => commandDecls.contains n && !seen.contains n
       | none => false
     if let some n := name? then seen := n :: seen
-    for f in findings cmd do
+    for f in findings cmd ++ expanderFindings cmd do
       let ok := if f.rule.name == commandRule.name then commandOk
         else allowed.contains f.rule.name
       if !ok then
