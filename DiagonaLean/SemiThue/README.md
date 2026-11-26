@@ -9,8 +9,9 @@ Given a string rewriting system (semi-Thue system) `R : SRS T`, a list of rules 
 ## Layout
 * `Basic.lean`: the problem, and its restriction to systems whose left sides are all non-empty (`DecisionProblemPos`).
 * `Reductions/Halt_to_SemiThue.lean`: a machine halts iff its configuration string rewrites to the empty string (`halt_iff_derives`), so `HaltProblem ⪯_s` the word problem over `Alpha ℕ Sym2` (`SemiThue.synthFromHalt`) and its restriction (`SemiThue.synthPosFromHalt`). See `Reductions/README.md`.
-* `MachineLevel.lean`: no Turing machine decides it over `Alpha ℕ Sym2` under any computable encoding (`not_machineDecidable_semiThue`, `not_machineDecidable_toEmpty`).
-* `AlphabetLift.lean`: the restricted problem is a functor on synchronizing codes (`semiThueFunctor`), and `SemiThue.synthFromPos` returns to the plain word problem; no Turing machine decides the word problem over any nontrivial `Primcodable` alphabet (`not_machineDecidable_semiThueOf`).
+* `MachineLevel.lean`: the rewriting system of a transition table (`codeRules`, `toEmptyOf`); a machine halts on an input iff the start string of its table rewrites to the empty string (`halts_iff_toEmptyN`).
+* `AlphabetLift.lean`: the restricted problem is a functor on synchronizing codes (`semiThueFunctor`), and `SemiThue.synthFromPos` returns to the plain word problem.
+* `Hardness.lean`: the word problem is halting-hard, by a reduction from `HaltCanon` proved computable, over `Alpha ℕ Sym2` (`SemiThue.fromHalt`, `SemiThue.posFromHalt`, `SemiThue.toEmptyFromHalt`) and over every alphabet with two distinct letters (`SemiThue.fromHaltOver`, `SemiThue.fromHaltBool`). So no Turing machine decides it under any computable encoding (`not_machineDecidable_semiThue`, `not_machineDecidable_toEmpty`, and over every nontrivial alphabet `not_machineDecidable_semiThueOf`).
 * `Undecidable.lean`: the word problem is synthetically halting-hard over `Alpha ℕ Sym2` (`SemiThue.synthFromHalt`), and over every alphabet with two distinct letters (`SemiThue.synthFromHaltOver`), for instance over `Bool` (`SemiThue.synthFromHaltBool`).
 
 ## Proof sketch
@@ -19,7 +20,7 @@ The transition tiles of the MPCP reduction (`MPCP/Reductions/Halt_to_MPCP.lean`)
 * **Forward** (`derives_of_halts`): each step of the run is one rewrite (`step_block`), from the configuration lemmas of the MPCP reduction; after halting, the absorb rules and the final rule erase the string (`derives_halted`).
 * **Backward** (`halts_of_derives`): a configuration string has exactly one state marker, and the left side of every rule contains a marker, so a rewrite happens at the marker (`split_mark`). By determinism of the machine it is the machine's step (`step_inv`), except for an interior right move at the right end, which leaves the marker before `#`: a string from which nothing can be rewritten (`not_derives_stuck`), or the halting marker, when the machine has halted.
 
-The machine is first normalised (`Foundations/Computability/Normalize/`), so that it never writes a blank and never moves left at the left end. At machine level, the system is read off the machine's code, as `MPCP.MachineLevel.instC` reads the tiles (`codeRules`, `toEmptyCode`), and is the renaming of the normalised machine's system (`mem_codeRules`); renaming letters injectively keeps derivability (`Codes.derives_mapRules_iff`, the code theorem `derives_encode_iff` for a one-letter code).
+The machine is first normalised (`Foundations/Computability/Normalize/`), so that it never writes a blank and never moves left at the left end. At machine level, the system is read off a transition table, as `MPCP.MachineLevel.instOf` reads the tiles (`codeRules`, `toEmptyOf`), and is the renaming of the normalised machine's system (`mem_codeRules`); renaming letters injectively keeps derivability (`Codes.derives_mapRules_iff`, the code theorem `derives_encode_iff` for a one-letter code).
 
 ## References
 * E. L. Post, *Recursive unsolvability of a problem of Thue* (1947)

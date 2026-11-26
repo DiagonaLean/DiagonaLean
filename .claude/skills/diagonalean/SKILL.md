@@ -75,7 +75,10 @@ extract them from `Nontrivial α` (a `Prop`).
 * **`reduce_from h via r`** reads the goal to choose the layer. It leaves `Computable r.f` (when it
   upgrades a synthetic link) and `Computable enc` only if `assumption` and `fun_prop` fail. Before
   `fun_prop` it reduces `r.f` to the *named* function `r` was built from (`unfoldField`), so a
-  `@[fun_prop]` lemma on that function is all it needs. `h` and `r` are arbitrary terms (applied
+  `@[fun_prop]` lemma on that function is all it needs. The source may also be a negative result
+  `h : ¬ ComputablePred p`; it then proves `¬ ComputablePred q` and `¬ MachineDecidable enc q`
+  (through `ComputableReduction.not_computablePred`, or `not_computablePred_of_reduces` for a
+  synthetic link) and nothing else. `h` and `r` are arbitrary terms (applied
   definitions, hypotheses, `.trans` chains), not only names. The bare correctness theorem is not a
   reduction; pass `⟨_, spec⟩`.
 * **`code_lift F from h`**: a halting reduction `h` is composed with the lift by `reduce_from`

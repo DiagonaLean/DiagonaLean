@@ -8,22 +8,20 @@ import DiagonaLean.SemiThue.MachineLevel
 
 @[expose] public section
 
-/-! # No machine decides membership for unrestricted grammars
+/-! # Membership for unrestricted grammars, at machine level
 
-`SemiThue.MachineLevel.toEmptyCode` sends a machine code to a string rewriting system and a start
-string such that the machine halts on its own code iff the start string rewrites to the empty
-string. A fresh start symbol `0`, with the rule `[0] → start string`, and the other symbols numbered
-from `1` (`gSym`), turn this into a grammar code (`gCode`) whose language contains the empty word
-iff the start string rewrites to the empty string (`emptyWord_gCode_iff`, from `SRS.derives_start`
-and `Codes.derives_mapRules_iff`). The grammar codes are of type 0 (`isType0_gCode`) and primitive
-recursive in the machine code (`gCode_prim`).
+A fresh start symbol `0`, with the rule `[0] → u`, and the symbols of `Alpha ℕ Sym2` numbered from
+`1` (`gSym`), turn a string rewriting system `R` and a start string `u` into a grammar code
+(`ofSRS`). When the left sides of `R` are non-empty, its language contains the empty word iff `u`
+rewrites to the empty string (`emptyWord_ofSRS_iff`, from `SRS.derives_start` and
+`Codes.derives_mapRules_iff`), and it is of type 0 (`isType0_ofSRS`).
 
 ## Main statements
 
-* `not_computablePred_emptyWord_type0`, `not_machineDecidable_emptyWord_type0`: whether the empty
-  word belongs to the language of a type 0 grammar code is not computable.
-* `not_computablePred_grammarMem`, `not_machineDecidable_grammarMem`: membership for grammar codes
-  is not computable.
+* `ofSRS`, `emptyWord_ofSRS_iff`, `isType0_ofSRS`, and the `Primcodable` instance of type 0 grammar
+  codes: used in `Hardness.lean` for the halting reductions `GrammarMem.emptyWordFromHalt` and
+  `GrammarMem.fromHalt`, from which the negative results there
+  (`not_computablePred_grammarMem`, `not_machineDecidable_emptyWord_type0`, …) follow.
 -/
 
 namespace DiagonaLean.GrammarMem.MachineLevel
@@ -55,14 +53,9 @@ def ofSRS (R : SRS (Alpha ℕ Normalize.Sym2))
     GrammarCode T :=
   (0, ([.inr 0], u.map gSym) :: R.map fun lr => (lr.1.map gSym, lr.2.map gSym))
 
-/-- **The grammar code of a machine code** `w`. -/
-def gCode (w : List Bool) : GrammarCode T := ofSRS (toEmptyCode w).1 (toEmptyCode w).2
-
 derive_primrec gSym [Primcodable T]
 
 derive_primrec ofSRS [Primcodable T]
-
-derive_primrec gCode [Primcodable T]
 
 /-- **The empty word is in the language of `ofSRS R u` iff `u` rewrites to the empty string**, when
 every rule of `R` has a non-empty left side. -/
@@ -85,51 +78,26 @@ theorem emptyWord_ofSRS_iff (R : SRS (Alpha ℕ Normalize.Sym2))
     exact fun a _ => gSym_ne_start a
   · simp
 
-/-- **The empty word is in the language of the grammar code of `w` iff the start string of `w`
-rewrites to the empty string.** -/
-theorem emptyWord_gCode_iff (w : List Bool) :
-    EmptyWordProblem (gCode (T := T) w) ↔ ToEmptyProblem (toEmptyCode w) :=
-  emptyWord_ofSRS_iff _ _ (codeRules_lhs_ne (rowsC w))
-
-/-- The grammar code of a machine code is of type 0. -/
-theorem isType0_gCode (w : List Bool) : IsType0 (gCode (T := T) w) := by
-  rw [isType0_iff, gCode, ofSRS]
+/-- The grammar code of a rewriting system whose left sides are non-empty is of type 0. -/
+theorem isType0_ofSRS (R : SRS (Alpha ℕ Normalize.Sym2)) (u : List (Alpha ℕ Normalize.Sym2))
+    (hne : ∀ lr ∈ R, lr.1 ≠ []) : IsType0 (ofSRS (T := T) R u) := by
+  rw [isType0_iff, ofSRS]
   intro lr hlr
   rcases List.mem_cons.1 hlr with rfl | hlr
   · exact ⟨0, List.mem_singleton.2 rfl⟩
   · obtain ⟨lr₀, hlr₀, rfl⟩ := List.mem_map.1 hlr
-    obtain ⟨a, l, hl⟩ := List.exists_cons_of_ne_nil (codeRules_lhs_ne (rowsC w) lr₀ hlr₀)
+    obtain ⟨a, l, hl⟩ := List.exists_cons_of_ne_nil (hne lr₀ hlr₀)
     exact ⟨Encodable.encode a + 1, by simp [hl, gSym]⟩
-
-/-- **A machine halts on its own code iff the empty word is in the language of the grammar code of
-its code.** -/
-theorem selfHalt_iff_emptyWord (M : EncodableTM Bool) :
-    Halts M.toSingleTapeTM (encodeBoolTM M) ↔ EmptyWordProblem (gCode (T := T) (encodeBoolTM M)) :=
-  (selfHalt_iff_toEmpty M).trans (emptyWord_gCode_iff _).symm
 
 variable [Primcodable T]
 
 /-- `IsType0` is a primitive recursive predicate. -/
-theorem isType0_prim : PrimrecPred (IsType0 (T := T)) := by
+@[fun_prop] theorem isType0_prim : PrimrecPred (IsType0 (T := T)) := by
   unfold IsType0 isType0
   fun_prop
 
 /-- Type 0 grammar codes, with the encoding of a subtype. -/
 instance : Primcodable { g : GrammarCode T // IsType0 g } := Primcodable.subtype isType0_prim
-
-/-- **Whether the empty word belongs to the language of a type 0 grammar code is not a computable
-predicate.** -/
-theorem not_computablePred_emptyWord_type0 :
-    ¬ ComputablePred fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1 :=
-  not_computablePred_of_selfHalt (code := fun w => ⟨gCode w, isType0_gCode w⟩)
-    (Primrec.subtype_mk gCode_prim).to_comp selfHalt_iff_emptyWord
-
-/-- **No Turing machine decides whether the empty word belongs to the language of a type 0 grammar
-code**, under any computable encoding. -/
-theorem not_machineDecidable_emptyWord_type0
-    {enc : { g : GrammarCode T // IsType0 g } → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc fun g => EmptyWordProblem g.1 :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_emptyWord_type0
 
 /-- Membership of the empty word in a type 0 grammar is membership in a grammar. -/
 def _root_.DiagonaLean.GrammarMem.synthFromEmptyWord :
@@ -140,15 +108,5 @@ def _root_.DiagonaLean.GrammarMem.synthFromEmptyWord :
 /-- The former name of `GrammarMem.synthFromEmptyWord`. -/
 @[deprecated DiagonaLean.GrammarMem.synthFromEmptyWord (since := "2026-11-23")]
 abbrev emptyWordReducesGrammarMem := @DiagonaLean.GrammarMem.synthFromEmptyWord
-
-/-- **Membership for grammar codes is not a computable predicate.** -/
-theorem not_computablePred_grammarMem : ¬ ComputablePred (@DecisionProblem T) :=
-  not_computablePred_of_reduces GrammarMem.synthFromEmptyWord
-    ((Primrec.subtype_val.pair (Primrec.const [])).to_comp) not_computablePred_emptyWord_type0
-
-/-- **No Turing machine decides membership for grammar codes**, under any computable encoding. -/
-theorem not_machineDecidable_grammarMem {enc : GrammarCode T × List T → List Bool}
-    (henc : Computable enc) : ¬ MachineDecidable enc DecisionProblem :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_grammarMem
 
 end DiagonaLean.GrammarMem.MachineLevel

@@ -21,10 +21,12 @@ import DiagonaLean.SemiThue.Basic
 import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
 import DiagonaLean.SemiThue.MachineLevel
 import DiagonaLean.SemiThue.AlphabetLift
+import DiagonaLean.SemiThue.Hardness
 import DiagonaLean.SemiThue.Undecidable
 import DiagonaLean.GrammarMem.Basic
 import DiagonaLean.GrammarMem.Reductions.Halt_to_GrammarMem
 import DiagonaLean.GrammarMem.MachineLevel
+import DiagonaLean.GrammarMem.Hardness
 import DiagonaLean.GrammarMem.Undecidable
 
 import DiagonaLean.PCP.Basic
@@ -123,6 +125,7 @@ import DiagonaLean.Foundations.Computability.CodeSim
 import DiagonaLean.Foundations.Computability.ProofRace
 import DiagonaLean.Foundations.Computability.OutputSearch
 import DiagonaLean.Foundations.Computability.MachineBridge
+import DiagonaLean.Foundations.Computability.MachineComputes
 import DiagonaLean.Foundations.Computability.ComputableReduction
 import DiagonaLean.Foundations.Computability.HaltCanon
 import DiagonaLean.Foundations.Computability.ReduceFrom
@@ -186,6 +189,7 @@ import DiagonaLean.KAComm.KleeneAlgebra.Instance
 import DiagonaLean.KAComm.KleeneAlgebra.InstanceCode
 import DiagonaLean.KAComm.KleeneAlgebra.BinarySubst
 import DiagonaLean.KAComm.KleeneAlgebra.Race
+import DiagonaLean.KAComm.KleeneAlgebra.BoolCode
 import DiagonaLean.KAComm.KleeneAlgebra.Between
 
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Configurations

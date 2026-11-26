@@ -28,7 +28,7 @@ is `Primcodable`, and every value is a real machine (`CanonTM.toTM`), so the hal
 * **Undecidable.** Self-halting reduces to `HaltCanon` through `parse`
   (`not_computablePred_haltCanon`).
 * **The bridge.** `synthHaltToCanon : HaltProblem ⪯_s HaltCanon` is the synthetic reduction that
-  connects the two layers.
+  connects the two layers, and `synthCanonToHalt : HaltCanon ⪯_s HaltProblem` (`c.toTM`) goes back.
 
 `HaltReduction P` is a reduction from `HaltCanon` proved computable, and `HaltHard P` says one
 exists: Mathlib's many-one hardness for the halting problem (`haltHard_iff`).
@@ -235,8 +235,9 @@ section TablePrim
 
 variable {α : Type*} [Primcodable α]
 
+/-- The table of a canonical machine: `prim_subtype_val` at the predicate `canonValid`. -/
 @[fun_prop] theorem prim_canon_val {f : α → CanonTM} (hf : Primrec f) : Primrec fun x => (f x).1 :=
-  (Primrec.subtype_val (hp := canonValid_primrecPred)).comp hf
+  prim_subtype_val (hp := canonValid_primrecPred) hf
 
 @[fun_prop] theorem prim_canon_n {f : α → CanonTM} (hf : Primrec f) : Primrec fun x => (f x).n :=
   Primrec.fst.comp (prim_canon_val hf)
@@ -428,6 +429,11 @@ reading the canonical machine off the machine's code. -/
 def synthHaltToCanon : HaltProblem ⪯_s HaltCanon :=
   ⟨fun p => (parse (encodeBoolTM p.1), p.2), fun p => (halts_parse_code p.1 p.2).symm⟩
 
+/-- **The bridge back**: a canonical machine is a machine, so `HaltCanon` reduces to `HaltProblem`
+by `c.toTM`. With `synthHaltToCanon` the two halting problems are synthetically equivalent. -/
+def synthCanonToHalt : HaltCanon ⪯_s HaltProblem :=
+  ⟨fun p => (p.1.toTM, p.2), fun _ => Iff.rfl⟩
+
 /-! ### Reductions from the halting problem, proved computable -/
 
 variable {β : Type*} [Primcodable β]
@@ -461,5 +467,16 @@ theorem HaltHard.not_computablePred {P : β → Prop} (h : HaltHard P) : ¬ Comp
 theorem HaltHard.not_machineDecidable {P : β → Prop} (h : HaltHard P) {enc : β → List Bool}
     (henc : Computable enc) : ¬ MachineDecidable enc P :=
   not_machineDecidable_of_not_computablePred henc h.not_computablePred
+
+/-- **The target of a halting reduction is undecidable**: `HaltHard.not_computablePred`, by dot
+notation on the reduction (`MPCP.fromHalt.not_computablePred`). -/
+theorem HaltReduction.not_computablePred {P : β → Prop} (h : HaltReduction P) :
+    ¬ ComputablePred P :=
+  HaltHard.not_computablePred ⟨h⟩
+
+/-- **No machine decides the target of a halting reduction**, under any computable encoding. -/
+theorem HaltReduction.not_machineDecidable {P : β → Prop} (h : HaltReduction P)
+    {enc : β → List Bool} (henc : Computable enc) : ¬ MachineDecidable enc P :=
+  HaltHard.not_machineDecidable ⟨h⟩ henc
 
 end DiagonaLean.Foundations.Computability

@@ -39,19 +39,28 @@ theorem normTrN_congr {r₁ r₂ : List (ℕ × ℕ)} (h : ∀ k, lookup r₁ k 
   unfold normTrN simN
   simp only [h]
 
+/-- Two transition tables are **the same table** when they have the same lookup and the same set of
+state numbers: the constructions on tables (`transN`, `stackN`, and the rewriting systems of
+`SemiThue.MachineLevel.codeRules`) read a table only through these. -/
+def SameTable (r₁ r₂ : List (ℕ × ℕ)) : Prop :=
+  (∀ k, lookup r₁ k = lookup r₂ k) ∧
+    ∀ i, i ∈ r₁.map (fun r => r.1.unpair.1) ↔ i ∈ r₂.map (fun r => r.1.unpair.1)
+
+/-- `transN` depends on a table only through its lookup and its set of state numbers. -/
+theorem mem_transN_congr {r₁ r₂ : List (ℕ × ℕ)} (h : SameTable r₁ r₂)
+    (t : Tile (Alpha ℕ Normalize.Sym2)) : t ∈ transN r₁ ↔ t ∈ transN r₂ := by
+  simp only [transN, List.mem_flatMap, normTrN_congr h.1, h.2]
+
 /-- `stackN` depends on a table only through its lookup and its set of state numbers. -/
-theorem mem_stackN_congr {r₁ r₂ : List (ℕ × ℕ)} (hl : ∀ k, lookup r₁ k = lookup r₂ k)
-    (hi : ∀ i, i ∈ r₁.map (fun r => r.1.unpair.1) ↔ i ∈ r₂.map (fun r => r.1.unpair.1))
+theorem mem_stackN_congr {r₁ r₂ : List (ℕ × ℕ)} (h : SameTable r₁ r₂)
     (t : Tile (Alpha ℕ Normalize.Sym2)) : t ∈ stackN r₁ ↔ t ∈ stackN r₂ := by
-  simp only [stackN, transN, List.mem_append, List.mem_flatMap, normTrN_congr hl]
-  constructor <;> rintro ((((h | h) | h) | h) | h)
-  all_goals first
-    | exact Or.inl (Or.inl (Or.inl (Or.inl h)))
-    | exact Or.inl (Or.inl (Or.inl (Or.inr h)))
-    | exact Or.inl (Or.inr h)
-    | exact Or.inr h
-    | (obtain ⟨i, hi', rest⟩ := h
-       exact Or.inl (Or.inl (Or.inr ⟨i, by first | exact (hi i).1 hi' | exact (hi i).2 hi', rest⟩)))
+  simp only [stackN, List.mem_append, mem_transN_congr h]
+
+/-- **The table of a canonical machine is the table of its machine.** -/
+theorem CanonTM.sameTable (c : CanonTM) : SameTable (rowsE c.toTM) c.table := by
+  refine ⟨fun k => by rw [CanonTM.lookup_rowsE_toTM, CanonTM.lookup_table], fun i => ?_⟩
+  rw [mem_idx, CanonTM.mem_idx_table]
+  exact ⟨fun ⟨q, hq⟩ => hq ▸ q.isLt, fun h => ⟨⟨i, h⟩, rfl⟩⟩
 
 /-- The MPCP instance of a canonical machine on an input. -/
 def canonInst (x : CanonTM × List Bool) :
@@ -66,12 +75,7 @@ theorem canonInst_prim : Primrec canonInst := by
 theorem haltCanon_iff_mpcp (x : CanonTM × List Bool) :
     HaltCanon x ↔ MPCP.DecisionProblem (canonInst x) := by
   obtain ⟨c, w⟩ := x
-  refine (halts_iff_mpcpN c.toTM w).trans (mpcp_congr _ fun t => mem_stackN_congr ?_ ?_ t)
-  · intro k
-    rw [CanonTM.lookup_rowsE_toTM, CanonTM.lookup_table]
-  · intro i
-    rw [mem_idx, CanonTM.mem_idx_table]
-    exact ⟨fun ⟨q, hq⟩ => hq ▸ q.isLt, fun h => ⟨⟨i, h⟩, rfl⟩⟩
+  exact (halts_iff_mpcpN c.toTM w).trans (mpcp_congr _ (mem_stackN_congr (CanonTM.sameTable c)))
 
 end DiagonaLean.MPCP.MachineLevel
 
@@ -119,20 +123,19 @@ theorem not_machineDecidable_mpcp
     (henc : Computable enc) : ¬ MachineDecidable enc MPCP.DecisionProblem :=
   MPCP.haltHard.not_machineDecidable henc
 
-open Foundations.Codes in
-/-- **MPCP is not a computable predicate over any nontrivial alphabet**: the lifting of
-`not_computablePred_mpcp` (`Foundations.Codes.CodeFunctor.not_computablePred_lift`).
--/
+/-- **MPCP is not a computable predicate over any nontrivial alphabet**: it is halting-hard there
+(`MPCP.fromHaltOver`). -/
 theorem not_computablePred_mpcpOf {α : Type} [Primcodable α] [Nontrivial α] :
     ¬ ComputablePred (@MPCP.DecisionProblem α) := by
-  code_lift mpcpFunctor from not_computablePred_mpcp
+  obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
+  exact (MPCP.fromHaltOver b0 b1 hne).not_computablePred
 
 /-- **No Turing machine decides MPCP over any nontrivial alphabet**, under any computable
 encoding. -/
 theorem not_machineDecidable_mpcpOf {α : Type} [Primcodable α] [Nontrivial α]
     {enc : Tile α × Stack α → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc MPCP.DecisionProblem := by
-  code_lift Reduction.mpcpFunctor from not_computablePred_mpcp
+    ¬ MachineDecidable enc MPCP.DecisionProblem :=
+  not_machineDecidable_of_not_computablePred henc not_computablePred_mpcpOf
 
 open Foundations.Codes in
 /-- **Alphabet invariance of MPCP**: over any two nontrivial `Primcodable` alphabets, MPCP is

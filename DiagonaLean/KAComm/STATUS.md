@@ -12,11 +12,11 @@ The paper's main result, from its abstract: *"the equational theory of Kleene al
 
 | Paper's claim | Lean | Status |
 |---|---|---|
-| Kleene algebra with commutativity conditions is undecidable | `KATermEq.Reduction.not_machineDecidable_kaTermEq`, `KATermEqBool.Reduction.not_machineDecidable_kaTermEqBool`; `KATermEq.Reduction.not_computablePred_kaTermEq` (over `ℕ`) | **Done, no hypotheses** |
-| …even for weaker theories without the induction axioms | `TermEq.Reduction.not_machineDecidable_termEq`, `TermEqBool.Reduction.not_machineDecidable_termEqBool` (pre-Kleene algebra); `TermEq.Reduction.not_computablePred_termEq` (over `ℕ`) | **Done, no hypotheses** |
+| Kleene algebra with commutativity conditions is undecidable | `KATermEq.Reduction.not_machineDecidable_kaTermEq`, `KATermEqBool.Reduction.not_machineDecidable_kaTermEqBool`; `KATermEq.Reduction.not_computablePred_kaTermEq`, `KATermEqBool.Reduction.not_computablePred_kaTermEqBool` | **Done, no hypotheses** |
+| …even for weaker theories without the induction axioms | `TermEq.Reduction.not_machineDecidable_termEq`, `TermEqBool.Reduction.not_machineDecidable_termEqBool` (pre-Kleene algebra); `TermEq.Reduction.not_computablePred_termEq`, `TermEqBool.Reduction.not_computablePred_termEqBool` | **Done, no hypotheses** |
 | Any theory between pre-Kleene algebra and the language model (Theorem 18, general form) | `not_machineDecidable_between` (inequalities), `not_machineDecidable_eq_between` (equations), `not_machineDecidable_eqVia` (any `X` the language map factors through), all in `KleeneAlgebra/Between.lean` | **Done, no hypotheses**, over `ℕ` (`encNat`); the first two also over `{0, 1}` (`…_bool`, `encBool`) |
 | Theorem 18 on `X` itself | `not_machineDecidable_eqOn` | Given a machine computing `l'` on expression codes, which is the paper's hypothesis that `l'` is computable |
-| Equality and inclusion of languages, `L Σ̈` | `not_machineDecidable_langEq`, `…_langEqBool`, `…_modelLe`, `…_modelLeBool`; `not_computablePred_langEq`, `…_modelLe` (over `ℕ`); `KAComm.LangEq.synthComplFromHalt`, `KAComm.ModelLe.synthComplFromHalt` and their `Bool` versions (`SynthHaltReduction`, for the complement) | **Done, no hypotheses** |
+| Equality and inclusion of languages, `L Σ̈` | `not_machineDecidable_langEq`, `…_langEqBool`, `…_modelLe`, `…_modelLeBool`; `not_computablePred_langEq`, `…_langEqBool`, `…_modelLe`, `…_modelLeBool`; `KAComm.LangEq.synthComplFromHalt`, `KAComm.ModelLe.synthComplFromHalt` and their `Bool` versions (`SynthHaltReduction`, for the complement) | **Done, no hypotheses** |
 | Theorem 6, Corollary 7 | `FiniteLangCounterexample.lean`, `FiniteLangExpansion.lean` | False as stated (counterexample at `e = 1∗`); a repaired version is proved |
 
 The headline statement:

@@ -5,6 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.KAComm.LangEqBool.Reductions.Halt_to_LangEqBool
 import DiagonaLean.KAComm.KleeneAlgebra.Between
+import DiagonaLean.KAComm.KleeneAlgebra.BoolCode
 
 @[expose] public section
 
@@ -16,6 +17,8 @@ encoding `encBool` of a pair of expressions as the binary digits of its code
 (`not_machineDecidable_langEqBool`), or under any encoding that a machine computes from `encBool`
 (`not_machineDecidable_langEqBool_of_conv`). The machine-level statement is the case of Theorem 18
 where the predicate is equality of languages itself (`not_machineDecidable_eq_between_bool`).
+Since the code of `encBool` has a primitive recursive decoder (`rcbDec`), it is not a computable
+predicate either (`not_computablePred_langEqBool`).
 
 ## References
 
@@ -34,6 +37,13 @@ abbrev undecidableNotLangEqBool := @DiagonaLean.KAComm.LangEqBool.synthComplFrom
 /-- **No Turing machine decides equality of languages over `{0, 1}`.** -/
 theorem not_machineDecidable_langEqBool : ¬ MachineDecidable encBool LangEqBoolProblem :=
   not_machineDecidable_eq_between_bool _ (fun _ h => congrArg pl (mk_eq_mk.2 h)) fun _ h => h
+
+/-- **Equality of languages over `{0, 1}` is not a computable predicate**: `encBool` writes the pair
+of codes `rc (toNat e)` in binary, which has a primitive recursive decoder (`rcbDec`), so this
+follows from `not_machineDecidable_langEqBool` (`not_computablePred_of_bitsPair`). -/
+theorem not_computablePred_langEqBool : ¬ ComputablePred LangEqBoolProblem :=
+  Foundations.Computability.not_computablePred_of_bitsPair rcb_prim rcbDec_prim rcbDec_rc
+    not_machineDecidable_langEqBool
 
 /-- **No Turing machine decides equality of languages over `{0, 1}`, under any encoding** that a
 machine computes from `encBool`. -/

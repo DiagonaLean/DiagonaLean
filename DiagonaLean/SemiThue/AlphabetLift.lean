@@ -18,18 +18,18 @@ functor on synchronizing codes (`semiThueFunctor`): encoding every word keeps le
 matches inside a block.
 
 The reductions from the halting problem produce systems with non-empty left sides, so the restricted
-problem is undecidable over `Alpha ℕ Sym2`, both by a synthetic halting reduction and at machine
-level. The lifting of `Foundations.Codes.Functor` moves it to every alphabet with two distinct
-letters, and `SemiThue.synthFromPos` returns to the plain word problem, sending a system with an
-empty left side to a fixed instance without solution. The `SynthHaltReduction` statements obtained
-this way are in `Undecidable.lean` (`SemiThue.synthPosFromHaltOver`, `SemiThue.synthFromHaltOver`,
-`SemiThue.synthFromHaltBool`).
+problem is halting-hard over `Alpha ℕ Sym2`. The lifting of `Foundations.Codes.Functor` moves it
+to every alphabet with two distinct letters, and `SemiThue.synthFromPos` returns to the plain word
+problem, sending a system with an empty left side to a fixed instance without solution. The
+`SynthHaltReduction` statements obtained this way are in `Undecidable.lean`
+(`SemiThue.synthPosFromHaltOver`, `SemiThue.synthFromHaltOver`, `SemiThue.synthFromHaltBool`), the
+proved ones in `Hardness.lean`.
 
 ## Main statements
 
 * `semiThueFunctor`, `SemiThue.synthFromPos`.
-* `not_computablePred_semiThuePosOf`, `not_computablePred_semiThueOf`,
-  `not_machineDecidable_semiThueOf`: over every nontrivial `Primcodable` alphabet.
+* The negative results over every nontrivial alphabet (`not_computablePred_semiThueOf`, …) are in
+  `Hardness.lean`, from `SemiThue.posFromHaltOver` and `SemiThue.fromHaltOver`.
 * `semiThuePos_manyOneEquiv`: the restricted problem is many-one equivalent over any two such
   alphabets.
 -/
@@ -73,6 +73,11 @@ theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯_s[posToWord a] @Decis
     · simp at hlr
   · exact and_iff_right (hall.1 h)
 
+/-- `posToWord a` is primitive recursive. -/
+@[fun_prop] theorem posToWord_prim [Primcodable T] (a : T) : Primrec (posToWord a) := by
+  unfold posToWord
+  fun_prop
+
 /-- The restricted word problem many-one reduces to the plain one, given a letter. -/
 def _root_.DiagonaLean.SemiThue.synthFromPos (a : T) :
     @DecisionProblemPos T ⪯_s @DecisionProblem T :=
@@ -87,39 +92,8 @@ namespace MachineLevel
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.MPCP.Reduction
   DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
 
-/-- **The restricted word problem is not a computable predicate** over `Alpha ℕ Sym2`: the systems
-of machine codes have non-empty left sides (`codeRules_lhs_ne`). -/
-theorem not_computablePred_semiThuePos :
-    ¬ ComputablePred (@DecisionProblemPos (Alpha ℕ Foundations.Computability.Normalize.Sym2)) :=
-  not_computablePred_of_selfHalt (code := fun w => ((toEmptyCode w).1, (toEmptyCode w).2, []))
-    (by have := toEmptyCode_prim; exact Primrec.to_comp (by fun_prop))
-    fun M => (selfHalt_iff_toEmpty M).trans (and_iff_right (codeRules_lhs_ne _)).symm
-
 /- Encoding a system is primitive recursive, for a code that may depend on the input. -/
 derive_primrec SRS.encode [Primcodable α] [Primcodable β]
-
-/-- **The restricted word problem is not a computable predicate over any nontrivial alphabet.** -/
-theorem not_computablePred_semiThuePosOf [Primcodable α] [Nontrivial α] :
-    ¬ ComputablePred (@DecisionProblemPos α) := by
-  code_lift semiThueFunctor from not_computablePred_semiThuePos
-
-/-- **The word problem for string rewriting systems is not a computable predicate over any
-nontrivial alphabet.** -/
-theorem not_computablePred_semiThueOf [Primcodable α] [Nontrivial α] :
-    ¬ ComputablePred (@DecisionProblem α) := by
-  obtain ⟨a, -, -⟩ := exists_pair_ne α
-  refine not_computablePred_of_reduces (SemiThue.synthFromPos a) (Primrec.to_comp ?_)
-    not_computablePred_semiThuePosOf
-  show Primrec (posToWord a)
-  unfold posToWord
-  fun_prop
-
-/-- **No Turing machine decides the word problem for string rewriting systems over any nontrivial
-alphabet**, under any computable encoding. -/
-theorem not_machineDecidable_semiThueOf [Primcodable α] [Nontrivial α]
-    {enc : SRS α × List α × List α → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc (@DecisionProblem α) :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_semiThueOf
 
 /-- **Alphabet invariance of the restricted word problem**: over any two nontrivial `Primcodable`
 alphabets, it is many-one equivalent. -/
