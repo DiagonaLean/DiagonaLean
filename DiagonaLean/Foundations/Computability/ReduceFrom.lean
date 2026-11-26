@@ -75,6 +75,22 @@ synthetic halting reduction is an error. `reduce_from h with …` picks `synth_r
 `hard_reduce_from` by the goal. After a `using` clause, a lemma on the next line is not read as a
 second lemma (`colGt`).
 
+## Chains of links
+
+`synth_reduce_from`, `hard_reduce_from` and `reduce_from` take several links, separated by commas,
+each `with f …` or `via r`:
+
+    hard_reduce_from MPCP.fromHalt via mpcpLink,
+      with (liftInstance 0 1) using (pcp_alphabet_lift_spec 0 1 hne),
+      with matImage using pcp_reducesto_matMort_spec
+
+The source is composed with each link in turn. On a hard goal, each link with a function or a
+synthetic `via r` (upgraded by `ofSynth`) leaves a computability goal, tried with `fun_prop`; it is
+tagged `computable_f` for a function named `f` (`computable_i`, the position from 1, otherwise),
+and `computable` for a single link. On a synthetic goal, a proved source or link is made synthetic.
+Every link but the last gives its correctness with `using`, since nothing else fixes the problem it
+reduces to; the last may leave `forward` and `backward`.
+
 ## A problem as the source
 
 A source that is a problem `X → Prop` rather than a reduction is looked up by the naming
@@ -377,30 +393,83 @@ def unfoldSplitGoal (g : MVarId) (hyp : Name) : MetaM MVarId := g.withContext do
   if let some t ← unfoldProblem? (← g.getType) then g ← g.change t
   return g
 
-/-- `synth_reduce_from h with f …` on a goal `SynthHaltReduction q`: the link is `⟨f, proof⟩`. -/
-def runWith (h f : Term) (how : LinkProof) : TacticM Unit := withMainContext do
+/-- One link of a chain: a function with its correctness (`with f …`), or a bundled link
+(`via r`). -/
+inductive ChainLink
+  | fn (f : Term) (how : LinkProof)
+  | via (r : Term)
+
+/-- The correctness of a link before the last must be given (`using`): the problem it reduces to
+is read from that proof, since nothing else fixes it. -/
+def checkInnerLinks (tac : String) (links : List ChainLink) : TacticM Unit := do
+  for l in links.dropLast do
+    if let .fn f how := l then
+      match how with
+      | .open_ | .unfold => throwError "{tac}: the link `with {f}` is not the last of the \
+          chain, so its correctness must be given with `using`: the problem it reduces to is \
+          read from that proof."
+      | _ => pure ()
+
+/-- The tag of the goal `Computable f` of the `i`-th link (from 1) of a chain of `n` links:
+`computable` for a single link; `computable_f` for a function named `f` that no other link of
+the chain uses; `computable_i` otherwise. -/
+def computableTag (links : List ChainLink) (i : Nat) : Name :=
+  if links.length ≤ 1 then `computable else
+  let name? : ChainLink → Option Name
+    | .fn f _ => if f.raw.isIdent then some f.raw.getId.eraseMacroScopes else none
+    | .via _ => none
+  match links[i - 1]? >>= name? with
+  | some n =>
+    let last := n.components.getLast?.getD n
+    if (links.filter fun l => name? l == some n).length == 1 then
+      .mkSimple s!"computable_{last}"
+    else .mkSimple s!"computable_{i}"
+  | none => .mkSimple s!"computable_{i}"
+
+/-- `synth_reduce_from h with f₁ …, …, with fₙ …` on a goal `SynthHaltReduction q`: the source
+composed with each link in turn; a link `with f …` is `⟨f, proof⟩`, a link `via r` is `r`, made
+synthetic if it is proved. Only the last link may leave its correctness open. -/
+def runWithChain (h : Term) (links : List ChainLink) : TacticM Unit := withMainContext do
   match ← goalOf? (← getMainTarget) with
   | some .synth => pure ()
   | _ => throwError "synth_reduce_from: the goal{indentExpr (← getMainTarget)}\nis not \
       `SynthHaltReduction q`. For a proved goal, use `reduce_from … via`."
+  checkInnerLinks "synth_reduce_from" links
   let h ← resolveSource h
-  checkLinkFunction f
-  let link : Term ← match how with
-    | .open_ | .unfold => `(⟨$f, ?spec⟩)
-    | .spec s => `(⟨$f, $s⟩)
-    | .lemmas a b => `(⟨$f, fun _ => ⟨$a, $b⟩⟩)
-  let term ← `(DiagonaLean.Synthetic.Definitions.SynthHaltReduction.comp $h $link)
+  let mut term := h
+  if let .red .proved ← sourceOfTerm h then
+    term ← `(DiagonaLean.Foundations.Computability.HaltReduction.toSynthHalt $h)
+  for l in links do
+    let link : Term ← match l with
+      | .fn f how =>
+        checkLinkFunction f
+        match how with
+        | .open_ | .unfold => `(⟨$f, ?spec⟩)
+        | .spec s => `(⟨$f, $s⟩)
+        | .lemmas a b => `(⟨$f, fun _ => ⟨$a, $b⟩⟩)
+      | .via r =>
+        if (← layerOfTerm r "link") == .proved then
+          `(DiagonaLean.Foundations.Computability.ComputableReduction.toSynth $r)
+        else pure r
+    term ← `(DiagonaLean.Synthetic.Definitions.SynthHaltReduction.comp $term $link)
   try withoutRecover <| evalTactic (← `(tactic| refine $term))
   catch e =>
-    match how with
-    | .lemmas a b => throwError "synth_reduce_from: the lemmas `{a}` and `{b}` do not prove that \
-        `{f}` reduces the source `{h}` to the goal. They must state `p x → q ({f} x)` and the \
-        converse, in this order; or give the whole statement with `using`.\n{e.toMessageData}"
-    | .spec s => throwError "synth_reduce_from: `{s}` does not prove that `{f}` reduces the \
-        source `{h}` to the goal.\n{e.toMessageData}"
-    | _ => throw e
-  match how with
-  | .open_ | .unfold =>
+    match links with
+    | [.fn f (.lemmas a b)] => throwError "synth_reduce_from: the lemmas `{a}` and `{b}` do not \
+        prove that `{f}` reduces the source `{h}` to the goal. They must state `p x → q ({f} x)` \
+        and the converse, in this order; or give the whole statement with `using`.\n\
+        {e.toMessageData}"
+    | [.fn f (.spec s)] => throwError "synth_reduce_from: `{s}` does not prove that `{f}` \
+        reduces the source `{h}` to the goal.\n{e.toMessageData}"
+    | [_] => throw e
+    | _ => throwError "synth_reduce_from: the chain from `{h}` does not compose to the goal: each \
+        link must start from the problem the previous one reduces to.\n{e.toMessageData}"
+  let lastOpen : Option LinkProof := match links.getLast? with
+    | some (.fn _ .open_) => some .open_
+    | some (.fn _ .unfold) => some .unfold
+    | _ => none
+  match lastOpen with
+  | some how =>
     evalTactic (← `(tactic| intro $(mkIdent `x):ident))
     evalTactic (← `(tactic| refine ⟨fun $(mkIdent `hp):ident => ?forward,
       fun $(mkIdent `hq):ident => ?backward⟩))
@@ -410,6 +479,9 @@ def runWith (h f : Term) (how : LinkProof) : TacticM Unit := withMainContext do
         setGoals ((← unfoldSplitGoal gf `hp) :: (← unfoldSplitGoal gb `hq) :: rest)
       | _ => pure ()
   | _ => pure ()
+
+/-- `synth_reduce_from h with f …` on a goal `SynthHaltReduction q`: the link is `⟨f, proof⟩`. -/
+def runWith (h f : Term) (how : LinkProof) : TacticM Unit := runWithChain h [.fn f how]
 
 /-- The kinds of source of a hard goal. -/
 inductive HardSource | red | hard | neg
@@ -453,23 +525,37 @@ def resolveHardSource (h : Term) : TacticM Term := do
     `HaltSource` or `HaltHardFact` for it, and finds none. Register one, or give the source \
     explicitly."
 
-/-- `hard_reduce_from h with f …` on a hard goal (`HaltReduction q`, `HaltHard q`,
-`¬ ComputablePred q`, `¬ MachineDecidable enc q`): the link is `⟨f, computable, proof⟩`. The goal
-`computable : Computable f` is tried with `assumption` and `fun_prop`; what they do not close
-stays open. -/
-def runHard (h f : Term) (how : LinkProof) : TacticM Unit := withMainContext do
+/-- `hard_reduce_from h with f₁ …, …, with fₙ …` on a hard goal (`HaltReduction q`, `HaltHard q`,
+`¬ ComputablePred q`, `¬ MachineDecidable enc q`): the links composed (`ComputableReduction.trans`),
+then the source. A link `with f …` is `⟨f, computable, proof⟩`; a link `via r` is `r`, upgraded by
+`ofSynth` if it is synthetic. Each computability goal (tag from `computableTag`) is tried with
+`assumption` and `fun_prop`; what they do not close stays open. -/
+def runHardChain (h : Term) (links : List ChainLink) : TacticM Unit := withMainContext do
   let some goal ← goalOf? (← getMainTarget) | throwError "hard_reduce_from: the goal{indentExpr
       (← getMainTarget)}\nis not one of `HaltReduction q`, `HaltHard q`, `¬ ComputablePred q`, \
       `¬ MachineDecidable enc q`"
   if let .synth := goal then
     throwError "hard_reduce_from: the goal{indentExpr (← getMainTarget)}\nis synthetic; use \
       `synth_reduce_from`."
+  checkInnerLinks "hard_reduce_from" links
   let h ← resolveHardSource h
   let kind ← hardSourceOf h
-  let link : Term ← match how with
-    | .open_ | .unfold => `(⟨$f, ?computable, ?spec⟩)
-    | .spec s => `(⟨$f, ?computable, $s⟩)
-    | .lemmas a b => `(⟨$f, ?computable, fun _ => ⟨$a, $b⟩⟩)
+  let mut link? : Option Term := none
+  for l in links, i in [1:links.length + 1] do
+    let c := mkIdent (computableTag links i)
+    let li : Term ← match l with
+      | .fn f how => match how with
+        | .open_ | .unfold => `(⟨$f, ?$c, ?spec⟩)
+        | .spec s => `(⟨$f, ?$c, $s⟩)
+        | .lemmas a b => `(⟨$f, ?$c, fun _ => ⟨$a, $b⟩⟩)
+      | .via r =>
+        if (← layerOfTerm r "link") == .proved then pure r
+        else `(DiagonaLean.Foundations.Computability.ComputableReduction.ofSynth $r ?$c)
+    link? ← match link? with
+      | none => pure (some li)
+      | some acc =>
+        some <$> `(DiagonaLean.Foundations.Computability.ComputableReduction.trans $acc $li)
+  let some link := link? | throwError "hard_reduce_from: no link"
   let term : Term ← match kind with
   | .neg =>
     let neg ← `(DiagonaLean.Foundations.Computability.ComputableReduction.not_computablePred
@@ -502,13 +588,16 @@ def runHard (h f : Term) (how : LinkProof) : TacticM Unit := withMainContext do
   let before := (← getGoals).length
   try withoutRecover <| evalTactic (← `(tactic| refine $term))
   catch e =>
-    match how with
-    | .lemmas a b => throwError "hard_reduce_from: the lemmas `{a}` and `{b}` do not prove that \
-        `{f}` reduces the source `{h}` to the goal. They must state `p x → q ({f} x)` and the \
-        converse, in this order; or give the whole statement with `using`.\n{e.toMessageData}"
-    | .spec s => throwError "hard_reduce_from: `{s}` does not prove that `{f}` reduces the \
-        source `{h}` to the goal.\n{e.toMessageData}"
-    | _ => throw e
+    match links with
+    | [.fn f (.lemmas a b)] => throwError "hard_reduce_from: the lemmas `{a}` and `{b}` do not \
+        prove that `{f}` reduces the source `{h}` to the goal. They must state `p x → q ({f} x)` \
+        and the converse, in this order; or give the whole statement with `using`.\n\
+        {e.toMessageData}"
+    | [.fn f (.spec s)] => throwError "hard_reduce_from: `{s}` does not prove that `{f}` \
+        reduces the source `{h}` to the goal.\n{e.toMessageData}"
+    | [_] => throw e
+    | _ => throwError "hard_reduce_from: the chain from `{h}` does not compose to the goal: each \
+        link must start from the problem the previous one reduces to.\n{e.toMessageData}"
   let new := (← getGoals).take ((← getGoals).length - (before - 1))
   let mut specG : Option MVarId := none
   let mut side : List MVarId := []
@@ -527,12 +616,15 @@ def runHard (h f : Term) (how : LinkProof) : TacticM Unit := withMainContext do
     evalTactic (← `(tactic| refine ⟨fun $(mkIdent `hp):ident => ?forward,
       fun $(mkIdent `hq):ident => ?backward⟩))
     split ← getGoals
-    if let .unfold := how then
+    if let some (.fn _ .unfold) := links.getLast? then
       match split with
       | gf :: gb :: rest =>
         split := (← unfoldSplitGoal gf `hp) :: (← unfoldSplitGoal gb `hq) :: rest
       | _ => pure ()
   setGoals (split ++ open_ ++ others)
+
+/-- `hard_reduce_from h with f …` on a hard goal: the link is `⟨f, computable, proof⟩`. -/
+def runHard (h f : Term) (how : LinkProof) : TacticM Unit := runHardChain h [.fn f how]
 
 end DiagonaLean.Foundations.Computability.ReduceFrom
 
@@ -599,7 +691,8 @@ open DiagonaLean.Foundations.Computability.ReduceFrom Lean Elab Tactic
 `f` and leave its correctness as the two goals `forward` (`hp : p x ⊢ q (f x)`) and `backward`
 (`hq : q (f x) ⊢ p x`). `with f unfold` also unfolds both problems one step. `with f using spec`
 (`spec : p ⪯_s[f] q`) or `with f using fwd bwd` closes the link with a known theorem, and
-`synth_reduce_from h via r` composes with a bundled link. `h` is a halting reduction to `p`, or the
+`synth_reduce_from h via r` composes with a bundled link. Several links, separated by commas, are
+composed in order (`with f₁ using s₁, via r, with f₂`). `h` is a halting reduction to `p`, or the
 problem `p` itself, found by the naming convention. See `Foundations.Computability.ReduceFrom`. -/
 syntax (name := srfWith) "synth_reduce_from " term:max " with " term:max : tactic
 @[tactic_alt srfWith]
@@ -631,7 +724,8 @@ left as `forward` (`hp : p x ⊢ q (f x)`) and `backward` (`hq : q (f x) ⊢ p x
 unfolds both problems one step; `with f using spec` or `using fwd bwd` closes the link with a known
 theorem. The source `h` is a proved halting reduction, `HaltHard p`, a negative result
 `¬ ComputablePred p` (for the two negative goals), or a problem with a `HaltSource` or
-`HaltHardFact` instance. -/
+`HaltHardFact` instance. Several links, separated by commas, are composed in order, each `with f …`
+or `via r`, with one computability goal per function or synthetic link. -/
 syntax (name := hrfWith) "hard_reduce_from " term:max " with " term:max : tactic
 @[tactic_alt hrfWith]
 syntax (name := hrfUnfold) "hard_reduce_from " term:max " with " term:max &" unfold" : tactic
@@ -676,3 +770,45 @@ elab_rules : tactic
   | `(tactic| reduce_from $h with $f using $a $b) => do
     if ← isSynthGoal then evalTactic (← `(tactic| synth_reduce_from $h with $f using $a $b))
     else evalTactic (← `(tactic| hard_reduce_from $h with $f using $a $b))
+
+/-! ### Chains of links -/
+
+/-- One link of a chain in `synth_reduce_from`, `hard_reduce_from` and `reduce_from`:
+`with f`, `with f unfold`, `with f using spec`, `with f using fwd bwd`, or `via r`. -/
+declare_syntax_cat reduceLink
+/-- A link `with f`: its correctness left as `forward` and `backward`. -/
+syntax (name := linkWith) " with " term:max : reduceLink
+/-- A link `with f unfold`: as `with f`, with both problems unfolded one step. -/
+syntax (name := linkUnfold) " with " term:max &" unfold" : reduceLink
+/-- A link `with f using spec`, with `spec : p ⪯_s[f] q`. -/
+syntax (name := linkUsing) " with " term:max " using " term:max : reduceLink
+/-- A link `with f using fwd bwd`, its correctness as the two directions. -/
+syntax (name := linkLemmas) " with " term:max " using " term:max colGt term:max : reduceLink
+/-- A bundled link `via r`, synthetic or proved. -/
+syntax (name := linkVia) " via " term:max : reduceLink
+
+/-- The link that the syntax `stx` stands for. -/
+def parseLink (stx : TSyntax `reduceLink) : TacticM ChainLink :=
+  match stx with
+  | `(reduceLink| with $f) => pure (.fn f .open_)
+  | `(reduceLink| with $f unfold) => pure (.fn f .unfold)
+  | `(reduceLink| with $f using $s) => pure (.fn f (.spec s))
+  | `(reduceLink| with $f using $a $b) => pure (.fn f (.lemmas a b))
+  | `(reduceLink| via $r) => pure (.via r)
+  | _ => throwUnsupportedSyntax
+
+@[tactic_alt srfWith]
+syntax (name := srfChain) "synth_reduce_from " term:max reduceLink ("," reduceLink)+ : tactic
+@[tactic_alt hrfWith]
+syntax (name := hrfChain) "hard_reduce_from " term:max reduceLink ("," reduceLink)+ : tactic
+@[tactic_alt tacticReduce_from_Via_]
+syntax (name := rfChain) "reduce_from " term:max reduceLink ("," reduceLink)+ : tactic
+
+elab_rules : tactic
+  | `(tactic| synth_reduce_from $h $l $[, $ls]*) => do
+    runWithChain h ((← parseLink l) :: (← ls.toList.mapM parseLink))
+  | `(tactic| hard_reduce_from $h $l $[, $ls]*) => do
+    runHardChain h ((← parseLink l) :: (← ls.toList.mapM parseLink))
+  | `(tactic| reduce_from $h $l $[, $ls]*) => do
+    let links := (← parseLink l) :: (← ls.toList.mapM parseLink)
+    if ← isSynthGoal then runWithChain h links else runHardChain h links

@@ -470,3 +470,90 @@ error: hard_reduce_from: `PCPS23` is a problem, so the tactic looks for an insta
 #guard_msgs in
 example : HaltHard DiagonaLean.MatMort.DecisionProblem := by
   hard_reduce_from PCPS23 with matImage using pcp_reducesto_matMort_spec
+
+/-! #### Chains of links
+
+Links separated by commas: `with f …` or `via r`, composed in order. Every link but the last gives
+its correctness with `using`. -/
+
+open DiagonaLean.PCP.AlphabetLift in
+/-- Three links to a proved goal: MPCP to PCP, the change of alphabet, PCP to mortality. -/
+example : HaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from DiagonaLean.MPCP.fromHalt
+    with (fun x => mpcpToPcp x.1 x.2) using mpcp_reducesto_pcp_spec,
+    with (liftInstance (0 : S23) 1) using (pcp_alphabet_lift_spec 0 1 (by decide)),
+    with matImage using pcp_reducesto_matMort_spec
+
+open DiagonaLean.PCP.AlphabetLift in
+/-- The same chain to a synthetic goal, from a proved source. -/
+example : SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  synth_reduce_from DiagonaLean.MPCP.fromHalt
+    with (fun x => mpcpToPcp x.1 x.2) using mpcp_reducesto_pcp_spec,
+    with (liftInstance (0 : S23) 1) using (pcp_alphabet_lift_spec 0 1 (by decide)),
+    with matImage using pcp_reducesto_matMort_spec
+
+open DiagonaLean.PCP.AlphabetLift in
+/-- A bundled synthetic link, upgraded by `fun_prop`, then two functions; `reduce_from` chooses the
+layer by the goal. -/
+example : ¬ ComputablePred DiagonaLean.MatMort.DecisionProblem := by
+  reduce_from DiagonaLean.MPCP.fromHalt via mpcpLink,
+    with (liftInstance (0 : S23) 1) using (pcp_alphabet_lift_spec 0 1 (by decide)),
+    with matImage using pcp_reducesto_matMort_spec
+
+open DiagonaLean.PCP.AlphabetLift in
+example : SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  reduce_from DiagonaLean.MPCP.synthFromHalt via mpcpLink,
+    with (liftInstance (0 : S23) 1) using (pcp_alphabet_lift_spec 0 1 (by decide)),
+    with matImage using pcp_reducesto_matMort_spec
+
+open DiagonaLean.PCP.AlphabetLift in
+/-- A negative source: the links are composed first. -/
+example : ¬ ComputablePred DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from mpcpNeg via mpcpLink,
+    with (liftInstance (0 : S23) 1) using (pcp_alphabet_lift_spec 0 1 (by decide)),
+    with matImage using pcp_reducesto_matMort_spec
+
+open DiagonaLean.PCP.AlphabetLift in
+/-- An inner link given by its two directions. -/
+example : HaltReduction DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from DiagonaLean.MPCP.fromHalt via mpcpLink,
+    with (liftInstance (0 : S23) 1)
+      using (fun h => (pcp_alphabet_lift_spec 0 1 (by decide) _).1 h)
+        (fun h => (pcp_alphabet_lift_spec 0 1 (by decide) _).2 h),
+    with matImage using pcp_reducesto_matMort_spec
+
+open DiagonaLean.PCP.AlphabetLift in
+/-- The last link left open; the computability goal of a named function is `computable_<name>`. -/
+example : HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from DiagonaLean.MPCP.fromHalt via mpcpLink,
+    with (liftInstance (0 : S23) 1) using (pcp_alphabet_lift_spec 0 1 (by decide)),
+    with plainF
+  case forward => exact matmort_of_pcp hp
+  case backward => exact pcp_of_matmort hq
+  case computable_plainF => exact matImage_primrec.to_comp
+
+/--
+error: hard_reduce_from: the link `with liftL` is not the last of the chain, so its correctness must be given with `using`: the problem it reduces to is read from that proof.
+-/
+#guard_msgs in
+example (liftL : DiagonaLean.PCP.Stack (Ext A) → DiagonaLean.PCP.Stack S23) :
+    HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from DiagonaLean.MPCP.fromHalt via mpcpLink,
+    with liftL,
+    with matImage using pcp_reducesto_matMort_spec
+
+/--
+error: hard_reduce_from: the chain from `DiagonaLean.MPCP.fromHalt` does not compose to the goal: each link must start from the problem the previous one reduces to.
+Application type mismatch: The argument
+  matImage
+has type
+  DiagonaLean.PCP.Stack S23 → Finset (Matrix (Fin 3) (Fin 3) ℤ)
+but is expected to have type
+  DiagonaLean.PCP.Stack (Ext A) → Finset (Matrix (Fin 3) (Fin 3) ℤ)
+in the application
+  ComputableReduction.mk matImage
+-/
+#guard_msgs in
+example : HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  hard_reduce_from DiagonaLean.MPCP.fromHalt via mpcpLink,
+    with matImage using pcp_reducesto_matMort_spec
