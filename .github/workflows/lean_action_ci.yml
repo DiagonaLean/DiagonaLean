@@ -20,6 +20,8 @@ jobs:
         run: lake env lean scripts/FunPropTest.lean
       - name: Check that reduce_from composes reductions in both layers
         run: lake env lean scripts/ReduceFromTest.lean
+      - name: Check that upgrade makes a synthetic halting reduction proved
+        run: lake env lean scripts/UpgradeTest.lean
       - name: Check that halt_results states the consequences of a halting reduction
         run: lake env lean scripts/HaltResultsTest.lean
       - name: Check that every declaration uses only the standard axioms

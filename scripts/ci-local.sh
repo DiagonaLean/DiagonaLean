@@ -75,6 +75,7 @@ checks=(
   "reductions-test|lake env lean scripts/CheckReductionsTest.lean"
   "fun-prop-test|lake env lean scripts/FunPropTest.lean"
   "reduce-from-test|lake env lean scripts/ReduceFromTest.lean"
+  "upgrade-test|lake env lean scripts/UpgradeTest.lean"
   "halt-results-test|lake env lean scripts/HaltResultsTest.lean"
   "axioms|lake env lean --run scripts/CheckAxioms.lean"
   "axioms-test|lake env lean scripts/CheckAxiomsTest.lean"

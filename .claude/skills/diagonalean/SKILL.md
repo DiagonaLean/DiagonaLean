@@ -105,6 +105,25 @@ extract them from `Nontrivial α` (a `Prop`).
   `HaltSource` / `HaltHardFact` instance (registered: MPCP, PCP and SemiThue over `Bool`, MatMort;
   `instance : HaltSource P := ⟨fromHalt…⟩` next to the `HaltReduction`). `reduce_from h with …`
   chooses between the two tactics by the goal.
+* **Chains.** The three tactics take several links separated by commas, each `with f …` or
+  `via r`, composed in order:
+  ```lean
+  hard_reduce_from MPCP.fromHalt via mpcpLink,
+    with (liftInstance 0 1) using (pcp_alphabet_lift_spec 0 1 hne),
+    with matImage using pcp_reducesto_matMort_spec
+  ```
+  Every link but the last needs `using` (the intermediate problem is read from it). On a hard goal
+  each function or synthetic `via` link gets a `Computable` goal, tagged `computable_f` for a named
+  `f` (`computable_i` otherwise; plain `computable` for one link). A synthetic goal accepts a proved
+  source.
+* **`upgrade s`** (`s : SynthHaltReduction q`) proves the hard goals about `q` from the synthetic
+  result: it cuts the chain of `s` at the last problem with a proved halting reduction (the
+  counterpart `foo` of `synthFoo` with the same explicit arguments, a hypothesis
+  `HaltReduction p`, or `HaltSource p`) and upgrades the links after it, one `Computable f` goal
+  per link, tried with `fun_prop`. "Synthetic first, computable later": write the synthetic chain,
+  then `def X.fromHalt : HaltReduction X := by upgrade X.synthFromHalt`. It cannot help where no
+  problem of the chain has a proved root (SKI, β, KAComm, Rice) or a link's types are not
+  `Primcodable` (grammars of Mathlib); the errors say which.
 * **`code_lift F from h`**: a halting reduction `h` is composed with the lift by `reduce_from`
   (synthetic `F.lift` or proved `F.computableLift`, chosen by the goal), so it proves every goal
   `reduce_from` does, over any alphabet with two letters (`hne : b0 ≠ b1` in the context); a source
@@ -177,7 +196,7 @@ end DiagonaLean.X
 **When not to use it.**
 
 * There is only a synthetic reduction (`SynthHaltReduction`): it proves none of the three. Make the
-  chain proved from a `HaltCanon` root first.
+  chain proved from a `HaltCanon` root first, by hand or with `upgrade`.
 * There is only `HaltHard P` and no `HaltReduction P`: use `.not_computablePred` and
   `.not_machineDecidable` on the fact.
 * The result is `¬ ComputablePred` with no halting reduction (SKI, β, KAComm, Rice), or about a
