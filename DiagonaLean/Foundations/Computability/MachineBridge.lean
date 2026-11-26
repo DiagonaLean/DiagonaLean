@@ -164,8 +164,8 @@ theorem _root_.DiagonaLean.Synthetic.Definitions.ManyOneReduces.toManyOneReducib
     (hr : Computable r.f) : ManyOneReducible p q :=
   DiagonaLean.Synthetic.Definitions.SynthReduction.toManyOneReducible r hr
 
-/-- **Undecidability transfers along a computable reduction.** If `p` is not a computable
-predicate and `r : p ⪯_s q` has a computable function, then `q` is not one either. -/
+/-- **Not being a computable predicate transfers along a computable reduction.** If `p` is not a
+computable predicate and `r : p ⪯_s q` has a computable function, then `q` is not one either. -/
 theorem not_computablePred_of_reduces {X Y : Type*} [Primcodable X] [Primcodable Y]
     {p : X → Prop} {q : Y → Prop} (r : p ⪯_s q) (hr : Computable r.f) (hp : ¬ ComputablePred p) :
     ¬ ComputablePred q :=

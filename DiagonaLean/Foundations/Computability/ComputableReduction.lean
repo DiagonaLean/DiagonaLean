@@ -114,13 +114,13 @@ theorem manyOneReducible (c : p ⪯ q) : ManyOneReducible p q :=
 /-- `toSynth` keeps the function. -/
 @[simp] theorem toSynth_f (c : p ⪯ q) : c.toSynth.f = c.f := rfl
 
-/-- **Undecidability transfers along a proved reduction.** -/
+/-- **Not being a computable predicate transfers along a proved reduction.** -/
 theorem not_computablePred (c : p ⪯ q) (hp : ¬ ComputablePred p) :
     ¬ ComputablePred q :=
   fun hq => hp (ComputablePred.computable_of_manyOneReducible c.manyOneReducible hq)
 
-/-- **No machine decides the target of a proved reduction from an undecidable predicate**, under
-any computable encoding. -/
+/-- **No machine decides the target of a proved reduction from a predicate that is not
+computable**, under any computable encoding. -/
 theorem not_machineDecidable (c : p ⪯ q) (hp : ¬ ComputablePred p)
     {enc : β → List Bool} (henc : Computable enc) : ¬ MachineDecidable enc q :=
   not_machineDecidable_of_not_computablePred henc (c.not_computablePred hp)
