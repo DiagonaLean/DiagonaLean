@@ -635,6 +635,26 @@ example :
 
 example :
     ∀ (eve adam : Finset DiagonaLean.MatrixGame.Position),
-      DiagonaLean.MatrixGame.DecisionProblem (eve, adam) ↔
-        DiagonaLean.MatrixGame.EveForcesZero eve adam :=
+      DiagonaLean.MatrixGame.DecisionProblem (eve, adam) ↔ DiagonaLean.MatrixGame.EveWins eve adam :=
   @DiagonaLean.MatrixGame.decisionProblem_mk
+
+example :
+    ∀ (eve adam : Finset DiagonaLean.MatrixGame.Position),
+      DiagonaLean.MatrixGame.EveWins eve adam ↔
+        ∃ σ, DiagonaLean.MatrixGame.LegalEve (eve, adam) σ ∧
+          DiagonaLean.MatrixGame.WinsFrom (eve, adam) σ 1 :=
+  @DiagonaLean.MatrixGame.eveWins_iff
+
+/-! The matrix game, stated by strategies (above), is membership of the identity in the attractor of
+zero (`MatrixGame/Attractor.lean`); and with Adam's moves fixed to `±1`, it is matrix mortality. -/
+
+example :
+    ∀ (G : DiagonaLean.MatrixGame.Arena),
+      DiagonaLean.MatrixGame.DecisionProblem G ↔ DiagonaLean.MatrixGame.ForceZero G 1 :=
+  @DiagonaLean.MatrixGame.decisionProblem_iff_forceZero
+
+example :
+    {eve | DiagonaLean.MatrixGame.DecisionProblem (eve, {1, -1})} =
+      {M | DiagonaLean.MatMort.DecisionProblem M} :=
+  @DiagonaLean.MatrixGame.setOf_signGame_eq_mortal
+

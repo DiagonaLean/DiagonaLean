@@ -4,7 +4,7 @@ Authors: Aalok Thakkar, Claude Opus
 -/
 
 import Mathlib.Data.Matrix.Mul
-import DiagonaLean.MatrixGame.Basic
+import DiagonaLean.MatrixGame.Attractor
 
 @[expose] public section
 

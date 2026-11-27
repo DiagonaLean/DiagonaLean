@@ -130,6 +130,7 @@ import DiagonaLean.Rabin.ComputableStrategy
 
 import DiagonaLean.MatrixGame.Basic
 import DiagonaLean.MatrixGame.Search
+import DiagonaLean.MatrixGame.Attractor
 import DiagonaLean.MatrixGame.Reductions.MatMort_to_MatrixGame
 import DiagonaLean.MatrixGame.Undecidable
 import DiagonaLean.MatrixGame.SynthHardness
