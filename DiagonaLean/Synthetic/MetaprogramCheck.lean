@@ -18,7 +18,9 @@ functions that change the environment (`ruleOf`), except where `allowances` perm
 command is permitted only in the declarations that `commandAllowances` names, file by file, so an
 allowlisted file cannot gain a second command unnoticed. Rules for existing syntax are forbidden
 outside the tactic category (`expanderRule`): a `macro_rules` on `#check_reductions` silences the
-check, and one on `¬` changes what every statement written with it says.
+check, and one on `¬` changes what every statement written with it says. A library proof also
+names its route instead of searching the reduction graph (`searchRule`), so that it does not
+depend on what is imported.
 `scripts/CheckMetaprograms.lean` runs it over the library in CI.
 
 Each file is parsed by Lean's own parser (`parseFile`), not scanned as text, so comments, string
@@ -175,6 +177,32 @@ def findings (stx : Syntax) : Array Finding :=
   let ls := leaves stx
   (List.range ls.size).foldl (fun acc i => acc ++ (findingsAt ls i).toArray) #[]
 
+/-- `undec from P`, `undec from P via?`, `undec?` and `reduction_path` search the reduction graph
+when the proof is elaborated, and the graph depends on what is imported and tagged: an import can
+change the route a proof takes, or which goals it leaves. A library proof names its route, with
+`reduce_from h via r₁, via r₂, …` (or `undec from h via r₁, …`), which `undec?` suggests. Not a
+soundness rule: whatever route is found, the kernel checks the proof. -/
+def searchRule : Rule :=
+  ⟨"search", "searches the reduction graph, so the route depends on the imports; name the route \
+    with `reduce_from h via r₁, via r₂, …`, which `undec?` suggests"⟩
+
+/-- The tactics that search the reduction graph, by syntax kind, with the name shown in a report;
+`undec from h via r₁, …` (`undecFromVia`) follows a given route and is not one of them. -/
+def searchKinds : List (Name × String) :=
+  [(`DiagonaLean.Synthetic.Notation.undecFrom, "undec from"),
+    (`DiagonaLean.Synthetic.Notation.undecSuggest, "undec?"),
+    (`DiagonaLean.Synthetic.ReductionChain.reductionPath, "reduction_path")]
+
+/-- The findings of the `search` rule in `cmd`: each use of a tactic of `searchKinds`. -/
+partial def searchFindings (cmd : Syntax) : Array Finding :=
+  match cmd with
+  | .node _ k args =>
+    let here := match searchKinds.lookup k with
+      | some shown => #[⟨searchRule, shown, (cmd.getPos? (canonicalOnly := true)).getD 0⟩]
+      | none => #[]
+    args.foldl (fun acc a => acc ++ searchFindings a) here
+  | _ => #[]
+
 /-- The quotations that a `macro_rules` or `elab_rules` pattern may be: tactic syntax only. -/
 def tacticQuotKinds : List Name := [``Parser.Tactic.quot, ``Parser.Tactic.quotSeq]
 
@@ -288,9 +316,11 @@ def allowances : List (String × List String) := [
   ("DiagonaLean/Synthetic/EvalExample.lean", ["eval"]),
   -- `register_label_attr undecReduction` and `register_option undec.showRoute`, which register a
   -- tag and an option and add no declarations
-  ("DiagonaLean/Synthetic/Tactics/ReductionPath.lean", ["initialize"]),
-  -- `register_label_attr undecHardness`, likewise
-  ("DiagonaLean/Foundations/Computability/UndecTransfer.lean", ["initialize"])]
+  ("DiagonaLean/Synthetic/Tactics/ReductionPath.lean", ["initialize", "search"]),
+  -- `register_label_attr undecHardness`, likewise; and the search tactics are defined here and in
+  -- `UndecFrom.lean`, whose elaborators match their syntax
+  ("DiagonaLean/Foundations/Computability/UndecTransfer.lean", ["initialize", "search"]),
+  ("DiagonaLean/Synthetic/Tactics/UndecFrom.lean", ["search"])]
 
 /-- The files, relative to the root, and the top-level declarations in each that may break the
 `command` rule: the command itself and the helpers typed in `CommandElabM`. Each name may be
@@ -348,7 +378,7 @@ def violationsInSource (env : Environment) (rel src : String) : IO (Array String
       | some n => commandDecls.contains n && !seen.contains n
       | none => false
     if let some n := name? then seen := n :: seen
-    for f in findings cmd ++ expanderFindings cmd do
+    for f in findings cmd ++ expanderFindings cmd ++ searchFindings cmd do
       let ok := if f.rule.name == commandRule.name then commandOk
         else allowed.contains f.rule.name
       if !ok then

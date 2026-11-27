@@ -35,12 +35,12 @@ def _root_.DiagonaLean.MatrixGame.fromHalt : HaltReduction DecisionProblem := by
 
 /-- **The matrix game is not a computable predicate.** -/
 @[undecHardness] theorem not_computablePred_matrixGame : ¬ ComputablePred DecisionProblem := by
-  undec from MatMort.DecisionProblem
+  reduce_from MatMort.not_computablePred via synthFromMatMort
 
 /-- **No Turing machine decides the matrix game**, under any computable encoding of the arenas. -/
 theorem not_machineDecidable_matrixGame {enc : Arena → List Bool} (he : Computable enc) :
     ¬ MachineDecidable enc DecisionProblem := by
-  undec from MatMort.DecisionProblem
+  reduce_from MatMort.not_computablePred via synthFromMatMort
 
 /-- **No Turing machine decides the matrix game when Adam's moves are `1` and `-1`**, under any
 computable encoding of Eve's moves. -/

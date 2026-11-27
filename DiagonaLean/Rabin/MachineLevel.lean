@@ -36,6 +36,6 @@ open DiagonaLean.Rabin.Reduction DiagonaLean.Foundations.Computability DiagonaLe
 encoding of the payoff programs. -/
 theorem not_machineDecidable_rabin {enc : PayoffCode → List Bool} (henc : Computable enc) :
     ¬ MachineDecidable enc DecisionProblem := by
-  undec from DecisionProblem
+  exact not_machineDecidable_of_not_computablePred henc not_computablePred_rabin
 
 end DiagonaLean.Rabin.MachineLevel

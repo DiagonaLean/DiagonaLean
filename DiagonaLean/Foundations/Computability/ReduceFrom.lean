@@ -139,6 +139,8 @@ inductive Goal | synth | proved | hard | notComputable | notMachine
 /-- The shape of the goal, if `reduce_from` accepts it. -/
 def goalOf? (tgt : Expr) : MetaM (Option Goal) := do
   let tgt ← instantiateMVars tgt
+  -- `Undecidable q` is the reducible `¬ ComputablePred q`
+  let tgt ← if tgt.isAppOfArity ``Not 1 then pure tgt else whnfR tgt
   if tgt.isAppOfArity ``Not 1 then
     let inner ← whnfR tgt.appArg!
     if inner.isAppOf ``ComputablePred then return some .notComputable
@@ -171,8 +173,10 @@ inductive Source | red (l : Layer) | neg
 def sourceOfTerm (stx : Term) : TacticM Source := withoutModifyingState do
   let e ← withoutRecover <| elabTerm stx none (mayPostpone := true)
   let ty ← instantiateMVars (← inferType e)
-  if ty.isAppOfArity ``Not 1 then
-    if (← whnfR ty.appArg!).isAppOf ``ComputablePred then return .neg
+  -- `Undecidable p` is the reducible `¬ ComputablePred p`
+  let tyN ← whnfR ty
+  if tyN.isAppOfArity ``Not 1 then
+    if (← whnfR tyN.appArg!).isAppOf ``ComputablePred then return .neg
   match ← layerOf? ty with
   | some l => return .red l
   | none => throwError "reduce_from: the source `{stx}` is neither a reduction nor a negative \
@@ -487,8 +491,10 @@ or a negative result `¬ ComputablePred p`. A synthetic halting reduction is an 
 def hardSourceOf (stx : Term) : TacticM HardSource := withoutModifyingState do
   let e ← withoutRecover <| elabTerm stx none (mayPostpone := true)
   let ty ← instantiateMVars (← inferType e)
-  if ty.isAppOfArity ``Not 1 then
-    if (← whnfR ty.appArg!).isAppOf ``ComputablePred then return .neg
+  -- `Undecidable p` is the reducible `¬ ComputablePred p`
+  let tyN ← whnfR ty
+  if tyN.isAppOfArity ``Not 1 then
+    if (← whnfR tyN.appArg!).isAppOf ``ComputablePred then return .neg
   let ty' ← whnfR ty
   if ty'.isAppOfArity ``Nonempty 1 then
     if (← whnfR ty'.appArg!).isAppOf ``ComputableReduction then return .hard

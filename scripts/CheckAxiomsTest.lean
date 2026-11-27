@@ -78,6 +78,7 @@ run_meta runOn `ViaRegistry
 /--
 info: `ViaHaltResults.fakeRed` is an axiom
 `ViaHaltResults.haltHard` depends on `ViaHaltResults.fakeRed`
+`ViaHaltResults.instHaltHardFactNatIsOne` depends on `ViaHaltResults.fakeRed`
 `ViaHaltResults.not_computablePred` depends on `ViaHaltResults.fakeRed`
 `ViaHaltResults.not_machineDecidable` depends on `ViaHaltResults.fakeRed`
 -/

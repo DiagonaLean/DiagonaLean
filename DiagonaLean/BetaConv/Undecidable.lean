@@ -99,7 +99,4 @@ halt_results BetaConvProblem from
     (exists_raceProg u.toSKI).elim fun C hC =>
       ⟨fromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC⟩
 
-/-- β-conversion is a halting-hard source for `hard_reduce_from`. -/
-instance : HaltHardFact BetaConvProblem := ⟨haltHard⟩
-
 end DiagonaLean.BetaConv

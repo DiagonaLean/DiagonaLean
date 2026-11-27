@@ -37,10 +37,16 @@ example : SynthHaltReduction MPCP.MPCProblem := by show_term undec from Halt.Hal
 info: Halting → Binary PCP → PCP over Paterson’s alphabet → 3×3 matrix mortality
 ---
 info: Try this:
-  [apply] undec from PCP.synthFromHaltBool via MatMort.synthS23FromPCP, MatMort.synthFromPCP
+  [apply] reduce_from PCP.synthFromHaltBool
+    via MatMort.synthS23FromPCP,
+    via MatMort.synthFromPCP
 -/
 #guard_msgs (whitespace := lax) in
 example : SynthHaltReduction MatMort.DecisionProblem := by undec? from PCP.PCProblem
+
+-- The suggestion replays with `reduce_from`.
+example : SynthHaltReduction MatMort.DecisionProblem := by
+  reduce_from PCP.synthFromHaltBool via MatMort.synthS23FromPCP, via MatMort.synthFromPCP
 
 -- Library results are discoverable from halting.
 example : SynthHaltReduction MPCP.MPCProblem := by undec from Halt.HaltProblem
@@ -178,13 +184,16 @@ example : SynthHaltReduction MatMort.DecisionProblem := by
 info: Binary PCP → PCP over Paterson’s alphabet → 3×3 matrix mortality
 ---
 info: Try this:
-  [apply] undec from PCP.not_computablePred via MatMort.synthS23FromPCP,
-    MatMort.synthFromPCP
+  [apply] reduce_from PCP.not_computablePred via MatMort.synthS23FromPCP, via MatMort.synthFromPCP
 -/
 #guard_msgs (whitespace := lax) in
 example {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool} (he : Computable enc) :
     ¬ MachineDecidable enc MatMort.DecisionProblem := by
   undec? from PCP.PCProblem
+
+example {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool} (he : Computable enc) :
+    ¬ MachineDecidable enc MatMort.DecisionProblem := by
+  reduce_from PCP.not_computablePred via MatMort.synthS23FromPCP, via MatMort.synthFromPCP
 
 example {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool} (he : Computable enc) :
     ¬ MachineDecidable enc MatMort.DecisionProblem := by
@@ -249,7 +258,7 @@ example : SynthHaltReduction Halt.HaltProblem := by undec?
 
 /--
 info: Try this:
-  [apply] undec from ‹SynthHaltReduction P› via ‹P ⪯_s Q›
+  [apply] reduce_from ‹SynthHaltReduction P› via ‹P ⪯_s Q›
 -/
 #guard_msgs (whitespace := lax) in
 example (P Q : ℕ → Prop) : (SynthHaltReduction P) → (P ⪯_s Q) → SynthHaltReduction Q := by
@@ -260,11 +269,15 @@ example (P Q : ℕ → Prop) : (SynthHaltReduction P) → (P ⪯_s Q) → SynthH
   intro _ _
   undec from ‹SynthHaltReduction P› via ‹P ⪯_s Q›
 
+example (P Q : ℕ → Prop) : (SynthHaltReduction P) → (P ⪯_s Q) → SynthHaltReduction Q := by
+  intro _ _
+  reduce_from ‹SynthHaltReduction P› via ‹P ⪯_s Q›
+
 /--
 info: Halting → P → Q
 ---
 info: Try this:
-  [apply] undec from h via ‹P ⪯_s Q›
+  [apply] reduce_from h via ‹P ⪯_s Q›
 -/
 #guard_msgs (whitespace := lax) in
 example (P Q R : ℕ → Prop) (h : SynthHaltReduction P) (r : P ⪯_s Q) (r' : Q ⪯_s R) :

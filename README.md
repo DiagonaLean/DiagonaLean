@@ -226,7 +226,7 @@ end SwappedPCP
 `with swap` alone leaves the two directions as goals `forward` and `backward`; `with swap unfold`
 also unfolds both problems; `using fwd bwd` closes them with two lemmas.
 
-`undec from P` finds a route from halting through a named source problem `P`. The halting reduction for the matrix game, `MatrixGame.synthFromHalt`, is proved by `undec from MatMort.DecisionProblem`. Run `lake env lean examples/GameReductions.lean` to display the proof terms for both games and play through a finite example.
+`undec from P` finds a route from halting through a named source problem `P`, and `undec? from P` prints that route as a `reduce_from … via …` script. Library proofs are written with the script, not the search, so that they do not depend on what is imported (the `search` rule of `scripts/CheckMetaprograms.lean`): the halting reduction for the matrix game, `MatrixGame.synthFromHalt`, is the route `undec? from MatMort.DecisionProblem` finds, `reduce_from MatMort.synthFromHalt via synthFromMatMort`. The search tactics are for finding routes, in examples and tests. Run `lake env lean examples/GameReductions.lean` to display the proof terms for both games and play through a finite example.
 
 The proof can also start at binary PCP. Run the following after `import DiagonaLean` to see the alphabet lift to Paterson's alphabet, the reduction from PCP to mortality, and the reduction from mortality to the game.
 
@@ -237,7 +237,7 @@ example : SynthHaltReduction MatrixGame.DecisionProblem := by
   undec? from PCP.PCProblem
 ```
 
-Lean displays the route and suggests a script that names each reduction on it, here `undec from PCP.synthFromHaltBool via MatMort.synthS23FromPCP, MatMort.synthFromPCP, MatrixGame.synthFromMatMort`. The script composes exactly those reductions, so replaying it does not depend on which reductions are tagged. For a machine-level goal the same source predicate selects a registered theorem of noncomputability. The search checks the functions along each candidate route and uses the encoding hypothesis.
+Lean displays the route and suggests a script that names each reduction on it, here `reduce_from PCP.synthFromHaltBool via MatMort.synthS23FromPCP, via MatMort.synthFromPCP, via MatrixGame.synthFromMatMort`. The script is written with `reduce_from`, the tactic library proofs use (`undec from H via r₁, …, rₙ` does the same); it composes exactly those reductions, so replaying it does not depend on which reductions are tagged. For a machine-level goal the same source predicate selects a registered theorem of noncomputability. The search checks the functions along each candidate route and uses the encoding hypothesis.
 
 ```lean
 example {enc : MatrixGame.Arena → List Bool} (he : Computable enc) :
@@ -247,8 +247,8 @@ example {enc : MatrixGame.Arena → List Bool} (he : Computable enc) :
 
 ```text
 Binary PCP → PCP over Paterson’s alphabet → 3×3 matrix mortality → Matrix-game winner
-Try this: undec from PCP.not_computablePred via MatMort.synthS23FromPCP,
-  MatMort.synthFromPCP, MatrixGame.synthFromMatMort
+Try this: reduce_from PCP.not_computablePred via MatMort.synthS23FromPCP,
+    via MatMort.synthFromPCP, via MatrixGame.synthFromMatMort
 ```
 
 Use `undec from P` for a quiet proof and `undec? from P` to see the route and a replayable script. For synthetic goals, `undec?` also discovers a source starting from halting. Search starts with local hypotheses and tagged reductions. If they do not solve the goal, it also searches for concrete reduction definitions in the current file and its imports. Each search is breadth first. Two predicates count as the same problem when they agree after unfolding reducible and instance definitions, so a problem should be stated with `abbrev` or as a `def` used under one name. For machine-level goals it tries certified paths in both searches before leaving proof obligations. A bundled computable reduction supplies its own certificate. If only a structural route is available, each missing computability proof becomes a goal. The diagnostic names the edge or encoding that needs evidence.

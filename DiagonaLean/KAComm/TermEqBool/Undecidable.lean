@@ -71,7 +71,4 @@ halt_results TermEqBoolProblem from
   exists_base.elim fun B hB => (exists_raceProgB false B).elim fun C hC =>
     ⟨fromHaltWith B C hB hC⟩
 
-/-- A halting-hard source for `hard_reduce_from`. -/
-instance : HaltHardFact TermEqBoolProblem := ⟨haltHard⟩
-
 end DiagonaLean.KAComm.TermEqBool

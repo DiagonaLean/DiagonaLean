@@ -501,12 +501,20 @@ example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
     SynthHaltReduction DiagonaLean.MatMort.DecisionProblem := by
   hard_reduce_from h with matImage using pcp_reducesto_matMort_spec
 
-/--
-error: hard_reduce_from: `PCPS23` is a problem, so the tactic looks for an instance of `HaltSource` or `HaltHardFact` for it, and finds none. Register one, or give the source explicitly.
--/
-#guard_msgs in
+-- `halt_results` registers PCP over every nontrivial alphabet (`HaltHardFact`), so PCP over
+-- `S23` is a source by name.
 example : HaltHard DiagonaLean.MatMort.DecisionProblem := by
   hard_reduce_from PCPS23 with matImage using pcp_reducesto_matMort_spec
+
+/-- A problem that nothing registers as halting-hard. -/
+abbrev Unregistered : ℕ → Prop := fun _ => False
+
+/--
+error: hard_reduce_from: `Unregistered` is a problem, so the tactic looks for an instance of `HaltSource` or `HaltHardFact` for it, and finds none. Register one, or give the source explicitly.
+-/
+#guard_msgs in
+example : HaltHard Unregistered := by
+  hard_reduce_from Unregistered with id using fun _ => Iff.rfl
 
 /-! #### Chains of links
 

@@ -220,3 +220,22 @@ T.lean:2: `priority` changes what existing command or term syntax means, which c
 #eval report "macro_rules | `(tactic| rfl) => `(tactic| exact rfl)\n\
   syntax (priority := high) \"my_tac\" : tactic\n\
   notation:50 a \" ≈≈ \" b => a = b"
+
+/-! ### Library proofs name their route -/
+
+-- The search tactics are reported; a route given with `via` is not.
+/-- info:
+T.lean:2: `undec from` searches the reduction graph, so the route depends on the imports; name the route with `reduce_from h via r₁, via r₂, …`, which `undec?` suggests
+T.lean:3: `undec?` searches the reduction graph, so the route depends on the imports; name the route with `reduce_from h via r₁, via r₂, …`, which `undec?` suggests
+T.lean:4: `reduction_path` searches the reduction graph, so the route depends on the imports; name the route with `reduce_from h via r₁, via r₂, …`, which `undec?` suggests -/
+#guard_msgs in
+#eval report "open DiagonaLean.Synthetic.Notation\n\
+  example : True := by undec from P\n\
+  example : True := by undec?\n\
+  example : True := by reduction_path"
+
+/-- info: clean -/
+#guard_msgs in
+#eval report "open DiagonaLean.Synthetic.Notation\n\
+  example : True := by undec from h via r₁, r₂\n\
+  example : True := by reduce_from h via r₁, via r₂"

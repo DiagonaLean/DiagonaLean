@@ -3,6 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Claude Opus
 -/
 
+import DiagonaLean.MatMort.SynthHardness
 import DiagonaLean.MatrixGame.Reductions.MatMort_to_MatrixGame
 import DiagonaLean.MatMort.Undecidable
 import DiagonaLean.Synthetic.Tactics.UndecFrom
@@ -27,6 +28,6 @@ open DiagonaLean.Synthetic.Definitions DiagonaLean.Synthetic.Notation
 /-- **The matrix game is synthetically halting-hard.** -/
 @[undecReduction] def _root_.DiagonaLean.MatrixGame.synthFromHalt :
     SynthHaltReduction DecisionProblem := by
-  undec from MatMort.DecisionProblem
+  reduce_from MatMort.synthFromHalt via synthFromMatMort
 
 end DiagonaLean.MatrixGame.Reduction

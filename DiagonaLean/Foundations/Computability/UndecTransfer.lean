@@ -15,7 +15,8 @@ predicate with a registered hardness theorem or a proof of `¬ ComputablePred P`
 `ComputablePred P → False`). Search prefers a route whose reduction functions have computability
 proofs, and proves each function's computability at most once per call. If evidence is missing,
 the corresponding computability obligations remain as goals. `undec from h via r₁, …, rₙ` follows
-exactly the named reductions, and `undec? from P` suggests such a script.
+exactly the named reductions, and `undec? from P` suggests a script for the route, written with
+`reduce_from h via r₁, via r₂, …`.
 `undecTagProblems` lists ill-formed `@[undecReduction]` and `@[undecHardness]` declarations;
 `scripts/CheckUndecTags.lean` runs it in CI.
 -/
@@ -190,17 +191,17 @@ def hardnessViaEdge (r : Term) : TacticM ReductionEdge := do
       {indentExpr (← inferType e)}"
   return edge
 
-/-- The script `undec from proof via r₁, …, rₙ` for a route from a hardness proof. `none` if
-some term does not elaborate again. -/
+/-- The script `reduce_from proof via r₁, …` for a route from a hardness proof, or
+`undec from proof` for a route with no links. `none` if some term does not elaborate again. -/
 def hardnessScript (proof : Expr) (path : List ReductionEdge) :
-    TermElabM (Option (TSyntax `tactic)) := do
+    TermElabM (Option Synthetic.Notation.Script) := do
   -- the source is replayed against the route, which fixes its implicit arguments
   let some src ← Synthetic.Notation.delabTermForScript proof (← inferType proof) | return none
   match path with
-  | [] => return some (← `(tactic| undec from $src))
+  | [] => return some (.tactic (← `(tactic| undec from $src)))
   | _ =>
     let some names := (← path.toArray.mapM Synthetic.Notation.delabEdge).mapM id | return none
-    return some (← `(tactic| undec from $src via $names,*))
+    return some (← Synthetic.Notation.reduceFromScript src names)
 
 /-- `undec from h` on a noncomputability goal, suggesting a script at `ref` when given. -/
 def undecHardness (h : Term) (ref : Option Syntax) : TacticM Unit := do

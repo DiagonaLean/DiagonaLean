@@ -91,7 +91,4 @@ halt_results SKIConvProblem from
   exists_isUniversal.elim fun u hu => (exists_raceProg u.toSKI).elim fun C hC =>
     ⟨fromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC⟩
 
-/-- SKI convertibility is a halting-hard source for `hard_reduce_from`. -/
-instance : HaltHardFact SKIConvProblem := ⟨haltHard⟩
-
 end DiagonaLean.SKIConv

@@ -80,7 +80,4 @@ halt_results KATermEqProblem from
   exists_base.elim fun B hB => (exists_raceProg true B).elim fun C hC =>
     ⟨fromHaltWith B C hB hC⟩
 
-/-- A halting-hard source for `hard_reduce_from`. -/
-instance : HaltHardFact KATermEqProblem := ⟨haltHard⟩
-
 end DiagonaLean.KAComm.KATermEq

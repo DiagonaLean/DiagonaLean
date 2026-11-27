@@ -4,6 +4,8 @@ Authors: Prathamesh Turaga, Claude Sonnet
 -/
 
 import DiagonaLean.Foundations.Computability.Undecidable
+import DiagonaLean.Foundations.Computability.ReduceFrom
+import DiagonaLean.Foundations.Computability.UndecTransfer
 
 @[expose] public section
 
@@ -16,6 +18,10 @@ theorems, under the same names for every problem, in the current namespace:
 * `haltHard : HaltHard P`;
 * `not_computablePred : Undecidable P`, that is `¬ ComputablePred P`;
 * `not_machineDecidable : Computable enc → ¬ MachineDecidable enc P`, for every encoding `enc`.
+
+It also registers the result for the tactics: `not_computablePred` is tagged `@[undecHardness]`,
+so the route search of `undec from` starts from `P`, and `instance : HaltHardFact P` lets
+`hard_reduce_from` and `reduce_from` take the problem `P` itself as a source.
 
 ## Forms
 
@@ -78,10 +84,14 @@ macro (name := haltResults) "halt_results" pre:(haltResultsName)? p:term
     `halt_results`. -/
     theorem $hardName:ident : DiagonaLean.Foundations.Computability.HaltHard $p := $hard
     /-- The problem is undecidable: it is not a computable predicate. Stated by `halt_results`. -/
-    theorem $computableName:ident : DiagonaLean.Foundations.Computability.Undecidable $p :=
+    @[undecHardness] theorem $computableName:ident :
+        DiagonaLean.Foundations.Computability.Undecidable $p :=
       DiagonaLean.Foundations.Computability.HaltHard.not_computablePred (P := $p) $hard
     /-- No Turing machine decides the problem, under any computable encoding of its instances.
     Stated by `halt_results`. -/
     theorem $machineName:ident {enc : _ → List Bool} (henc : Computable enc) :
         ¬ DiagonaLean.Synthetic.Definitions.MachineDecidable enc $p :=
-      DiagonaLean.Foundations.Computability.HaltHard.not_machineDecidable (P := $p) $hard henc)
+      DiagonaLean.Foundations.Computability.HaltHard.not_machineDecidable (P := $p) $hard henc
+    /-- The problem is registered as halting-hard, for the tactics. Stated by `halt_results`. -/
+    instance : DiagonaLean.Foundations.Computability.HaltHardFact $p :=
+      ⟨$hardName:ident⟩)

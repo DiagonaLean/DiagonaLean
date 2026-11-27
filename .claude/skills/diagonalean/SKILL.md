@@ -204,6 +204,14 @@ extract them from `Nontrivial α` (a `Prop`).
   then `def X.fromHalt : HaltReduction X := by upgrade X.synthFromHalt`. It cannot help where no
   problem of the chain has a proved root (SKI, β, KAComm, Rice) or a link's types are not
   `Primcodable` (grammars of Mathlib); the errors say which.
+* **`undec? from P`, `undec?`, `reduction_path`, `undec from P`** (Aalok's, `Synthetic/Tactics/`,
+  `Foundations/Computability/UndecTransfer.lean`) search the reduction graph: edges are closed
+  `P ⪯_s Q` / `P ⪯ Q` definitions (tagged `@[undecReduction]` first, then any in the imports),
+  sources are `@[undecHardness]` theorems. Use them to *find* a route; `undec?` prints it as
+  `reduce_from h via r₁, via r₂, …`, which is what goes in the library. The search forms are
+  rejected in library files (the `search` rule of `MetaprogramCheck`), because the route they find
+  depends on the imports; `undec from h via r₁, …` (a given route) is allowed. A generic
+  reduction (with parameters) is not an edge: tag a closed instance (`PCP.synthFromHaltBool`).
 * **`code_lift F from h`**: a halting reduction `h` is composed with the lift by `reduce_from`
   (synthetic `F.lift` or proved `F.computableLift`, chosen by the goal), so it proves every goal
   `reduce_from` does, over any alphabet with two letters (`hne : b0 ≠ b1` in the context); a source
@@ -242,6 +250,10 @@ declares, in the current namespace,
 | `haltHard` | `HaltHard P` |
 | `not_computablePred` | `Undecidable P` (`¬ ComputablePred P` by definition) |
 | `not_machineDecidable` | `{enc} → Computable enc → ¬ MachineDecidable enc P` |
+
+It also registers them: `not_computablePred` gets `@[undecHardness]` (a source for `undec?`), and
+`instance : HaltHardFact P` makes the problem `P` a source by name for `hard_reduce_from` and
+`reduce_from` (over every alphabet, with `over_letters`). Do not write these by hand.
 
 **Where.** In `X/Undecidable.lean`, the file that defines the `HaltReduction`, after the `def`, inside `namespace DiagonaLean.X`, so the names are
 `X.haltHard`, `X.not_computablePred` and `X.not_machineDecidable`. Add
