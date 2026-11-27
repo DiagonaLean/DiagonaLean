@@ -6,6 +6,7 @@ Authors: Aalok Thakkar
 import DiagonaLean.Halt.Basic
 import DiagonaLean.MPCP.AlphabetLift
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
+import DiagonaLean.Foundations.Computability.ListMachine
 
 @[expose] public section
 
@@ -31,6 +32,7 @@ codes (`Alpha.map`), over the fixed alphabet `Alpha ℕ Sym2` (`halt_reducesto_m
 namespace DiagonaLean.MPCP.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP DiagonaLean.Halt
+  DiagonaLean.Foundations.Computability
   DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability.Normalize
   DiagonaLean.Synthetic.Definitions
 
@@ -549,25 +551,6 @@ theorem stepTilesRightInterior_subset_haltTiles (tm : EncodableTM Symbol)
     exact List.mem_cons_self
   · exact map_copyTile_subset_haltTiles tm _ tile hr
   · exact sepTile_mem_haltTiles tm
-
-omit [Inhabited Symbol] [Fintype Symbol] in
-/-- In the non-degenerate case, `StackTape.cons` does not strip blanks. -/
-theorem cons_toList_of_nondeg (w : Option Symbol) (xs : StackTape Symbol)
-    (h : w ≠ none ∨ xs.toList ≠ []) :
-    (StackTape.cons w xs).toList = w :: xs.toList := by
-  obtain ⟨tl, hLast⟩ := xs
-  cases tl with
-  | nil => cases w with
-    | none => rcases h with h | h <;> exact absurd rfl h
-    | some s => rfl
-  | cons hd tl' => cases w with | none => rfl | some _ => rfl
-
-omit [Inhabited Symbol] [Fintype Symbol] in
-/-- For a non-empty `StackTape`, `head :: tail.toList = toList`. -/
-theorem head_cons_tail_toList (xs : StackTape Symbol) (h : xs.toList ≠ []) :
-    xs.head :: xs.tail.toList = xs.toList := by
-  obtain ⟨tl, hLast⟩ := xs
-  cases tl with | nil => exact absurd rfl h | cons a rest => rfl
 
 /-- For a non-empty `StackTape`, the lifted head followed by the lifted tail is the lifted
 `toList`. -/

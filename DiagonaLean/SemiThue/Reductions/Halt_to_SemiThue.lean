@@ -42,7 +42,7 @@ namespace DiagonaLean.SemiThue.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Halt
   DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Grammar
-  DiagonaLean.Foundations.Computability.Normalize
+  DiagonaLean.Foundations.Computability DiagonaLean.Foundations.Computability.Normalize
   DiagonaLean.Synthetic.Definitions Relation
 
 /-! ### Markers -/

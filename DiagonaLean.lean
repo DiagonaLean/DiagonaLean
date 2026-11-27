@@ -146,6 +146,7 @@ import DiagonaLean.Foundations.Computability.ComputableReduction
 import DiagonaLean.Foundations.Computability.HaltCanon
 import DiagonaLean.Foundations.Computability.ReduceFrom
 import DiagonaLean.Foundations.Computability.UndecTransfer
+import DiagonaLean.Foundations.Computability.ListMachine
 import DiagonaLean.Foundations.Computability.Normalize.Conditions
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
 import DiagonaLean.Foundations.Computability.Normalize.Cell
