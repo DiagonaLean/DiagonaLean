@@ -17,6 +17,7 @@ import DiagonaLean.MPCP.Undecidable
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.MPCP.SynthHardness
 import DiagonaLean.MPCP.Reductions.HaltCanon_to_MPCP
+import DiagonaLean.MPCP.RE
 import DiagonaLean.SemiThue.Basic
 import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
 import DiagonaLean.SemiThue.Reductions.HaltCanon_to_SemiThue
@@ -38,6 +39,7 @@ import DiagonaLean.PCP.Reductions.MPCP_to_PCP
 import DiagonaLean.PCP.SynthHardness
 import DiagonaLean.PCP.Primrec
 import DiagonaLean.PCP.Undecidable
+import DiagonaLean.PCP.RE
 
 import DiagonaLean.AmbigCFG.Basic
 import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFG
@@ -60,6 +62,7 @@ import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
 import DiagonaLean.MatMort.SynthHardness
 import DiagonaLean.MatMort.Primrec
 import DiagonaLean.MatMort.Undecidable
+import DiagonaLean.MatMort.RE
 
 import DiagonaLean.KAComm.TermEq.Basic
 import DiagonaLean.KAComm.TermEq.Reductions.Halt_to_TermEq

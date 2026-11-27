@@ -12,3 +12,4 @@ Given a finite set `Ms : Finset (Matrix (Fin 3) (Fin 3) ℤ)` of `3 × 3` intege
 * `Primrec.lean`: the reduction function `matImage` is primitive recursive (`matImage_primrec`).
 * `SynthHardness.lean`: matrix mortality is synthetically halting-hard (`MatMort.synthFromHalt`).
 * `Undecidable.lean`: the halting reduction `MatMort.fromHalt`, proved computable, and from it `MatMort.haltHard`, `MatMort.not_computablePred` and `MatMort.not_machineDecidable` (no Turing machine decides it under any computable encoding).
+* `RE.lean`: matrix mortality is recursively enumerable (`MatMort.rePred`), by a search over lists of matrices for one drawn from the set with product zero; with `MatMort.haltHard`, it is exactly as hard as the halting problem.

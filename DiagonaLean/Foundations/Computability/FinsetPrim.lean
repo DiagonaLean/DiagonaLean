@@ -18,7 +18,7 @@ Mathlib encodes a finite set as the code of the list of its elements, sorted by 
 The sorted list is the insertion sort by code (`encode_finset_mk`), since sorted permutations
 under an antisymmetric order are equal; insertion sort is primitive recursive (`prim_insertionSort`),
 and so is `encode (decode n)` (`encode_decode_finset`). `List.toFinset` is primitive recursive
-(`prim_toFinset`).
+(`prim_toFinset`), and so is membership (`pred_finset_mem`).
 -/
 
 namespace DiagonaLean.Foundations.Computability
@@ -120,6 +120,21 @@ instance Finset.primcodable : Primcodable (Finset β) :=
   refine (Primrec.encode_iff.1 (h.of_eq fun l => ?_)).comp hf
   show _ = encode (⟨↑l.dedup, List.nodup_dedup l⟩ : Finset β)
   rw [encode_finset_mk]
+
+/-- Membership in a finite set is membership in the list its code decodes to. -/
+theorem mem_iff_mem_decode_encode (s : Finset β) (b : β) :
+    b ∈ s ↔ b ∈ (decode (α := List β) (encode s)).getD [] := by
+  show b ∈ s ↔ b ∈ (decode (α := List β) (encodeMultiset s.val)).getD []
+  unfold encodeMultiset
+  simp [encodek]
+
+/-- **Membership in a finite set is primitive recursive.** -/
+@[fun_prop] theorem pred_finset_mem {f : α → Finset β} {g : α → β} (hf : Primrec f)
+    (hg : Primrec g) : PrimrecPred fun x => g x ∈ f x := by
+  have := decidableEqOfEncodable β
+  have h : Primrec fun x => (decode (α := List β) (encode (f x))).getD [] :=
+    Primrec.option_getD.comp (Primrec.decode.comp (Primrec.encode.comp hf)) (Primrec.const [])
+  exact (pred_mem h hg).of_eq fun x => (mem_iff_mem_decode_encode _ _).symm
 
 end Prim
 

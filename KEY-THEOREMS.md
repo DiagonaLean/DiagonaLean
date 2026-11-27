@@ -69,11 +69,13 @@ root (from `HaltCanon`); proving the last link computable does not upgrade a syn
 | theorem | statement |
 |---|---|
 | `REPred.of_exists_primrecPred` | `(∀ a, p a ↔ ∃ k, q a k)` with `q` primitive recursive → `REPred p` (`MachineBridge.lean`) |
+| `REPred.of_exists_primrecPred_witness` | the same with witnesses `w` of any `Primcodable` type, such as the solutions themselves (`MachineBridge.lean`) |
 | `exists_machine` | a partial recursive `g` as one fixed machine that halts on the tape of `n` **exactly** when `g n` is defined (`PartrecToCslib.lean`); the converse through the two custom layers is `eval_dom_of_simulation` (`Simulation.lean`) |
 | `manyOneReducible_haltCanon_of_rePred` | `REPred p → ManyOneReducible p HaltCanon`: `HaltCanon` is complete for the r.e. predicates (`HaltComplete.lean`) |
 | `ManyOneReducible.of_rePred_of_haltHard` | `REPred p → HaltHard q → ManyOneReducible p q` |
 | `manyOneEquiv_of_haltHard_of_rePred` | halting-hard r.e. predicates are `ManyOneEquiv` |
 | `SemiThue.rePred`, `SKIConv.rePred`, `BetaConv.rePred` | the rewriting problems are r.e. (`X/RE.lean`) |
+| `PCP.rePred`, `MPCP.rePred`, `MatMort.rePred` | PCP, MPCP and matrix mortality are r.e., by a search over solutions (`X/RE.lean`) |
 | `Degrees.semiThue_equiv_skiConv`, `skiConv_equiv_betaConv`, `semiThue_equiv_betaConv`; `X.complete` | the three rewriting problems are many-one equivalent, and complete for the r.e. problems (`Degrees/Rewriting.lean`) |
 
 ## 4. Alphabets: functors on codes

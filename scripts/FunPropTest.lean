@@ -420,6 +420,13 @@ example : Primrec fun z : ℤ => (z.toNat, ((z.natAbs : ℕ) : ℤ)) := by fun_p
 example : Primrec fun p : ℤ × ℤ => (!![p.1, 0; p.2, p.1 * p.2] : Matrix (Fin 2) (Fin 2) ℤ) := by
   fun_prop
 example : Primrec fun n : ℕ => (Matrix.of fun (i j : Fin 3) => n * i + j) := by fun_prop
+
+example : Primrec fun p : Matrix (Fin 3) (Fin 3) ℤ × Matrix (Fin 3) (Fin 3) ℤ => p.1 * p.2 := by
+  fun_prop
+
+example : Primrec fun l : List (Matrix (Fin 2) (Fin 2) ℤ) => l.prod := by fun_prop
+
+example : PrimrecPred fun p : Finset ℕ × ℕ => p.2 ∈ p.1 := by fun_prop
 example : Primrec fun n : ℕ => List.ofFn fun i : Fin 4 => n + i := by fun_prop
 
 example : Primrec fun n : ℕ => (List.range n).zip (List.range (n+1)) := by fun_prop

@@ -36,7 +36,8 @@ So every `¬ ComputablePred` result of Mathlib, such as `ComputablePred.rice` or
 * `not_computablePred_of_reduces`: `¬ ComputablePred` transfers along a reduction with a computable
   function; `REPred.of_reduces`, `REPred.of_manyOneReducible`: recursive enumerability transfers
   back along one; `REPred.of_exists_primrecPred`: recursive enumerability from a primitive
-  recursive check.
+  recursive check, and `REPred.of_exists_primrecPred_witness` with witnesses of any `Primcodable`
+  type.
 * `not_computablePred_of_selfHalt`: a predicate that a computable map of machine codes reduces
   self-halting to is not computable.
 * `encUnary`, `machineDecidable_unary_iff`: an encoding of any `Primcodable` type that satisfies
@@ -190,6 +191,32 @@ theorem _root_.REPred.of_exists_primrecPred {α : Type*} [Primcodable α] {p : �
   refine (Partrec.dom_re hf).of_eq fun a => ?_
   rw [h a, Nat.rfind_dom]
   simp [g]
+
+/-- **Recursive enumerability from a primitive recursive check on witnesses**: a predicate that
+holds exactly when some witness `w` of a `Primcodable` type passes a primitive recursive check
+`q a w` is recursively enumerable. The search runs over the codes `k` of witnesses
+(`REPred.of_exists_primrecPred`), checking `decode k`. The witnesses are typically the solutions
+themselves, as a stack of tiles for PCP or a list of matrices for matrix mortality. -/
+theorem _root_.REPred.of_exists_primrecPred_witness {α β : Type*} [Primcodable α] [Primcodable β]
+    {p : α → Prop} {q : α → β → Prop} (hq : PrimrecPred fun x : α × β => q x.1 x.2)
+    (h : ∀ a, p a ↔ ∃ w, q a w) : REPred p := by
+  classical
+  have hd : Primrec fun x : α × β => decide (q x.1 x.2) := hq.decide
+  refine REPred.of_exists_primrecPred
+    (q := fun a k => (Encodable.decode (α := β) k).elim false (fun w => decide (q a w)) = true) ?_
+    fun a => ?_
+  · refine (Primrec.eq.comp (Primrec.option_casesOn (Primrec.decode.comp .snd) (.const false)
+      (hd.comp ((Primrec.fst.comp .fst).pair .snd)).to₂) (.const true)).of_eq
+      fun x => ?_
+    cases Encodable.decode (α := β) x.2 <;> rfl
+  · rw [h a]
+    constructor
+    · rintro ⟨w, hw⟩
+      exact ⟨Encodable.encode w, by simpa [Encodable.encodek] using hw⟩
+    · rintro ⟨k, hk⟩
+      cases hdk : Encodable.decode (α := β) k with
+      | none => simp [hdk] at hk
+      | some w => exact ⟨w, by simpa [hdk] using hk⟩
 
 /-! ### From self-halting on codes -/
 
