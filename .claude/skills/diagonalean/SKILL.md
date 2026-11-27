@@ -1,6 +1,6 @@
 ---
 name: diagonalean
-description: How to write, prove and check Lean 4 code in the DiagonaLean library (undecidability by many-one reductions, on Mathlib and Cslib) — the two layers of reductions (synthetic `⪯_s`, proved `⪯`), the tactics `reduce_from` (with chains of links), `upgrade`, `code_lift`, `fun_prop`, `derive_primrec`, `primrec_rec`, `derive_primcodable`, the command `halt_results`, the key theorems from hardness to "no Turing machine decides it", Primcodable/Primrec proofs, naming of packages, and the compliance rules that `#check_reductions` and CI enforce. Use it for any work in this repository — a new undecidable problem, a new reduction or link, a `Primrec`/`Computable` proof, an alphabet change, a renaming or refactor, a review of a DiagonaLean PR, or fixing a CI failure — even when the request does not name the skill or a tactic.
+description: How to write, prove and check Lean 4 code in the DiagonaLean library (undecidability by many-one reductions, on Mathlib and Cslib) — the two layers of reductions (synthetic `⪯_s`, proved `⪯`), the tactics `reduce_from` (with chains of links), `upgrade`, `code_lift`, `fun_prop`, `derive_primrec`, `primrec_rec`, `derive_primcodable`, the command `halt_results`, the key theorems from hardness to "no Turing machine decides it", how to define a problem (objects, one-step relations, Mathlib closures, the curried problem and its pinned unfolding), Primcodable/Primrec proofs, naming of packages, and the compliance rules that `#check_reductions` and CI enforce. Use it for any work in this repository — a new undecidable problem or a change to how one is defined, a new reduction or link, a `Primrec`/`Computable` proof, an alphabet change, a renaming or refactor, a review of a DiagonaLean PR, or fixing a CI failure — even when the request does not name the skill or a tactic.
 ---
 
 # Working in DiagonaLean
@@ -36,13 +36,92 @@ A claim that a reduction merely exists (`Nonempty (p ⪯_s q)`, `∃ f, p ⪯_s[
 trivial and is rejected by the check. `∃ f, p ⪯[f] q` (Mathlib's `ManyOneReducible`) and
 `HaltHard P` include computability and are fine.
 
-## 2. Adding an undecidable problem: the workflow
+## 2. Defining a problem
 
-1. **The problem.** `X/Basic.lean`: one-argument predicate `X.DecisionProblem : Inst → Prop`. If
-   proofs want a curried form, define it separately (as `MPCP.Solvable c P`) with a bridge lemma
-   by `rfl`; never write `fun x => … x.1 x.2` at use sites.
+A result is only as good as the definition of its problem, and a reader audits that definition by
+reading `X/Basic.lean`. These rules keep that file short, textbook-shaped and checked. SemiThue
+(`Foundations/Rewriting/SRS.lean`, `SemiThue/Basic.lean`) is the model; SKIConv and BetaConv follow
+it.
+
+**Where definitions live.**
+* `X/Basic.lean` imports only Mathlib, Cslib, other `Basic.lean` files and definition-only
+  `Foundations/` files: never proof search, stack machines, `Primcodable` instances or the
+  `derive_*` commands. (SKI and λ used to import 200- and 600-line proof searches.)
+* A relation that several problems share lives in a definition-only file, apart from what is proved
+  about it: `Rewriting/SRS.lean` vs `Grammar/Rewriting.lean`, `CombinatoryLogic/Conv.lean` vs
+  `ProofSearch.lean`. `Primcodable` instances go in their own file (`Rewriting/Primcodable.lean`).
+  Measure the import closure of a `Basic.lean` after a change; one transitive import took
+  `GrammarMem/Basic.lean` from 5 modules to 11.
+
+**Objects.**
+* Named fields, not tuples, for the pieces of an instance: `Rule` has `lhs`/`rhs`, `Tile` has
+  `top`/`bot`. A role gets a reducible name, `abbrev Word T := List T`, so the `List` API applies.
+  An instance of three or more components gets one too: `abbrev Instance T := SRS T × Word T × Word T`.
+* A finite collection that reductions read is a `List`, not a `Finset` (`Finset.toList` is
+  noncomputable); a `_congr` theorem says that only the set matters (`wordProblem_congr`).
+
+**Steps and closures.** A rewriting relation has three ingredients: the root rules (what rewrites),
+the context (where), and the closure (what the question asks).
+* Keep them visibly apart. Cslib's λ-calculus is the model: `Beta` is the redex, `Xi` the compatible
+  closure, `ReflTransGen` the iteration. Where one inductive mixes them (Cslib's `SKI.Red`, KAComm's
+  `Equiv`), the docstring says which constructors play which part.
+* One step is an `inductive` with one constructor per textbook rule, as Mathlib's
+  `ContextFreeRule.Rewrites` and Cslib's `SKI.Red`. Prefer the textbook form for the definition
+  (`p ++ ρ.lhs ++ q ⭢[R] p ++ ρ.rhs ++ q`), and state the other form as a lemma: `SRS.step_iff`,
+  the existential, which proofs use when an endpoint is not a variable (`cases` cannot unify
+  `p ++ l ++ q` with `encode c u`).
+* Never hand-roll iteration or symmetry: `ReflTransGen` (derivability), `TransGen` (at least one
+  step), `EqvGen` (equality modulo the rules), `Join (ReflTransGen r)` (a common reduct, Cslib's
+  `MJoin`), each through an `abbrev`, so `.tail`, `.trans`, `head_induction_on` and `cases_head`
+  apply unchanged. The exception is an equational theory, a deduction system with congruence over
+  a syntax that Mathlib cannot close generically (KAComm's `Equiv`, `KAEquiv`).
+* The closure in the definition is the one the question asks; prove the textbook's other form. A
+  directed question (does `u` reach `v`?) is `ReflTransGen`. An undirected one, for a confluent
+  system, is `Join`, which the reductions produce, with `EqvGen` as a theorem from confluence
+  (`convertible_iff_eqvGen`); for a system that is not confluent, `EqvGen`. Never `ReflTransGen`
+  for an undirected question.
+* Notation: a relation without parameters gets Cslib's `@[reduction_sys "x"]` (`⭢x`, `↠x`); one
+  with a parameter gets `scoped notation:50 u:51 " ⭢[" R "] " v:51`, so `++` and `::` bind tighter.
+  Notation only abbreviates existing names. Check once that goals print with it.
+* Proofs: induct on `ReflTransGen` with `tail`, or `head_induction_on` from the source;
+  `cases_head` for the first step; lift a step through context (`Step.append_left`,
+  `append_right`), then derivations (`Derives.append`).
+
+**The question.**
+* The curried problem comes first, named for the problem (`WordProblem R u v`, `Convertible x y`):
+  an `abbrev` when it wraps a relation, a `def` when it adds content (`PosWordProblem`). Variants
+  are its specialisations (`ToEmpty R u := WordProblem R u []`). Partially applied it is a set
+  (`WordProblem R u`, the words that `u` rewrites to).
+* Then, under the heading "The problem on instances, for the reductions and the computability
+  statements", the one-argument `DecisionProblem` in one line, by projections, and
+  `@[simp] theorem decisionProblem_mk … := Iff.rfl` right after it. Projections give the cleanest
+  goals: `Function.uncurry` leaves `simp` stuck, and a pattern match shows `match` in every goal
+  that unfolds the problem (tested 2026-11-27).
+* A transparency theorem states the curried problem in upstream terms, by `Iff.rfl`
+  (`wordProblem_iff`, `convertible_iff`). Pin it and `decisionProblem_mk` in
+  `scripts/HeadlineTest.lean`, generated from the compiled types; the module docstring names them as
+  the way to audit the definition.
+* **Results are stated on the one-argument problem only.** A partially applied curried problem
+  type-checks as a different, weaker claim: `Undecidable (DecisionProblem x)` for a curried
+  `DecisionProblem` says "convertibility to a fixed `x` is undecidable". A genuine parameter of the
+  problem (Rice's set `C`) is the one exception.
+
+**Names.**
+* No relation named like a problem namespace (`Foundations.LambdaCalculus.BetaConv` became `Conv`);
+  no Mathlib name with another meaning (`Rewrites` is one step in Mathlib); words `u v`, rules
+  `l r` or `ρ`.
+* A namespace follows the role of its file, never the file's name: `X.Reduction` in `Reductions/`,
+  `X.AlphabetLift`, `X` for results. (`X.MachineLevel` outlived its file; its old names are aliases
+  in `DiagonaLean/Aliases/MachineLevel.lean`.)
+
+## 3. Adding an undecidable problem: the workflow
+
+1. **The problem.** `X/Basic.lean`, following §2: the curried problem first, then the one-argument
+   predicate `X.DecisionProblem : Inst → Prop` in one line, with `decisionProblem_mk` and the
+   transparency theorem pinned in `scripts/HeadlineTest.lean`. Never write `fun x => … x.1 x.2` at
+   use sites.
 2. **The link.** `X/Reductions/Src_to_X.lean`:
-   * the function, a `def` (not an `abbrev`, see §5), e.g. `srcToX`;
+   * the function, a `def` (not an `abbrev`, see §6), e.g. `srcToX`;
    * correctness, `theorem src_reducesto_x_spec : Src.DecisionProblem ⪯_s[srcToX] X.DecisionProblem`.
    No bundled package `X.synthFromSrc := ⟨srcToX, spec⟩` is needed: the tactics take the function
    and the spec. Define one only if several results compose it.
@@ -50,8 +129,9 @@ trivial and is rejected by the check. `∃ f, p ⪯[f] q` (Mathlib's `ManyOneRed
    `derive_primrec srcToX` if `fun_prop` can read its body, or a hand-stated
    `@[fun_prop] theorem srcToX_primrec : Primrec srcToX` (with `primrec_rec` for structural
    recursion). Instances need `Primcodable`: `derive_primcodable` for inductive types.
-4. **The results.** The synthetic one in `X/Undecidable.lean`, the proved ones in
-   `X/MachineLevel.lean` (MatMort is the model):
+4. **The results.** The synthetic one in `X/SynthHardness.lean`, the proved ones in
+   `X/Undecidable.lean` (MatMort is the model). Constructions, including the link from
+   `HaltCanon` (`X/Reductions/HaltCanon_to_X.lean`), stay in `Reductions/`:
    ```lean
    def X.synthFromHalt : SynthHaltReduction X.DecisionProblem := by
      synth_reduce_from (Src.synthFromHaltOver b0 b1 hne) with srcToX using src_reducesto_x_spec
@@ -67,14 +147,14 @@ trivial and is rejected by the check. `∃ f, p ⪯[f] q` (Mathlib's `ManyOneRed
    `code_lift F from h` for every nontrivial alphabet (`…Over b0 b1 hne`, `…Bool`).
 6. **Register it.** Import the new modules from `DiagonaLean.lean`: the check covers only what the
    root imports. Update the folder's `README.md`.
-7. **Check.** §6.
+7. **Check.** §7.
 
 Names: packages in the target's namespace, `Tgt.synthFromSrc`, `Tgt.synthFromHalt`,
 `…Over b0 b1 hne`, `…Bool`, `synthCompl…` for a complement, `X.synthAlphabetLift`; proved versions
 drop `synth` (`MPCP.fromHalt`). The letters are data, so a `def` takes them explicitly; it cannot
 extract them from `Nontrivial α` (a `Prop`).
 
-## 3. The tactics, and what they need from you
+## 4. The tactics, and what they need from you
 
 * **`reduce_from h via r`** reads the goal to choose the layer. It leaves `Computable r.f` (when it
   upgrades a synthetic link) and `Computable enc` only if `assumption` and `fun_prop` fail. Before
@@ -160,11 +240,10 @@ declares, in the current namespace,
 | theorem | statement |
 |---|---|
 | `haltHard` | `HaltHard P` |
-| `not_computablePred` | `¬ ComputablePred P` |
+| `not_computablePred` | `Undecidable P` (`¬ ComputablePred P` by definition) |
 | `not_machineDecidable` | `{enc} → Computable enc → ¬ MachineDecidable enc P` |
 
-**Where.** In the file that defines the `HaltReduction` (`X/Hardness.lean` or
-`X/MachineLevel.lean`), after the `def`, inside `namespace DiagonaLean.X`, so the names are
+**Where.** In `X/Undecidable.lean`, the file that defines the `HaltReduction`, after the `def`, inside `namespace DiagonaLean.X`, so the names are
 `X.haltHard`, `X.not_computablePred` and `X.not_machineDecidable`. Add
 `import DiagonaLean.Foundations.Computability.HaltResults`: so far only the root imports it.
 
@@ -211,7 +290,7 @@ end DiagonaLean.X
 The generated docstrings are generic. Put the citation for the result on the `HaltReduction`
 `def`. Tests: `scripts/HaltResultsTest.lean`.
 
-## 4. Compliance: what the checks reject
+## 5. Compliance: what the checks reject
 
 From `CONTRIBUTING.md`, in short; follow it exactly, because these are what make a synthetic result
 mean something:
@@ -234,7 +313,7 @@ Style: lines at most 100 characters (`scripts/ci-local.sh --style-only`), module
 `## Main statements` and `## References` (`bibliography.bib`), docstrings on every declaration.
 When wrapping prose, never split a backticked code span across lines.
 
-## 5. Pitfalls (each cost real time)
+## 6. Pitfalls (each cost real time)
 
 * **`with` and `using` take one term each**: an applied function or lemma needs parentheses,
   `with (liftInstance b0 b1) using (pcp_alphabet_lift_spec b0 b1 hne)`; without them the
@@ -258,10 +337,18 @@ When wrapping prose, never split a backticked code span across lines.
   macro call; check the token before replacing it. When an alias replaces a declaration, move its
   docstring to the new declaration. An `alias` of a lemma breaks field notation under the old
   type name; restate the lemma instead.
+* **Dot notation through an `abbrev` looks in the abbreviated type**: `SRS` is `List`, so `R.letters`
+  looks for `List.letters`, and `h.tail` fails on `h : WordProblem R u v`. Write the full name.
+* **Attribute-registered lemmas have uses that no text search finds**: `letters_prim` is used by
+  `fun_prop` through `@[fun_prop]`. Before retiring a declaration, build without it.
+* **After adding an import to `DiagonaLean.lean`**, rebuild the root before testing a scratch file
+  with `lake env lean`; it reads the old root otherwise.
+* **Every new file costs about 3.7 s of CPU** to load its imports (measured 2026-11-27). Split a
+  file when it removes imports or separates roles, not otherwise.
 * **Machine-level negative results** go through `HaltHard.not_computablePred` /
   `.not_machineDecidable` from a proved root, not through a second self-halting construction.
 
-## 6. Checking, economically
+## 7. Checking, economically
 
 * While editing: `lake build <Module>` for the file at hand; `lake env lean scripts/XTest.lean`
   for a test file.
@@ -273,7 +360,7 @@ When wrapping prose, never split a backticked code span across lines.
 * Dry-run any rewriting script on all the shapes it will meet (nested namespaces, `@name`,
   `name.field`, macro calls, docstrings, Markdown code blocks) before applying it.
 
-## 7. Working with this user
+## 8. Working with this user
 
 Commit only when asked; do not open a PR before a phase's substantial changes are done locally.
 Report wall-clock and line counts as evidence when asked how long something took, and give

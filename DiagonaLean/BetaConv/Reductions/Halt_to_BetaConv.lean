@@ -47,12 +47,6 @@ theorem halt_reducesto_betaConv_spec {u : Code} {U : SKI} {C : Code}
     (hC : RaceProg U C) : HaltProblem ⪯_s[reduction U C] BetaConvProblem :=
   halt_iff_betaConv hu hU hC
 
-/-- `HaltProblem` many-one reduces to β-conversion. -/
-def _root_.DiagonaLean.BetaConv.synthFromHaltWith {u : Code} (U : SKI) (C : Code)
-    (hu : Foundations.CombinatoryLogic.IsUniversal u) (hU : Computes U u.eval)
-    (hC : RaceProg U C) : HaltProblem ⪯_s BetaConvProblem :=
-  ⟨reduction U C, halt_reducesto_betaConv_spec hu hU hC⟩
-
 /-- The separating instance of a machine: the λ-instance of the reader program `c` on the data
 of `M` on its own code, against `tr FF`. -/
 def sepRed (U : SKI) (c : Code) (M : EncodableTM Bool) : Term ℕ × Term ℕ :=

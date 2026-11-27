@@ -17,7 +17,7 @@ halt_results MatMort.DecisionProblem from MatMort.fromHalt
 #guard_msgs in
 #check haltHard
 
-/-- info: MatMortResults.not_computablePred : ¬ComputablePred MatMort.DecisionProblem -/
+/-- info: MatMortResults.not_computablePred : Undecidable MatMort.DecisionProblem -/
 #guard_msgs in
 #check not_computablePred
 
@@ -95,13 +95,13 @@ end GrammarResults
 /-! ## From a proof of hardness
 
 When the reduction needs constants that exist only classically, the source is `HaltHard P`
-itself, as in `SKIConv/Hardness.lean`. -/
+itself, as in `SKIConv/Undecidable.lean`. -/
 
 namespace FromHard
 
 halt_results MatMort.DecisionProblem from (⟨MatMort.fromHalt⟩ : HaltHard MatMort.DecisionProblem)
 
-/-- info: FromHard.not_computablePred : ¬ComputablePred MatMort.DecisionProblem -/
+/-- info: FromHard.not_computablePred : Undecidable MatMort.DecisionProblem -/
 #guard_msgs in
 #check not_computablePred
 

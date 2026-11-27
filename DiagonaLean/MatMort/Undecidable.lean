@@ -3,30 +3,47 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Akhilesh Balaji, Aristotle (Harmonic), Prathamesh Turaga
 -/
 
-import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
+import DiagonaLean.MatMort.Primrec
 import DiagonaLean.PCP.Undecidable
+import DiagonaLean.Foundations.Computability.HaltResults
 
 @[expose] public section
 
 /-! # Undecidability of matrix mortality
 
-Mortality of finite sets of `3 × 3` integer matrices is synthetically halting-hard
-(`MatMort.synthFromHalt`), by the reduction from PCP over `S23` of `Reductions/PCP_to_MatMort.lean`.
-The machine-level statements are in `MachineLevel.lean`.
+The reduction `matImage` from PCP over `S23` is primitive recursive (`matImage_primrec`), so with
+`PCP.fromHaltOver` it gives the halting reduction `MatMort.fromHalt`, proved computable. So
+mortality of finite sets of `3 × 3` integer matrices is halting-hard (`MatMort.haltHard`), is
+undecidable (`MatMort.not_computablePred`), and no Turing machine decides it under any computable
+encoding (`MatMort.not_machineDecidable`).
+
+## Main statements
+
+* `MatMort.fromHalt`: a reduction from the halting problem, proved computable.
+* `MatMort.haltHard`, `MatMort.not_computablePred`, `MatMort.not_machineDecidable`: its
+  consequences, stated by `halt_results`.
+
+The synthetic result is in `SynthHardness.lean`.
 
 ## References
 
 * [M. S. Paterson, *Unsolvability in 3 × 3 Matrices*][Paterson1970]
 -/
 
-namespace DiagonaLean.MatMort.Reduction
+namespace DiagonaLean.MatMort
 
-open DiagonaLean.PCP DiagonaLean.MatMort DiagonaLean.Synthetic.Definitions
+open DiagonaLean.MatMort.Reduction DiagonaLean.Foundations.Computability
 
-/-- **Matrix mortality of `3 × 3` integer matrices is synthetically halting-hard.** It is reduced
-from PCP over the alphabet `S23 = {2, 3}` through `matImage`. -/
-def _root_.DiagonaLean.MatMort.synthFromHalt : SynthHaltReduction DecisionProblem := by
-  reduce_from_pcp over_letters (0 : S23) (1 : S23) with matImage
+/-- **Matrix mortality of `3 × 3` integer matrices is halting-hard** (Paterson 1970): PCP over `S23`
+is (`PCP.fromHaltOver`), and `matImage` reduces it to mortality (`pcp_reducesto_matMort_spec`),
+computably (`matImage_primrec`). -/
+def fromHalt : HaltReduction DecisionProblem := by
+  hard_reduce_from (PCP.fromHaltOver (0 : S23) 1 (by decide)) with matImage
     using pcp_reducesto_matMort_spec
 
-end DiagonaLean.MatMort.Reduction
+/-- Matrix mortality is registered as halting-hard. -/
+instance : HaltSource DecisionProblem := ⟨fromHalt⟩
+
+halt_results DecisionProblem from fromHalt
+
+end DiagonaLean.MatMort

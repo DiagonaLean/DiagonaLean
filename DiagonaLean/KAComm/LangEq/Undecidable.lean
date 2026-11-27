@@ -6,20 +6,18 @@ Authors: Prathamesh TVH, Claude Opus
 import DiagonaLean.KAComm.LangEq.Reductions.Halt_to_LangEq
 import DiagonaLean.KAComm.KleeneAlgebra.Between
 import DiagonaLean.KAComm.KleeneAlgebra.RExpPrimcodable
-import DiagonaLean.Foundations.Computability.MachineBridge
+import DiagonaLean.Foundations.Computability.Undecidable
 
 @[expose] public section
 
 /-! # Undecidability of equality on `L Σ̈`
 
-The failure of equality of languages over `ℕ` is synthetically halting-hard
-(`KAComm.LangEq.synthComplFromHalt`). No Turing machine decides equality of languages under the
-encoding `encNat` of a pair of expressions as the binary digits of its code
-(`not_machineDecidable_langEq`), or under any encoding that a machine computes from `encNat`
-(`not_machineDecidable_langEq_of_conv`). Since `rc` has a primitive recursive decoder, it is not a
-computable predicate either (`KAComm.LangEq.not_computablePred`). The machine-level statement is the
-case of Theorem 18 where the predicate is equality of languages itself
-(`not_machineDecidable_eq_between`).
+No Turing machine decides equality of languages under the encoding `encNat` of a pair of expressions
+as the binary digits of its code (`not_machineDecidable_langEq`), or under any encoding that a
+machine computes from `encNat` (`not_machineDecidable_langEq_of_conv`). Since `rc` has a primitive
+recursive decoder, it is undecidable too (`KAComm.LangEq.not_computablePred`). The machine-level
+statement is the case of Theorem 18 where the predicate is equality of languages itself
+(`not_machineDecidable_eq_between`). The synthetic result is in `SynthHardness.lean`.
 
 ## References
 
@@ -38,7 +36,8 @@ theorem not_machineDecidable_langEq : ¬ MachineDecidable encNat LangEqProblem :
 /-- **Equality of languages over `ℕ` is not a computable predicate**: `encNat` writes the pair of
 codes `rc` in binary, and `rc` has a primitive recursive decoder (`rcDec`), so this follows from
 `not_machineDecidable_langEq` (`not_computablePred_of_bitsPair`). -/
-theorem _root_.DiagonaLean.KAComm.LangEq.not_computablePred : ¬ ComputablePred LangEqProblem :=
+theorem _root_.DiagonaLean.KAComm.LangEq.not_computablePred :
+    Foundations.Computability.Undecidable LangEqProblem :=
   Foundations.Computability.not_computablePred_of_bitsPair RExp.rc_primrec RExp.rcDec_primrec
     RExp.rcDec_rc not_machineDecidable_langEq
 

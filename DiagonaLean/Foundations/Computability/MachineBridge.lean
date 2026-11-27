@@ -35,7 +35,8 @@ So every `¬ ComputablePred` result of Mathlib, such as `ComputablePred.rice` or
 * `not_machineDecidable_of_not_computablePred`: the form used for undecidability.
 * `not_computablePred_of_reduces`: `¬ ComputablePred` transfers along a reduction with a computable
   function; `REPred.of_reduces`, `REPred.of_manyOneReducible`: recursive enumerability transfers
-  back along one.
+  back along one; `REPred.of_exists_primrecPred`: recursive enumerability from a primitive
+  recursive check.
 * `not_computablePred_of_selfHalt`: a predicate that a computable map of machine codes reduces
   self-halting to is not computable.
 * `encUnary`, `machineDecidable_unary_iff`: an encoding of any `Primcodable` type that satisfies
@@ -172,6 +173,23 @@ theorem _root_.REPred.of_manyOneReducible {X Y : Type*} [Primcodable X] [Primcod
     {p : X → Prop} {q : Y → Prop} (h : ManyOneReducible p q) (hq : REPred q) : REPred p := by
   obtain ⟨f, hf, hpq⟩ := h
   exact REPred.of_reduces (q := q) ⟨f, hpq⟩ hf hq
+
+/-- **Recursive enumerability from a primitive recursive check**: a predicate that holds exactly
+when some `k` passes a primitive recursive check `q a k` is recursively enumerable, by an
+unbounded search for `k` (`Nat.rfind`). The checks are typically "the program numbered `k` proves
+the instance", as for the proof searches of `StackProof`. -/
+theorem _root_.REPred.of_exists_primrecPred {α : Type*} [Primcodable α] {p : α → Prop}
+    {q : α → ℕ → Prop} (hq : PrimrecPred fun x : α × ℕ => q x.1 x.2)
+    (h : ∀ a, p a ↔ ∃ k, q a k) : REPred p := by
+  classical
+  have hc : Computable fun x : α × ℕ => decide (q x.1 x.2) := by
+    simpa using (PrimrecPred.computablePred hq).decide
+  let g : α → ℕ →. Bool := fun a k => Part.some (decide (q a k))
+  have hf : Partrec fun a => Nat.rfind (g a) :=
+    Partrec.rfind (hc.partrec.comp (Computable.pair .fst .snd)).to₂
+  refine (Partrec.dom_re hf).of_eq fun a => ?_
+  rw [h a, Nat.rfind_dom]
+  simp [g]
 
 /-! ### From self-halting on codes -/
 

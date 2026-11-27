@@ -3,28 +3,26 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh Turaga, Claude Opus
 -/
 
-import DiagonaLean.BetaConv.Undecidable
+import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
+import DiagonaLean.Foundations.LambdaCalculus.Primcodable
 import DiagonaLean.Foundations.Computability.CanonRace
-import DiagonaLean.Foundations.Computability.HaltResults
 import DiagonaLean.Foundations.Computability.ReduceFrom
 
 @[expose] public section
 
-/-! # β-conversion is halting-hard
+/-! # From the halting problem on canonical machines to β-conversion
 
-The argument of `SKIConv/Hardness.lean`, for the λ-instances `linst U C n` of
-`Foundations/LambdaCalculus/Race.lean` (the translations of the SKI instances). On a canonical
+The argument of `SKIConv/Reductions/HaltCanon_to_SKIConv.lean`, for the λ-instances `linst U C n`
+of `Foundations/LambdaCalculus/Race.lean` (the translations of the SKI instances). On a canonical
 instance `x`, `canonRed U C x` is the λ-instance of the race program `C` on the code of
 `dataCanon x`, against `tr FF`. It is primitive recursive through the code `tc`
 (`primrec_iff_tc`, `tc_linst_prim`), and Smullyan's argument on canonical instances
-(`ProofRace.haltCanon_iff`) makes it a reduction, so `BetaConv.fromHaltWith U C …` is a proved
-halting reduction given the universal term `U` and the race program `C`.
+(`ProofRace.haltCanon_iff`) makes it a reduction (`haltCanon_reducesto_betaConv_spec`). The
+halting reduction `BetaConv.fromHaltWith` built from it is in `Undecidable.lean`.
 
-The constants are only known to exist, so halting-hardness, a proposition, obtains them in its proof
-(`BetaConv.haltHard`). From it, β-conversion is not a computable predicate
-(`BetaConv.not_computablePred`), and no machine decides it under any computable encoding
-(`BetaConv.not_machineDecidable`). `Undecidable.lean` reaches the two negative statements through a
-machine-level race and the binary encoding `encBeta`.
+## Main statements
+
+* `canonRed`, `canonRed_primrec`, `haltCanon_reducesto_betaConv_spec`.
 
 ## References
 
@@ -58,25 +56,8 @@ theorem canonRed_primrec (U : SKI) (C : Code) : Primrec (canonRed U C) :=
 theorem haltCanon_reducesto_betaConv_spec {u : Code} {U : SKI} {C : Code}
     (hu : Foundations.CombinatoryLogic.IsUniversal u) (hU : Computes U u.eval)
     (hC : RaceProg U C) : HaltCanon ⪯_s[canonRed U C] BetaConvProblem :=
-  ProofRace.haltCanon_iff (Q := fun n => Foundations.LambdaCalculus.BetaConv (linst U C n) (tr FF))
+  ProofRace.haltCanon_iff (Q := fun n => Foundations.LambdaCalculus.Conv (linst U C n) (tr FF))
     hC (fun _ => betaConv_iff_chk U C _) (fun _ h => betaConv_linst_of_one hu hU h)
     (fun _ h => not_betaConv_linst_of_zero hu hU h)
-
-/-- **A proved halting reduction to β-conversion**, given the universal term `U` and the race
-program `C`. -/
-def fromHaltWith {u : Code} (U : SKI) (C : Code) (hu : Foundations.CombinatoryLogic.IsUniversal u)
-    (hU : Computes U u.eval) (hC : RaceProg U C) : HaltReduction BetaConvProblem :=
-  ⟨canonRed U C, (canonRed_primrec U C).to_comp, haltCanon_reducesto_betaConv_spec hu hU hC⟩
-
--- Halting-hardness and its consequences: the universal code and the race program exist
--- (`exists_isUniversal`, `exists_raceProg`), so the proof obtains them, and only the existence
--- of a reduction is stated.
-halt_results BetaConvProblem from
-  Foundations.CombinatoryLogic.exists_isUniversal.elim fun u hu =>
-    (exists_raceProg u.toSKI).elim fun C hC =>
-      ⟨fromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC⟩
-
-/-- β-conversion is a halting-hard source for `hard_reduce_from`. -/
-instance : HaltHardFact BetaConvProblem := ⟨haltHard⟩
 
 end DiagonaLean.BetaConv

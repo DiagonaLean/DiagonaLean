@@ -33,15 +33,16 @@ The reduction `haltToSemiThue` normalises the machine and its input
 (`Foundations.Computability.Normalize`), so that both conditions hold, takes `tmRules` of the
 normalised machine, and renames its states to their codes, over the fixed alphabet `Alpha ℕ Sym2`.
 `halt_iff_derives` and `Codes.derives_mapRules_iff` make it a reduction from `HaltProblem`
-(`halt_reducesto_semiThue_spec`, `SemiThue.synthFromHalt`). The systems produced have non-empty left
-sides (`haltToSemiThue_lhs_ne`), so it is also a reduction to `DecisionProblemPos`
-(`SemiThue.synthPosFromHalt`).
+(`halt_reducesto_semiThue_spec`). The systems produced have non-empty left sides
+(`haltToSemiThue_lhs_ne`), so it is also a reduction to `DecisionProblemPos`
+(`halt_reducesto_semiThuePos_spec`). The packaged reductions `SemiThue.synthFromHalt` and
+`SemiThue.synthPosFromHalt` are in `SynthHardness.lean`.
 -/
 
 namespace DiagonaLean.SemiThue.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Halt
-  DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Grammar
+  DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Rewriting
   DiagonaLean.Foundations.Computability.Normalize
   DiagonaLean.Synthetic.Definitions Relation
 
@@ -107,13 +108,13 @@ theorem halt_not_mem_block_running (tm : SingleTapeTM Symbol) (q : tm.State) (t 
 variable [Encodable Symbol]
 
 /-- The rewriting rule of a tile. -/
-def tileRule {α : Type} (t : Tile α) : List α × List α := (t.top, t.bot)
+def tileRule {α : Type} (t : Tile α) : Rule α := ⟨t.top, t.bot⟩
 
 /-- The rewriting system of a machine: its transition tiles and absorb tiles as rules, and the
 final rule `# h⊥ # → []`. -/
 def tmRules (tm : EncodableTM Symbol) : SRS (Alpha tm.State Symbol) :=
   (transitionTiles tm).map tileRule ++ (absorbTiles tm.toSingleTapeTM).map tileRule ++
-    [([#, h⊥, #], [])]
+    [⟨[#, h⊥, #], []⟩]
 
 variable {tm : EncodableTM Symbol}
 
@@ -125,26 +126,26 @@ theorem tileRule_mem {q : tm.State} {a : Option Symbol} {T : Tile (Alpha tm.Stat
 
 /-- The rule `a h⊥ → h⊥` is a rule of the system. -/
 theorem absorbLeft_mem (a : Option Symbol) :
-    (([↟ₜa, h⊥], [h⊥]) : List _ × List _) ∈ tmRules tm :=
+    (⟨[↟ₜa, h⊥], [h⊥]⟩ : Rule _) ∈ tmRules tm :=
   List.mem_append_left _ (List.mem_append_right _ (List.mem_map.2
     ⟨absorbLeftTile tm.toSingleTapeTM a, List.mem_flatMap.2 ⟨a, mem_enumerate a, by
       simp [absorbTilesFor]⟩, rfl⟩))
 
 /-- The rule `h⊥ a → h⊥` is a rule of the system. -/
 theorem absorbRight_mem (a : Option Symbol) :
-    (([h⊥, ↟ₜa], [h⊥]) : List _ × List _) ∈ tmRules tm :=
+    (⟨[h⊥, ↟ₜa], [h⊥]⟩ : Rule _) ∈ tmRules tm :=
   List.mem_append_left _ (List.mem_append_right _ (List.mem_map.2
     ⟨absorbRightTile tm.toSingleTapeTM a, List.mem_flatMap.2 ⟨a, mem_enumerate a, by
       simp [absorbTilesFor]⟩, rfl⟩))
 
 /-- The final rule `# h⊥ # → []` is a rule of the system. -/
-theorem final_mem : (([#, h⊥, #], []) : List _ × List _) ∈ tmRules tm :=
+theorem final_mem : (⟨[#, h⊥, #], []⟩ : Rule _) ∈ tmRules tm :=
   List.mem_append_right _ (List.mem_singleton.2 rfl)
 
 /-- A rule is a transition tile, or its left side contains the halting marker. -/
-theorem mem_tmRules_cases {lr : List (Alpha tm.State Symbol) × List (Alpha tm.State Symbol)}
+theorem mem_tmRules_cases {lr : Rule (Alpha tm.State Symbol)}
     (h : lr ∈ tmRules tm) :
-    (∃ q a T, T ∈ transitionTilesFor tm.toSingleTapeTM q a ∧ lr = tileRule T) ∨ h⊥ ∈ lr.1 := by
+    (∃ q a T, T ∈ transitionTilesFor tm.toSingleTapeTM q a ∧ lr = tileRule T) ∨ h⊥ ∈ lr.lhs := by
   simp only [tmRules, List.mem_append, List.mem_map, List.mem_singleton] at h
   rcases h with (⟨T, hT, rfl⟩ | ⟨T, hT, rfl⟩) | rfl
   · obtain ⟨q, a, hT⟩ := (MPCP.Reduction.mem_transitionTiles tm T).1 hT
@@ -171,7 +172,7 @@ theorem top_window {q : tm.State} {a : Option Symbol} {T : Tile (Alpha tm.State 
     exact ⟨[↟ₜb], [], rfl⟩
 
 /-- Every rule has a non-empty left side. -/
-theorem tmRules_lhs_ne : ∀ lr ∈ tmRules tm, lr.1 ≠ [] := by
+theorem tmRules_lhs_ne : ∀ lr ∈ tmRules tm, lr.lhs ≠ [] := by
   intro lr hlr
   rcases mem_tmRules_cases hlr with ⟨q, a, T, hT, rfl⟩ | hh
   · obtain ⟨pre, post, htop⟩ := top_window hT
@@ -183,11 +184,12 @@ theorem tmRules_lhs_ne : ∀ lr ∈ tmRules tm, lr.1 ≠ [] := by
 /-- **A string whose running marker is followed by `#` is stuck**: no rule applies, so it never
 rewrites to the empty string. -/
 theorem not_derives_stuck {L : List (Alpha tm.State Symbol)} (hL : ∀ x ∈ L, isMark x = false)
-    (q : tm.State) : ¬ (tmRules tm).Derives (L ++ [↟ₛq, #]) [] := by
+    (q : tm.State) : ¬ L ++ [↟ₛq, #] ↠[tmRules tm] [] := by
   intro h
-  rcases h.cases_head with heq | ⟨s₁, ⟨lr, hlr, p, r, hb, -⟩, -⟩
+  rcases h.cases_head with heq | ⟨s₁, hs, -⟩
   · simp at heq
-  · rcases mem_tmRules_cases hlr with ⟨q₀, a₀, T, hT, rfl⟩ | hh
+  · obtain ⟨lr, hlr, p, r, hb, -⟩ := SRS.step_iff.1 hs
+    rcases mem_tmRules_cases hlr with ⟨q₀, a₀, T, hT, rfl⟩ | hh
     · obtain ⟨pre, post, htop⟩ := top_window hT
       simp only [tileRule, htop] at hb
       have := split_mark (xs := p ++ pre) (ys := ↟ₜa₀ :: post ++ r) (m := ↟ₛq₀)
@@ -214,22 +216,22 @@ theorem encodeCfg_after_no_move (qNew : Option tm.State) (t : BiTape Symbol) (w 
 it moves left at the left end. -/
 theorem step_block (h_nbw : NoBlankWrites tm.toSingleTapeTM) (q : tm.State) (t : BiTape Symbol)
     (hl : (tm.tr q t.head).1.movement = some Turing.Dir.left → t.left.toList ≠ []) :
-    (tmRules tm).Step (block tm.toSingleTapeTM ⟨some q, t⟩)
-      (block tm.toSingleTapeTM (stepResult tm.toSingleTapeTM q t)) := by
+    block tm.toSingleTapeTM ⟨some q, t⟩ ⭢[tmRules tm]
+      block tm.toSingleTapeTM (stepResult tm.toSingleTapeTM q t) := by
   rcases h : tm.tr q t.head with ⟨⟨w, mov⟩, n⟩
   have hw : w ≠ none := by simpa [h] using h_nbw q t.head
   have hres : stepResult tm.toSingleTapeTM q t = ⟨n, (t.write w).optionMove mov⟩ := by
     simp [stepResult, h]
   rw [hres, block_running]
   rcases mov with _ | _ | _
-  · refine ⟨_, tileRule_mem (q := q) (a := t.head) (T := noMoveTile _ q t.head n w)
+  · refine SRS.step_iff.2 ⟨_, tileRule_mem (q := q) (a := t.head) (T := noMoveTile _ q t.head n w)
       (by simp [transitionTilesFor, h]), # :: liftTape _ t.left.toList.reverse,
       liftTape _ t.right.toList ++ [#], by simp [tileRule, noMoveTile], ?_⟩
     simp [block, BiTape.optionMove, encodeCfg_after_no_move, tileRule, noMoveTile]
   · have hne := hl (by simp [h])
     have hL : t.left.toList = t.left.head :: t.left.tail.toList :=
       (head_cons_tail_toList _ hne).symm
-    refine ⟨_, tileRule_mem (q := q) (a := t.head)
+    refine SRS.step_iff.2 ⟨_, tileRule_mem (q := q) (a := t.head)
       (T := leftMoveTile _ q t.head n w t.left.head)
       (by simp [transitionTilesFor, h]),
       # :: liftTape _ t.left.tail.toList.reverse, liftTape _ t.right.toList ++ [#], ?_, ?_⟩
@@ -239,14 +241,14 @@ theorem step_block (h_nbw : NoBlankWrites tm.toSingleTapeTM) (q : tm.State) (t :
         leftMoveTile]
   · cases hr : t.right.toList with
     | nil =>
-      refine ⟨_, tileRule_mem (q := q) (a := t.head)
+      refine SRS.step_iff.2 ⟨_, tileRule_mem (q := q) (a := t.head)
         (T := rightMoveBoundaryTile _ q t.head n w) (by simp [transitionTilesFor, h]),
         # :: liftTape _ t.left.toList.reverse, [], by simp [tileRule, rightMoveBoundaryTile], ?_⟩
       simp [block, BiTape.optionMove, BiTape.move,
         encodeCfg_after_right_move_boundary_eq _ _ _ _ (Or.inl hw) hr,
         tileRule, rightMoveBoundaryTile]
     | cons x xs =>
-      refine ⟨_, tileRule_mem (q := q) (a := t.head)
+      refine SRS.step_iff.2 ⟨_, tileRule_mem (q := q) (a := t.head)
         (T := rightMoveTile _ q t.head n w) (by simp [transitionTilesFor, h]),
         # :: liftTape _ t.left.toList.reverse, liftTape _ (x :: xs) ++ [#],
         by simp [tileRule, rightMoveTile], ?_⟩
@@ -259,10 +261,10 @@ theorem step_block (h_nbw : NoBlankWrites tm.toSingleTapeTM) (q : tm.State) (t :
 result is stuck. -/
 theorem step_inv (h_nbw : NoBlankWrites tm.toSingleTapeTM) {q : tm.State} {t : BiTape Symbol}
     {s' : List (Alpha tm.State Symbol)}
-    (hs : (tmRules tm).Step (block tm.toSingleTapeTM ⟨some q, t⟩) s') :
+    (hs : block tm.toSingleTapeTM ⟨some q, t⟩ ⭢[tmRules tm] s') :
     s' = block tm.toSingleTapeTM (stepResult tm.toSingleTapeTM q t) ∨
-      (stepResult tm.toSingleTapeTM q t).state = none ∨ ¬ (tmRules tm).Derives s' [] := by
-  obtain ⟨lr, hlr, p, r, hb, rfl⟩ := hs
+      (stepResult tm.toSingleTapeTM q t).state = none ∨ ¬ s' ↠[tmRules tm] [] := by
+  obtain ⟨lr, hlr, p, r, hb, rfl⟩ := SRS.step_iff.1 hs
   rw [block_running] at hb
   have hxs : ∀ x ∈ # :: liftTape tm.toSingleTapeTM t.left.toList.reverse, isMark x = false := by
     intro x hx
@@ -289,7 +291,7 @@ theorem step_inv (h_nbw : NoBlankWrites tm.toSingleTapeTM) {q : tm.State} {t : B
   unfold transitionTilesFor at hT
   rw [h₀] at hT
   -- the window of a rule whose top is `pre ++ [↟ₛq₀, ↟ₜa₀] ++ post`
-  have win : ∀ pre post, (tileRule T).1 = pre ++ ↟ₛq₀ :: ↟ₜa₀ :: post →
+  have win : ∀ pre post, (tileRule T).lhs = pre ++ ↟ₛq₀ :: ↟ₜa₀ :: post →
       p ++ pre = # :: liftTape tm.toSingleTapeTM t.left.toList.reverse ∧ q₀ = q ∧ a₀ = t.head ∧
         post ++ r = liftTape tm.toSingleTapeTM t.right.toList ++ [#] := by
     intro pre post htop
@@ -373,32 +375,33 @@ theorem step_inv (h_nbw : NoBlankWrites tm.toSingleTapeTM) {q : tm.State} {t : B
 
 /-- The halting marker swallows the tape on its left, up to `#`. -/
 theorem derives_absorb_left (l : List (Option Symbol)) (rest : List (Alpha tm.State Symbol)) :
-    (tmRules tm).Derives (# :: liftTape tm.toSingleTapeTM l ++ h⊥ :: rest) (# :: h⊥ :: rest) := by
+    # :: liftTape tm.toSingleTapeTM l ++ h⊥ :: rest ↠[tmRules tm] # :: h⊥ :: rest := by
   induction l using List.reverseRecOn with
   | nil => exact .refl
   | append_singleton l a ih =>
     refine Relation.ReflTransGen.head ?_ ih
-    exact ⟨_, absorbLeft_mem a, # :: liftTape tm.toSingleTapeTM l, rest,
+    exact SRS.step_iff.2 ⟨_, absorbLeft_mem a, # :: liftTape tm.toSingleTapeTM l, rest,
       by simp [liftTape], by simp⟩
 
 /-- The halting marker swallows the tape on its right, up to `#`. -/
 theorem derives_absorb_right (pre : List (Alpha tm.State Symbol)) (r : List (Option Symbol)) :
-    (tmRules tm).Derives (pre ++ h⊥ :: liftTape tm.toSingleTapeTM r ++ [#]) (pre ++ [h⊥, #]) := by
+    pre ++ h⊥ :: liftTape tm.toSingleTapeTM r ++ [#] ↠[tmRules tm] pre ++ [h⊥, #] := by
   induction r with
   | nil => simpa [liftTape] using (Relation.ReflTransGen.refl :
-      (tmRules tm).Derives (pre ++ [h⊥, #]) (pre ++ [h⊥, #]))
+      pre ++ [h⊥, #] ↠[tmRules tm] pre ++ [h⊥, #])
   | cons a r ih =>
     refine Relation.ReflTransGen.head ?_ ih
-    exact ⟨_, absorbRight_mem a, pre, liftTape tm.toSingleTapeTM r ++ [#], by simp [liftTape],
-      by simp⟩
+    exact SRS.step_iff.2 ⟨_, absorbRight_mem a, pre, liftTape tm.toSingleTapeTM r ++ [#],
+      by simp [liftTape], by simp⟩
 
 /-- A halted configuration rewrites to the empty string. -/
 theorem derives_halted (t : BiTape Symbol) :
-    (tmRules tm).Derives (block tm.toSingleTapeTM ⟨none, t⟩) [] := by
+    block tm.toSingleTapeTM ⟨none, t⟩ ↠[tmRules tm] [] := by
   have h₁ := derives_absorb_left (tm := tm) t.left.toList.reverse
     (liftTape tm.toSingleTapeTM (t.head :: t.right.toList) ++ [#])
   have h₂ := derives_absorb_right (tm := tm) [#] (t.head :: t.right.toList)
-  have h₃ : (tmRules tm).Derives [#, h⊥, #] [] := .single ⟨_, final_mem, [], [], by simp, by simp⟩
+  have h₃ : [#, h⊥, #] ↠[tmRules tm] [] :=
+    .single (SRS.step_iff.2 ⟨_, final_mem, [], [], by simp, by simp⟩)
   have e : block tm.toSingleTapeTM ⟨none, t⟩ =
       # :: liftTape tm.toSingleTapeTM t.left.toList.reverse ++ h⊥ ::
         (liftTape tm.toSingleTapeTM (t.head :: t.right.toList) ++ [#]) := by
@@ -411,12 +414,12 @@ theorem derives_halted (t : BiTape Symbol) :
 /-- **If the machine halts, its initial configuration string rewrites to the empty string.** -/
 theorem derives_of_halts (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Symbol)
     (h_nlb : NoLeftBoundary tm.toSingleTapeTM w) (h : Halts tm.toSingleTapeTM w) :
-    (tmRules tm).Derives (block tm.toSingleTapeTM (initCfg tm.toSingleTapeTM w)) [] := by
+    block tm.toSingleTapeTM (initCfg tm.toSingleTapeTM w) ↠[tmRules tm] [] := by
   obtain ⟨tape, htr⟩ := h
   have reach : ∀ c, ReflTransGen tm.toSingleTapeTM.TransitionRelation
       (initCfg tm.toSingleTapeTM w) c →
-      (tmRules tm).Derives (block tm.toSingleTapeTM (initCfg tm.toSingleTapeTM w))
-        (block tm.toSingleTapeTM c) := by
+      block tm.toSingleTapeTM (initCfg tm.toSingleTapeTM w) ↠[tmRules tm]
+        block tm.toSingleTapeTM c := by
     intro c hc
     induction hc with
     | refl => exact .refl
@@ -435,9 +438,9 @@ theorem derives_of_halts (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Sym
 
 /-- **If the initial configuration string rewrites to the empty string, the machine halts.** -/
 theorem halts_of_derives (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Symbol)
-    (h : (tmRules tm).Derives (block tm.toSingleTapeTM (initCfg tm.toSingleTapeTM w)) []) :
+    (h : block tm.toSingleTapeTM (initCfg tm.toSingleTapeTM w) ↠[tmRules tm] []) :
     Halts tm.toSingleTapeTM w := by
-  suffices key : ∀ s, (tmRules tm).Derives s [] → ∀ c,
+  suffices key : ∀ s, s ↠[tmRules tm] [] → ∀ c,
       ReflTransGen tm.toSingleTapeTM.TransitionRelation (initCfg tm.toSingleTapeTM w) c →
       s = block tm.toSingleTapeTM c → Halts tm.toSingleTapeTM w from
     key _ h _ .refl rfl
@@ -467,7 +470,7 @@ machine that never writes a blank and never moves left at the left end on this i
 theorem halt_iff_derives (h_nbw : NoBlankWrites tm.toSingleTapeTM) (w : List Symbol)
     (h_nlb : NoLeftBoundary tm.toSingleTapeTM w) :
     Halts tm.toSingleTapeTM w ↔
-      (tmRules tm).Derives (block tm.toSingleTapeTM (initCfg tm.toSingleTapeTM w)) [] :=
+      block tm.toSingleTapeTM (initCfg tm.toSingleTapeTM w) ↠[tmRules tm] [] :=
   ⟨derives_of_halts h_nbw w h_nlb, halts_of_derives h_nbw w⟩
 
 /-! ### The reduction -/
@@ -496,15 +499,9 @@ theorem halt_reducesto_semiThue_spec : HaltProblem ⪯_s[haltToSemiThue] Decisio
       tmRules_lhs_ne]
   rfl
 
-/-- **The word problem for string rewriting systems is synthetically halting-hard**, over
-`Alpha ℕ Sym2`. The halting problem many-one reduces to the word problem for string rewriting
-systems over `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
-def _root_.DiagonaLean.SemiThue.synthFromHalt : HaltProblem ⪯_s @DecisionProblem (Alpha ℕ Sym2) :=
-  ⟨haltToSemiThue, halt_reducesto_semiThue_spec⟩
-
 /-- Every rule of a system produced by the reduction has a non-empty left side. -/
 theorem haltToSemiThue_lhs_ne (p : EncodableTM Bool × List Bool) :
-    ∀ lr ∈ (haltToSemiThue p).1, lr.1 ≠ [] := by
+    ∀ lr ∈ (haltToSemiThue p).1, lr.lhs ≠ [] := by
   intro lr hlr
   obtain ⟨lr₀, hlr₀, rfl⟩ := List.mem_map.1 hlr
   simpa using tmRules_lhs_ne lr₀ hlr₀
@@ -514,12 +511,6 @@ systems with non-empty left sides. -/
 theorem halt_reducesto_semiThuePos_spec :
     HaltProblem ⪯_s[haltToSemiThue] DecisionProblemPos := fun p =>
   (halt_reducesto_semiThue_spec p).trans (and_iff_right (haltToSemiThue_lhs_ne p)).symm
-
-/-- The halting problem many-one reduces to the word problem for systems with non-empty left sides
-over `Alpha ℕ Sym2`, through `haltToSemiThue`. -/
-def _root_.DiagonaLean.SemiThue.synthPosFromHalt :
-    HaltProblem ⪯_s @DecisionProblemPos (Alpha ℕ Sym2) :=
-  ⟨haltToSemiThue, halt_reducesto_semiThuePos_spec⟩
 
 end Reduction
 

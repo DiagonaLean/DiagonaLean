@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh Turaga, Claude Sonnet
 -/
 
-import DiagonaLean.Foundations.Computability.HaltCanon
+import DiagonaLean.Foundations.Computability.Undecidable
 
 @[expose] public section
 
@@ -14,7 +14,7 @@ the library states about a problem `P`. `halt_results P from r` states its three
 theorems, under the same names for every problem, in the current namespace:
 
 * `haltHard : HaltHard P`;
-* `not_computablePred : ¬ ComputablePred P`;
+* `not_computablePred : Undecidable P`, that is `¬ ComputablePred P`;
 * `not_machineDecidable : Computable enc → ¬ MachineDecidable enc P`, for every encoding `enc`.
 
 ## Forms
@@ -22,7 +22,7 @@ theorems, under the same names for every problem, in the current namespace:
 * `halt_results P from r`, with `r : HaltReduction P`, or with `r : HaltHard P` itself: when the
   reduction needs constants that exist only classically (a universal code, a race program from the
   recursion theorem), only its existence can be stated, and its proof obtains them
-  (`SKIConv/Hardness.lean`).
+  (`SKIConv/Undecidable.lean`).
 * `halt_results P over_letters from r`, for the statement over every nontrivial alphabet `α`:
   `r b0 b1 hne : HaltReduction P` is a reduction for each pair of distinct letters of `α`
   (such as `MPCP.fromHaltOver`). The letters come from `Nontrivial α` (`HaltHard.of_letters`).
@@ -77,8 +77,8 @@ macro (name := haltResults) "halt_results" pre:(haltResultsName)? p:term
   `(/-- The problem is halting-hard: the halting problem reduces to it computably. Stated by
     `halt_results`. -/
     theorem $hardName:ident : DiagonaLean.Foundations.Computability.HaltHard $p := $hard
-    /-- The problem is not a computable predicate. Stated by `halt_results`. -/
-    theorem $computableName:ident : ¬ ComputablePred $p :=
+    /-- The problem is undecidable: it is not a computable predicate. Stated by `halt_results`. -/
+    theorem $computableName:ident : DiagonaLean.Foundations.Computability.Undecidable $p :=
       DiagonaLean.Foundations.Computability.HaltHard.not_computablePred (P := $p) $hard
     /-- No Turing machine decides the problem, under any computable encoding of its instances.
     Stated by `halt_results`. -/

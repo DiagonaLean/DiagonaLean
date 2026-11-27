@@ -6,22 +6,28 @@ Authors: Aalok Thakkar, Claude Opus
 import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
 import DiagonaLean.Foundations.LambdaCalculus.Primcodable
 import DiagonaLean.Foundations.Computability.MachineBridge
+import DiagonaLean.BetaConv.Reductions.HaltCanon_to_BetaConv
+import DiagonaLean.Foundations.Computability.HaltResults
+import DiagonaLean.Foundations.Computability.ReduceFrom
 
 @[expose] public section
 
 /-! # Undecidability of β-conversion
 
-β-conversion of λ-terms is synthetically halting-hard (`BetaConv.synthFromHalt`), given the
-reduction's constants: a universal code `u` and the race program `C` for its SKI term `u.toSKI`,
-from the recursion theorem. They are only known to exist, so `C` and the proofs `hu : IsUniversal u`
-and `hC : RaceProg u.toSKI C` are arguments, and `u` is implicit. No Turing machine decides it under
-the encoding of a pair of terms as the binary digits of the pair of their codes
+On a canonical instance, `canonRed U C` (`Reductions/HaltCanon_to_BetaConv.lean`) builds the
+λ-instance of the race program `C`, primitive recursively, so `BetaConv.fromHaltWith U C …` is a
+proved halting reduction, given the universal term `U` and the race program `C`. The constants are
+only known to exist, so halting-hardness, a proposition, obtains them in its proof
+(`BetaConv.haltHard`). From it, β-conversion is undecidable (`BetaConv.not_computablePred`), and no
+machine decides it under any computable encoding (`BetaConv.not_machineDecidable`).
+
+The same two statements are reached independently through a machine-level race: no Turing machine
+decides it under the encoding of a pair of terms as the binary digits of the pair of their codes
 (`not_machineDecidable_betaConv`); the encoding is injective (`encBeta_injective`) and follows
-`encNat` in `KAComm/KleeneAlgebra/Race.lean`. That it is not a computable predicate, and that no
-machine decides it under any computable encoding, follows from halting-hardness in `Hardness.lean`
-(`BetaConv.haltHard`, `BetaConv.not_computablePred`, `BetaConv.not_machineDecidable`). It separates
-the computably inseparable pair `SelfOut true`, `SelfOut false`, so no machine decides it on the
-instances `sepRed U c M` given the code of `M` (`not_machineDecidable_betaConv_sepRed`).
+`encNat` in `KAComm/KleeneAlgebra/Race.lean`. It separates the computably inseparable pair
+`SelfOut true`, `SelfOut false`, so no machine decides it on the instances `sepRed U c M` given the
+code of `M` (`not_machineDecidable_betaConv_sepRed`). The synthetic results are in
+`SynthHardness.lean`.
 
 ## References
 
@@ -36,15 +42,6 @@ open Cslib SKI LambdaCalculus.LocallyNameless.Untyped Nat.Partrec
   DiagonaLean.Foundations.LambdaCalculus DiagonaLean.Foundations.Computability
   DiagonaLean.Synthetic.Definitions DiagonaLean.Halt.Encoding
   DiagonaLean.Halt.Inseparable
-
-/-- **β-conversion of λ-terms is synthetically halting-hard**, given a universal code `u`
-(`Foundations.CombinatoryLogic.exists_isUniversal`) and the race program `C` for `u.toSKI`
-(`exists_raceProg`). These finite constants are only known to exist, so they are arguments rather
-than computed here. The statement without them is `not_machineDecidable_betaConv`. -/
-def _root_.DiagonaLean.BetaConv.synthFromHalt {u : Code} (C : Code)
-    (hu : Foundations.CombinatoryLogic.IsUniversal u) (hC : RaceProg u.toSKI C) :
-    SynthHaltReduction BetaConvProblem :=
-  BetaConv.synthFromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC
 
 /-- A pair of λ-terms, as the binary digits of the pair of their codes. -/
 def encBeta (i : Term ℕ × Term ℕ) : List Bool :=
@@ -81,3 +78,28 @@ theorem not_machineDecidable_betaConv_sepRed :
     selfOut_inseparable (sepRed_separates u.toSKI c hu (Code.toSKI_correct u) hc)⟩
 
 end DiagonaLean.BetaConv.Reduction
+
+namespace DiagonaLean.BetaConv
+
+open Cslib SKI LambdaCalculus.LocallyNameless.Untyped Nat.Partrec
+  DiagonaLean.Foundations.LambdaCalculus DiagonaLean.Foundations.Computability
+  DiagonaLean.Synthetic.Definitions
+
+/-- **A proved halting reduction to β-conversion**, given the universal term `U` and the race
+program `C`. -/
+def fromHaltWith {u : Code} (U : SKI) (C : Code) (hu : Foundations.CombinatoryLogic.IsUniversal u)
+    (hU : Computes U u.eval) (hC : RaceProg U C) : HaltReduction BetaConvProblem :=
+  ⟨canonRed U C, (canonRed_primrec U C).to_comp, haltCanon_reducesto_betaConv_spec hu hU hC⟩
+
+-- Halting-hardness and its consequences: the universal code and the race program exist
+-- (`exists_isUniversal`, `exists_raceProg`), so the proof obtains them, and only the existence
+-- of a reduction is stated.
+halt_results BetaConvProblem from
+  Foundations.CombinatoryLogic.exists_isUniversal.elim fun u hu =>
+    (exists_raceProg u.toSKI).elim fun C hC =>
+      ⟨fromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC⟩
+
+/-- β-conversion is a halting-hard source for `hard_reduce_from`. -/
+instance : HaltHardFact BetaConvProblem := ⟨haltHard⟩
+
+end DiagonaLean.BetaConv

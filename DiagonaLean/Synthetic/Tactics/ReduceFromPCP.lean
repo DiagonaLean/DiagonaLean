@@ -4,7 +4,7 @@ Authors: Prathamesh Turaga
 -/
 
 import DiagonaLean.Synthetic.HaltReduction
-import DiagonaLean.PCP.Undecidable
+import DiagonaLean.PCP.SynthHardness
 import DiagonaLean.PCP.Basic
 import DiagonaLean.Foundations.Computability.ReduceFrom
 

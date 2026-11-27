@@ -14,6 +14,9 @@ every left letter commutes with every right letter (`DComm`). `DecisionProblem` 
 language of the first side is contained in the language of the second in the model `TD.pl`, that is,
 whether `e ≤ f` holds in `L Σ̈` for `Σ = {0, 1}`. `ModelLeBoolProblem` names it.
 
+To audit the definition, read `decisionProblem_mk`: the problem on a pair `(e, f)` in its curried
+form. It is pinned in `scripts/HeadlineTest.lean`.
+
 ## References
 
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18, Section 3
@@ -23,12 +26,19 @@ namespace DiagonaLean.KAComm.ModelLeBool
 
 open DiagonaLean.KAComm.KleeneAlgebra
 
-/-- `DecisionProblem i` holds iff the language of `i.1` is contained in the language of `i.2` in the
-model `TD.pl`. -/
+/-! ### The problem on instances, for the reductions and the computability statements -/
+
+/-- **The problem on a pair `(e, f)` of expressions**, for the reductions and the computability
+statements: inclusion of the language of `e` in that of `f`. Read it curried, `decisionProblem_mk`.
+-/
 def DecisionProblem (i : InstB) : Prop :=
   TD.pl (FreePreKA.mk i.1 : TD Bool) ≤ TD.pl (FreePreKA.mk i.2)
 
 /-- Inclusion in `L Σ̈` over `Σ = {0, 1}`. -/
 abbrev ModelLeBoolProblem : InstB → Prop := DecisionProblem
+
+/-- The problem on a pair `(e, f)` of expressions is the curried problem. -/
+@[simp] theorem decisionProblem_mk (e f : RExp (Bool ⊕ Bool)) :
+    DecisionProblem (e, f) ↔ TD.pl (FreePreKA.mk e : TD Bool) ≤ TD.pl (FreePreKA.mk f) := Iff.rfl
 
 end DiagonaLean.KAComm.ModelLeBool

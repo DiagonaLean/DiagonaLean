@@ -1,10 +1,12 @@
 import DiagonaLean.Foundations.Computability.Upgrade
-import DiagonaLean.MPCP.Hardness
+import DiagonaLean.MPCP.Undecidable
+import DiagonaLean.MPCP.SynthHardness
 import DiagonaLean.PCP.Primrec
-import DiagonaLean.PCP.Undecidable
-import DiagonaLean.MatMort.MachineLevel
+import DiagonaLean.PCP.SynthHardness
 import DiagonaLean.MatMort.Undecidable
-import DiagonaLean.SKIConv.Undecidable
+import DiagonaLean.MatMort.SynthHardness
+import DiagonaLean.SKIConv.SynthHardness
+import DiagonaLean.Foundations.CombinatoryLogic.Primcodable
 
 /-! Tests for `upgrade`, run by CI: the cut by name, by hypothesis and by `HaltSource`, the goals
 left on the links after the cut, and the errors. -/

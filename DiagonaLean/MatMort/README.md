@@ -10,5 +10,5 @@ Given a finite set `Ms : Finset (Matrix (Fin 3) (Fin 3) ℤ)` of `3 × 3` intege
 * `Basic.lean`: the problem.
 * `Reductions/PCP_to_MatMort.lean`: PCP over `{2, 3}` many-one reduces to matrix mortality through `matImage` (`pcp_reducesto_matMort_spec`). See `Reductions/README.md`.
 * `Primrec.lean`: the reduction function `matImage` is primitive recursive (`matImage_primrec`).
-* `Undecidable.lean`: matrix mortality is synthetically halting-hard (`MatMort.synthFromHalt`).
-* `MachineLevel.lean`: the halting reduction `MatMort.fromHalt`, proved computable, and from it `MatMort.haltHard`, `MatMort.not_computablePred` and `MatMort.not_machineDecidable` (no Turing machine decides it under any computable encoding).
+* `SynthHardness.lean`: matrix mortality is synthetically halting-hard (`MatMort.synthFromHalt`).
+* `Undecidable.lean`: the halting reduction `MatMort.fromHalt`, proved computable, and from it `MatMort.haltHard`, `MatMort.not_computablePred` and `MatMort.not_machineDecidable` (no Turing machine decides it under any computable encoding).

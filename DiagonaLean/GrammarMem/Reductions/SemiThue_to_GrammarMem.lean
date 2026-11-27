@@ -4,11 +4,11 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.GrammarMem.Basic
-import DiagonaLean.SemiThue.MachineLevel
+import DiagonaLean.SemiThue.Reductions.HaltCanon_to_SemiThue
 
 @[expose] public section
 
-/-! # Membership for unrestricted grammars, at machine level
+/-! # From string rewriting to membership for unrestricted grammars
 
 A fresh start symbol `0`, with the rule `[0] → u`, and the symbols of `Alpha ℕ Sym2` numbered from
 `1` (`gSym`), turn a string rewriting system `R` and a start string `u` into a grammar code
@@ -19,17 +19,14 @@ rewrites to the empty string (`emptyWord_ofSRS_iff`, from `SRS.derives_start` an
 ## Main statements
 
 * `ofSRS`, `emptyWord_ofSRS_iff`, `isType0_ofSRS`, and the `Primcodable` instance of type 0 grammar
-  codes: used in `Hardness.lean` for the halting reductions `GrammarMem.emptyWordFromHalt` and
-  `GrammarMem.fromHalt`, from which the negative results there
-  (`GrammarMem.not_computablePred`, `GrammarMem.EmptyWord.not_machineDecidable`, …) follow.
+  codes: used by `Halt_to_GrammarMem.lean` and `HaltCanon_to_GrammarMem.lean`.
 -/
 
-namespace DiagonaLean.GrammarMem.MachineLevel
+namespace DiagonaLean.GrammarMem.Reduction
 
 open DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Halt DiagonaLean.Halt.Encoding
   DiagonaLean.Foundations.Computability DiagonaLean.Foundations.Grammar
-  DiagonaLean.MPCP.MachineLevel
-  DiagonaLean.SemiThue DiagonaLean.SemiThue.Reduction DiagonaLean.SemiThue.MachineLevel
+  DiagonaLean.Foundations.Rewriting DiagonaLean.SemiThue DiagonaLean.SemiThue.Reduction
   DiagonaLean.Synthetic.Definitions
 
 variable {T : Type}
@@ -51,7 +48,7 @@ and the rules of `R`, over the nonterminals `gSym`. -/
 def ofSRS (R : SRS (Alpha ℕ Normalize.Sym2))
     (u : List (Alpha ℕ Normalize.Sym2)) :
     GrammarCode T :=
-  (0, ([.inr 0], u.map gSym) :: R.map fun lr => (lr.1.map gSym, lr.2.map gSym))
+  (0, ⟨[.inr 0], u.map gSym⟩ :: R.map fun lr => ⟨lr.lhs.map gSym, lr.rhs.map gSym⟩)
 
 derive_primrec gSym [Primcodable T]
 
@@ -60,10 +57,10 @@ derive_primrec ofSRS [Primcodable T]
 /-- **The empty word is in the language of `ofSRS R u` iff `u` rewrites to the empty string**, when
 every rule of `R` has a non-empty left side. -/
 theorem emptyWord_ofSRS_iff (R : SRS (Alpha ℕ Normalize.Sym2))
-    (u : List (Alpha ℕ Normalize.Sym2)) (hne : ∀ lr ∈ R, lr.1 ≠ []) :
-    EmptyWordProblem (ofSRS (T := T) R u) ↔ R.Derives u [] := by
-  show SRS.Derives (([(Sum.inr 0 : T ⊕ ℕ)], u.map gSym) ::
-      R.map fun lr => (lr.1.map gSym, lr.2.map gSym)) [Sum.inr 0]
+    (u : List (Alpha ℕ Normalize.Sym2)) (hne : ∀ lr ∈ R, lr.lhs ≠ []) :
+    EmptyWordProblem (ofSRS (T := T) R u) ↔ u ↠[R] [] := by
+  show SRS.Derives (⟨[(Sum.inr 0 : T ⊕ ℕ)], u.map gSym⟩ ::
+      R.map fun lr => ⟨lr.lhs.map gSym, lr.rhs.map gSym⟩) [Sum.inr 0]
       (([] : List T).map Sum.inl) ↔ _
   rw [List.map_nil, SRS.derives_start (v := [])]
   · exact Foundations.Codes.derives_mapRules_iff gSym_injective hne _ []
@@ -80,7 +77,7 @@ theorem emptyWord_ofSRS_iff (R : SRS (Alpha ℕ Normalize.Sym2))
 
 /-- The grammar code of a rewriting system whose left sides are non-empty is of type 0. -/
 theorem isType0_ofSRS (R : SRS (Alpha ℕ Normalize.Sym2)) (u : List (Alpha ℕ Normalize.Sym2))
-    (hne : ∀ lr ∈ R, lr.1 ≠ []) : IsType0 (ofSRS (T := T) R u) := by
+    (hne : ∀ lr ∈ R, lr.lhs ≠ []) : IsType0 (ofSRS (T := T) R u) := by
   rw [isType0_iff, ofSRS]
   intro lr hlr
   rcases List.mem_cons.1 hlr with rfl | hlr
@@ -99,4 +96,4 @@ variable [Primcodable T]
 /-- Type 0 grammar codes, with the encoding of a subtype. -/
 instance : Primcodable { g : GrammarCode T // IsType0 g } := Primcodable.subtype isType0_prim
 
-end DiagonaLean.GrammarMem.MachineLevel
+end DiagonaLean.GrammarMem.Reduction

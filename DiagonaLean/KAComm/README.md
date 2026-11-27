@@ -34,7 +34,7 @@ An instance is a pair of expressions `e₁ e₂ : RExp (Σ ⊕ Σ)` over the dou
 The problem `X` is `KAComm.X.DecisionProblem`, named `XProblem`, and its results are in the namespace `DiagonaLean.KAComm.X.Reduction`, for example `KAComm.TermEq.synthFromHalt`.
 
 ## Layout
-* `X/`, for each of the eight problems: `Basic.lean` (the problem), `Reductions/Halt_to_X.lean` (a reduction from `HaltProblem`, to the complement for the four language-model problems) and `Undecidable.lean` (the results).
+* `X/`, for each of the eight problems: `Basic.lean` (the problem), `Reductions/Halt_to_X.lean` (a reduction from `HaltProblem`, to the complement for the four language-model problems), for the four equality problems `Reductions/HaltCanon_to_X.lean` (the reduction from canonical machines), `SynthHardness.lean` (the synthetic result) and `Undecidable.lean` (the undecidability results).
 * `KleeneAlgebra/`: the algebra, the encoding of Turing machines as terms (`KleeneAlgebra/MachineEncoding/`), the race program and Theorem 18 for every theory in between (`KleeneAlgebra/Between.lean`).
 
 The interpreter the race program relies on is in `Foundations/Computability/`.

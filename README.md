@@ -38,13 +38,13 @@ graph LR
 | Universal machine halting | For a fixed weakly universal machine $U$, does $U$ halt on $w$? | [`UTMHalt/`](DiagonaLean/UTMHalt/README.md) | No machine decides it (`not_exists_haltDeciderFor_of_isWeaklyUniversal`) |
 | Modified PCP | Given tiles and a designated start tile, is there a match that begins with it? | [`MPCP/`](DiagonaLean/MPCP/README.md) | `SynthHaltReduction`, `HaltHard`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, over any alphabet with at least two letters (`MPCP.haltHard`, …) |
 | Post Correspondence Problem | Given tiles $(u_i, v_i)$, is there a nonempty sequence with $u_{i_1}\cdots u_{i_n} = v_{i_1}\cdots v_{i_n}$? | [`PCP/`](DiagonaLean/PCP/README.md) | `SynthHaltReduction`, `HaltHard`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, over any alphabet with at least two letters (`PCP.haltHard`, …) |
-| String rewriting (semi-Thue) | Given rewriting rules `l → r` between strings, does `u` rewrite to `v`? | [`SemiThue/`](DiagonaLean/SemiThue/README.md) | `SynthHaltReduction`, `HaltHard`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, over any alphabet with at least two letters (`SemiThue.haltHard`, …); the same for systems with non-empty left sides (`SemiThue.Pos.haltHard`, …) |
+| String rewriting (semi-Thue) | Given rewriting rules `l ⟶ r` between words, does `u` rewrite to `v` (`u ↠[R] v`)? | [`SemiThue/`](DiagonaLean/SemiThue/README.md) | `SynthHaltReduction`, `HaltHard`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, over any alphabet with at least two letters (`SemiThue.haltHard`, …); the same for systems with non-empty left sides (`SemiThue.Pos.haltHard`, …); recursively enumerable (`SemiThue.rePred`) |
 | Membership for grammar codes | Given a grammar code and a word, is the word in its language? | [`GrammarMem/`](DiagonaLean/GrammarMem/README.md) | `SynthHaltReduction`; `HaltHard`, `¬ ComputablePred` and `¬ MachineDecidable` under every computable encoding (`GrammarMem.haltHard`, …), and for the empty word already over type 0 codes (`GrammarMem.EmptyWord.haltHard`, …) |
 | Ambiguity of CFGs | Does a context-free grammar have two parse trees for some word? | [`AmbigCFG/`](DiagonaLean/AmbigCFG/README.md) | `SynthHaltReduction`; for grammar codes over any alphabet with at least two letters, `HaltHard`, `¬ ComputablePred` and `¬ MachineDecidable` under every computable encoding (`AmbigCFG.Code.haltHard`, …) |
 | Intersection of CFGs | Do the languages of two context-free grammars intersect? (Emptiness of the intersection is the complement.) | [`EmpCFG/`](DiagonaLean/EmpCFG/README.md) | `SynthHaltReduction` over any alphabet with at least two letters; for grammar codes over any alphabet with at least two letters, `HaltHard`, `¬ ComputablePred` and `¬ MachineDecidable` under every computable encoding (`EmpCFG.Code.haltHard`, …); `¬ ComputablePred` and `¬ MachineDecidable` for its emptiness |
 | Matrix mortality | Given a finite set of $3 \times 3$ integer matrices, does some product of them equal $0$? | [`MatMort/`](DiagonaLean/MatMort/README.md) | `SynthHaltReduction`, `HaltHard`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding (`MatMort.haltHard`, …) |
-| SKI convertibility | Do two SKI terms have a common reduct? | [`SKIConv/`](DiagonaLean/SKIConv/README.md) | `SynthHaltReduction`, `HaltHard`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding (`SKIConv.haltHard`, …) |
-| β-conversion | Are two λ-terms β-convertible? | [`BetaConv/`](DiagonaLean/BetaConv/README.md) | `SynthHaltReduction`, `HaltHard`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding (`BetaConv.haltHard`, …) |
+| SKI convertibility | Do two SKI terms have a common reduct? | [`SKIConv/`](DiagonaLean/SKIConv/README.md) | `SynthHaltReduction`, `HaltHard`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding (`SKIConv.haltHard`, …); recursively enumerable (`SKIConv.rePred`) |
+| β-conversion | Are two λ-terms β-convertible? | [`BetaConv/`](DiagonaLean/BetaConv/README.md) | `SynthHaltReduction`, `HaltHard`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding (`BetaConv.haltHard`, …); recursively enumerable (`BetaConv.rePred`) |
 | Rice's problem | For a set $C$ of partial functions $\mathbb N \rightharpoonup \mathbb N$, does a program compute a function in $C$? | [`Rice/`](DiagonaLean/Rice/README.md) | `¬ ComputablePred` and `¬ MachineDecidable` for every non-trivial $C$; `SynthHaltReduction` when $C$ contains some computable function but not the nowhere-defined one; of the complement when $C$ contains the nowhere-defined function and misses some computable function (`Rice.not_computablePred`, `Rice.not_machineDecidable`) |
 | Kleene algebra with commutativity | Is $e = f$ provable in Kleene algebra (`KATermEq`) or pre-Kleene algebra (`TermEq`) with commutativity conditions on letters? Is $\mathcal L(e) = \mathcal L(f)$ (`LangEq`), or $\mathcal L(e) \subseteq \mathcal L(f)$ (`ModelLe`), in the language model? Each over $\Sigma = \mathbb N$ and over $\Sigma = \{0, 1\}$ (`XBool`). | [`KAComm/`](DiagonaLean/KAComm/README.md) | `HaltHard` for `KATermEq`, `TermEq` and their `XBool` forms (`KAComm.KATermEq.haltHard`, …); `SynthHaltReduction` (for `LangEq`, `ModelLe`: of the complement); `¬ ComputablePred` and `¬ MachineDecidable` under every computable encoding for all eight (`KAComm.X.not_computablePred`, `KAComm.X.not_machineDecidable`); also `¬ MachineDecidable` for every theory between pre-Kleene algebra and the language model (Theorem 18) |
 
@@ -53,17 +53,22 @@ The Kleene algebra folder formalises A. Azevedo de Amorim, C. Zhang and M. Gaboa
 Shared machinery lives in `Foundations/`:
 
 * the computability infrastructure (`Foundations/Computability/`): a Turing-machine interpreter for Mathlib's partial recursive codes, machines computing primitive recursive functions, and a race between a halting search and a proof search, following Smullyan;
-* proof search for combinatory logic and the λ-calculus (`Foundations/CombinatoryLogic/`, `Foundations/LambdaCalculus/`);
-* grammars presented by lists, and grammar codes (`Foundations/Grammar/`): a `Primcodable` description of a context-free grammar, which a machine can read, and the theorem that renaming nonterminals keeps the language; string rewriting systems, which every grammar of the Chomsky hierarchy is, with derivability checked by a stack machine uniformly in the system;
+* string rewriting systems (`Foundations/Rewriting/SRS.lean`): words, rules with a left and a right side, one rewriting step `u ⭢[R] v` and derivability `u ↠[R] v`, in a file of definitions only;
+* convertibility of SKI terms and β-convertibility of λ-terms (`Foundations/CombinatoryLogic/Conv.lean`, `Foundations/LambdaCalculus/Conv.lean`, definitions only), and proof search for both (`ProofSearch.lean` in the same folders);
+* grammars presented by lists, and grammar codes (`Foundations/Grammar/`): a `Primcodable` description of a context-free grammar, which a machine can read, and the theorem that renaming nonterminals keeps the language; context-free grammar codes as string rewriting systems (`ToSRS.lean`), since every grammar of the Chomsky hierarchy is one, with derivability checked by a stack machine uniformly in the system (`Rewriting.lean`);
 * codes between alphabets (`Foundations/Codes/`): letterwise codes, the problems that they preserve and reflect (PCP, MPCP, string rewriting, context-free grammars) as functors on codes, and the lifting of `SynthHaltReduction`, `¬ ComputablePred` and `¬ MachineDecidable` from one alphabet to every alphabet with two letters (`code_lift`);
 * the normalisation of Turing machines (`Foundations/Computability/Normalize/`): every machine over `{0, 1}` is equivalent, for halting, to one that never writes a blank and never moves left at the left end, as the reductions to MPCP, PCP and string rewriting assume;
 * proof systems checked by a stack machine (`Foundations/Computability/StackProof.lean`): running proof programs, the invariant, and the primitive recursive check, once for every system. SKI convertibility and string rewriting are instances.
 
 `Synthetic/` holds the definitions of reductions and undecidability, and the reduction check.
 
+**Degrees.** The halting problem is complete for the recursively enumerable problems: every r.e. predicate many-one reduces to it, computably (`manyOneReducible_haltCanon_of_rePred`, `Foundations/Computability/HaltComplete.lean`). Its proof needs a machine that halts *exactly* when a program converges; the compiler from Mathlib's program codes to Cslib machines (`exists_machine`) now proves both directions, the converse through a lemma that forward simulations with progress reflect halting (`Foundations/Computability/Simulation.lean`). So a problem that is halting-hard and recursively enumerable has the degree of the halting problem, and any two such problems are many-one equivalent. The three rewriting problems are the first instances: string rewriting, SKI convertibility and β-conversion are many-one equivalent (`Degrees/Rewriting.lean`), although no translation of one rewriting system into another is a reduction (the translation of SKI terms into λ-terms does not reflect convertibility, `tr_not_reflect`).
+
 ## Two Notions of Undecidability
 
 Lean is classical, so every proposition is "decidable" in the sense of `Classical.propDecidable`. Undecidability therefore has to be stated relative to some notion of computation. The library uses two: `SynthHaltReduction p` and `¬ MachineDecidable enc p`, with a proved layer between them, `HaltHard p` (section 3), from which `¬ ComputablePred p` and `¬ MachineDecidable enc p` follow. In the table above, a problem lists each notion that is proved for it.
+
+`Undecidable p` (`Foundations/Computability/Undecidable.lean`) names Mathlib's `¬ ComputablePred p`, so the results `X.not_computablePred : Undecidable X.DecisionProblem` say what they mean. Unfolded, it says that no computable Boolean function decides `p` (`undecidable_iff`); without the condition `Computable`, such a function would exist for every `p`, classically.
 
 ### 1. `SynthHaltReduction p`: a compiled many-one reduction from halting
 
@@ -111,10 +116,10 @@ abbrev HaltHard (P : β → Prop) : Prop := Nonempty (HaltReduction P)
 `HaltCanon` is halting for canonical machines (states `Fin n`), which, unlike `HaltProblem`, is
 `Primcodable`, so the computability of a reduction from it can be stated and proved. `HaltHard p`
 is a proposition with content: Mathlib's many-one reducibility from halting (`haltHard_iff`). It
-gives `¬ ComputablePred p` and `¬ MachineDecidable enc p` for every computable encoding. Where a
-problem has a `HaltReduction`, or a proof of `HaltHard` when the reduction needs constants that
-exist only classically, `halt_results` states all three as `X.haltHard`, `X.not_computablePred` and
-`X.not_machineDecidable`.
+gives `Undecidable p` (that is, `¬ ComputablePred p`) and `¬ MachineDecidable enc p` for every
+computable encoding. Where a problem has a `HaltReduction`, or a proof of `HaltHard` when the
+reduction needs constants that exist only classically, `halt_results` states all three as
+`X.haltHard`, `X.not_computablePred` and `X.not_machineDecidable`.
 
 * *Strength:* the strongest of the three statements, under Mathlib's notion of computability.
 * *Limitation:* it needs a `Primcodable` type of instances, so problems on Mathlib's grammars are
@@ -122,7 +127,33 @@ exist only classically, `halt_results` states all three as `X.haltHard`, `X.not_
   rather than upgraded.
 
 ### Which to read
-For trust, read the `¬ MachineDecidable` theorem and the definitions it uses (see the [audit guide](DiagonaLean/KAComm/README.md#auditing-the-definitions)). For composing results and building the reduction graph, use `SynthHaltReduction`.
+For trust, read the `¬ MachineDecidable` theorem and the definitions it uses (see the [audit guide](DiagonaLean/KAComm/README.md#auditing-the-definitions), and [How problems are defined](#how-problems-are-defined)). For composing results and building the reduction graph, use `SynthHaltReduction`.
+
+## How Problems Are Defined
+
+A result is only as trustworthy as the definition of its problem, so every `X/Basic.lean` is written to be read without opening any other file of the library. The rewriting problems (string rewriting, SKI convertibility, β-conversion) follow four layers:
+
+| layer | rule | string rewriting |
+|---|---|---|
+| object | plain data with named fields, `Primcodable` | `Word T := List T`, a rule `⟨lhs, rhs⟩`, a system `SRS T` (a list of rules) |
+| step | an inductive relation, one constructor per textbook rule | `p ++ l ++ q ⭢[R] p ++ r ++ q` for a rule `l ⟶ r` of `R` |
+| closure | Mathlib's or Cslib's closure, never a new one | `u ↠[R] v` is `ReflTransGen` of a step |
+| question | a curried statement, and the one-argument form the tactics need | `WordProblem R u v`; `DecisionProblem (R, u, v)` |
+
+Each problem then states what it means in upstream terms, by `Iff.rfl`, so the kernel checks the explanation:
+
+```lean
+theorem SemiThue.decisionProblem_mk (R : SRS T) (u v : Word T) :
+    DecisionProblem (R, u, v) ↔ WordProblem R u v := Iff.rfl
+theorem SemiThue.wordProblem_iff (R : SRS T) (u v : Word T) :
+    WordProblem R u v ↔ ReflTransGen (SRS.Step R) u v := Iff.rfl
+theorem SKIConv.convertible_iff (x y : SKI) :
+    Convertible x y ↔ ∃ z, ReflTransGen Red x z ∧ ReflTransGen Red y z := Iff.rfl
+```
+
+Problems on tuples (MPCP, the grammar problems, the Kleene algebra problems) have the same `decisionProblem_mk` to their curried form.
+
+**To audit a problem**, read its curried definition and these `Iff.rfl` statements, which the kernel checks against the definition, rather than the one-line `DecisionProblem` on instances that the tactics use. Every `Basic.lean` names them in its header. Results are always stated on the one-argument problem: a partially applied curried problem would type-check as a different, weaker claim. The relations themselves live in files of definitions only (`Foundations/Rewriting/SRS.lean`, `Foundations/CombinatoryLogic/Conv.lean`, `Foundations/LambdaCalculus/Conv.lean`), apart from the machinery that proves things about them, so a `Basic.lean` imports a few dozen lines rather than a proof search. `scripts/HeadlineTest.lean` pins these statements next to the headline results, so a change to what a problem means fails CI.
 
 ## How to Use It
 
@@ -263,20 +294,25 @@ checks.
 -- ∀ {enc : InstB → List Bool}, Computable enc → ¬ MachineDecidable enc KATermEqBoolProblem
 #check @DiagonaLean.MatMort.haltHard
 -- HaltHard MatMort.DecisionProblem
+#check @DiagonaLean.SemiThue.decisionProblem_mk
+-- ∀ {T} (R : SRS T) (u v : Word T), DecisionProblem (R, u, v) ↔ WordProblem R u v
 ```
 
 ### Contribute
 Read [CONTRIBUTING.md](CONTRIBUTING.md) first. It covers:
 
 * the commit conventions;
-* the folder layout: each problem `X` has `Basic.lean` (the problem), `Reductions/Y_to_X.lean` (the reductions) and `Undecidable.lean` (the results), and where they apply `MachineLevel.lean` (the results about machines) and `AlphabetLift.lean` (the lifting to other alphabets); problems from one larger result are subfolders of a shared folder, as in `KAComm/`; and `Foundations/` may depend only on `Foundations`, `Synthetic` and `Halt`;
+* the folder layout: each problem `X` has `Basic.lean` (the problem), `Reductions/Y_to_X.lean` (the reductions, including `HaltCanon_to_X.lean` from canonical machines), `SynthHardness.lean` (the synthetic results) and `Undecidable.lean` (the undecidability results), and where it applies `AlphabetLift.lean` (the lifting to other alphabets); problems from one larger result are subfolders of a shared folder, as in `KAComm/`; and `Foundations/` may depend only on `Foundations`, `Synthetic` and `Halt`;
+* how a problem is defined: see [How problems are defined](#how-problems-are-defined);
 * the conventions for reductions that `#check_reductions` relies on.
 
-CI runs `lake build`, `lake lint`, `#check_reductions` with its tests, `scripts/CheckAxioms.lean` (only the standard axioms, everywhere) with its tests, `scripts/CheckMetaprograms.lean` (no metaprogram that edits the environment) with its tests in `scripts/CheckMetaprogramsTest.lean`, the tactic tests `scripts/FunPropTest.lean` (with `FunPropDeriveTest.lean` and `FunPropNestedTest.lean`), `scripts/ReduceFromTest.lean`, `scripts/UpgradeTest.lean` and `scripts/HaltResultsTest.lean`, `scripts/ReservedWordsTest.lean` (no accidental keywords), `scripts/HeadlineTest.lean` (the exact statements of the 62 headline results), and `scripts/CheckLayering.lean`; `scripts/ci-local.sh` runs the same checks locally.
+Renamed declarations keep their old names as deprecated aliases until no active branch uses them; the former `X.MachineLevel` namespaces are in `DiagonaLean/Aliases/MachineLevel.lean`.
+
+CI runs `lake build`, `lake lint`, `#check_reductions` with its tests, `scripts/CheckAxioms.lean` (only the standard axioms, everywhere) with its tests, `scripts/CheckMetaprograms.lean` (no metaprogram that edits the environment) with its tests in `scripts/CheckMetaprogramsTest.lean`, the tactic tests `scripts/FunPropTest.lean` (with `FunPropDeriveTest.lean` and `FunPropNestedTest.lean`), `scripts/ReduceFromTest.lean`, `scripts/UpgradeTest.lean` and `scripts/HaltResultsTest.lean`, `scripts/ReservedWordsTest.lean` (no accidental keywords), `scripts/HeadlineTest.lean` (the exact statements of the 72 headline results, and of the 19 unfoldings of the problems' definitions), and `scripts/CheckLayering.lean`; `scripts/ci-local.sh` runs the same checks locally.
 
 ## Roadmap
 
 * **Core framework:** the problems above, `SynthHaltReduction`, `HaltHard` and `MachineDecidable`, the reduction and axiom checks, and the reduction tactics (`synth_reduce_from`, `hard_reduce_from`, chains of links, `upgrade`, `reduce_from_pcp`, `code_lift`, `halt_results`). Done, string rewriting included (`SemiThue/`, `GrammarMem/`).
-* **Next for the tactics:** proved roots for Rice and the KAComm language problems `LangEq`, `ModelLe` (SKI, β, `KATermEq` and `TermEq` have one, in their `Hardness.lean`), so that `upgrade` and `halt_results` reach them; a way to force an earlier cut in `upgrade`.
+* **Next for the tactics:** proved roots for Rice and the KAComm language problems `LangEq`, `ModelLe` (SKI, β, `KATermEq` and `TermEq` have one, in their `Undecidable.lean`), so that `upgrade` and `halt_results` reach them; a way to force an earlier cut in `upgrade`.
 * **Base theorems:** Rice's theorem is done (`Rice/`). Still to come: the acceptance problem, Rice–Shapiro and Greibach; a reduction graph registered through attributes, and a tactic that searches it.
 * **Standard reduction library:** more models of computation (RAM machines, register machines, μ-recursive functions) and their equivalence with Turing machines, where Cslib does not already have them.

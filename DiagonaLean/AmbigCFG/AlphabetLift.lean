@@ -4,9 +4,8 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.AmbigCFG.Encode
-import DiagonaLean.AmbigCFG.MachineLevel
+import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFGCode
 import DiagonaLean.Foundations.Codes.Tactic
-import DiagonaLean.Foundations.Computability.HaltResults
 
 @[expose] public section
 
@@ -15,21 +14,18 @@ import DiagonaLean.Foundations.Computability.HaltResults
 Encoding the terminals of a grammar by a code keeps and reflects ambiguity
 (`decisionProblem_grammarEncode_iff`), so on grammar codes ambiguity is a functor on codes
 (`ambCodeFunctor`), and the lifting of `Foundations.Codes.Functor` moves the results over the
-terminals `Bool ⊕ ℕ` (`AmbigCFG.codeFromHaltSum`, through `ambCode`) to grammar codes over any
-alphabet with two distinct letters: the classical statement, with a finite terminal alphabet.
+terminals `Bool ⊕ ℕ` (through `ambCode`) to grammar codes over any alphabet with two distinct
+letters: the classical statement, with a finite terminal alphabet. The lifted results are
+`AmbigCFG.synthCodeFromHaltOver` (`SynthHardness.lean`) and `AmbigCFG.codeFromHaltOver`
+(`Undecidable.lean`).
 
 ## Main statements
 
-* `AmbigCFG.synthCodeFromHaltOver`: `SynthHaltReduction` over any alphabet with two distinct
-  letters.
-* `AmbigCFG.codeFromHaltOver`: a halting reduction, proved computable, over any alphabet with two
-  distinct letters.
-* `AmbigCFG.Code.haltHard`, `AmbigCFG.Code.not_computablePred`, `AmbigCFG.Code.not_machineDecidable`
-  (`halt_results`): over every nontrivial `Primcodable` alphabet.
+* `ambCodeFunctor`, `codeProblemReduces`, `codeProblemReduces'`.
 * `ambigCFGCode_manyOneEquiv`: many-one equivalent over any two such alphabets.
 -/
 
-namespace DiagonaLean.AmbigCFG.MachineLevel
+namespace DiagonaLean.AmbigCFG.AlphabetLift
 
 open DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Codes
   DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
@@ -74,19 +70,6 @@ def codeProblemReduces' [DecidableEq T] :
     @CodeProblem T ⪯_s fun p : CFGCode T => AmbigCFG.DecisionProblem p.toCFG :=
   ⟨id, fun p => codeProblem_iff p⟩
 
-/-- **Ambiguity of grammar codes is synthetically halting-hard over any alphabet `α` with two
-distinct letters
-`b0`, `b1`**: from PCP over `Bool` to codes over `Bool ⊕ ℕ`, then the lifting. -/
-def _root_.DiagonaLean.AmbigCFG.synthCodeFromHaltOver [DecidableEq α] (b0 b1 : α) (hne : b0 ≠ b1) :
-    SynthHaltReduction fun c : CFGCode α => AmbigCFG.DecisionProblem c.toCFG :=
-  have u₀ : SynthHaltReduction fun c : CFGCode (Bool ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG := by
-    synth_reduce_from (PCP.synthFromHaltOver false true Bool.false_ne_true) with ambCode
-      using pcp_reducesto_ambigCFGCode_spec
-  have u : SynthHaltReduction (@CodeProblem (Bool ⊕ ℕ)) :=
-    SynthHaltReduction.comp u₀ codeProblemReduces
-  have u' : SynthHaltReduction (@CodeProblem α) := by code_lift ambCodeFunctor from u
-  SynthHaltReduction.comp u' codeProblemReduces'
-
 /-- **Alphabet invariance of ambiguity on grammar codes**: over any two nontrivial `Primcodable`
 alphabets, ambiguity of grammar codes is many-one equivalent. -/
 theorem ambigCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
@@ -96,31 +79,4 @@ theorem ambigCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] 
   have h : ManyOneEquiv (@CodeProblem α) (@CodeProblem β) := by code_lift ambCodeFunctor
   rwa [codeProblem_eq, codeProblem_eq] at h
 
-end DiagonaLean.AmbigCFG.MachineLevel
-
-namespace DiagonaLean.AmbigCFG
-
-open DiagonaLean.AmbigCFG.MachineLevel DiagonaLean.Foundations.Codes
-  DiagonaLean.Foundations.Computability DiagonaLean.Foundations.Grammar
-
-variable {α : Type} [Primcodable α] [DecidableEq α]
-
-/-- **Ambiguity of grammar codes is halting-hard over any alphabet with two distinct letters**:
-`codeFromHaltSum` over `Bool ⊕ ℕ`, then the lifting along `ambCodeFunctor`, proved computable. -/
-def codeFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
-    HaltReduction fun c : CFGCode α => AmbigCFG.DecisionProblem c.toCFG := by
-  have h : HaltReduction (@CodeProblem (Bool ⊕ ℕ)) := by
-    rw [codeProblem_eq]
-    exact codeFromHaltSum false true Bool.false_ne_true
-  rw [← codeProblem_eq]
-  code_lift ambCodeFunctor from h
-
-section
-variable [Nontrivial α]
-
-halt_results Code for (fun c : CFGCode α => AmbigCFG.DecisionProblem c.toCFG)
-  over_letters from codeFromHaltOver
-
-end
-
-end DiagonaLean.AmbigCFG
+end DiagonaLean.AmbigCFG.AlphabetLift

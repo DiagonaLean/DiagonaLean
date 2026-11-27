@@ -14,6 +14,9 @@ every left letter commutes with every right letter (`DComm`). `DecisionProblem` 
 sides are provably equal in Kleene algebra with these commutations (`RExp.KAEquiv DComm`), that is,
 equal in `K Σ̈` for `Σ = {0, 1}`. `KATermEqBoolProblem` names it.
 
+To audit the definition, read `decisionProblem_mk`: the problem on a pair `(e, f)` in its curried
+form. It is pinned in `scripts/HeadlineTest.lean`.
+
 ## References
 
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorem 18, Section 3
@@ -23,12 +26,18 @@ namespace DiagonaLean.KAComm.KATermEqBool
 
 open DiagonaLean.KAComm.KleeneAlgebra
 
-/-- `DecisionProblem i` holds iff the two sides of `i` are provably equal in Kleene algebra with the
-commutations `DComm` between left and right letters. -/
+/-! ### The problem on instances, for the reductions and the computability statements -/
+
+/-- **The problem on a pair `(e, f)` of expressions**, for the reductions and the computability
+statements: `RExp.KAEquiv DComm e f`. Read it curried, `decisionProblem_mk`. -/
 def DecisionProblem (i : InstB) : Prop :=
   RExp.KAEquiv DComm i.1 i.2
 
 /-- Equality on `K Σ̈` over `Σ = {0, 1}`. -/
 abbrev KATermEqBoolProblem : InstB → Prop := DecisionProblem
+
+/-- The problem on a pair `(e, f)` of expressions is the curried problem. -/
+@[simp] theorem decisionProblem_mk (e f : RExp (Bool ⊕ Bool)) :
+    DecisionProblem (e, f) ↔ RExp.KAEquiv DComm e f := Iff.rfl
 
 end DiagonaLean.KAComm.KATermEqBool

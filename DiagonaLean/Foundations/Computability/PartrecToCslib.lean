@@ -28,7 +28,8 @@ the top of the main stack to `σ` and then halts.
 ## Main statements
 
 * `exists_machine`: on input `e₀ ++ (trNat n).reverse.flatMap e`, the machine outputs
-  `[decide (m ≠ 0)]` for every `m ∈ g n`.
+  `[decide (m ≠ 0)]` for every `m ∈ g n`, and it halts only when `g n` is defined.
+* `eval_dom_of_tr2`: the converse of `tr2_eval`.
 -/
 
 namespace DiagonaLean.Foundations.Computability
@@ -154,6 +155,34 @@ theorem tr2_eval {n m : ℕ} (hm : [m] ∈ uc.eval [n]) :
   refine mem_eval.2 ⟨hr.tail ?_, rfl⟩
   exact Option.mem_def.2 rfl
 
+/-- **The converse of `tr2_eval`**: if `tr2 uc` stops on `[n]`, then `uc` converges on `[n]`.
+Each step of Mathlib's machine is one step of `tr2 uc` on the lifted configuration
+(`stepAux_rwS`), so the simulation reflects halting (`eval_dom_of_simulation`), and Mathlib's
+machine stops exactly when the code converges (`PartrecToTM2.tr_eval`). -/
+theorem eval_dom_of_tr2 {n : ℕ}
+    (h : (StateTransition.eval (TM2.step (tr2 uc))
+      (TM2.init K'.main (trList [n]) : Cf2 (L2 uc))).Dom) :
+    (uc.eval [n]).Dom := by
+  have hinit : lift uc (init uc [n]) = (TM2.init K'.main (trList [n]) : Cf2 (L2 uc)) := by
+    simp only [lift, init, TM2.init]
+    congr 1
+    funext k
+    cases k <;> rfl
+  have hd : (StateTransition.eval (TM2.step tr) (init uc [n])).Dom :=
+    eval_dom_of_simulation (R := fun a b => b = lift uc a)
+      (fun a _ b hab hb => by
+        subst hab
+        refine ⟨lift uc b, rfl, Relation.TransGen.single ?_⟩
+        obtain ⟨_ | q, v, S⟩ := a
+        · simp [TM2.step] at hb
+        · have hd : b = TM2.stepAux (tr q) v S := by
+            simpa [TM2.step] using (Option.mem_def.1 hb).symm
+          subst hd
+          exact Option.mem_def.2 (congrArg some (stepAux_rwS uc (tr q) v S)))
+      hinit.symm h
+  rw [PartrecToTM2.tr_eval] at hd
+  simpa using hd
+
 /-! ### The result bit -/
 
 /-- The bit read from the local variable: is the top of the stack a digit? -/
@@ -213,10 +242,14 @@ theorem trTape_mk₁ {n : ℕ} {enc : Γ2 → List.Vector Bool n}
     List.flatMap_nil]
 
 /-- **The compiler.** A partial recursive function, as a fixed machine that outputs whether the
-value is zero. The input is a tape built from a finite table. -/
+value is zero. The input is a tape built from a finite table. The machine halts *only* when the
+function converges: the second conjunct is the converse of the first, so the machine halts on the
+tape of `n` exactly when `g n` is defined. -/
 theorem exists_machine (g : ℕ →. ℕ) (hg : Partrec g) :
     ∃ (W : Cslib.Turing.SingleTapeTM Bool) (e₀ : List Bool) (e : Γ' → List Bool),
-      ∀ n m, m ∈ g n → W.Outputs (e₀ ++ (trNat n).reverse.flatMap e) [decide (m ≠ 0)] := by
+      (∀ n m, m ∈ g n → W.Outputs (e₀ ++ (trNat n).reverse.flatMap e) [decide (m ≠ 0)]) ∧
+      ∀ n, (StateTransition.eval W.step (W.initCfg (e₀ ++ (trNat n).reverse.flatMap e))).Dom →
+        (g n).Dom := by
   classical
   obtain ⟨uc, huc⟩ := Code.exists_code (Nat.Partrec'.part_iff₁.2 hg)
   obtain ⟨k, enc, dec, enc0, encdec⟩ := TM1to1.exists_enc_dec (Γ := Γ2)
@@ -228,12 +261,35 @@ theorem exists_machine (g : ℕ →. ℕ) (hg : Partrec g) :
   have sb := TM1to1.tr_supports (enc := enc) (dec := dec) M1 s1
   have s0 := TM1to0.tr_supports Mb sb
   let bit : TM1to0.Λ' Mb → Bool := fun q => bitOf q.2
+  have huc' : ∀ n, uc.eval [n] = pure <$> g n := fun n => huc ⟨[n], rfl⟩
   refine ⟨wrap M0 _ s0 bit, (enc (cell true Γ'.cons)).toList,
-    fun a => (enc (cell false a)).toList, fun n m hm => ?_⟩
+    fun a => (enc (cell false a)).toList, fun n m hm => ?_, fun n hn => ?_⟩
+  rotate_left
+  · -- the converse: back through the wrapper, Mathlib's three translations, and `tr2`
+    have hin : (TM2to1.trInit K'.main (trList [n])).flatMap (fun x => (enc x).toList) =
+        (enc (cell true Γ'.cons)).toList ++
+          (trNat n).reverse.flatMap fun a => (enc (cell false a)).toList := by
+      rw [trInit_eq, List.flatMap_cons, List.flatMap_map]
+    rw [← hin] at hn
+    have h0 := eval_dom_of_wrapG M0 _ s0 _ _ hn
+    have h1 : (StateTransition.eval (TM1.step Mb)
+        (TM1.init ((TM2to1.trInit K'.main (trList [n])).flatMap fun x => (enc x).toList))).Dom := by
+      have h : (TM0.eval M0 ((TM2to1.trInit K'.main (trList [n])).flatMap
+          fun x => (enc x).toList)).Dom := h0
+      rw [TM1to0.tr_eval] at h
+      exact h
+    have h2 : (StateTransition.eval (TM1.step M1)
+        (TM1.init (TM2to1.trInit K'.main (trList [n])))).Dom := by
+      refine (StateTransition.tr_eval_dom (TM1to1.tr_respects dec M1 encdec (enc0 := enc0)) ?_).1 h1
+      simp only [TM1to1.trCfg, TM1.init, trTape_mk₁]
+      rfl
+    have h3 : (StateTransition.eval (TM2.step M2) (TM2.init K'.main (trList [n]))).Dom :=
+      (TM2to1.tr_eval_dom (M := M2) K'.main (trList [n])).1 h2
+    have h4 := eval_dom_of_tr2 uc h3
+    rw [huc'] at h4
+    exact h4
   have hv : [m] ∈ uc.eval [n] := by
-    have h := huc ⟨[n], rfl⟩
-    have h' : uc.eval [n] = pure <$> g n := h
-    rw [h']
+    rw [huc']
     exact (Part.mem_map_iff _).2 ⟨m, hm, rfl⟩
   have h2 := tr2_eval uc hv
   obtain ⟨b₁, hb₁, hb₁e⟩ := StateTransition.tr_eval (TM2to1.tr_respects M2)

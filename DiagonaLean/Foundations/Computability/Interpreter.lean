@@ -157,7 +157,7 @@ def Base.Good (B : Base) : Prop :=
 theorem exists_base : ∃ B : Base, B.Good := by
   have hg : Partrec fun n : ℕ => Code.eval (Denumerable.ofNat Code n) 0 :=
     Code.eval_part.comp (Computable.ofNat Code) (Computable.const 0)
-  obtain ⟨W, e₀, e, hW⟩ := exists_machine _ hg
+  obtain ⟨W, e₀, e, hW, -⟩ := exists_machine _ hg
   obtain ⟨K, hK⟩ := exists_uconst W
   refine ⟨⟨K, e₀, e .bit0, e .bit1⟩, fun c m hm => ?_⟩
   have h := hW (Encodable.encode c) m (by simpa [Denumerable.ofNat_encode] using hm)

@@ -5,11 +5,11 @@ Authors: Prathamesh TVH, Claude Opus
 
 import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFG
 import DiagonaLean.AmbigCFG.Rename
-import DiagonaLean.PCP.MachineLevel
+import DiagonaLean.PCP.Primrec
 
 @[expose] public section
 
-/-! # No machine decides whether a grammar code is ambiguous
+/-! # From PCP to the ambiguity of grammar codes
 
 `pcpToAmbigCFG` sends a PCP instance `P` to a grammar of Mathlib's `ContextFreeGrammar` over the
 terminals `α ⊕ Fin P.length`, which is not `Primcodable`, so it says nothing about machines. Here
@@ -19,20 +19,19 @@ it presents `Stack.toGrammar` (`toCFG_ambPres_abs`); with `0, 1, 2` and natural 
 grammar code over `α ⊕ ℕ` (`ambCode`), the renaming of the first (`ambCode_eq_map`). Injective
 renamings keep and reflect ambiguity (`AmbigCFG.decisionProblem_map_iff`), so PCP many-one reduces
 to the ambiguity of grammar codes (`pcp_reducesto_ambigCFGCode_spec`), through a primitive recursive
-function (`ambCode_prim`). So it gives the halting reduction `AmbigCFG.codeFromHaltSum b0 b1 hne`
-(from `PCP.fromHaltOver`), which `AlphabetLift.lean` moves to every alphabet with two letters.
+function (`ambCode_prim`). The halting reduction `AmbigCFG.codeFromHaltSum` built from it is in
+`Undecidable.lean`.
 
 The statements are about grammar codes (`Foundations.Grammar.CFGCode`): a machine reads a finite
 description, and `CFGCode.toCFG` is the grammar a code describes.
 
-
 ## Main statements
 
-* `AmbigCFG.codeFromHaltSum`: whether a grammar code over the terminals `α ⊕ ℕ` is ambiguous is
-  halting-hard.
+* `ambCode`, `pcp_reducesto_ambigCFGCode_spec`, `ambCode_prim`: the reduction from PCP to the
+  ambiguity of grammar codes over `α ⊕ ℕ`, its correctness and its computability.
 -/
 
-namespace DiagonaLean.AmbigCFG.MachineLevel
+namespace DiagonaLean.AmbigCFG.Reduction
 
 open DiagonaLean.PCP DiagonaLean.AmbigCFG DiagonaLean.AmbigCFG.Reduction
   DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Computability
@@ -141,21 +140,4 @@ omit [DecidableEq α] in
   unfold ambCode ambPres codeTs
   fun_prop
 
-end DiagonaLean.AmbigCFG.MachineLevel
-
-namespace DiagonaLean.AmbigCFG
-
-open DiagonaLean.AmbigCFG.MachineLevel DiagonaLean.Foundations.Computability
-  DiagonaLean.Foundations.Grammar
-
-variable {α : Type} [DecidableEq α] [Primcodable α]
-
-/-- **Ambiguity of grammar codes is halting-hard**, over the terminals `α ⊕ ℕ` for any alphabet `α`
-with two distinct letters: `PCP.fromHaltOver`, then `ambCode` (`pcp_reducesto_ambigCFGCode_spec`,
-`ambCode_prim`). -/
-def codeFromHaltSum (b0 b1 : α) (hne : b0 ≠ b1) :
-    HaltReduction fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionProblem c.toCFG := by
-  haveI : Nonempty α := ⟨b0⟩
-  hard_reduce_from (PCP.fromHaltOver b0 b1 hne) with ambCode using pcp_reducesto_ambigCFGCode_spec
-
-end DiagonaLean.AmbigCFG
+end DiagonaLean.AmbigCFG.Reduction

@@ -17,7 +17,7 @@ renaming of letters is such a code (`mpcp_map_iff`).
 
 MPCP is thus a functor on codes (`mpcpFunctor`), and the lifting of `Foundations.Codes.Functor`
 applies: MPCP over an alphabet with decidable equality many-one reduces to MPCP over any alphabet
-with two distinct letters (`MPCP.synthAlphabetLift`). `Undecidable.lean` and `MachineLevel.lean`
+with two distinct letters (`MPCP.synthAlphabetLift`). `SynthHardness.lean` and `Undecidable.lean`
 apply it to the reduction from the halting problem.
 -/
 

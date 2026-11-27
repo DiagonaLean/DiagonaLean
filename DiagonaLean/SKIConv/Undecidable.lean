@@ -6,22 +6,29 @@ Authors: Aalok Thakkar, Claude Opus
 import DiagonaLean.SKIConv.Reductions.Halt_to_SKIConv
 import DiagonaLean.Foundations.CombinatoryLogic.Primcodable
 import DiagonaLean.Foundations.Computability.MachineBridge
+import DiagonaLean.SKIConv.Reductions.HaltCanon_to_SKIConv
+import DiagonaLean.Foundations.Computability.HaltResults
+import DiagonaLean.Foundations.Computability.ReduceFrom
 
 @[expose] public section
 
 /-! # Undecidability of SKI convertibility
 
-Convertibility of SKI terms is synthetically halting-hard (`SKIConv.synthFromHalt`), given the
-reduction's constants: a universal code `u` and the race program `C` for its SKI term `u.toSKI`,
-from the recursion theorem. They are only known to exist, so `C` and the proofs `hu : IsUniversal u`
-and `hC : RaceProg u.toSKI C` are arguments, and `u` is implicit. No Turing machine decides it under
-the encoding of a pair of terms as the binary digits of the pair of their codes
+On a canonical instance, `canonRed U C` (`Reductions/HaltCanon_to_SKIConv.lean`) builds the
+instance of the race program `C`, primitive recursively, so `SKIConv.fromHaltWith U C …` is a
+proved halting reduction, given the universal term `U` and the race program `C`. Those constants
+are only known to exist (a universal code, and the recursion theorem), so the reduction takes them
+as arguments, and halting-hardness, which is a proposition, obtains them in its proof
+(`SKIConv.haltHard`). From it, SKI convertibility is undecidable (`SKIConv.not_computablePred`),
+and no machine decides it under any computable encoding (`SKIConv.not_machineDecidable`).
+
+The same two statements are reached independently through a machine-level race: no Turing machine
+decides it under the encoding of a pair of terms as the binary digits of the pair of their codes
 (`not_machineDecidable_skiConv`); the encoding is injective (`encSKI_injective`) and follows
-`encNat` in `KAComm/KleeneAlgebra/Race.lean`. That it is not a computable predicate, and that no
-machine decides it under any computable encoding, follows from halting-hardness in `Hardness.lean`
-(`SKIConv.haltHard`, `SKIConv.not_computablePred`, `SKIConv.not_machineDecidable`). It separates the
-computably inseparable pair `SelfOut true`, `SelfOut false`, so no machine decides it on the
-instances `sepRed U c M` given the code of `M` (`not_machineDecidable_skiConv_sepRed`).
+`encNat` in `KAComm/KleeneAlgebra/Race.lean`. It separates the computably inseparable pair
+`SelfOut true`, `SelfOut false`, so no machine decides it on the instances `sepRed U c M` given the
+code of `M` (`not_machineDecidable_skiConv_sepRed`). The synthetic results are in
+`SynthHardness.lean`.
 
 ## References
 
@@ -33,17 +40,8 @@ instances `sepRed U c M` given the code of `M` (`not_machineDecidable_skiConv_se
 namespace DiagonaLean.SKIConv.Reduction
 
 open Cslib SKI Nat.Partrec DiagonaLean.Foundations.CombinatoryLogic
-  DiagonaLean.Foundations.Computability
   DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions DiagonaLean.Halt.Encoding
   DiagonaLean.Halt.Inseparable
-
-/-- **Convertibility of SKI terms is synthetically halting-hard**, given a universal code `u`
-(`exists_isUniversal`) and the race program `C` for `u.toSKI` (`exists_raceProg`). These finite
-constants are only known to exist, so they are arguments rather than computed here. The statement
-without them is `not_machineDecidable_skiConv`. -/
-def _root_.DiagonaLean.SKIConv.synthFromHalt {u : Code} (C : Code) (hu : IsUniversal u)
-    (hC : RaceProg u.toSKI C) : SynthHaltReduction SKIConvProblem :=
-  SKIConv.synthFromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC
 
 /-- A pair of SKI terms, as the binary digits of the pair of their codes. -/
 def encSKI (i : SKI × SKI) : List Bool := bitsPair (skc i.1) (skc i.2)
@@ -74,3 +72,26 @@ theorem not_machineDecidable_skiConv_sepRed :
     selfOut_inseparable (sepRed_separates u.toSKI c hu (Code.toSKI_correct u) hc)⟩
 
 end DiagonaLean.SKIConv.Reduction
+
+namespace DiagonaLean.SKIConv
+
+open Cslib SKI Nat.Partrec DiagonaLean.Foundations.CombinatoryLogic
+  DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
+
+/-- **A proved halting reduction to SKI convertibility**, given the universal term `U` and the race
+program `C`. -/
+def fromHaltWith {u : Code} (U : SKI) (C : Code) (hu : IsUniversal u) (hU : Computes U u.eval)
+    (hC : RaceProg U C) : HaltReduction SKIConvProblem :=
+  ⟨canonRed U C, (canonRed_primrec U C).to_comp, haltCanon_reducesto_skiConv_spec hu hU hC⟩
+
+-- Halting-hardness and its consequences: the universal code and the race program exist
+-- (`exists_isUniversal`, `exists_raceProg`), so the proof obtains them, and only the existence
+-- of a reduction is stated.
+halt_results SKIConvProblem from
+  exists_isUniversal.elim fun u hu => (exists_raceProg u.toSKI).elim fun C hC =>
+    ⟨fromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC⟩
+
+/-- SKI convertibility is a halting-hard source for `hard_reduce_from`. -/
+instance : HaltHardFact SKIConvProblem := ⟨haltHard⟩
+
+end DiagonaLean.SKIConv

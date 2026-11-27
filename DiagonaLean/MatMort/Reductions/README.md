@@ -58,4 +58,4 @@ The main result is `pcp_reducesto_matMort_spec`: for any PCP instance `K` over a
 
 ### Undecidability
 - `MatMort.synthFromHalt`: mortality of finite sets of `3 × 3` integer matrices is synthetically halting-hard, by reduction from PCP over `{2, 3}`.
-- `MatMort.fromHalt`, `MatMort.haltHard`, `MatMort.not_computablePred`, `MatMort.not_machineDecidable` (`MachineLevel.lean`): it is halting-hard, so not a computable predicate, and no Turing machine decides it under any computable encoding. They follow from `PCP.fromHaltOver` along `matImage`, which is primitive recursive (`matImage_primrec`).
+- `MatMort.fromHalt`, `MatMort.haltHard`, `MatMort.not_computablePred`, `MatMort.not_machineDecidable` (`Undecidable.lean`): it is halting-hard, so undecidable, and no Turing machine decides it under any computable encoding. They follow from `PCP.fromHaltOver` along `matImage`, which is primitive recursive (`matImage_primrec`).

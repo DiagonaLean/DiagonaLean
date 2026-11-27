@@ -4,10 +4,9 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.PCP.Primrec
-import DiagonaLean.EmpCFG.MachineLevel
+import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFGCode
 import DiagonaLean.Foundations.Codes.Grammar
 import DiagonaLean.Foundations.Codes.Tactic
-import DiagonaLean.Foundations.Computability.HaltResults
 
 @[expose] public section
 
@@ -17,15 +16,14 @@ import DiagonaLean.Foundations.Computability.HaltResults
 of the PCP instance. Encoding the terminals of both grammars by a code preserves and reflects
 non-emptiness of the intersection (`Foundations.Codes.intersection_encode_iff`), and `Term Bool` is
 countable, so `Foundations.Codes.bitCode` moves the problem to any alphabet with two distinct
-letters (`EmpCFG.synthAlphabetLift`). `Undecidable.lean` uses it for `EmpCFG.synthFromHaltOver` and
-`EmpCFG.synthFromHaltBool`.
+letters (`EmpCFG.synthAlphabetLift`). `SynthHardness.lean` uses it for `EmpCFG.synthFromHaltOver`
+and `EmpCFG.synthFromHaltBool`.
 
 Mathlib's grammars keep their rules in a `Finset`, so encoding them needs the proof that the code
 is a code, and is not the action of a functor. Grammar codes keep their rules in a list: on pairs
 of grammar codes the problem is a functor on codes (`empCodeFunctor`), and the lifting of
 `Foundations.Codes.Functor` moves the halting reduction `EmpCFG.codeFromHaltTerm` to every alphabet
-with two distinct letters (`EmpCFG.codeFromHaltOver`), and `halt_results` states
-`EmpCFG.Code.haltHard`, `EmpCFG.Code.not_computablePred` and `EmpCFG.Code.not_machineDecidable`.
+with two distinct letters (`EmpCFG.codeFromHaltOver`, `Undecidable.lean`).
 -/
 
 open DiagonaLean.Synthetic.Definitions DiagonaLean.Foundations.Codes
@@ -55,7 +53,7 @@ def _root_.DiagonaLean.EmpCFG.synthAlphabetLift [Encodable T] (b0 b1 : α) (hne 
 
 end DiagonaLean.EmpCFG.Reduction
 
-namespace DiagonaLean.EmpCFG.MachineLevel
+namespace DiagonaLean.EmpCFG.AlphabetLift
 
 open DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Computability
   DiagonaLean.Synthetic.Definitions
@@ -106,32 +104,4 @@ theorem empCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [N
   have h : ManyOneEquiv (@CodeProblem α) (@CodeProblem β) := by code_lift empCodeFunctor
   rwa [codeProblem_eq, codeProblem_eq] at h
 
-end DiagonaLean.EmpCFG.MachineLevel
-
-namespace DiagonaLean.EmpCFG
-
-open DiagonaLean.EmpCFG.MachineLevel DiagonaLean.Foundations.Codes
-  DiagonaLean.Foundations.Computability DiagonaLean.Foundations.Grammar
-
-variable {α : Type} [Primcodable α] [DecidableEq α]
-
-/-- **Non-emptiness of the intersection of two grammar codes is halting-hard over any alphabet with
-two distinct letters**: `codeFromHaltTerm` over `Term Bool`, then the lifting along
-`empCodeFunctor`, proved computable. -/
-def codeFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
-    HaltReduction fun c : CFGCode α × CFGCode α => IntersectionNonempty c.1.toCFG c.2.toCFG := by
-  have h : HaltReduction (@CodeProblem (Reduction.Term Bool)) := by
-    rw [codeProblem_eq]
-    exact codeFromHaltTerm false true Bool.false_ne_true
-  rw [← codeProblem_eq]
-  code_lift empCodeFunctor from h
-
-section
-variable [Nontrivial α]
-
-halt_results Code for (fun c : CFGCode α × CFGCode α => IntersectionNonempty c.1.toCFG c.2.toCFG)
-  over_letters from codeFromHaltOver
-
-end
-
-end DiagonaLean.EmpCFG
+end DiagonaLean.EmpCFG.AlphabetLift

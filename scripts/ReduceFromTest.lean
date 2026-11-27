@@ -1,16 +1,17 @@
 import DiagonaLean.Foundations.Computability.ReduceFrom
-import DiagonaLean.MPCP.Hardness
+import DiagonaLean.MPCP.Undecidable
+import DiagonaLean.MPCP.SynthHardness
 import DiagonaLean.PCP.Primrec
-import DiagonaLean.PCP.Undecidable
+import DiagonaLean.PCP.SynthHardness
 import DiagonaLean.MatMort.Primrec
-import DiagonaLean.EmpCFG.MachineLevel
-import DiagonaLean.AmbigCFG.MachineLevel
+import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFGCode
+import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFGCode
 import DiagonaLean.Foundations.Codes.Tactic
-import DiagonaLean.GrammarMem.Hardness
-import DiagonaLean.MatMort.MachineLevel
-import DiagonaLean.SemiThue.Undecidable
-import DiagonaLean.SKIConv.Hardness
-import DiagonaLean.BetaConv.Hardness
+import DiagonaLean.GrammarMem.Undecidable
+import DiagonaLean.MatMort.Undecidable
+import DiagonaLean.SemiThue.SynthHardness
+import DiagonaLean.SKIConv.Undecidable
+import DiagonaLean.BetaConv.Undecidable
 
 /-! Tests for `reduce_from`, run by CI: one case per goal shape, the link upgrade, and the errors. -/
 
@@ -73,14 +74,14 @@ example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem Bool)) :
     HaltHard (fun c : DiagonaLean.Foundations.Grammar.CFGCode (DiagonaLean.EmpCFG.Reduction.Term Bool) ×
         DiagonaLean.Foundations.Grammar.CFGCode (DiagonaLean.EmpCFG.Reduction.Term Bool) =>
       DiagonaLean.EmpCFG.IntersectionNonempty c.1.toCFG c.2.toCFG) := by
-  reduce_from h via (SynthReduction.mk DiagonaLean.EmpCFG.MachineLevel.empCode
-    (DiagonaLean.EmpCFG.MachineLevel.pcp_reducesto_empCFGCode_spec (α := Bool)))
+  reduce_from h via (SynthReduction.mk DiagonaLean.EmpCFG.Reduction.empCode
+    (DiagonaLean.EmpCFG.Reduction.pcp_reducesto_empCFGCode_spec (α := Bool)))
 
 example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem Bool)) :
     HaltHard (fun c : DiagonaLean.Foundations.Grammar.CFGCode (Bool ⊕ ℕ) =>
       DiagonaLean.AmbigCFG.DecisionProblem c.toCFG) := by
-  reduce_from h via (SynthReduction.mk DiagonaLean.AmbigCFG.MachineLevel.ambCode
-    (DiagonaLean.AmbigCFG.MachineLevel.pcp_reducesto_ambigCFGCode_spec (α := Bool)))
+  reduce_from h via (SynthReduction.mk DiagonaLean.AmbigCFG.Reduction.ambCode
+    (DiagonaLean.AmbigCFG.Reduction.pcp_reducesto_ambigCFGCode_spec (α := Bool)))
 
 example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem (Ext Bool))) :
     HaltHard (@DiagonaLean.PCP.DecisionProblem Bool) := by
