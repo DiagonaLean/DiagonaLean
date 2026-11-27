@@ -25,10 +25,12 @@ graph LR
   PCP --> AmbigCFG
   PCP --> EmpCFG
   PCP --> MatMort
+  MatMort --> MatrixGame
   HALT --> UTMHalt
   HALT --> SKIConv
   HALT --> BetaConv
   HALT --> Rice
+  HALT --> Rabin
   HALT --> KA["KAComm: KA with commutativity<br/>(8 problems: T, K, L equality and L inclusion,<br/>over ℕ and over {0, 1})"]
 ```
 
@@ -46,9 +48,13 @@ graph LR
 | SKI convertibility | Do two SKI terms have a common reduct? | [`SKIConv/`](DiagonaLean/SKIConv/README.md) | `SynthHaltReduction`, `¬ MachineDecidable` |
 | β-conversion | Are two λ-terms β-convertible? | [`BetaConv/`](DiagonaLean/BetaConv/README.md) | `SynthHaltReduction`, `¬ MachineDecidable` |
 | Rice's problem | For a set $C$ of partial functions $\mathbb N \rightharpoonup \mathbb N$, does a program compute a function in $C$? | [`Rice/`](DiagonaLean/Rice/README.md) | `¬ ComputablePred` and `¬ MachineDecidable` for every non-trivial $C$; `SynthHaltReduction` when $C$ contains some computable function but not the nowhere-defined one; of the complement when $C$ contains the nowhere-defined function and misses some computable function |
+| Rabin's game | Given a finite program for a primitive recursive payoff $g$, in a language with an instruction that runs a bounded Turing-machine simulation, can Player I win the game where I picks $i$, II picks $j$, I picks $k$, and I wins iff $g(k) = i + j$? | [`Rabin/`](DiagonaLean/Rabin/README.md) | `SynthHaltReduction`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding |
+| Matrix game | Given finite sets of $3 \times 3$ integer matrices for Eve and Adam, who alternately right-multiply starting from the identity, can Eve force the product to $0$? | [`MatrixGame/`](DiagonaLean/MatrixGame/README.md) | `SynthHaltReduction`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, already when Adam plays $\pm I$ |
 | Kleene algebra with commutativity | Is $e = f$ provable in Kleene algebra (`KATermEq`) or pre-Kleene algebra (`TermEq`) with commutativity conditions on letters? Is $\mathcal L(e) = \mathcal L(f)$ (`LangEq`), or $\mathcal L(e) \subseteq \mathcal L(f)$ (`ModelLe`), in the language model? Each over $\Sigma = \mathbb N$ and over $\Sigma = \{0, 1\}$ (`XBool`). | [`KAComm/`](DiagonaLean/KAComm/README.md) | `SynthHaltReduction` (for `LangEq`, `ModelLe`: of the complement), `¬ MachineDecidable`; also `¬ MachineDecidable` for every theory between pre-Kleene algebra and the language model (Theorem 18) |
 
 The Kleene algebra folder formalises A. Azevedo de Amorim, C. Zhang and M. Gaboardi, *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979). Its main results hold with no hypotheses. It also finds and repairs an error in the paper's Theorem 6. Its [README](DiagonaLean/KAComm/README.md) states the results mathematically and explains how to audit them, and [STATUS.md](DiagonaLean/KAComm/STATUS.md) records what is open.
+
+The Rabin folder also proves Rabin's theorem (`rabin_game`): for one primitive recursive payoff, Player II has a winning strategy, but every computable strategy for Player II loses on some play.
 
 Shared machinery lives in `Foundations/`:
 
@@ -154,27 +160,29 @@ def SwappedPCP.synthFromHalt : SynthHaltReduction SwappedPCP := by
 #print axioms SwappedPCP.synthFromHalt  -- propext, Classical.choice, Quot.sound
 ```
 
-`undec from P` finds a route from halting through a named source problem `P`. Run the following after `import DiagonaLean` to see the alphabet lift to Paterson's alphabet and the reduction from PCP to mortality.
+`undec from P` finds a route from halting through a named source problem `P`. The halting reduction for the matrix game, `MatrixGame.synthFromHalt`, is proved by `undec from MatMort.DecisionProblem`. Run `lake env lean examples/GameReductions.lean` to display the proof terms for both games and play through a finite example.
+
+The proof can also start at binary PCP. Run the following after `import DiagonaLean` to see the alphabet lift to Paterson's alphabet, the reduction from PCP to mortality, and the reduction from mortality to the game.
 
 ```lean
 open DiagonaLean DiagonaLean.Synthetic.Definitions
 
-example : SynthHaltReduction MatMort.DecisionProblem := by
+example : SynthHaltReduction MatrixGame.DecisionProblem := by
   undec? from PCP.PCProblem
 ```
 
-Lean displays the route and suggests a script that names each reduction on it, here `undec from PCP.synthFromHaltBool via MatMort.synthS23FromPCP, MatMort.synthFromPCP`. The script composes exactly those reductions, so replaying it does not depend on which reductions are tagged. For a machine-level goal the same source predicate selects a registered theorem of noncomputability. The search checks the functions along each candidate route and uses the encoding hypothesis.
+Lean displays the route and suggests a script that names each reduction on it, here `undec from PCP.synthFromHaltBool via MatMort.synthS23FromPCP, MatMort.synthFromPCP, MatrixGame.synthFromMatMort`. The script composes exactly those reductions, so replaying it does not depend on which reductions are tagged. For a machine-level goal the same source predicate selects a registered theorem of noncomputability. The search checks the functions along each candidate route and uses the encoding hypothesis.
 
 ```lean
-example {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool} (he : Computable enc) :
-    ¬ Synthetic.Definitions.MachineDecidable enc MatMort.DecisionProblem := by
+example {enc : MatrixGame.Arena → List Bool} (he : Computable enc) :
+    ¬ Synthetic.Definitions.MachineDecidable enc MatrixGame.DecisionProblem := by
   undec? from PCP.PCProblem
 ```
 
 ```text
-Binary PCP → PCP over Paterson’s alphabet → 3×3 matrix mortality
+Binary PCP → PCP over Paterson’s alphabet → 3×3 matrix mortality → Matrix-game winner
 Try this: undec from PCP.MachineLevel.not_computablePred_pcp via MatMort.synthS23FromPCP,
-  MatMort.synthFromPCP
+  MatMort.synthFromPCP, MatrixGame.synthFromMatMort
 ```
 
 Use `undec from P` for a quiet proof and `undec? from P` to see the route and a replayable script. For synthetic goals, `undec?` also discovers a source starting from halting. Search starts with local hypotheses and tagged reductions. If they do not solve the goal, it also searches for concrete reduction definitions in the current file and its imports. Each search is breadth first. Two predicates count as the same problem when they agree after unfolding reducible and instance definitions, so a problem should be stated with `abbrev` or as a `def` used under one name. For machine-level goals it tries certified paths in both searches before leaving proof obligations. A bundled computable reduction supplies its own certificate. If only a structural route is available, each missing computability proof becomes a goal. The diagnostic names the edge or encoding that needs evidence.

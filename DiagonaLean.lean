@@ -94,6 +94,20 @@ import DiagonaLean.Rice.Basic
 import DiagonaLean.Rice.Reductions.Halt_to_Rice
 import DiagonaLean.Rice.Undecidable
 
+import DiagonaLean.Rabin.Basic
+import DiagonaLean.Rabin.FixedGame
+import DiagonaLean.Rabin.Strategies
+import DiagonaLean.Rabin.Reductions.Halt_to_Rabin
+import DiagonaLean.Rabin.Undecidable
+import DiagonaLean.Rabin.MachineLevel
+import DiagonaLean.Rabin.ComputableStrategy
+
+import DiagonaLean.MatrixGame.Basic
+import DiagonaLean.MatrixGame.Search
+import DiagonaLean.MatrixGame.Reductions.MatMort_to_MatrixGame
+import DiagonaLean.MatrixGame.Undecidable
+import DiagonaLean.MatrixGame.MachineLevel
+
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
 import DiagonaLean.Synthetic.HaltReduction

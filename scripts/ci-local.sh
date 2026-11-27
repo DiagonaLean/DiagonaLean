@@ -75,6 +75,7 @@ checks=(
   "reductions-test|lake env lean scripts/CheckReductionsTest.lean"
   "undec-from-test|lake env lean scripts/UndecFromTest.lean"
   "undec-tags|lake env lean scripts/CheckUndecTags.lean"
+  "game-demo|lake env lean examples/GameReductions.lean"
   "palindrome-demo|lake env lean examples/PalindromeGrammar.lean"
   "fun-prop-test|lake env lean scripts/FunPropTest.lean"
   "reduce-from-test|lake env lean scripts/ReduceFromTest.lean"

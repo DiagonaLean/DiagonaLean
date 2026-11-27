@@ -1,6 +1,10 @@
 import DiagonaLean.EmpCFG.Undecidable
 import DiagonaLean.SemiThue.Undecidable
 import DiagonaLean.MatMort.MachineLevel
+import DiagonaLean.MatrixGame.Undecidable
+import DiagonaLean.MatrixGame.MachineLevel
+import DiagonaLean.Rabin.FixedGame
+import DiagonaLean.Rabin.MachineLevel
 
 /-! Regression tests for discovery, composition, and the manual tactic interface. -/
 
@@ -288,3 +292,37 @@ example : ¬ ComputablePred MatMort.DecisionProblem := by undec?
 open DiagonaLean.Foundations.Computability in
 example (P Q : ℕ → Prop) (r : P ⪯ Q) (h : ¬ ComputablePred P) : ¬ ComputablePred Q := by
   undec from (by exact h) via r
+
+-- Game reductions registered in their own modules.
+example : SynthHaltReduction Rabin.DecisionProblem := by undec from Halt.HaltProblem
+example : SynthHaltReduction MatrixGame.DecisionProblem := by undec from PCP.PCProblem
+
+/--
+info: Halting → Rabin game winner
+---
+info: Try this:
+  [apply] exact Rabin.synthFromHalt
+-/
+#guard_msgs (whitespace := lax) in
+example : SynthHaltReduction Rabin.DecisionProblem := by undec? from Halt.HaltProblem
+
+-- Every function along the PCP-to-matrix-game route has computability evidence.
+example {enc : MatrixGame.Arena → List Bool} (he : Computable enc) :
+    ¬ MachineDecidable enc MatrixGame.DecisionProblem := by
+  undec from PCP.PCProblem
+
+/-- info: Binary PCP → PCP over Paterson’s alphabet → 3×3 matrix mortality → Matrix-game winner -/
+#guard_msgs in
+set_option undec.showRoute true in
+example : ¬ ComputablePred MatrixGame.DecisionProblem := by undec from PCP.PCProblem
+
+-- The original spelling with a witness still leaves the reduction goal for the caller.
+example : SynthHaltReduction MatrixGame.DecisionProblem := by
+  undec from MatMort.synthFromHalt
+  exact MatrixGame.synthFromMatMort
+
+-- The suggested script for the matrix game replays without search.
+example {enc : MatrixGame.Arena → List Bool} (he : Computable enc) :
+    ¬ MachineDecidable enc MatrixGame.DecisionProblem := by
+  undec from PCP.MachineLevel.not_computablePred_pcp via MatMort.synthS23FromPCP,
+    MatMort.synthFromPCP, MatrixGame.synthFromMatMort
