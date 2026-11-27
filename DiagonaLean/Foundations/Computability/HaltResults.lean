@@ -19,7 +19,10 @@ theorems, under the same names for every problem, in the current namespace:
 
 ## Forms
 
-* `halt_results P from r`, with `r : HaltReduction P`.
+* `halt_results P from r`, with `r : HaltReduction P`, or with `r : HaltHard P` itself: when the
+  reduction needs constants that exist only classically (a universal code, a race program from the
+  recursion theorem), only its existence can be stated, and its proof obtains them
+  (`SKIConv/Hardness.lean`).
 * `halt_results P over_letters from r`, for the statement over every nontrivial alphabet `α`:
   `r b0 b1 hne : HaltReduction P` is a reduction for each pair of distinct letters of `α`
   (such as `MPCP.fromHaltOver`). The letters come from `Nontrivial α` (`HaltHard.of_letters`).
@@ -55,8 +58,9 @@ syntax haltResultsName := atomic(ident " for ")
 
 open Lean in
 /-- `halt_results P from r` states `haltHard`, `not_computablePred` and `not_machineDecidable` for
-the problem `P`, from `r : HaltReduction P`. With `over_letters`, `r` takes two distinct letters of
-a nontrivial alphabet. `halt_results Name for …` puts the theorems under `Name`. -/
+the problem `P`, from `r : HaltReduction P` or `r : HaltHard P`. With `over_letters`, `r` takes
+two distinct letters of a nontrivial alphabet. `halt_results Name for …` puts the theorems under
+`Name`. -/
 macro (name := haltResults) "halt_results" pre:(haltResultsName)? p:term
     letters:(" over_letters")? " from " r:term : command => do
   let pre : Option Name := pre.map fun stx => stx.raw[0].getId
@@ -64,7 +68,9 @@ macro (name := haltResults) "halt_results" pre:(haltResultsName)? p:term
   let name (s : Name) : Ident := mkIdentFrom ref (pre.elim s (· ++ s)) (canonical := true)
   let hard : Term ← match letters with
     | some _ => `(DiagonaLean.Foundations.Computability.HaltHard.of_letters $r)
-    | none => `(⟨$r⟩)
+    -- `r` is a proof of hardness, or a reduction; the reduction is tried last, so that a source
+    -- that is neither is reported against `HaltReduction`, the usual form
+    | none => `(by first | exact $r | exact ⟨$r⟩)
   let hardName := name `haltHard
   let computableName := name `not_computablePred
   let machineName := name `not_machineDecidable

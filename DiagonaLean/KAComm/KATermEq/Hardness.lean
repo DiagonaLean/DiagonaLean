@@ -5,6 +5,7 @@ Authors: Prathamesh Turaga, Claude Opus
 
 import DiagonaLean.KAComm.KATermEq.Undecidable
 import DiagonaLean.KAComm.KleeneAlgebra.CanonRace
+import DiagonaLean.Foundations.Computability.HaltResults
 import DiagonaLean.Foundations.Computability.ReduceFrom
 
 @[expose] public section
@@ -40,21 +41,12 @@ def fromHaltWith (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg true B C) :
     HaltReduction KATermEqProblem :=
   ⟨canonReduction B C, (canonReduction_prim B C).to_comp, haltCanon_reducesto_spec hB hC⟩
 
-/-- **Halting-hardness.** The interpreter constants and the race program exist (`exists_base`,
-`exists_raceProg`). -/
-theorem haltHard : HaltHard KATermEqProblem := by
-  obtain ⟨B, hB⟩ := exists_base
-  obtain ⟨C, hC⟩ := exists_raceProg true B
-  exact ⟨fromHaltWith B C hB hC⟩
-
-/-- **Not a computable predicate.** -/
-theorem not_computablePred : ¬ ComputablePred KATermEqProblem :=
-  haltHard.not_computablePred
-
-/-- **No Turing machine decides it under any computable encoding.** -/
-theorem not_machineDecidable {enc : Inst → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc KATermEqProblem :=
-  haltHard.not_machineDecidable henc
+-- Halting-hardness and its consequences: the interpreter constants and the race program exist
+-- (`exists_base`, `exists_raceProg`), so the proof obtains them, and only the existence of a
+-- reduction is stated.
+halt_results KATermEqProblem from
+  exists_base.elim fun B hB => (exists_raceProg true B).elim fun C hC =>
+    ⟨fromHaltWith B C hB hC⟩
 
 /-- A halting-hard source for `hard_reduce_from`. -/
 instance : HaltHardFact KATermEqProblem := ⟨haltHard⟩

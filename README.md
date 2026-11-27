@@ -112,8 +112,9 @@ abbrev HaltHard (P : β → Prop) : Prop := Nonempty (HaltReduction P)
 `Primcodable`, so the computability of a reduction from it can be stated and proved. `HaltHard p`
 is a proposition with content: Mathlib's many-one reducibility from halting (`haltHard_iff`). It
 gives `¬ ComputablePred p` and `¬ MachineDecidable enc p` for every computable encoding. Where a
-problem has a `HaltReduction`, `halt_results` states all three as `X.haltHard`,
-`X.not_computablePred` and `X.not_machineDecidable`.
+problem has a `HaltReduction`, or a proof of `HaltHard` when the reduction needs constants that
+exist only classically, `halt_results` states all three as `X.haltHard`, `X.not_computablePred` and
+`X.not_machineDecidable`.
 
 * *Strength:* the strongest of the three statements, under Mathlib's notion of computability.
 * *Limitation:* it needs a `Primcodable` type of instances, so problems on Mathlib's grammars are
@@ -238,7 +239,7 @@ checks.
 | `reduce_from h via r` / `reduce_from h with f …` | Composes `h` with a bundled link `r`, or chooses between the two tactics above by the goal; a synthetic link is upgraded by `fun_prop` on a proved goal | same |
 | `reduce_from_pcp over_letters b0 b1 with f …` | `synth_reduce_from` from PCP over the alphabet of the letters `b0 ≠ b1` (also `via R`) | [`Synthetic/Tactics/ReduceFromPCP.lean`](DiagonaLean/Synthetic/Tactics/ReduceFromPCP.lean) |
 | `code_lift F from h` | Lifts a halting reduction or `¬ ComputablePred` along a functor on codes to every alphabet with two letters | [`Foundations/Codes/Tactic.lean`](DiagonaLean/Foundations/Codes/Tactic.lean) |
-| `halt_results P from r` | A command: from `r : HaltReduction P`, states `haltHard`, `not_computablePred` and `not_machineDecidable`; `over_letters` for every nontrivial alphabet, `Name for` for a second problem in one namespace | [`Foundations/Computability/HaltResults.lean`](DiagonaLean/Foundations/Computability/HaltResults.lean) |
+| `halt_results P from r` | A command: from `r : HaltReduction P` (or `r : HaltHard P`), states `haltHard`, `not_computablePred` and `not_machineDecidable`; `over_letters` for every nontrivial alphabet, `Name for` for a second problem in one namespace | [`Foundations/Computability/HaltResults.lean`](DiagonaLean/Foundations/Computability/HaltResults.lean) |
 | `#check_reductions` / `#check_reductions local` | Checks that every reduction (in the library, or in the current file) is a definition Lean compiles, with no classical escape hatch | [`Synthetic/ReductionCheck.lean`](DiagonaLean/Synthetic/ReductionCheck.lean) |
 
 **Computability**

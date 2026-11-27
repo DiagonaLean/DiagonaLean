@@ -5,6 +5,7 @@ Authors: Prathamesh Turaga, Claude Opus
 
 import DiagonaLean.KAComm.TermEq.Undecidable
 import DiagonaLean.KAComm.KleeneAlgebra.CanonRace
+import DiagonaLean.Foundations.Computability.HaltResults
 import DiagonaLean.Foundations.Computability.ReduceFrom
 
 @[expose] public section
@@ -40,21 +41,12 @@ def fromHaltWith (B : Base) (C : Code) (hB : B.Good) (hC : RaceProg false B C) :
     HaltReduction TermEqProblem :=
   ⟨canonReduction B C, (canonReduction_prim B C).to_comp, haltCanon_reducesto_spec hB hC⟩
 
-/-- **Halting-hardness.** The interpreter constants and the race program exist (`exists_base`,
-`exists_raceProg`). -/
-theorem haltHard : HaltHard TermEqProblem := by
-  obtain ⟨B, hB⟩ := exists_base
-  obtain ⟨C, hC⟩ := exists_raceProg false B
-  exact ⟨fromHaltWith B C hB hC⟩
-
-/-- **Not a computable predicate.** -/
-theorem not_computablePred : ¬ ComputablePred TermEqProblem :=
-  haltHard.not_computablePred
-
-/-- **No Turing machine decides it under any computable encoding.** -/
-theorem not_machineDecidable {enc : Inst → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc TermEqProblem :=
-  haltHard.not_machineDecidable henc
+-- Halting-hardness and its consequences: the interpreter constants and the race program exist
+-- (`exists_base`, `exists_raceProg`), so the proof obtains them, and only the existence of a
+-- reduction is stated.
+halt_results TermEqProblem from
+  exists_base.elim fun B hB => (exists_raceProg false B).elim fun C hC =>
+    ⟨fromHaltWith B C hB hC⟩
 
 /-- A halting-hard source for `hard_reduce_from`. -/
 instance : HaltHardFact TermEqProblem := ⟨haltHard⟩

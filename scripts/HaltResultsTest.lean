@@ -92,6 +92,28 @@ example : ¬ ComputablePred fun c : CFGCode (α ⊕ ℕ) => AmbigCFG.DecisionPro
 
 end GrammarResults
 
+/-! ## From a proof of hardness
+
+When the reduction needs constants that exist only classically, the source is `HaltHard P`
+itself, as in `SKIConv/Hardness.lean`. -/
+
+namespace FromHard
+
+halt_results MatMort.DecisionProblem from (⟨MatMort.fromHalt⟩ : HaltHard MatMort.DecisionProblem)
+
+/-- info: FromHard.not_computablePred : ¬ComputablePred MatMort.DecisionProblem -/
+#guard_msgs in
+#check not_computablePred
+
+-- the library's uses state the same theorems as by hand
+example : ¬ ComputablePred SKIConv.SKIConvProblem := SKIConv.not_computablePred
+
+example {enc : KAComm.KleeneAlgebra.InstB → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc KAComm.TermEqBool.TermEqBoolProblem :=
+  KAComm.TermEqBool.not_machineDecidable henc
+
+end FromHard
+
 /-! ## Rejected sources
 
 Each of the three theorems reports the error, so `substring` matches one telling line. -/
@@ -117,6 +139,16 @@ namespace WrongProblem
 halt_results (@PCP.DecisionProblem Bool) from MatMort.fromHalt
 
 end WrongProblem
+
+namespace WrongHard
+
+-- A proof of hardness must be for the problem stated.
+/-- error: Application type mismatch: The argument
+  MatMort.haltHard -/
+#guard_msgs (substring := true) in
+halt_results (@PCP.DecisionProblem Bool) from MatMort.haltHard
+
+end WrongHard
 
 namespace NoLetters
 

@@ -152,6 +152,7 @@ Once a problem has a proved halting reduction, one command states its consequenc
 
 ```lean
 halt_results P from r        -- r : HaltReduction P
+halt_results P from h        -- h : HaltHard P, when the reduction takes classical constants
 ```
 
 declares, in the current namespace,

@@ -5,6 +5,7 @@ Authors: Prathamesh Turaga, Claude Opus
 
 import DiagonaLean.SKIConv.Undecidable
 import DiagonaLean.Foundations.Computability.CanonRace
+import DiagonaLean.Foundations.Computability.HaltResults
 import DiagonaLean.Foundations.Computability.ReduceFrom
 
 @[expose] public section
@@ -65,21 +66,12 @@ def fromHaltWith {u : Code} (U : SKI) (C : Code) (hu : IsUniversal u) (hU : Comp
     (hC : RaceProg U C) : HaltReduction SKIConvProblem :=
   ⟨canonRed U C, (canonRed_primrec U C).to_comp, haltCanon_reducesto_skiConv_spec hu hU hC⟩
 
-/-- **SKI convertibility is halting-hard.** The universal code and the race program exist
-(`exists_isUniversal`, `exists_raceProg`). -/
-theorem haltHard : HaltHard SKIConvProblem := by
-  obtain ⟨u, hu⟩ := exists_isUniversal
-  obtain ⟨C, hC⟩ := exists_raceProg u.toSKI
-  exact ⟨fromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC⟩
-
-/-- **SKI convertibility is not a computable predicate.** -/
-theorem not_computablePred : ¬ ComputablePred SKIConvProblem :=
-  haltHard.not_computablePred
-
-/-- **No Turing machine decides SKI convertibility under any computable encoding.** -/
-theorem not_machineDecidable {enc : SKI × SKI → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc SKIConvProblem :=
-  haltHard.not_machineDecidable henc
+-- Halting-hardness and its consequences: the universal code and the race program exist
+-- (`exists_isUniversal`, `exists_raceProg`), so the proof obtains them, and only the existence
+-- of a reduction is stated.
+halt_results SKIConvProblem from
+  exists_isUniversal.elim fun u hu => (exists_raceProg u.toSKI).elim fun C hC =>
+    ⟨fromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC⟩
 
 /-- SKI convertibility is a halting-hard source for `hard_reduce_from`. -/
 instance : HaltHardFact SKIConvProblem := ⟨haltHard⟩

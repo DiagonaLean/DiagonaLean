@@ -5,6 +5,7 @@ Authors: Prathamesh Turaga, Claude Opus
 
 import DiagonaLean.BetaConv.Undecidable
 import DiagonaLean.Foundations.Computability.CanonRace
+import DiagonaLean.Foundations.Computability.HaltResults
 import DiagonaLean.Foundations.Computability.ReduceFrom
 
 @[expose] public section
@@ -67,21 +68,13 @@ def fromHaltWith {u : Code} (U : SKI) (C : Code) (hu : Foundations.CombinatoryLo
     (hU : Computes U u.eval) (hC : RaceProg U C) : HaltReduction BetaConvProblem :=
   ⟨canonRed U C, (canonRed_primrec U C).to_comp, haltCanon_reducesto_betaConv_spec hu hU hC⟩
 
-/-- **β-conversion is halting-hard.** The universal code and the race program exist
-(`exists_isUniversal`, `exists_raceProg`). -/
-theorem haltHard : HaltHard BetaConvProblem := by
-  obtain ⟨u, hu⟩ := Foundations.CombinatoryLogic.exists_isUniversal
-  obtain ⟨C, hC⟩ := exists_raceProg u.toSKI
-  exact ⟨fromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC⟩
-
-/-- **β-conversion is not a computable predicate.** -/
-theorem not_computablePred : ¬ ComputablePred BetaConvProblem :=
-  haltHard.not_computablePred
-
-/-- **No Turing machine decides β-conversion under any computable encoding.** -/
-theorem not_machineDecidable {enc : Term ℕ × Term ℕ → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc BetaConvProblem :=
-  haltHard.not_machineDecidable henc
+-- Halting-hardness and its consequences: the universal code and the race program exist
+-- (`exists_isUniversal`, `exists_raceProg`), so the proof obtains them, and only the existence
+-- of a reduction is stated.
+halt_results BetaConvProblem from
+  Foundations.CombinatoryLogic.exists_isUniversal.elim fun u hu =>
+    (exists_raceProg u.toSKI).elim fun C hC =>
+      ⟨fromHaltWith u.toSKI C hu (Code.toSKI_correct u) hC⟩
 
 /-- β-conversion is a halting-hard source for `hard_reduce_from`. -/
 instance : HaltHardFact BetaConvProblem := ⟨haltHard⟩
