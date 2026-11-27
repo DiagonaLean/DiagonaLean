@@ -22,6 +22,8 @@ jobs:
         run: lake env lean scripts/CheckUndecTags.lean
       - name: Check the palindrome example
         run: lake env lean examples/PalindromeGrammar.lean
+      - name: Check the game examples
+        run: lake env lean examples/GameReductions.lean
       - name: Check that fun_prop proves Primrec and Computable goals
         run: lake env lean scripts/FunPropTest.lean
       - name: Check that reduce_from composes reductions in both layers
