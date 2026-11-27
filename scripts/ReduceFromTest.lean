@@ -506,6 +506,15 @@ example (h : HaltReduction (@DiagonaLean.PCP.DecisionProblem S23)) :
 example : HaltHard DiagonaLean.MatMort.DecisionProblem := by
   hard_reduce_from PCPS23 with matImage using pcp_reducesto_matMort_spec
 
+-- A problem as the source of a single `via` link: on a hard goal it is found in the registry
+-- (`HaltSource` for data, `HaltHardFact` for `HaltHard`), not by the names of its synthetic
+-- results.
+example : HaltReduction PCPS23 := by
+  reduce_from (@DiagonaLean.PCP.DecisionProblem Bool) via DiagonaLean.MatMort.synthS23FromPCP
+
+example : HaltHard DiagonaLean.MatMort.DecisionProblem := by
+  reduce_from PCPS23 via DiagonaLean.MatMort.synthFromPCP
+
 /-- A problem that nothing registers as halting-hard. -/
 abbrev Unregistered : ℕ → Prop := fun _ => False
 

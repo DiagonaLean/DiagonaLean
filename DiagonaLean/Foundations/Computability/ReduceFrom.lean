@@ -635,6 +635,12 @@ open DiagonaLean.Foundations.Computability.ReduceFrom Lean Elab Tactic in
 from `p` to `q`. The goal decides whether the result is synthetic or proved; see the module
 docstring of `Foundations.Computability.ReduceFrom`. -/
 elab "reduce_from " h:term:max " via " r:term : tactic => withMainContext do
+  -- a problem as the source of a hard goal is found in the registry, as by `hard_reduce_from`
+  let isProblem ← withoutModifyingState do
+    let e ← withoutRecover <| elabTerm h none (mayPostpone := true)
+    isProblemType (← Meta.inferType e)
+  let synthGoal := (← goalOf? (← getMainTarget)) matches some .synth
+  if isProblem && !synthGoal then return ← runHardChain h [.via r]
   let h ← resolveSource h
   let some goal ← goalOf? (← getMainTarget) | throwError "reduce_from: the goal{indentExpr
       (← getMainTarget)}\nis not one of `SynthHaltReduction q`, `HaltReduction q`, `HaltHard q`, \

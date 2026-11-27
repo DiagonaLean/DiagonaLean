@@ -212,6 +212,8 @@ extract them from `Nontrivial α` (a `Prop`).
   rejected in library files (the `search` rule of `MetaprogramCheck`), because the route they find
   depends on the imports; `undec from h via r₁, …` (a given route) is allowed. A generic
   reduction (with parameters) is not an edge: tag a closed instance (`PCP.synthFromHaltBool`).
+  On proved goals (`HaltReduction Q`, `HaltHard Q`) `undec? from P` also finds the route and runs
+  `reduce_from P via …`, from `P`'s `HaltSource` / `HaltHardFact`.
 * **`code_lift F from h`**: a halting reduction `h` is composed with the lift by `reduce_from`
   (synthetic `F.lift` or proved `F.computableLift`, chosen by the goal), so it proves every goal
   `reduce_from` does, over any alphabet with two letters (`hne : b0 ≠ b1` in the context); a source

@@ -17,8 +17,9 @@ and `undec from H via?` searches for it. `undec from H via r₁, …, rₙ` comp
 reductions, with no search. `undec?` and `undec? from P` suggest a script for the route found,
 written with `reduce_from s via r₁, via r₂, …` (`Foundations/Computability/ReduceFrom.lean`), the
 tactic library proofs use, so that replaying the proof does not depend on which reductions are
-tagged. The goals `¬ ComputablePred Q` and
-`¬ MachineDecidable enc Q` are handled in `Foundations/Computability/UndecTransfer.lean`.
+tagged. The goals `¬ ComputablePred Q`,
+`¬ MachineDecidable enc Q`, `HaltReduction Q` and `HaltHard Q` are handled in
+`Foundations/Computability/UndecTransfer.lean`.
 -/
 
 namespace DiagonaLean.Synthetic.Notation
@@ -68,6 +69,10 @@ def notBody? (type : Expr) : Option Expr :=
 /-- `type` is `¬ ComputablePred Q` or `¬ MachineDecidable enc Q`, the goals that
 `Foundations/Computability/UndecTransfer.lean` handles. -/
 def isHardnessGoal (type : Expr) : Bool :=
+  let type := type.consumeMData
+  -- the proved goals, handled in `UndecTransfer` by `reduce_from`
+  type.isAppOf `DiagonaLean.Foundations.Computability.HaltReduction ||
+  type.isAppOf `DiagonaLean.Foundations.Computability.HaltHard ||
   match notBody? type with
   | some body => body.isAppOf `ComputablePred || body.isAppOf ``MachineDecidable
   | none => false
@@ -75,8 +80,8 @@ def isHardnessGoal (type : Expr) : Bool :=
 /-- The goals `undec from` proves, for error messages. -/
 def undecGoalShapes : MessageData :=
   m!"undec from proves goals of the form `SynthHaltReduction Q`, and, with \
-    `DiagonaLean.Foundations.Computability.UndecTransfer` imported, `¬ ComputablePred Q` and \
-    `¬ MachineDecidable enc Q`"
+    `DiagonaLean.Foundations.Computability.UndecTransfer` imported, `¬ ComputablePred Q`, \
+    `¬ MachineDecidable enc Q`, `HaltReduction Q` and `HaltHard Q`"
 
 /-- Compose reductions given first to last. With none, the identity reduction on `source`. -/
 def composeWitnesses (source : Expr) : List Expr → MetaM Expr
