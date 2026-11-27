@@ -88,6 +88,8 @@ def ruleOfAtom : String → Option Rule
   | "run_cmd" | "run_elab" | "run_meta" => some runRule
   | "#eval" | "#eval!" => some evalRule
   | "initialize" | "builtin_initialize" => some initializeRule
+  -- these commands expand to `initialize`
+  | "register_label_attr" | "register_simp_attr" | "register_option" => some initializeRule
   | "unsafe" => some unsafeRule
   | "implemented_by" | "extern" => some implementedByRule
   | _ => none
@@ -213,7 +215,12 @@ def allowances : List (String × List String) := [
   -- defines `#check_reductions`, whose messages name the escape hatches it reports
   ("DiagonaLean/Synthetic/ReductionCheck.lean", ["unsafe", "implemented_by"]),
   -- not imported by `DiagonaLean.lean`; evaluates a reduction to show that it runs
-  ("DiagonaLean/Synthetic/EvalExample.lean", ["eval"])]
+  ("DiagonaLean/Synthetic/EvalExample.lean", ["eval"]),
+  -- `register_label_attr undecReduction` and `register_option undec.showRoute`, which register a
+  -- tag and an option and add no declarations
+  ("DiagonaLean/Synthetic/Tactics/ReductionPath.lean", ["initialize"]),
+  -- `register_label_attr undecHardness`, likewise
+  ("DiagonaLean/Foundations/Computability/UndecTransfer.lean", ["initialize"])]
 
 /-- The files, relative to the root, and the top-level declarations in each that may break the
 `command` rule: the command itself and the helpers typed in `CommandElabM`. Each name may be

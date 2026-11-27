@@ -3,6 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Prathamesh Turaga
 -/
 
+import DiagonaLean.Foundations.Computability.UndecTransfer
 import DiagonaLean.PCP.Primrec
 import DiagonaLean.MPCP.Hardness
 
@@ -65,7 +66,8 @@ theorem not_computablePred_pcp_ext :
 
 /-- **PCP is not a computable predicate** over any alphabet with two distinct letters: it is
 halting-hard there (`PCP.fromHaltOver`). -/
-theorem not_computablePred_pcp {α : Type} [Primcodable α] [Nontrivial α] :
+@[undecHardness] theorem not_computablePred_pcp {α : Type} [Primcodable α]
+    [Nontrivial α] :
     ¬ ComputablePred (@DecisionProblem α) := by
   obtain ⟨b0, b1, hne⟩ := exists_pair_ne α
   exact (PCP.fromHaltOver b0 b1 hne).not_computablePred

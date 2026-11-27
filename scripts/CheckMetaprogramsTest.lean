@@ -77,6 +77,13 @@ T.lean:8: `modifyEnv` changes the environment from a metaprogram -/
   set_option debug.skipKernelTC true in theorem t : True := trivial\nunsafe def u := 1\n\
   @[implemented_by u] def v := 1\ndef w : CommandElab := fun _ => pure ()\ndef m := modifyEnv"
 
+-- Commands that expand to `initialize` count as `initialize`.
+/-- info:
+T.lean:1: `register_label_attr` runs code when the module is loaded
+T.lean:2: `register_option` runs code when the module is loaded -/
+#guard_msgs in
+#eval report "register_label_attr foo\nregister_option bar : Bool := { defValue := false }"
+
 -- A new command is reported at its `:`, also when `command` is on the next line.
 /-- info:
 T.lean:1: `: command` defines a command, which can change the environment

@@ -58,4 +58,5 @@ The main result is `pcp_iff_matmort`: for any PCP instance `K` over alphabet `{2
 
 ### Undecidability
 - `MatMort.synthFromHalt`: mortality of finite sets of `3 × 3` integer matrices is synthetically halting-hard, by reduction from PCP over `{2, 3}`.
+- `MatMort.synthS23FromPCP` (`Reductions/PCP_to_MatMort.lean`): PCP over `Bool` reduces to PCP over `{2, 3}` by the alphabet lift, so that `undec from` finds the route from binary PCP to mortality. Its function is primitive recursive (`synthS23FromPCP_primrec`).
 - `not_computablePred_matMort`, `not_machineDecidable_matMort` (`MachineLevel.lean`): it is not a computable predicate, so no Turing machine decides it under any computable encoding. They follow from `PCP.MachineLevel.not_computablePred_pcp` along `MatMort.synthFromPCP`, whose function `matImage` is primitive recursive (`matImage_primrec`).

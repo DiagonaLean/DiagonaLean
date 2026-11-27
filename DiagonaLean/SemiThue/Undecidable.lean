@@ -3,6 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
+import DiagonaLean.Synthetic.Tactics.UndecFrom
 import DiagonaLean.SemiThue.AlphabetLift
 
 @[expose] public section
@@ -59,7 +60,8 @@ def _root_.DiagonaLean.SemiThue.synthFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1)
 abbrev undecidableSemiThueOf := @DiagonaLean.SemiThue.synthFromHaltOver
 
 /-- **The word problem for string rewriting systems over `Bool` is synthetically halting-hard.** -/
-def _root_.DiagonaLean.SemiThue.synthFromHaltBool : SynthHaltReduction (@DecisionProblem Bool) :=
+@[undecReduction] def _root_.DiagonaLean.SemiThue.synthFromHaltBool :
+    SynthHaltReduction (@DecisionProblem Bool) :=
   SemiThue.synthFromHaltOver false true Bool.false_ne_true
 
 /-- The former name of `SemiThue.synthFromHaltBool`. -/

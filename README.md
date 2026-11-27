@@ -10,7 +10,7 @@ The project has three goals:
 
 * **A library of undecidable problems.** Each problem is stated once, and the reductions to it are proved correct. The classical problems from automata theory are covered, and so are results from current research, such as the undecidability of Kleene algebra with commutativity conditions (arXiv:2411.15979).
 * **Honest statements.** Lean's logic is classical, so a naive statement of undecidability can be proved by a case split on whether a machine halts. The library rules this out in two ways, described in [Two notions of undecidability](#two-notions-of-undecidability).
-* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. `reduce_from` composes a halting reduction with a link, in either layer; `reduce_from_pcp` and `code_lift` handle the PCP source and the alphabet lift.
+* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. `reduce_from` composes a halting reduction with a link, in either layer; `reduce_from_pcp` and `code_lift` handle the PCP source and the alphabet lift. `undec from P` finds and composes reductions through a named source problem. `undec?` displays a route from halting as a script that names each reduction.
 
 DiagonaLean continues <https://github.com/aalok-thakkar/undecidability/>.
 
@@ -144,7 +144,7 @@ theorem swap_spec : (@DecisionProblem Bool) ⪯_s[swap] SwappedPCP := fun A => b
   simp [SwappedPCP, swap, List.map_map, Function.comp_def]
 
 /-- The reduction, as data: a link from PCP. -/
-def SwappedPCP.synthFromPCP : (@DecisionProblem Bool) ⪯_s SwappedPCP := ⟨swap, swap_spec⟩
+@[undecReduction] def SwappedPCP.synthFromPCP : (@DecisionProblem Bool) ⪯_s SwappedPCP := ⟨swap, swap_spec⟩
 
 /-- `SwappedPCP` is synthetically halting-hard: PCP's halting reduction, then the link. -/
 def SwappedPCP.synthFromHalt : SynthHaltReduction SwappedPCP := by
@@ -153,6 +153,35 @@ def SwappedPCP.synthFromHalt : SynthHaltReduction SwappedPCP := by
 #check_reductions local              -- checks the definitions in this file
 #print axioms SwappedPCP.synthFromHalt  -- propext, Classical.choice, Quot.sound
 ```
+
+`undec from P` finds a route from halting through a named source problem `P`. Run the following after `import DiagonaLean` to see the alphabet lift to Paterson's alphabet and the reduction from PCP to mortality.
+
+```lean
+open DiagonaLean DiagonaLean.Synthetic.Definitions
+
+example : SynthHaltReduction MatMort.DecisionProblem := by
+  undec? from PCP.PCProblem
+```
+
+Lean displays the route and suggests a script that names each reduction on it, here `undec from PCP.synthFromHaltBool via MatMort.synthS23FromPCP, MatMort.synthFromPCP`. The script composes exactly those reductions, so replaying it does not depend on which reductions are tagged. For a machine-level goal the same source predicate selects a registered theorem of noncomputability. The search checks the functions along each candidate route and uses the encoding hypothesis.
+
+```lean
+example {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool} (he : Computable enc) :
+    ¬ Synthetic.Definitions.MachineDecidable enc MatMort.DecisionProblem := by
+  undec? from PCP.PCProblem
+```
+
+```text
+Binary PCP → PCP over Paterson’s alphabet → 3×3 matrix mortality
+Try this: undec from PCP.MachineLevel.not_computablePred_pcp via MatMort.synthS23FromPCP,
+  MatMort.synthFromPCP
+```
+
+Use `undec from P` for a quiet proof and `undec? from P` to see the route and a replayable script. For synthetic goals, `undec?` also discovers a source starting from halting. Search starts with local hypotheses and tagged reductions. If they do not solve the goal, it also searches for concrete reduction definitions in the current file and its imports. Each search is breadth first. Two predicates count as the same problem when they agree after unfolding reducible and instance definitions, so a problem should be stated with `abbrev` or as a `def` used under one name. For machine-level goals it tries certified paths in both searches before leaving proof obligations. A bundled computable reduction supplies its own certificate. If only a structural route is available, each missing computability proof becomes a goal. The diagnostic names the edge or encoding that needs evidence.
+
+Tag a source theorem of the form `¬ ComputablePred P` with `@[undecHardness]`. Type and instance arguments can be inferred from `P`, as in the PCP theorem over any nontrivial alphabet. You can also pass the source theorem directly. To display a mathematical name for a problem, supply a `Synthetic.ReductionChain.ProblemName P` instance.
+
+A compiled definition of type `P ⪯_s Q` or `SynthHaltReduction Q` can be discovered without a tag. Machine-level goals also use definitions of type `P ⪯ Q` or `HaltReduction Q`. Use `@[undecReduction]` to give a concrete synthetic reduction priority. For a family with parameters, supply a specialized witness as a local hypothesis or a named definition. The search skips a tagged declaration that is not a closed reduction, and names it when no route is found; `scripts/CheckUndecTags.lean` fails CI on such a tag, or on an `@[undecHardness]` theorem that does not state `¬ ComputablePred P`. The [palindrome grammar example](examples/PalindromeGrammar.lean) uses an untagged PCP reduction.
 
 ### Prove a function primitive recursive, computable, or computed by a Turing machine
 The tactics in `DiagonaLean.Foundations.Computability` do this one definition at a time, with one
@@ -199,6 +228,11 @@ checks.
 |---|---|---|
 | `reduce_from_pcp over_letters b0 b1 via R` | Proves `SynthHaltReduction Q` from a reduction `R : PCP ⪯_s Q`, over the alphabet of the letters `b0 ≠ b1` | [`Synthetic/Tactics/ReduceFromPCP.lean`](DiagonaLean/Synthetic/Tactics/ReduceFromPCP.lean) |
 | `reduce_from h via r` | Composes a halting reduction `h` with a link `r`; the goal (`SynthHaltReduction Q`, `HaltReduction Q`, `HaltHard Q`, `¬ ComputablePred Q`, `¬ MachineDecidable enc Q`) decides whether the result is synthetic or proved, and a synthetic link is upgraded when its computability can be proved | [`Foundations/Computability/ReduceFrom.lean`](DiagonaLean/Foundations/Computability/ReduceFrom.lean) |
+| `undec from P` / `undec?` | Finds a route through the source predicate `P`; `undec?` finds a route from halting and suggests a script that replays it | [`Synthetic/Tactics/UndecFrom.lean`](DiagonaLean/Synthetic/Tactics/UndecFrom.lean) |
+| `undec from h` for `h : ¬ ComputablePred P` | Transfers noncomputability or machine undecidability along computable reductions | [`Foundations/Computability/UndecTransfer.lean`](DiagonaLean/Foundations/Computability/UndecTransfer.lean) |
+| `reduction_path` | Composes a shortest chain of reductions for a goal `P ⪯_s Q` | [`Synthetic/Tactics/ReductionPath.lean`](DiagonaLean/Synthetic/Tactics/ReductionPath.lean) |
+| `undec from H` / `undec from H via?` | Reduces `SynthHaltReduction Q` to a reduction `P ⪯_s Q`, given `H : SynthHaltReduction P`. Append `via?` to search for that reduction | [`Synthetic/Tactics/UndecFrom.lean`](DiagonaLean/Synthetic/Tactics/UndecFrom.lean) |
+| `undec from H via r₁, …, rₙ` | Composes the source `H` (a halting reduction, a predicate, or a proof of `¬ ComputablePred P`) with exactly the reductions `rᵢ`, checking that each starts where the previous one ends | [`Synthetic/Tactics/UndecFrom.lean`](DiagonaLean/Synthetic/Tactics/UndecFrom.lean) |
 | `#check_reductions` / `#check_reductions local` | Checks that every reduction (in the library, or in the current file) is a definition Lean compiles, with no classical escape hatch | [`Synthetic/ReductionCheck.lean`](DiagonaLean/Synthetic/ReductionCheck.lean) |
 
 For example, the last definition in *Prove a new problem undecidable* above can be written
