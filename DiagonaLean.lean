@@ -97,6 +97,8 @@ import DiagonaLean.Rice.Undecidable
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
 import DiagonaLean.Synthetic.HaltReduction
+import DiagonaLean.Synthetic.Tactics.ReductionPath
+import DiagonaLean.Synthetic.Tactics.UndecFrom
 import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 import DiagonaLean.Synthetic.ReductionCheck
@@ -129,6 +131,7 @@ import DiagonaLean.Foundations.Computability.MachineComputes
 import DiagonaLean.Foundations.Computability.ComputableReduction
 import DiagonaLean.Foundations.Computability.HaltCanon
 import DiagonaLean.Foundations.Computability.ReduceFrom
+import DiagonaLean.Foundations.Computability.UndecTransfer
 import DiagonaLean.Foundations.Computability.Normalize.Conditions
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
 import DiagonaLean.Foundations.Computability.Normalize.Cell

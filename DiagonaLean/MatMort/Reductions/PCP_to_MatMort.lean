@@ -7,6 +7,7 @@ import Mathlib.LinearAlgebra.Matrix.Notation
 import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 import Mathlib.Computability.Language
 import Mathlib.Tactic
+import DiagonaLean.Synthetic.Tactics.ReductionPath
 import DiagonaLean.PCP.Reductions.Halt_to_PCP
 import DiagonaLean.MatMort.Basic
 import DiagonaLean.PCP.Basic
@@ -526,8 +527,21 @@ theorem pcp_reducesto_matMort_spec :
     @PCP.DecisionProblem S23 ⪯_s[matImage] MatMort.DecisionProblem :=
   pcp_iff_matmort
 
+/-- PCP over `S23` is displayed as PCP over Paterson's alphabet. -/
+instance : Synthetic.ReductionChain.ProblemName (@PCP.DecisionProblem S23) :=
+  ⟨"PCP over Paterson’s alphabet"⟩
+
+/-- Matrix mortality is displayed as 3×3 matrix mortality. -/
+instance : Synthetic.ReductionChain.ProblemName MatMort.DecisionProblem :=
+  ⟨"3×3 matrix mortality"⟩
+
+/-- Binary PCP reduces to PCP over `S23` by the alphabet lift. -/
+@[undecReduction] def _root_.DiagonaLean.MatMort.synthS23FromPCP :
+    PCP.PCProblem ⪯_s @PCP.DecisionProblem S23 :=
+  PCP.synthAlphabetLift (0 : S23) 1 (by decide)
+
 /-- **The reduction.** PCP over `S23` many-one reduces to matrix mortality through `matImage`. -/
-def _root_.DiagonaLean.MatMort.synthFromPCP :
+@[undecReduction] def _root_.DiagonaLean.MatMort.synthFromPCP :
     @PCP.DecisionProblem S23 ⪯_s MatMort.DecisionProblem :=
   ⟨matImage, pcp_reducesto_matMort_spec⟩
 

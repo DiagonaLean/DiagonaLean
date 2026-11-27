@@ -44,7 +44,7 @@ open DiagonaLean.MatMort.Reduction DiagonaLean.Foundations.Computability
 
 /-- **Matrix mortality of `3 × 3` integer matrices is not a computable predicate**: it is
 halting-hard (`MatMort.fromHalt`). -/
-theorem not_computablePred_matMort : ¬ ComputablePred DecisionProblem :=
+@[undecHardness] theorem not_computablePred_matMort : ¬ ComputablePred DecisionProblem :=
   MatMort.fromHalt.not_computablePred
 
 /-- **No Turing machine decides matrix mortality** of `3 × 3` integer matrices, under any

@@ -3,6 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Prathamesh TVH, Claude Opus
 -/
 
+import DiagonaLean.Synthetic.Tactics.UndecFrom
 import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.MPCP.AlphabetLift
 import DiagonaLean.Foundations.Codes.Tactic
@@ -47,7 +48,7 @@ def _root_.DiagonaLean.MPCP.synthFromHaltOver (b0 b1 : α) (hne : b0 ≠ b1) :
 abbrev undecidableMPCPOf := @DiagonaLean.MPCP.synthFromHaltOver
 
 /-- **MPCP over `Bool` is synthetically halting-hard.** -/
-def _root_.DiagonaLean.MPCP.synthFromHaltBool : SynthHaltReduction MPCProblem :=
+@[undecReduction] def _root_.DiagonaLean.MPCP.synthFromHaltBool : SynthHaltReduction MPCProblem :=
   MPCP.synthFromHaltOver false true Bool.false_ne_true
 
 /-- The former name of `MPCP.synthFromHaltBool`. -/
