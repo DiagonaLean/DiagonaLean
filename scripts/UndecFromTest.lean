@@ -380,3 +380,38 @@ name a source problem: `undec? from P`
 example : HaltReduction MatrixGame.DecisionProblem := by
   undec?
 
+/-! ### A route with no links
+
+When the source is the goal's problem, the suggestion is a term, not a search. -/
+
+/--
+info: Rabin game winner
+---
+info: Try this:
+  [apply] exact Rabin.not_computablePred
+-/
+#guard_msgs (whitespace := lax) in
+example : ¬ ComputablePred Rabin.DecisionProblem := by
+  undec? from Rabin.DecisionProblem
+
+/--
+info: Rabin game winner
+---
+info: Try this:
+  [apply] exact DiagonaLean.Foundations.Computability.not_machineDecidable_of_not_computablePred
+    (by fun_prop) Rabin.not_computablePred
+-/
+#guard_msgs (whitespace := lax) in
+example {enc : Rabin.PayoffCode → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc Rabin.DecisionProblem := by
+  undec? from Rabin.DecisionProblem
+
+-- Both replay.
+example : ¬ ComputablePred Rabin.DecisionProblem := by
+  exact Rabin.not_computablePred
+
+example {enc : Rabin.PayoffCode → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc Rabin.DecisionProblem := by
+  exact DiagonaLean.Foundations.Computability.not_machineDecidable_of_not_computablePred
+    (by fun_prop) Rabin.not_computablePred
+

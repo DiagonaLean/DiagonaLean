@@ -196,14 +196,21 @@ def hardnessViaEdge (r : Term) : TacticM ReductionEdge := do
       {indentExpr (← inferType e)}"
   return edge
 
-/-- The script `reduce_from proof via r₁, …` for a route from a hardness proof, or
-`undec from proof` for a route with no links. `none` if some term does not elaborate again. -/
-def hardnessScript (proof : Expr) (path : List ReductionEdge) :
+/-- The script `reduce_from proof via r₁, …` for a route from a hardness proof. A route with no
+links needs no tactic: `exact proof`, or on a goal `¬ MachineDecidable enc Q` (`machine`) the
+bridge `not_machineDecidable_of_not_computablePred`, with the encoding's computability by
+`fun_prop` (which uses a hypothesis `Computable enc`). `none` if
+some term does not elaborate again. -/
+def hardnessScript (proof : Expr) (path : List ReductionEdge) (machine : Bool) :
     TermElabM (Option Synthetic.Notation.Script) := do
   -- the source is replayed against the route, which fixes its implicit arguments
   let some src ← Synthetic.Notation.delabTermForScript proof (← inferType proof) | return none
   match path with
-  | [] => return some (.tactic (← `(tactic| undec from $src)))
+  | [] =>
+    if machine then
+      let bridge := mkIdent ``not_machineDecidable_of_not_computablePred
+      return some (.tactic (← `(tactic| exact $bridge (by fun_prop) $src)))
+    return some (.tactic (← `(tactic| exact $src)))
   | _ =>
     let some names := (← path.toArray.mapM Synthetic.Notation.delabEdge).mapM id | return none
     return some (← Synthetic.Notation.reduceFromScript src names)
@@ -256,7 +263,8 @@ def undecHardness (h : Term) (ref : Option Syntax) : TacticM Unit := do
   | none => applyRoute source proof path
   | some tk =>
     withOptions (fun o => o.setBool `undec.showRoute true) <| applyRoute source proof path
-    Synthetic.Notation.suggestScript tk (← hardnessScript proof (path.map Prod.fst))
+    Synthetic.Notation.suggestScript tk
+      (← hardnessScript proof (path.map Prod.fst) (machine := encoding.isSome))
   finishEncoding encoding
 
 elab_rules : tactic
