@@ -48,17 +48,17 @@ structure Models (r : Register) (repr : ℕ → ℕ × ℕ) : Prop where
     RunsAt s (repr n) i w → RunsAt (r.dec z s) (repr (n + 1)) i w
 
 /-- The register of counter `r`. -/
-def physical (r : Bool) : Register := ⟨Block.inc r, Block.dec r⟩
+def physical (r : Counter) : Register := ⟨Block.inc r, Block.dec r⟩
 
 /-- The first counter is a register, for every value of the second. -/
-theorem models_left (b : ℕ) : (physical false).Models (fun a => (a, b)) :=
-  ⟨fun h => runs_inc (r := false) h, fun h => runs_dec_zero (r := false) rfl h,
-   fun h => runs_dec_succ (r := false) h⟩
+theorem models_left (b : ℕ) : (physical .fst).Models (fun a => (a, b)) :=
+  ⟨fun h => runs_inc (r := .fst) h, fun h => runs_dec_zero (r := .fst) rfl h,
+   fun h => runs_dec_succ (r := .fst) h⟩
 
 /-- The second counter is a register, for every value of the first. -/
-theorem models_right (a : ℕ) : (physical true).Models (fun b => (a, b)) :=
-  ⟨fun h => runs_inc (r := true) h, fun h => runs_dec_zero (r := true) rfl h,
-   fun h => runs_dec_succ (r := true) h⟩
+theorem models_right (a : ℕ) : (physical .snd).Models (fun b => (a, b)) :=
+  ⟨fun h => runs_inc (r := .snd) h, fun h => runs_dec_zero (r := .snd) rfl h,
+   fun h => runs_dec_succ (r := .snd) h⟩
 
 /-- Add the constant `n` to the register: `n` increments. -/
 def add (r : Register) (n : ℕ) (k : Block α) : Block α :=

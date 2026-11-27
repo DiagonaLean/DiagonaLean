@@ -264,7 +264,7 @@ theorem haltCanon_iff_cm2 (x : CanonTM × List Bool) :
   obtain ⟨c, w⟩ := x
   have hstart : (cfgN c.start w).q ∈ statesN c.table :=
     (mem_statesN c _).mpr ⟨(c.toTM.q₀, Ctrl.start), rfl⟩
-  have h := halting_program_iff (δ := actN c.table) (bl := none) (cs := syms2)
+  have h := haltsFrom_program_iff (δ := actN c.table) (bl := none) (cs := syms2)
     (qs := statesN c.table) (k₀ := cfgN c.start w) (fun a => MPCP.Reduction.mem_enumerate a)
     (statesN_closed c) hstart rfl
   rw [HaltCanon, halts_iff_cfgN, ← h, DecisionProblem, canonProgram, codesN_eq]

@@ -3,8 +3,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Claude Opus
 -/
 
-import DiagonaLean.CM2.Arithmetic
 import Mathlib.Data.Nat.Prime.Basic
+import DiagonaLean.CM2.Arithmetic
 
 @[expose] public section
 
@@ -23,14 +23,14 @@ and 5 are registers (`models_two`, `models_three`, `models_five`).
 namespace DiagonaLean.CM2.Register
 
 /-- The two counters are two registers stored together. -/
-private theorem pairModels_physical : PairModels (physical false) (physical true) Prod.mk :=
+private theorem pairModels_physical : PairModels (physical .fst) (physical .snd) Prod.mk :=
   ⟨models_left, models_right⟩
 
 /-- The register of the exponent of `p` in the first counter. -/
 def factor (p : ℕ) : Register where
-  inc k := multiply (physical false) (physical true) p k
-  dec z s := divide (physical false) (physical true) p fun r =>
-    if r = 0 then s else multiply (physical false) (physical true) p ((physical false).add r z)
+  inc k := multiply (physical .fst) (physical .snd) p k
+  dec z s := divide (physical .fst) (physical .snd) p fun r =>
+    if r = 0 then s else multiply (physical .fst) (physical .snd) p ((physical .fst).add r z)
 
 /-- The exponent of `p` in `p ^ n * co` is a register when `p` does not divide `co`. -/
 theorem models_factor (p co : ℕ) (hp : 0 < p) (hc : co % p ≠ 0) :

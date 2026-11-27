@@ -28,7 +28,7 @@ does not halt, returns to its own block with the same counters.
 The program starts from zero counters: block 0 sets the first counter to 1, one block for each
 cell right of the head of the initial configuration `k₀` pushes it on the right stack, and a jump
 enters the block of the state and head cell of `k₀`. The two-counter machine halts from zero
-counters iff the list machine halts from `k₀` (`halting_program_iff`).
+counters iff the list machine halts from `k₀` (`haltsFrom_program_iff`).
 
 ## References
 
@@ -151,7 +151,7 @@ def kindBlock (cs : List Γ) : Kind Γ → Block ℕ
     pop (factor 2) (cs.length + 1) fun d =>
       if d = 0 then goto 0 else push (factor 3) (cs.length + 1) (digit cs b) (goto d)
   | .load b => push (factor 3) (cs.length + 1) (digit cs b) (goto 0)
-  | .boot => Block.inc false (goto 0)
+  | .boot => Block.inc .fst (goto 0)
 
 /-- The block of a kind and a list of block indices: exit `e` of the kind is relabelled by
 entry `e` of the list. -/
@@ -202,8 +202,8 @@ theorem runs_load (cs : List Γ) (b : Γ) (l r : ℕ) :
 
 /-- From zero counters, the boot block takes exit 0 with the counters of two empty stacks. -/
 theorem runs_boot (cs : List Γ) : RunsAt (kindBlock cs .boot) (0, 0) 0 (encode 0 0 0) := by
-  have h : (Block.inc false (goto (0 : ℕ))).Runs 0 0 0 1 0 :=
-    runs_inc (r := false) (runs_goto _ _ _)
+  have h : (Block.inc .fst (goto (0 : ℕ))).Runs 0 0 0 1 0 :=
+    runs_inc (r := .fst) (runs_goto _ _ _)
   simpa [RunsAt, kindBlock, encode] using h
 
 /-! ### The block of a state and a head cell -/
@@ -318,7 +318,7 @@ def program (δ : Q → Γ → Act Q Γ) (bl : Γ) (qs : List Q) (cs : List Γ) 
 /-- The configuration of the two-counter machine for a configuration of the list machine. -/
 def config (δ : Q → Γ → Act Q Γ) (bl : Γ) (qs : List Q) (cs : List Γ) (k₀ k : Cfg Q Γ) :
     Config :=
-  (addr (program δ bl qs cs k₀) (stepIx qs cs k₀.r.length (k.q, k.c)), counters cs k)
+  cfgAt (addr (program δ bl qs cs k₀) (stepIx qs cs k₀.r.length (k.q, k.c))) (counters cs k)
 
 variable {qs : List Q} {k₀ : Cfg Q Γ}
 
@@ -326,8 +326,8 @@ variable {qs : List Q} {k₀ : Cfg Q Γ}
 to the address of block `i`. -/
 theorem reaches_code {j : ℕ} {c : Kind Γ × List ℕ} (hc : (codes δ bl qs cs k₀)[j]? = some c)
     {v w : ℕ × ℕ} {i : ℕ} (h : RunsAt (codeBlock cs c) v i w) :
-    Reaches₁ (step (link (program δ bl qs cs k₀))) (addr (program δ bl qs cs k₀) j, v)
-      (addr (program δ bl qs cs k₀) i, w) := by
+    Reaches₁ (step (link (program δ bl qs cs k₀))) (cfgAt (addr (program δ bl qs cs k₀) j) v)
+      (cfgAt (addr (program δ bl qs cs k₀) i) w) := by
   have hj : j < (program δ bl qs cs k₀).length := by
     simpa [program] using (List.getElem?_eq_some_iff.mp hc).choose
   have hget : (program δ bl qs cs k₀)[j] = codeBlock cs c := by
@@ -368,14 +368,14 @@ theorem codes_step {p : Q × Γ} (hp : p ∈ qs ×ˢ cs) :
 
 /-- After the boot block and `i` load blocks, the right stack holds the `i` farthest cells. -/
 theorem reaches_load (i : ℕ) (hi : i ≤ k₀.r.length) :
-    Reaches₁ (step (link (program δ bl qs cs k₀))) (0, 0, 0)
-      (addr (program δ bl qs cs k₀) (i + 1),
-        encode 0 (val cs (k₀.r.reverse.take i).reverse) 0) := by
+    Reaches₁ (step (link (program δ bl qs cs k₀))) ⟨0, 0, 0⟩
+      (cfgAt (addr (program δ bl qs cs k₀) (i + 1))
+        (encode 0 (val cs (k₀.r.reverse.take i).reverse) 0)) := by
   induction i with
   | zero =>
     have h := reaches_code (codes_zero (δ := δ) (bl := bl) (qs := qs) (k₀ := k₀))
       (runs_codeBlock (runs_boot cs) [1])
-    simpa [addr, val] using h
+    simpa [addr, val, cfgAt] using h
   | succ i ih =>
     have hi' : i < k₀.r.reverse.length := by simpa using hi
     have h := reaches_code (codes_load (δ := δ) (bl := bl) (qs := qs) (k₀ := k₀) hi)
@@ -392,7 +392,7 @@ theorem reaches_load (i : ℕ) (hi : i ≤ k₀.r.length) :
 /-- **From zero counters the program reaches the configuration of `k₀`**, when nothing is left of
 the head of `k₀`. -/
 theorem reaches_config (hl : k₀.l = []) :
-    Reaches₁ (step (link (program δ bl qs cs k₀))) (0, 0, 0) (config δ bl qs cs k₀ k₀) := by
+    Reaches₁ (step (link (program δ bl qs cs k₀))) ⟨0, 0, 0⟩ (config δ bl qs cs k₀ k₀) := by
   have h := reaches_load (δ := δ) (bl := bl) (cs := cs) (qs := qs) (k₀ := k₀) k₀.r.length
     (Nat.le_refl _)
   rw [← List.length_reverse, List.take_length, List.reverse_reverse, List.length_reverse] at h
@@ -409,19 +409,19 @@ theorem reaches_step (hcs : ∀ c, c ∈ cs) {k : Cfg Q Γ} (hk : k.q ∈ qs) {i
     (h : RunsAt (codeBlock cs (stepCode δ bl cs (stepIx qs cs k₀.r.length)
       (k₀.r.length + 2 + (qs ×ˢ cs).length) (k.q, k.c))) (counters cs k) i w) :
     Reaches₁ (step (link (program δ bl qs cs k₀))) (config δ bl qs cs k₀ k)
-      (addr (program δ bl qs cs k₀) i, w) :=
+      (cfgAt (addr (program δ bl qs cs k₀) i) w) :=
   reaches_code (codes_step (List.mem_product.mpr ⟨hk, hcs _⟩)) h
 
 /-- The two-counter machine halts from the configuration of `k` iff the list machine halts from
 `k`, when the state of `k` is in `qs` and a step from a state of `qs` leads to a state of
 `qs`. -/
-theorem halting_config_iff (hcs : ∀ c, c ∈ cs)
+theorem haltsFrom_config_iff (hcs : ∀ c, c ∈ cs)
     (hqs : ∀ k k' : Cfg Q Γ, k.q ∈ qs → next δ bl k = some k' → k'.q ∈ qs) (k : Cfg Q Γ)
     (hk : k.q ∈ qs) :
-    Halting (link (program δ bl qs cs k₀), config δ bl qs cs k₀ k) ↔ Halts δ bl k := by
+    HaltsFrom (link (program δ bl qs cs k₀)) (config δ bl qs cs k₀ k) ↔ Halts δ bl k := by
   constructor
   · intro h
-    refine halting_induction
+    refine haltsFrom_induction
       (C := fun s => ∀ k, k.q ∈ qs → config δ bl qs cs k₀ k = s → Halts δ bl k) h ?_ k hk rfl
     · rintro _ _ ih k hk rfl
       by_cases hh : δ k.q k.c = .halt
@@ -435,22 +435,22 @@ theorem halting_config_iff (hcs : ∀ c, c ∈ cs)
   · rintro ⟨k', hreach, hhalt⟩
     induction hreach using Relation.ReflTransGen.head_induction_on with
     | refl =>
-      refine (halting_of_reaches₁ (reaches_step hcs hk
-        (runs_stepCode_halt hhalt))).mpr (halting_of_length_le ?_)
-      simp [length_link, program, length_codes]
+      refine (haltsFrom_iff_of_reaches₁ (reaches_step hcs hk
+        (runs_stepCode_halt hhalt))).mpr (haltsFrom_of_length_le ?_)
+      simp [length_link, program, length_codes, cfgAt]
     | head hn _ ih =>
       rename_i a b _
-      exact (halting_of_reaches₁ (reaches_step hcs hk
+      exact (haltsFrom_iff_of_reaches₁ (reaches_step hcs hk
         (runs_stepCode_next hcs hn))).mpr (ih (hqs a b hk hn))
 
 /-- **The two-counter machine halts from zero counters iff the list machine halts from `k₀`**,
 when nothing is left of the head of `k₀`, its state is in `qs`, and a step from a state of `qs`
 leads to a state of `qs`. -/
-theorem halting_program_iff (hcs : ∀ c, c ∈ cs)
+theorem haltsFrom_program_iff (hcs : ∀ c, c ∈ cs)
     (hqs : ∀ k k' : Cfg Q Γ, k.q ∈ qs → next δ bl k = some k' → k'.q ∈ qs)
     (hk : k₀.q ∈ qs) (hl : k₀.l = []) :
-    Halting (link (program δ bl qs cs k₀), (0, 0, 0)) ↔ Halts δ bl k₀ :=
-  (halting_of_reaches₁ (reaches_config hl)).trans (halting_config_iff hcs hqs k₀ hk)
+    HaltsFrom (link (program δ bl qs cs k₀)) ⟨0, 0, 0⟩ ↔ Halts δ bl k₀ :=
+  (haltsFrom_iff_of_reaches₁ (reaches_config hl)).trans (haltsFrom_config_iff hcs hqs k₀ hk)
 
 end Program
 

@@ -17,7 +17,7 @@ halts on `w` iff its list machine halts from the initial configuration
 (`Foundations.Computability.ListMachine.halts_iff`). The reduction `haltToCM2` normalises the
 machine and its input (`Foundations.Computability.Normalize`) and takes the two-counter program
 of the list machine of the normalised machine for its initial configuration. The program starts
-from zero counters. By `halting_program_iff` it is a reduction from `HaltProblem`
+from zero counters. By `haltsFrom_program_iff` it is a reduction from `HaltProblem`
 (`halt_reducesto_cm2_spec`, `CM2.synthFromHalt`).
 
 ## References
@@ -50,7 +50,7 @@ theorem halt_reducesto_cm2_spec : HaltProblem ⪯_s[haltToCM2] DecisionProblem :
   let := (normEnc M).stateFintype
   let : DecidableEq (normEnc M).State := Encodable.decidableEqOfEncodable _
   rw [halts_normTM_iff, halts_iff (normTM_noBlankWrites _) (normTM_noLeftBoundary _ _)]
-  exact (halting_program_iff mem_enumAll (fun _ _ _ _ => mem_enumAll _) (mem_enumAll _)
+  exact (haltsFrom_program_iff mem_enumAll (fun _ _ _ _ => mem_enumAll _) (mem_enumAll _)
     (by simp only [cfgOf, BiTape.mk₁]; cases encInput w <;> rfl)).symm
 
 /-- Halting of two-counter machines is displayed as "Two-counter machine halting". -/
