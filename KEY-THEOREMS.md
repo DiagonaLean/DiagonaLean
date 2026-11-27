@@ -76,6 +76,7 @@ root (from `HaltCanon`); proving the last link computable does not upgrade a syn
 | `manyOneEquiv_of_haltHard_of_rePred` | halting-hard r.e. predicates are `ManyOneEquiv` |
 | `SemiThue.rePred`, `SKIConv.rePred`, `BetaConv.rePred` | the rewriting problems are r.e. (`X/RE.lean`) |
 | `PCP.rePred`, `MPCP.rePred`, `MatMort.rePred` | PCP, MPCP and matrix mortality are r.e., by a search over solutions (`X/RE.lean`) |
+| `MatrixGame.rePred` | whether Eve has a winning strategy is r.e., by a bounded search run on a whole level of the game tree at once (`winsList`, recursion on `ℕ` with one changing argument) (`MatrixGame/RE.lean`) |
 | `Degrees.semiThue_equiv_skiConv`, `skiConv_equiv_betaConv`, `semiThue_equiv_betaConv`; `X.complete` | the three rewriting problems are many-one equivalent, and complete for the r.e. problems (`Degrees/Rewriting.lean`) |
 
 ## 4. Alphabets: functors on codes

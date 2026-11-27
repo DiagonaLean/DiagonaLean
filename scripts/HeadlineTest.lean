@@ -435,9 +435,9 @@ example :
 
 /-! ## Recursive enumerability
 
-The three rewriting problems, PCP, MPCP and matrix mortality are recursively enumerable, so with
-their halting-hardness above they are exactly as hard as the halting problem. Generated on
-2026-11-27. -/
+The three rewriting problems, PCP, MPCP, matrix mortality and the matrix game are recursively
+enumerable, so with their halting-hardness above they are exactly as hard as the halting problem.
+Generated on 2026-11-27 and 2026-11-28. -/
 
 example :
     ∀ {T : Type} [Primcodable T] [DecidableEq T],
@@ -463,6 +463,10 @@ example :
 example :
     REPred DiagonaLean.MatMort.DecisionProblem :=
   @DiagonaLean.MatMort.rePred
+
+example :
+    REPred DiagonaLean.MatrixGame.DecisionProblem :=
+  @DiagonaLean.MatrixGame.rePred
 
 /-! ## Completeness and degrees
 

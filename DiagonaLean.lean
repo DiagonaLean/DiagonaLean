@@ -133,6 +133,7 @@ import DiagonaLean.MatrixGame.Search
 import DiagonaLean.MatrixGame.Attractor
 import DiagonaLean.MatrixGame.Reductions.MatMort_to_MatrixGame
 import DiagonaLean.MatrixGame.Undecidable
+import DiagonaLean.MatrixGame.RE
 import DiagonaLean.MatrixGame.SynthHardness
 
 import DiagonaLean.Synthetic.Definitions
