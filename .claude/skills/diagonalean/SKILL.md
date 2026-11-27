@@ -156,11 +156,40 @@ extract them from `Nontrivial α` (a `Prop`).
 
 ## 4. The tactics, and what they need from you
 
+**Use the library's tactic for every job it covers**, not a hand-written term or proof:
+
+| Job | Tactic |
+|---|---|
+| compose reductions, either layer | `synth_reduce_from` / `hard_reduce_from` / `reduce_from`, chains of links |
+| a synthetic result made proved | `upgrade s` |
+| a result over every alphabet | `code_lift F from h` |
+| `haltHard`, `not_computablePred`, `not_machineDecidable` | `halt_results` |
+| `Primrec`, `PrimrecPred`, `Computable` | `fun_prop`, `derive_primrec`, `primrec_rec` |
+| `Primcodable` for an inductive type | `derive_primcodable` |
+| an explicit Turing machine for a computable function | `tm_computer`, `tm_computes` |
+| find a route you do not know | `undec? from P`, then paste the script it prints |
+
+Three limits:
+* **No search in the library.** `undec from P`, `undec?` and `reduction_path` are for finding a
+  route; a library proof names it (`reduce_from h via r₁, via r₂, …`). The `search` rule rejects
+  the search forms.
+* **Correctness is mathematics.** The `forward` / `backward` goals a link leaves are proved by hand;
+  no tactic does them.
+* **Nothing to compose, no tactic.** A one-line term is clearer when no tactic step is involved:
+  `exact not_machineDecidable_of_not_computablePred (by fun_prop) h`.
+
+**When a tactic fails on a case it should cover, fix the tactic or report the gap; do not write
+around it silently.** A hand-written proof hides the gap, and the next problem hits it again. The
+tactics are tested by being used: two bugs of `reduce_from` were found that way on 2026-11-27 (a
+problem as the source of one link on a proved goal; an `Undecidable p` source). The fix comes
+with a regression test (`scripts/ReduceFromTest.lean`, `UndecFromTest.lean`); for `fun_prop`, the
+missing lemma goes in the matching `*Prim.lean` with a test in `scripts/FunPropTest.lean`.
+
 * **`reduce_from h via r`** reads the goal to choose the layer. It leaves `Computable r.f` (when it
   upgrades a synthetic link) and `Computable enc` only if `assumption` and `fun_prop` fail. Before
   `fun_prop` it reduces `r.f` to the *named* function `r` was built from (`unfoldField`), so a
   `@[fun_prop]` lemma on that function is all it needs. The source may also be a negative result
-  `h : ¬ ComputablePred p`; it then proves `¬ ComputablePred q` and `¬ MachineDecidable enc q`
+  `h : ¬ ComputablePred p` or `h : Undecidable p` (what `halt_results` states); it then proves `¬ ComputablePred q` and `¬ MachineDecidable enc q`
   (through `ComputableReduction.not_computablePred`, or `not_computablePred_of_reduces` for a
   synthetic link) and nothing else. `h` and `r` are arbitrary terms (applied
   definitions, hypotheses, `.trans` chains), not only names. The bare correctness theorem is not a
@@ -172,9 +201,10 @@ extract them from `Nontrivial α` (a `Prop`).
   one step; `with f using spec` (`spec : p ⪯_s[f] q`) or `with f using fwd bwd` closes the link with
   a known theorem; `synth_reduce_from h via r` composes a bundled link. `f` must be a program (no
   `noncomputable`, `implemented_by`, `extern`, `opaque`, `partial`, `unsafe`, classical choice): the
-  tactic says so. The source `h` may be a **problem** (`@SemiThue.DecisionProblem Bool`): it is
-  found in the problem's namespace as `synthFromHalt` or `synthFromHaltBool` (no explicit
-  arguments), by name, in `reduce_from … via` too.
+  tactic says so. The source `h` may be a **problem** (`@SemiThue.DecisionProblem Bool`). On a
+  synthetic goal it is found in the problem's namespace as `synthFromHalt` or `synthFromHaltBool`
+  (no explicit arguments), by name; on a hard goal, through `HaltSource` / `HaltHardFact` (next);
+  in `reduce_from … via` too.
   `reduce_from_pcp over_letters b0 b1 with f using spec` (also `using fwd bwd`, `with f`, `with f
   unfold`) is the same with PCP as the source, the letters and `b0 ≠ b1` automatic.
 * **`hard_reduce_from h with f …`** is the same for hard goals (`HaltReduction q`, `HaltHard q`,
@@ -182,9 +212,11 @@ extract them from `Nontrivial α` (a `Prop`).
   `Computable f` is tried with `fun_prop` and left open if it fails (stated on `f`, no unfolding of a
   bundled link). The source is a proved `HaltReduction`, the fact `HaltHard p` (not for the data
   goal `HaltReduction q`), `¬ ComputablePred p` (for the two negative goals), or a problem with a
-  `HaltSource` / `HaltHardFact` instance (registered: MPCP, PCP and SemiThue over `Bool`, MatMort;
-  `instance : HaltSource P := ⟨fromHalt…⟩` next to the `HaltReduction`). `reduce_from h with …`
-  chooses between the two tactics by the goal.
+  `HaltSource` / `HaltHardFact` instance. `halt_results` states `HaltHardFact` for every problem it
+  covers (over every alphabet with `over_letters`); `HaltSource`, the reduction as data, is
+  written by hand next to a `HaltReduction` (MPCP, PCP and SemiThue over `Bool`, MatMort), and only
+  it proves the data goal `HaltReduction q`. `reduce_from h with …` chooses between the two tactics
+  by the goal.
 * **Chains.** The three tactics take several links separated by commas, each `with f …` or
   `via r`, composed in order:
   ```lean
@@ -204,7 +236,7 @@ extract them from `Nontrivial α` (a `Prop`).
   then `def X.fromHalt : HaltReduction X := by upgrade X.synthFromHalt`. It cannot help where no
   problem of the chain has a proved root (SKI, β, KAComm, Rice) or a link's types are not
   `Primcodable` (grammars of Mathlib); the errors say which.
-* **`undec? from P`, `undec?`, `reduction_path`, `undec from P`** (Aalok's, `Synthetic/Tactics/`,
+* **`undec? from P`, `undec?`, `reduction_path`, `undec from P`** (`Synthetic/Tactics/`,
   `Foundations/Computability/UndecTransfer.lean`) search the reduction graph: edges are closed
   `P ⪯_s Q` / `P ⪯ Q` definitions (tagged `@[undecReduction]` first, then any in the imports),
   sources are `@[undecHardness]` theorems. Use them to *find* a route; `undec?` prints it as
@@ -213,7 +245,10 @@ extract them from `Nontrivial α` (a `Prop`).
   depends on the imports; `undec from h via r₁, …` (a given route) is allowed. A generic
   reduction (with parameters) is not an edge: tag a closed instance (`PCP.synthFromHaltBool`).
   On proved goals (`HaltReduction Q`, `HaltHard Q`) `undec? from P` also finds the route and runs
-  `reduce_from P via …`, from `P`'s `HaltSource` / `HaltHardFact`.
+  `reduce_from P via …`, from `P`'s `HaltSource` / `HaltHardFact`. A route with no links (the
+  source is the goal's problem) is suggested as a term, `exact h` or the bridge to
+  `¬ MachineDecidable`. The search costs about 44 ms at worst on the current library (measured
+  2026-11-28).
 * **`code_lift F from h`**: a halting reduction `h` is composed with the lift by `reduce_from`
   (synthetic `F.lift` or proved `F.computableLift`, chosen by the goal), so it proves every goal
   `reduce_from` does, over any alphabet with two letters (`hne : b0 ≠ b1` in the context); a source
@@ -232,6 +267,13 @@ extract them from `Nontrivial α` (a `Prop`).
   recursion on `ℕ`, `List`, or a `derive_primcodable` type.
 * **`derive_primcodable T`**: `Primcodable T` plus constructor lemmas, for an inductive type whose
   fields are `T`, `List T`, `Option T` or `Primcodable` data.
+* **`tm_computer F`** proves `∃ R : SingleTapeTM Bool, ∀ l, R.Outputs l (F l)` for
+  `F : List Bool → List Bool`, and **`tm_computes F`** turns a goal
+  `∃ R, ComputesReduction R enc₁ enc₂ f` into `∀ x, F (enc₁ x) = enc₂ (f x)`; both prove `F`
+  computable with `fun_prop` (first as `Primrec`). They give an explicit machine for statements
+  that name one (`Foundations/Computability/Computer.lean`; used by `ProofRace` and the KAComm race,
+  `KAComm/KleeneAlgebra/Between.lean`). A negative result about machines does not need them: it
+  comes from `HaltHard` through `.not_machineDecidable` (§6, last pitfall).
 
 Commands that add declarations are allowed only by name (`Synthetic/MetaprogramCheck.lean`);
 never use `run_cmd`, `#eval`, `initialize`, `addDecl` or `debug.` options in the library.
