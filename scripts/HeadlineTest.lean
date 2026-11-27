@@ -402,6 +402,37 @@ example :
               (DiagonaLean.Rice.RiceProblem C) :=
   @DiagonaLean.Rice.not_machineDecidable
 
+example :
+    DiagonaLean.Foundations.Computability.HaltHard DiagonaLean.MatrixGame.DecisionProblem :=
+  @DiagonaLean.MatrixGame.haltHard
+
+example :
+    ¬ComputablePred DiagonaLean.MatrixGame.DecisionProblem :=
+  @DiagonaLean.MatrixGame.not_computablePred
+
+example :
+    ∀ {enc : DiagonaLean.MatrixGame.Arena → List Bool},
+      Computable enc → ¬DiagonaLean.Synthetic.Definitions.MachineDecidable enc
+          DiagonaLean.MatrixGame.DecisionProblem :=
+  @DiagonaLean.MatrixGame.not_machineDecidable
+
+example :
+    ∀ {enc : Finset DiagonaLean.MatrixGame.Position → List Bool},
+      Computable enc →
+        ¬DiagonaLean.Synthetic.Definitions.MachineDecidable enc fun moves =>
+          DiagonaLean.MatrixGame.DecisionProblem (DiagonaLean.MatrixGame.Reduction.signGame moves) :=
+  @DiagonaLean.MatrixGame.not_machineDecidable_signGame
+
+example :
+    ¬ComputablePred DiagonaLean.Rabin.DecisionProblem :=
+  @DiagonaLean.Rabin.not_computablePred
+
+example :
+    ∀ {enc : DiagonaLean.Rabin.PayoffCode → List Bool},
+      Computable enc → ¬DiagonaLean.Synthetic.Definitions.MachineDecidable enc
+          DiagonaLean.Rabin.DecisionProblem :=
+  @DiagonaLean.Rabin.not_machineDecidable
+
 /-! ## Recursive enumerability
 
 The three rewriting problems, PCP, MPCP and matrix mortality are recursively enumerable, so with
@@ -601,3 +632,9 @@ example :
           DiagonaLean.KAComm.KleeneAlgebra.TD.pl
             (DiagonaLean.KAComm.KleeneAlgebra.FreePreKA.mk f) :=
   @DiagonaLean.KAComm.ModelLeBool.decisionProblem_mk
+
+example :
+    ∀ (eve adam : Finset DiagonaLean.MatrixGame.Position),
+      DiagonaLean.MatrixGame.DecisionProblem (eve, adam) ↔
+        DiagonaLean.MatrixGame.EveForcesZero eve adam :=
+  @DiagonaLean.MatrixGame.decisionProblem_mk

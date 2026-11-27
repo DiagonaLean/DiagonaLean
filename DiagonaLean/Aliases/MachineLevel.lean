@@ -8,10 +8,12 @@ import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFGCode
 import DiagonaLean.EmpCFG.AlphabetLift
 import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFGCode
 import DiagonaLean.EmpCFG.Undecidable
+import DiagonaLean.MatrixGame.Undecidable
 import DiagonaLean.GrammarMem.Reductions.HaltCanon_to_GrammarMem
 import DiagonaLean.GrammarMem.Reductions.SemiThue_to_GrammarMem
 import DiagonaLean.MPCP.Reductions.HaltCanon_to_MPCP
 import DiagonaLean.MPCP.Undecidable
+import DiagonaLean.Rabin.Undecidable
 import DiagonaLean.SemiThue.AlphabetLift
 import DiagonaLean.SemiThue.Reductions.HaltCanon_to_SemiThue
 
@@ -263,3 +265,26 @@ alias toEmptyOf := SemiThue.Reduction.toEmptyOf
 alias toEmptyOf_prim := SemiThue.Reduction.toEmptyOf_prim
 
 end DiagonaLean.SemiThue.MachineLevel
+
+namespace DiagonaLean.MatrixGame.MachineLevel
+
+-- from `DiagonaLean.MatrixGame` (2026-11-27: `MatrixGame/MachineLevel.lean` became
+-- `MatrixGame/Undecidable.lean`, with the names of `halt_results`)
+@[deprecated MatrixGame.not_computablePred (since := "2026-11-27")]
+alias not_computablePred_matrixGame := MatrixGame.not_computablePred
+@[deprecated MatrixGame.not_machineDecidable (since := "2026-11-27")]
+alias not_machineDecidable_matrixGame := MatrixGame.not_machineDecidable
+@[deprecated MatrixGame.not_machineDecidable_signGame (since := "2026-11-27")]
+alias not_machineDecidable_signGame := MatrixGame.not_machineDecidable_signGame
+
+end DiagonaLean.MatrixGame.MachineLevel
+
+namespace DiagonaLean.Rabin.MachineLevel
+
+-- from `DiagonaLean.Rabin` (2026-11-27: `Rabin/MachineLevel.lean` became `Rabin/Undecidable.lean`)
+@[deprecated Rabin.not_computablePred (since := "2026-11-27")]
+alias not_computablePred_rabin := Rabin.not_computablePred
+@[deprecated Rabin.not_machineDecidable (since := "2026-11-27")]
+alias not_machineDecidable_rabin := Rabin.not_machineDecidable
+
+end DiagonaLean.Rabin.MachineLevel

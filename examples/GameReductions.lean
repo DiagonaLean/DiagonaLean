@@ -4,8 +4,10 @@ Authors: Aalok Thakkar, Claude Opus
 -/
 
 import DiagonaLean.Rabin.FixedGame
-import DiagonaLean.Rabin.MachineLevel
-import DiagonaLean.MatrixGame.MachineLevel
+import DiagonaLean.Rabin.Undecidable
+import DiagonaLean.Rabin.SynthHardness
+import DiagonaLean.MatrixGame.Undecidable
+import DiagonaLean.MatrixGame.SynthHardness
 
 /-! # Two game reductions
 

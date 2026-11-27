@@ -105,6 +105,7 @@ explicitly (`…Over b0 b1 hne`); `Nontrivial α` is enough only for `Prop` resu
 | `upgrade s` | from a synthetic halting reduction `s : SynthHaltReduction q`, proves `HaltReduction q`, `HaltHard q`, `¬ ComputablePred q` or `¬ MachineDecidable enc q`: cuts the chain of `s` at the last problem with a proved halting reduction (`foo` for `synthFoo`, same explicit arguments; a hypothesis; `HaltSource`), and upgrades the synthetic links after it, one `Computable f` goal per link tried with `fun_prop` (tags as for chains). Errors name the chain when no cut exists, and a link whose types are not `Primcodable`. (`Foundations/Computability/Upgrade.lean`) |
 | `reduce_from h via r` | closes `SynthHaltReduction q`, `HaltReduction q`, `HaltHard q`, `¬ ComputablePred q`, `¬ MachineDecidable enc q` from a halting reduction `h` to `p` and a link `r : p ⪯_s q` or `p ⪯ q`. The goal picks the layer. A synthetic link is upgraded with `ofSynth`, and its `Computable r.f` is closed by `fun_prop` when the link's function has a lemma. A synthetic `h` with a proved goal is an error. (`Foundations/Computability/ReduceFrom.lean`) |
 | `halt_results P from r` | a command: from `r : HaltReduction P`, states the theorems `haltHard`, `not_computablePred` and `not_machineDecidable` in the current namespace. `r` may also be a proof of `HaltHard P`, when the reduction takes constants that exist only classically (`SKIConv/Undecidable.lean`: `exists_isUniversal.elim fun u hu => … ⟨fromHaltWith …⟩`). `halt_results P over_letters from r` states them over every nontrivial alphabet, from `r b0 b1 hne` (`HaltHard.of_letters`); `halt_results Name for …` puts them under `Name`. (`Foundations/Computability/HaltResults.lean`) |
+| `undec? from P`, `undec?`, `reduction_path`, `undec from P` | search the reduction graph (breadth first) for a route to the goal (`SynthHaltReduction q`, `¬ ComputablePred q`, `¬ MachineDecidable enc q`, `HaltReduction q`, `HaltHard q`): edges are closed `P ⪯_s Q` / `P ⪯ Q` definitions, `@[undecReduction]` first, then any in the imports; sources are `@[undecHardness]` theorems, which `halt_results` tags. `undec?` prints the route as `reduce_from h via r₁, via r₂, …`, the form library proofs use: the search forms are rejected in the library (`MetaprogramCheck`, rule `search`), since their route depends on the imports. `undec from h via r₁, …` follows a given route. (`Synthetic/Tactics/ReductionPath.lean`, `UndecFrom.lean`, `Foundations/Computability/UndecTransfer.lean`) |
 | `code_lift F from h` | lifts `h` over the source alphabet to the goal's alphabet. A halting reduction `h` goes through `reduce_from h via` the lift (synthetic `F.lift` or proved `F.computableLift`, by the goal), so every `reduce_from` goal works, e.g. `HaltReduction (@MPCP.DecisionProblem α)` from `MPCP.fromHalt`; `h : ¬ ComputablePred` gives `¬ ComputablePred` and `¬ MachineDecidable`; `code_lift F` alone proves `ManyOneEquiv`. Needs `hne : b0 ≠ b1` in context for a halting reduction. (`Foundations/Codes/Tactic.lean`) |
 | `reduce_from_pcp over_letters b0 b1 with f …` | `synth_reduce_from (PCP.synthFromHaltOver b0 b1 _) with f …`, the letters and `b0 ≠ b1` found automatically; `via R` is the older form |
 | `fun_prop` | `Primrec`, `PrimrecPred`, `Computable` goals, from registered lemmas (`Foundations/Computability/Prim.lean`, `IntPrim.lean`, `MatrixPrim.lean`, `FinsetPrim.lean`) |
@@ -129,6 +130,7 @@ duplicates `MatMortProblem`, `AmbigCFGProblem` and `EmpCFGProblem` were removed.
 **Proved halting reductions** (`HaltReduction`, 2026-11-23): the root `MPCP.fromHalt` (over
 `Alpha ℕ Sym2`, through `canonInst = instOf c.start c.table w`, `MPCP/Reductions/HaltCanon_to_MPCP.lean`), and from it
 `MPCP.fromHaltOver`/`…Bool`, `PCP.fromHalt`/`…Over`/`…Bool`, `MatMort.fromHalt`,
+`MatrixGame.fromHalt` (from `MatMort.fromHalt` along `signGame`),
 `EmpCFG.codeFromHaltTerm`, `AmbigCFG.codeFromHaltSum` (fixed terminal shapes) and, lifted to grammar
 codes over every alphabet with two letters, `EmpCFG.codeFromHaltOver`, `AmbigCFG.codeFromHaltOver`.
 Each problem states its consequences with `halt_results` (`X.haltHard`, `X.not_computablePred`,
@@ -139,7 +141,8 @@ on the same table construction: `SemiThue.posFromHalt`/`…Over`, `SemiThue.from
 `GrammarMem.emptyWordFromHalt`, `GrammarMem.fromHalt`. Constructions on tables share
 `MPCP.Reduction.SameTable` (same lookup, same state numbers) and `CanonTM.sameTable`. Still only
 synthetic: the grammar problems on
-Mathlib's `ContextFreeGrammar` (not `Primcodable`), Rice, and the KAComm language problems
+Mathlib's `ContextFreeGrammar` (not `Primcodable`), Rice, Rabin's game (`Rabin.not_computablePred`
+from self-halting), and the KAComm language problems
 `LangEq`, `ModelLe` and their `…Bool` forms (their reduction `haltRed` is built from a machine's
 own state type, so making it computable on canonical machines is its own project). Their `¬ ComputablePred` results are kernel-checked all the same.
 SKI, β, and KAComm's `KATermEq`, `TermEq` and their `…Bool` forms are halting-hard all the same

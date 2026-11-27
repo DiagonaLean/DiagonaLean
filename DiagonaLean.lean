@@ -125,14 +125,14 @@ import DiagonaLean.Rabin.FixedGame
 import DiagonaLean.Rabin.Strategies
 import DiagonaLean.Rabin.Reductions.Halt_to_Rabin
 import DiagonaLean.Rabin.Undecidable
-import DiagonaLean.Rabin.MachineLevel
+import DiagonaLean.Rabin.SynthHardness
 import DiagonaLean.Rabin.ComputableStrategy
 
 import DiagonaLean.MatrixGame.Basic
 import DiagonaLean.MatrixGame.Search
 import DiagonaLean.MatrixGame.Reductions.MatMort_to_MatrixGame
 import DiagonaLean.MatrixGame.Undecidable
-import DiagonaLean.MatrixGame.MachineLevel
+import DiagonaLean.MatrixGame.SynthHardness
 
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain

@@ -6,9 +6,11 @@ import DiagonaLean.EmpCFG.Undecidable
 import DiagonaLean.SemiThue.Undecidable
 import DiagonaLean.MatMort.Undecidable
 import DiagonaLean.MatrixGame.Undecidable
-import DiagonaLean.MatrixGame.MachineLevel
+import DiagonaLean.MatrixGame.Undecidable
+import DiagonaLean.MatrixGame.SynthHardness
 import DiagonaLean.Rabin.FixedGame
-import DiagonaLean.Rabin.MachineLevel
+import DiagonaLean.Rabin.Undecidable
+import DiagonaLean.Rabin.SynthHardness
 
 /-! Regression tests for discovery, composition, and the manual tactic interface. -/
 
