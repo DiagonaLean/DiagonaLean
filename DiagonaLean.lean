@@ -108,6 +108,18 @@ import DiagonaLean.MatrixGame.Reductions.MatMort_to_MatrixGame
 import DiagonaLean.MatrixGame.Undecidable
 import DiagonaLean.MatrixGame.MachineLevel
 
+import DiagonaLean.CM2.Basic
+import DiagonaLean.CM2.Assembly
+import DiagonaLean.CM2.Arithmetic
+import DiagonaLean.CM2.Registers
+import DiagonaLean.CM2.Execution
+import DiagonaLean.CM2.Link
+import DiagonaLean.CM2.Simulation
+import DiagonaLean.CM2.Reductions.Halt_to_CM2
+import DiagonaLean.CM2.Assembler
+import DiagonaLean.CM2.MachineLevel
+import DiagonaLean.CM2.Undecidable
+
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
 import DiagonaLean.Synthetic.HaltReduction
