@@ -25,7 +25,8 @@ open DiagonaLean.PCP DiagonaLean.MatMort DiagonaLean.Synthetic.Definitions
 
 /-- **Matrix mortality of `3 × 3` integer matrices is synthetically halting-hard.** It is reduced
 from PCP over the alphabet `S23 = {2, 3}` through `matImage`. -/
-def _root_.DiagonaLean.MatMort.synthFromHalt : SynthHaltReduction DecisionProblem := by
+@[undecReduction] def _root_.DiagonaLean.MatMort.synthFromHalt :
+    SynthHaltReduction DecisionProblem := by
   reduce_from_pcp over_letters (0 : S23) (1 : S23) with matImage
     using pcp_reducesto_matMort_spec
 

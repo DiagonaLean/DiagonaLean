@@ -120,9 +120,25 @@ import DiagonaLean.Rice.Reductions.Halt_to_Rice
 import DiagonaLean.Rice.SynthHardness
 import DiagonaLean.Rice.Undecidable
 
+import DiagonaLean.Rabin.Basic
+import DiagonaLean.Rabin.FixedGame
+import DiagonaLean.Rabin.Strategies
+import DiagonaLean.Rabin.Reductions.Halt_to_Rabin
+import DiagonaLean.Rabin.Undecidable
+import DiagonaLean.Rabin.MachineLevel
+import DiagonaLean.Rabin.ComputableStrategy
+
+import DiagonaLean.MatrixGame.Basic
+import DiagonaLean.MatrixGame.Search
+import DiagonaLean.MatrixGame.Reductions.MatMort_to_MatrixGame
+import DiagonaLean.MatrixGame.Undecidable
+import DiagonaLean.MatrixGame.MachineLevel
+
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
 import DiagonaLean.Synthetic.HaltReduction
+import DiagonaLean.Synthetic.Tactics.ReductionPath
+import DiagonaLean.Synthetic.Tactics.UndecFrom
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 import DiagonaLean.Synthetic.ReductionCheck
 import DiagonaLean.Synthetic.MetaprogramCheck
@@ -161,6 +177,7 @@ import DiagonaLean.Foundations.Computability.CanonRace
 import DiagonaLean.Foundations.Computability.HaltResults
 import DiagonaLean.Foundations.Computability.ReduceFrom
 import DiagonaLean.Foundations.Computability.Upgrade
+import DiagonaLean.Foundations.Computability.UndecTransfer
 import DiagonaLean.Foundations.Computability.Normalize.Conditions
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
 import DiagonaLean.Foundations.Computability.Normalize.Cell

@@ -3,6 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Prathamesh Turaga
 -/
 
+import DiagonaLean.Foundations.Computability.UndecTransfer
 import DiagonaLean.PCP.Primrec
 import DiagonaLean.MPCP.Undecidable
 import DiagonaLean.PCP.AlphabetLift
@@ -62,6 +63,8 @@ section
 variable {α : Type} [Primcodable α] [Nontrivial α]
 
 halt_results (@PCP.DecisionProblem α) over_letters from fromHaltOver
+
+attribute [undecHardness] not_computablePred
 
 end
 

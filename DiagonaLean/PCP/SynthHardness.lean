@@ -3,6 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Prathamesh Turaga
 -/
 
+import DiagonaLean.Synthetic.Tactics.UndecFrom
 import DiagonaLean.PCP.Reductions.Halt_to_PCP
 
 @[expose] public section
@@ -11,8 +12,8 @@ import DiagonaLean.PCP.Reductions.Halt_to_PCP
 
 PCP is synthetically halting-hard over the fixed alphabet `Ext (Alpha ℕ Bool)`
 (`PCP.synthFromHalt`), and over any alphabet with two distinct letters (`PCP.synthFromHaltOver`), by
-transporting the first result along `PCP.synthAlphabetLift`. The undecidability results are in
-`Undecidable.lean`.
+transporting the first result along `PCP.synthAlphabetLift`; over `Bool` this is
+`PCP.synthFromHaltBool`. The undecidability results are in `Undecidable.lean`.
 
 ## References
 
@@ -47,5 +48,13 @@ proof. -/
 def _root_.DiagonaLean.PCP.synthFromHaltOver {α : Type} (b0 b1 : α) (hne : b0 ≠ b1) :
     SynthHaltReduction (@DecisionProblem α) :=
   SynthHaltReduction.comp PCP.synthFromHalt (PCP.synthAlphabetLift b0 b1 hne)
+
+/-- PCP over `Bool` is displayed as binary PCP. -/
+instance : Synthetic.ReductionChain.ProblemName PCProblem :=
+  ⟨"Binary PCP"⟩
+
+/-- **PCP over `Bool` is synthetically halting-hard.** -/
+@[undecReduction] def _root_.DiagonaLean.PCP.synthFromHaltBool : SynthHaltReduction PCProblem :=
+  PCP.synthFromHaltOver false true Bool.false_ne_true
 
 end DiagonaLean.PCP.Reduction

@@ -16,6 +16,14 @@ jobs:
         run: lake env lean scripts/CheckReductions.lean
       - name: Check that the reduction checker rejects classical witnesses
         run: lake env lean scripts/CheckReductionsTest.lean
+      - name: Check undecidability tactic path discovery and composition
+        run: lake env lean scripts/UndecFromTest.lean
+      - name: Check the declarations tagged for undec from
+        run: lake env lean scripts/CheckUndecTags.lean
+      - name: Check the palindrome example
+        run: lake env lean examples/PalindromeGrammar.lean
+      - name: Check the game examples
+        run: lake env lean examples/GameReductions.lean
       - name: Check that fun_prop proves Primrec and Computable goals
         run: lake env lean scripts/FunPropTest.lean
       - name: Check derive_primcodable and primrec_rec on inductive types

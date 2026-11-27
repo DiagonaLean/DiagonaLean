@@ -3,6 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Akhilesh Balaji, Aristotle (Harmonic), Prathamesh Turaga
 -/
 
+import DiagonaLean.Foundations.Computability.UndecTransfer
 import DiagonaLean.MatMort.Primrec
 import DiagonaLean.PCP.Undecidable
 import DiagonaLean.Foundations.Computability.HaltResults
@@ -45,5 +46,7 @@ def fromHalt : HaltReduction DecisionProblem := by
 instance : HaltSource DecisionProblem := ⟨fromHalt⟩
 
 halt_results DecisionProblem from fromHalt
+
+attribute [undecHardness] not_computablePred
 
 end DiagonaLean.MatMort

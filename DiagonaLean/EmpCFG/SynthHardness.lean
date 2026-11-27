@@ -3,6 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar
 -/
 
+import DiagonaLean.Synthetic.Tactics.UndecFrom
 import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFG
 import DiagonaLean.EmpCFG.AlphabetLift
 
@@ -46,7 +47,7 @@ def _root_.DiagonaLean.EmpCFG.synthFromHaltOver {α : Type} (b0 b1 : α) (hne : 
 
 /-- **Non-emptiness of the intersection of two context-free grammars over `Bool` is
 synthetically halting-hard.** -/
-def _root_.DiagonaLean.EmpCFG.synthFromHaltBool :
+@[undecReduction] def _root_.DiagonaLean.EmpCFG.synthFromHaltBool :
     SynthHaltReduction (@DiagonaLean.EmpCFG.DecisionProblem Bool) :=
   EmpCFG.synthFromHaltOver false true Bool.false_ne_true
 

@@ -58,4 +58,5 @@ The main result is `pcp_reducesto_matMort_spec`: for any PCP instance `K` over a
 
 ### Undecidability
 - `MatMort.synthFromHalt`: mortality of finite sets of `3 × 3` integer matrices is synthetically halting-hard, by reduction from PCP over `{2, 3}`.
+- `MatMort.synthS23FromPCP` and `MatMort.synthFromPCP` (`Reductions/PCP_to_MatMort.lean`): PCP over `Bool` reduces to PCP over `{2, 3}` by the alphabet lift, and PCP over `{2, 3}` to mortality through `matImage`; they are edges of the reduction graph of `undec from`, which finds the route from binary PCP to mortality. The function of the first is primitive recursive (`synthS23FromPCP_primrec`).
 - `MatMort.fromHalt`, `MatMort.haltHard`, `MatMort.not_computablePred`, `MatMort.not_machineDecidable` (`Undecidable.lean`): it is halting-hard, so undecidable, and no Turing machine decides it under any computable encoding. They follow from `PCP.fromHaltOver` along `matImage`, which is primitive recursive (`matImage_primrec`).

@@ -10,7 +10,7 @@ The project has three goals:
 
 * **A library of undecidable problems.** Each problem is stated once, and the reductions to it are proved correct. The classical problems from automata theory are covered, and so are results from current research, such as the undecidability of Kleene algebra with commutativity conditions (arXiv:2411.15979).
 * **Honest statements.** Lean's logic is classical, so a naive statement of undecidability can be proved by a case split on whether a machine halts. The library rules this out in two ways, described in [Two notions of undecidability](#two-notions-of-undecidability).
-* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. A reduction is written as its function and its correctness proof (`synth_reduce_from h with f using spec`, `hard_reduce_from h with f using spec`), with no bundled link, and several links chain in one call separated by commas; `reduce_from` composes with an existing link in either layer; `upgrade` turns a synthetic halting reduction into a proved one, cut at the last problem with a proved reduction, leaving one `Computable` goal per remaining link; `reduce_from_pcp` and `code_lift` handle the PCP source and the alphabet lift; `halt_results` states the consequences of a proved halting reduction under uniform names.
+* **Tactics for reductions.** Composing reductions and reusing the reduction graph should take one line. A reduction is written as its function and its correctness proof (`synth_reduce_from h with f using spec`, `hard_reduce_from h with f using spec`), with no bundled link, and several links chain in one call separated by commas; `reduce_from` composes with an existing link in either layer; `upgrade` turns a synthetic halting reduction into a proved one, cut at the last problem with a proved reduction, leaving one `Computable` goal per remaining link; `reduce_from_pcp` and `code_lift` handle the PCP source and the alphabet lift; `halt_results` states the consequences of a proved halting reduction under uniform names. `undec from P` finds and composes reductions through a named source problem, and `undec?` displays a route from halting as a script that names each reduction.
 
 DiagonaLean continues <https://github.com/aalok-thakkar/undecidability/>.
 
@@ -25,10 +25,12 @@ graph LR
   PCP --> AmbigCFG
   PCP --> EmpCFG
   PCP --> MatMort
+  MatMort --> MatrixGame
   HALT --> UTMHalt
   HALT --> SKIConv
   HALT --> BetaConv
   HALT --> Rice
+  HALT --> Rabin
   HALT --> KA["KAComm: KA with commutativity<br/>(8 problems: T, K, L equality and L inclusion,<br/>over ℕ and over {0, 1})"]
 ```
 
@@ -46,9 +48,13 @@ graph LR
 | SKI convertibility | Do two SKI terms have a common reduct? | [`SKIConv/`](DiagonaLean/SKIConv/README.md) | `SynthHaltReduction`, `HaltHard`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding (`SKIConv.haltHard`, …); recursively enumerable (`SKIConv.rePred`) |
 | β-conversion | Are two λ-terms β-convertible? | [`BetaConv/`](DiagonaLean/BetaConv/README.md) | `SynthHaltReduction`, `HaltHard`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding (`BetaConv.haltHard`, …); recursively enumerable (`BetaConv.rePred`) |
 | Rice's problem | For a set $C$ of partial functions $\mathbb N \rightharpoonup \mathbb N$, does a program compute a function in $C$? | [`Rice/`](DiagonaLean/Rice/README.md) | `¬ ComputablePred` and `¬ MachineDecidable` for every non-trivial $C$; `SynthHaltReduction` when $C$ contains some computable function but not the nowhere-defined one; of the complement when $C$ contains the nowhere-defined function and misses some computable function (`Rice.not_computablePred`, `Rice.not_machineDecidable`) |
+| Rabin's game | Given a finite program for a primitive recursive payoff $g$, in a language with an instruction that runs a bounded Turing-machine simulation, can Player I win the game where I picks $i$, II picks $j$, I picks $k$, and I wins iff $g(k) = i + j$? | [`Rabin/`](DiagonaLean/Rabin/README.md) | `SynthHaltReduction`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding |
+| Matrix game | Given finite sets of $3 \times 3$ integer matrices for Eve and Adam, who alternately right-multiply starting from the identity, can Eve force the product to $0$? | [`MatrixGame/`](DiagonaLean/MatrixGame/README.md) | `SynthHaltReduction`, `¬ ComputablePred`, `¬ MachineDecidable` under every computable encoding, already when Adam plays $\pm I$ |
 | Kleene algebra with commutativity | Is $e = f$ provable in Kleene algebra (`KATermEq`) or pre-Kleene algebra (`TermEq`) with commutativity conditions on letters? Is $\mathcal L(e) = \mathcal L(f)$ (`LangEq`), or $\mathcal L(e) \subseteq \mathcal L(f)$ (`ModelLe`), in the language model? Each over $\Sigma = \mathbb N$ and over $\Sigma = \{0, 1\}$ (`XBool`). | [`KAComm/`](DiagonaLean/KAComm/README.md) | `HaltHard` for `KATermEq`, `TermEq` and their `XBool` forms (`KAComm.KATermEq.haltHard`, …); `SynthHaltReduction` (for `LangEq`, `ModelLe`: of the complement); `¬ ComputablePred` and `¬ MachineDecidable` under every computable encoding for all eight (`KAComm.X.not_computablePred`, `KAComm.X.not_machineDecidable`); also `¬ MachineDecidable` for every theory between pre-Kleene algebra and the language model (Theorem 18) |
 
 The Kleene algebra folder formalises A. Azevedo de Amorim, C. Zhang and M. Gaboardi, *Kleene algebra with commutativity conditions is undecidable* (arXiv:2411.15979). Its main results hold with no hypotheses. It also finds and repairs an error in the paper's Theorem 6. Its [README](DiagonaLean/KAComm/README.md) states the results mathematically and explains how to audit them, and [STATUS.md](DiagonaLean/KAComm/STATUS.md) records what is open.
+
+The Rabin folder also proves Rabin's theorem (`rabin_game`): for one primitive recursive payoff, Player II has a winning strategy, but every computable strategy for Player II loses on some play.
 
 Shared machinery lives in `Foundations/`:
 
@@ -220,6 +226,37 @@ end SwappedPCP
 `with swap` alone leaves the two directions as goals `forward` and `backward`; `with swap unfold`
 also unfolds both problems; `using fwd bwd` closes them with two lemmas.
 
+`undec from P` finds a route from halting through a named source problem `P`. The halting reduction for the matrix game, `MatrixGame.synthFromHalt`, is proved by `undec from MatMort.DecisionProblem`. Run `lake env lean examples/GameReductions.lean` to display the proof terms for both games and play through a finite example.
+
+The proof can also start at binary PCP. Run the following after `import DiagonaLean` to see the alphabet lift to Paterson's alphabet, the reduction from PCP to mortality, and the reduction from mortality to the game.
+
+```lean
+open DiagonaLean DiagonaLean.Synthetic.Definitions
+
+example : SynthHaltReduction MatrixGame.DecisionProblem := by
+  undec? from PCP.PCProblem
+```
+
+Lean displays the route and suggests a script that names each reduction on it, here `undec from PCP.synthFromHaltBool via MatMort.synthS23FromPCP, MatMort.synthFromPCP, MatrixGame.synthFromMatMort`. The script composes exactly those reductions, so replaying it does not depend on which reductions are tagged. For a machine-level goal the same source predicate selects a registered theorem of noncomputability. The search checks the functions along each candidate route and uses the encoding hypothesis.
+
+```lean
+example {enc : MatrixGame.Arena → List Bool} (he : Computable enc) :
+    ¬ Synthetic.Definitions.MachineDecidable enc MatrixGame.DecisionProblem := by
+  undec? from PCP.PCProblem
+```
+
+```text
+Binary PCP → PCP over Paterson’s alphabet → 3×3 matrix mortality → Matrix-game winner
+Try this: undec from PCP.not_computablePred via MatMort.synthS23FromPCP,
+  MatMort.synthFromPCP, MatrixGame.synthFromMatMort
+```
+
+Use `undec from P` for a quiet proof and `undec? from P` to see the route and a replayable script. For synthetic goals, `undec?` also discovers a source starting from halting. Search starts with local hypotheses and tagged reductions. If they do not solve the goal, it also searches for concrete reduction definitions in the current file and its imports. Each search is breadth first. Two predicates count as the same problem when they agree after unfolding reducible and instance definitions, so a problem should be stated with `abbrev` or as a `def` used under one name. For machine-level goals it tries certified paths in both searches before leaving proof obligations. A bundled computable reduction supplies its own certificate. If only a structural route is available, each missing computability proof becomes a goal. The diagnostic names the edge or encoding that needs evidence.
+
+Tag a source theorem of the form `¬ ComputablePred P` with `@[undecHardness]`. Type and instance arguments can be inferred from `P`, as in the PCP theorem over any nontrivial alphabet. You can also pass the source theorem directly. To display a mathematical name for a problem, supply a `Synthetic.ReductionChain.ProblemName P` instance.
+
+A compiled definition of type `P ⪯_s Q` or `SynthHaltReduction Q` can be discovered without a tag. Machine-level goals also use definitions of type `P ⪯ Q` or `HaltReduction Q`. Use `@[undecReduction]` to give a concrete synthetic reduction priority. For a family with parameters, supply a specialized witness as a local hypothesis or a named definition. The search skips a tagged declaration that is not a closed reduction, and names it when no route is found; `scripts/CheckUndecTags.lean` fails CI on such a tag, or on an `@[undecHardness]` theorem that does not state `¬ ComputablePred P`. The [palindrome grammar example](examples/PalindromeGrammar.lean) uses an untagged PCP reduction.
+
 ### Prove a function primitive recursive, computable, or computed by a Turing machine
 The tactics in `DiagonaLean.Foundations.Computability` do this one definition at a time, with one
 call each:
@@ -271,6 +308,11 @@ checks.
 | `reduce_from_pcp over_letters b0 b1 with f …` | `synth_reduce_from` from PCP over the alphabet of the letters `b0 ≠ b1` (also `via R`) | [`Synthetic/Tactics/ReduceFromPCP.lean`](DiagonaLean/Synthetic/Tactics/ReduceFromPCP.lean) |
 | `code_lift F from h` | Lifts a halting reduction or `¬ ComputablePred` along a functor on codes to every alphabet with two letters | [`Foundations/Codes/Tactic.lean`](DiagonaLean/Foundations/Codes/Tactic.lean) |
 | `halt_results P from r` | A command: from `r : HaltReduction P` (or `r : HaltHard P`), states `haltHard`, `not_computablePred` and `not_machineDecidable`; `over_letters` for every nontrivial alphabet, `Name for` for a second problem in one namespace | [`Foundations/Computability/HaltResults.lean`](DiagonaLean/Foundations/Computability/HaltResults.lean) |
+| `undec from P` / `undec?` | Finds a route through the source predicate `P`; `undec?` finds a route from halting and suggests a script that replays it | [`Synthetic/Tactics/UndecFrom.lean`](DiagonaLean/Synthetic/Tactics/UndecFrom.lean) |
+| `undec from h` for `h : ¬ ComputablePred P` | Transfers noncomputability or machine undecidability along computable reductions | [`Foundations/Computability/UndecTransfer.lean`](DiagonaLean/Foundations/Computability/UndecTransfer.lean) |
+| `reduction_path` | Composes a shortest chain of reductions for a goal `P ⪯_s Q` | [`Synthetic/Tactics/ReductionPath.lean`](DiagonaLean/Synthetic/Tactics/ReductionPath.lean) |
+| `undec from H` / `undec from H via?` | Reduces `SynthHaltReduction Q` to a reduction `P ⪯_s Q`, given `H : SynthHaltReduction P`. Append `via?` to search for that reduction | [`Synthetic/Tactics/UndecFrom.lean`](DiagonaLean/Synthetic/Tactics/UndecFrom.lean) |
+| `undec from H via r₁, …, rₙ` | Composes the source `H` (a halting reduction, a predicate, or a proof of `¬ ComputablePred P`) with exactly the reductions `rᵢ`, checking that each starts where the previous one ends | [`Synthetic/Tactics/UndecFrom.lean`](DiagonaLean/Synthetic/Tactics/UndecFrom.lean) |
 | `#check_reductions` / `#check_reductions local` | Checks that every reduction (in the library, or in the current file) is a definition Lean compiles, with no classical escape hatch | [`Synthetic/ReductionCheck.lean`](DiagonaLean/Synthetic/ReductionCheck.lean) |
 
 **Computability**
