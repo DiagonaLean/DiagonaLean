@@ -300,6 +300,7 @@ import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.TraceCompleteness
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.LanguageSoundness
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.MachineTerms
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Halting
+import DiagonaLean.Degrees.Complete
 import DiagonaLean.Degrees.Rewriting
 import DiagonaLean.Degrees.Matrices
 import DiagonaLean.Aliases.MachineLevel

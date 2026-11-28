@@ -609,6 +609,57 @@ example :
   @DiagonaLean.SemiThue.complete
 
 example :
+    ∀ {α : Type} [Primcodable α] [Nontrivial α] {β : Type u}
+      [Primcodable β] {p : β → Prop}, REPred p → p ≤₀ (@DiagonaLean.MPCP.DecisionProblem α) :=
+  @DiagonaLean.MPCP.complete
+
+example :
+    ∀ {α : Type} [Primcodable α] [Nontrivial α] {β : Type u}
+      [Primcodable β] {p : β → Prop}, REPred p → p ≤₀ (@DiagonaLean.PCP.DecisionProblem α) :=
+  @DiagonaLean.PCP.complete
+
+example :
+    ∀ {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ DiagonaLean.MatMort.DecisionProblem :=
+  @DiagonaLean.MatMort.complete
+
+example :
+    ∀ {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ DiagonaLean.KAComm.TermEq.DecisionProblem :=
+  @DiagonaLean.KAComm.TermEq.complete
+
+example :
+    ∀ {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ DiagonaLean.KAComm.KATermEq.DecisionProblem :=
+  @DiagonaLean.KAComm.KATermEq.complete
+
+example :
+    ∀ {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ DiagonaLean.KAComm.TermEqBool.DecisionProblem :=
+  @DiagonaLean.KAComm.TermEqBool.complete
+
+example :
+    ∀ {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ DiagonaLean.KAComm.KATermEqBool.DecisionProblem :=
+  @DiagonaLean.KAComm.KATermEqBool.complete
+
+example :
+    ∀ {T : Type} [Primcodable T] {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ (@DiagonaLean.GrammarMem.DecisionProblem T) :=
+  @DiagonaLean.GrammarMem.complete
+
+example :
+    ∀ {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ DiagonaLean.CM2.DecisionProblem :=
+  @DiagonaLean.CM2.complete
+
+example :
+    ∀ {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ DiagonaLean.Foundations.Computability.ListHalt.DecisionProblem
+        (none : Option DiagonaLean.Foundations.Computability.Normalize.Sym2) :=
+  @DiagonaLean.Foundations.Computability.ListHalt.complete
+
+example :
     ∀ {β : Type u} [Primcodable β] {p : β → Prop},
       REPred p → p ≤₀ DiagonaLean.SKIConv.DecisionProblem :=
   @DiagonaLean.SKIConv.complete
@@ -619,7 +670,7 @@ example :
   @DiagonaLean.BetaConv.complete
 
 example :
-    ∀ {α : Type} [Primcodable α] [DecidableEq α] [Nontrivial α],
+    ∀ {α : Type} [Primcodable α] [Nontrivial α],
       ManyOneEquiv (@DiagonaLean.SemiThue.DecisionProblem α) DiagonaLean.SKIConv.DecisionProblem :=
   @DiagonaLean.Degrees.semiThue_equiv_skiConv
 
@@ -628,7 +679,7 @@ example :
   @DiagonaLean.Degrees.skiConv_equiv_betaConv
 
 example :
-    ∀ {α : Type} [Primcodable α] [DecidableEq α] [Nontrivial α],
+    ∀ {α : Type} [Primcodable α] [Nontrivial α],
       ManyOneEquiv (@DiagonaLean.SemiThue.DecisionProblem α) DiagonaLean.BetaConv.DecisionProblem :=
   @DiagonaLean.Degrees.semiThue_equiv_betaConv
 

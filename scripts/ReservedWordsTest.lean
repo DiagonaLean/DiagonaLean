@@ -22,7 +22,7 @@ library's commands (a command's first word is always reserved), and two tactic w
 `halt_results … over_letters` and the `reduceLink` category parse; no file uses them as names. -/
 def knownKeywords : List String :=
   ["for", "from", "local", "using", "with",
-    "derive_primcodable", "derive_primrec", "halt_results",
+    "derive_primcodable", "derive_primrec", "halt_results", "re_results",
     "via", "over_letters"]
 
 /-- The symbols of a `ParserDescr` term, each with whether it is reserved. -/
