@@ -39,8 +39,9 @@ def cells (k : Cfg Q Γ) : List (Cell Q Γ) :=
 /-- The row of a configuration: its cells, then blanks. -/
 def row (bl : Γ) (k : Cfg Q Γ) (j : ℕ) : Cell Q Γ := (cells k).getD j (.plain bl)
 
-/-- The cell after a head whose transition is `a`: the halting head stays, a head that stays
-writes and changes state, and a head that moves leaves the written symbol. -/
+/-- `afterHead q c a` is the cell after a head in state `q` on `c` whose transition is `a`: the
+halting head stays, a head that stays writes and changes state, and a head that moves leaves the
+written symbol. -/
 def afterHead (q : Q) (c : Γ) : Act Q Γ → Cell Q Γ
   | .halt => .head q c
   | .stay q' b => .head q' b
@@ -166,7 +167,7 @@ def tab (δ : Q → Γ → Act Q Γ) (bl : Γ) (k : Cfg Q Γ) : ℕ → ℕ → 
   | 0 => row bl k
   | t + 1 => stepRow δ (tab δ bl k t)
 
-/-- A head cell whose transition halts. -/
+/-- `x` is a head whose transition halts. -/
 def IsHaltCell (δ : Q → Γ → Act Q Γ) : Cell Q Γ → Prop
   | .head q c => δ q c = .halt
   | .plain _ => False

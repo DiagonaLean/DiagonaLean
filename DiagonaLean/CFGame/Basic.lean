@@ -17,7 +17,18 @@ side of a rule for `a`. Juliet wins when the word enters the target language aft
 a play that never does is won by Romeo. The game is a reachability game whose positions are the
 words, so Juliet has a winning strategy from `w` exactly when one move of hers leads into the least
 set of words that contains the target and is closed under her moves (`Reach`, `Wins`). The problem
-asks whether Juliet wins from a given word (`DecisionProblem`).
+asks, for a game and a word given together, whether Juliet wins from the word (`DecisionProblem`).
+Juliet must move at least once: the word itself does not count, even when it is in the target.
+Renaming letters injectively does not change the winner (`wins_map_iff`).
+
+To audit the definition, read `Reach`, `Wins` and `decisionProblem_mk`; the last is pinned in
+`scripts/HeadlineTest.lean`.
+
+## Main definitions
+
+* `Game`, `Reach G w`, `Wins G w`: games, the words from which Juliet reaches the target, and the
+  words from which she wins.
+* `DecisionProblem`: the problem on an instance `(G, w)`.
 
 ## References
 
@@ -56,9 +67,15 @@ def Wins (G : Game α) (w : List α) : Prop :=
   ∃ u v a, w = u ++ a :: v ∧ IsNonterminal G.1 a ∧
     ∀ b x, (a, b, x) ∈ G.1 → Reach G (u ++ b :: x ++ v)
 
-/-- The combined decision problem for context-free games: does Juliet win the game from the
-word? -/
+/-! ### The problem on instances, for the reductions and the computability statements -/
+
+/-- **Active context-free games on an instance `(G, w)`**: `Wins G w`. Read it curried,
+`decisionProblem_mk`. -/
 def DecisionProblem (x : Game α × List α) : Prop := Wins x.1 x.2
+
+/-- The problem on an instance `(G, w)` is the curried problem. -/
+@[simp] theorem decisionProblem_mk (G : Game α) (w : List α) :
+    DecisionProblem (G, w) ↔ Wins G w := Iff.rfl
 
 /-! ### Renaming letters -/
 

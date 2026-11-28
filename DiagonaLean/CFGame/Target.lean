@@ -18,7 +18,7 @@ given by a regular expression (`CFGame.pattern`), so the target is one too
 
 namespace DiagonaLean.CFGame.Simulation
 
-open RegularExpression Letter
+open Letter
 
 /-! ### The target -/
 
