@@ -130,8 +130,10 @@ import DiagonaLean.Rabin.ComputableStrategy
 
 import DiagonaLean.MatrixGame.Basic
 import DiagonaLean.MatrixGame.Search
+import DiagonaLean.MatrixGame.Attractor
 import DiagonaLean.MatrixGame.Reductions.MatMort_to_MatrixGame
 import DiagonaLean.MatrixGame.Undecidable
+import DiagonaLean.MatrixGame.RE
 import DiagonaLean.MatrixGame.SynthHardness
 
 import DiagonaLean.CM2.Basic
@@ -269,4 +271,5 @@ import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.LanguageSoundness
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.MachineTerms
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Halting
 import DiagonaLean.Degrees.Rewriting
+import DiagonaLean.Degrees.Matrices
 import DiagonaLean.Aliases.MachineLevel
