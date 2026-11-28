@@ -76,6 +76,10 @@ root (from `HaltCanon`); proving the last link computable does not upgrade a syn
 | `manyOneEquiv_of_haltHard_of_rePred` | halting-hard r.e. predicates are `ManyOneEquiv` |
 | `SemiThue.rePred`, `SKIConv.rePred`, `BetaConv.rePred` | the rewriting problems are r.e. (`X/RE.lean`) |
 | `PCP.rePred`, `MPCP.rePred`, `MatMort.rePred` | PCP, MPCP and matrix mortality are r.e., by a search over solutions (`X/RE.lean`) |
+| `KAComm.TermEq.rePred`, `KAComm.KATermEq.rePred`, and the `Bool` forms | the KAComm equality problems are r.e., by the proof search `checks_prim` (`X/RE.lean`) |
+| `GrammarMem.rePred`, `GrammarMem.EmptyWord.rePred`, `EmpCFG.Code.rePred` | membership for grammar codes and intersection of grammar codes are r.e., through the search of `SemiThue.rePred` (`X/RE.lean`) |
+| `REPred.of_reaches` | reaching a stopping configuration of a primitive recursive step function is r.e. (`Foundations/Computability/Reaches.lean`) |
+| `CM2.rePred`, `ListHalt.rePred` | halting of two-counter machines and of list machines is r.e., by `REPred.of_reaches` (`CM2/RE.lean`, `Foundations/Computability/ListHaltRE.lean`) |
 | `MatrixGame.rePred` | whether Eve has a winning strategy is r.e., by a bounded search run on a whole level of the game tree at once (`winsList`, recursion on `ℕ` with one changing argument) (`MatrixGame/RE.lean`) |
 | `Degrees.semiThue_equiv_skiConv`, `skiConv_equiv_betaConv`, `semiThue_equiv_betaConv`; `X.complete` | the three rewriting problems are many-one equivalent, and complete for the r.e. problems (`Degrees/Rewriting.lean`) |
 | `Degrees.matMort_equiv_matrixGame`; `MatMort.complete`, `MatrixGame.complete` | matrix mortality and the matrix game are many-one equivalent, and complete for the r.e. problems (`Degrees/Matrices.lean`) |

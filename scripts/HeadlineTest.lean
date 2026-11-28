@@ -461,9 +461,10 @@ example :
 
 /-! ## Recursive enumerability
 
-The three rewriting problems, PCP, MPCP, matrix mortality and the matrix game are recursively
-enumerable, so with their halting-hardness above they are exactly as hard as the halting problem.
-Generated on 2026-11-27 and 2026-11-28. -/
+The three rewriting problems, PCP, MPCP, matrix mortality, the matrix game, the four KAComm
+equality problems, membership for grammar codes, intersection of grammar codes, two-counter
+machines and list machines are recursively enumerable, so with their halting-hardness above they
+are exactly as hard as the halting problem. Generated on 2026-11-27 and 2026-11-28. -/
 
 example :
     ∀ {T : Type} [Primcodable T] [DecidableEq T],
@@ -489,6 +490,50 @@ example :
 example :
     REPred DiagonaLean.MatMort.DecisionProblem :=
   @DiagonaLean.MatMort.rePred
+
+example :
+    REPred DiagonaLean.KAComm.TermEq.DecisionProblem :=
+  @DiagonaLean.KAComm.TermEq.rePred
+
+example :
+    REPred DiagonaLean.KAComm.KATermEq.DecisionProblem :=
+  @DiagonaLean.KAComm.KATermEq.rePred
+
+example :
+    REPred DiagonaLean.KAComm.TermEqBool.DecisionProblem :=
+  @DiagonaLean.KAComm.TermEqBool.rePred
+
+example :
+    REPred DiagonaLean.KAComm.KATermEqBool.DecisionProblem :=
+  @DiagonaLean.KAComm.KATermEqBool.rePred
+
+example :
+    ∀ {T : Type} [Primcodable T],
+      REPred (@DiagonaLean.GrammarMem.DecisionProblem T) :=
+  @DiagonaLean.GrammarMem.rePred
+
+example :
+    ∀ {T : Type} [Primcodable T],
+      REPred fun g : { g : DiagonaLean.GrammarMem.GrammarCode T //
+          DiagonaLean.GrammarMem.IsType0 g } =>
+        DiagonaLean.GrammarMem.EmptyWordProblem g.1 :=
+  @DiagonaLean.GrammarMem.EmptyWord.rePred
+
+example :
+    ∀ {α : Type} [Primcodable α] [DecidableEq α],
+      REPred fun c : DiagonaLean.Foundations.Grammar.CFGCode α ×
+          DiagonaLean.Foundations.Grammar.CFGCode α =>
+        DiagonaLean.EmpCFG.IntersectionNonempty c.1.toCFG c.2.toCFG :=
+  @DiagonaLean.EmpCFG.Code.rePred
+
+example :
+    REPred DiagonaLean.CM2.DecisionProblem :=
+  @DiagonaLean.CM2.rePred
+
+example :
+    ∀ {Γ : Type} [DecidableEq Γ] [Primcodable Γ] (bl : Γ),
+      REPred (DiagonaLean.Foundations.Computability.ListHalt.DecisionProblem bl) :=
+  @DiagonaLean.Foundations.Computability.ListHalt.rePred
 
 example :
     REPred DiagonaLean.MatrixGame.DecisionProblem :=
