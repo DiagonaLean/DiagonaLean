@@ -31,6 +31,23 @@ example {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool} (henc : Comput
 
 end MatMortResults
 
+/-! ## `re_results` -/
+
+namespace MatMortRE
+
+re_results MatMort.DecisionProblem from MatMort.rePred
+
+/--
+info: MatMortRE.complete.{u_1} {β : Type u_1} [Primcodable β] {q : β → Prop} (hq : REPred q) : q ≤₀ MatMort.DecisionProblem
+-/
+#guard_msgs in
+#check complete
+
+example : ManyOneEquiv MatMort.DecisionProblem CM2.DecisionProblem :=
+  manyOneEquiv_of_complete _ _
+
+end MatMortRE
+
 /-! ## Over every nontrivial alphabet -/
 
 namespace MPCPResults

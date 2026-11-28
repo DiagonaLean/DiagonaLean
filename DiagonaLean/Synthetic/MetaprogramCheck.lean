@@ -336,8 +336,8 @@ def commandAllowances : List (String × List String) := [
     ["readCtors", "derivePrimcodable"]),
   -- `derive_primrec`, under the same discipline: it elaborates one generated theorem
   ("DiagonaLean/Foundations/Computability/DerivePrimrec.lean", ["readArgs", "derivePrimrec"]),
-  -- `halt_results`, a macro that expands to three theorem commands
-  ("DiagonaLean/Foundations/Computability/HaltResults.lean", ["haltResults"])]
+  -- `halt_results` and `re_results`, macros that expand to theorem and instance commands
+  ("DiagonaLean/Foundations/Computability/HaltResults.lean", ["haltResults", "reResults"])]
 
 /-- The rules that the file at `rel` may break anywhere. -/
 def allowedRules (rel : String) : List String :=

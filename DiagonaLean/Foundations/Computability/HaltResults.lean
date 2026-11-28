@@ -6,6 +6,7 @@ Authors: Prathamesh Turaga, Claude Sonnet
 import DiagonaLean.Foundations.Computability.Undecidable
 import DiagonaLean.Foundations.Computability.ReduceFrom
 import DiagonaLean.Foundations.Computability.UndecTransfer
+import DiagonaLean.Foundations.Computability.HaltComplete
 
 @[expose] public section
 
@@ -35,6 +36,14 @@ so the route search of `undec from` starts from `P`, and `instance : HaltHardFac
 * `halt_results Name for …` puts the three theorems under `Name`, for a second problem in the same
   namespace.
 
+## `re_results`
+
+`re_results P from h`, with `h : REPred P`, after `halt_results` for `P`, states that `P` is
+complete for the recursively enumerable problems (`complete : REPred q → ManyOneReducible q P`) and
+registers `h` as `instance : REFact P`. Two problems registered by both commands are many-one
+equivalent by `manyOneEquiv_of_complete p q`. `re_results Name for …` puts the theorem under
+`Name`.
+
 The section's variables, such as `{α : Type} [Primcodable α] [Nontrivial α]`, become arguments of
 the theorems as for any theorem: those that `P` mentions.
 
@@ -45,6 +54,8 @@ kernel checks as if written by hand.
 
 * `HaltHard.of_letters`: halting-hardness over a nontrivial alphabet, from a reduction for each
   pair of distinct letters.
+* `manyOneEquiv_of_complete`: two problems registered as halting-hard and recursively enumerable
+  are many-one equivalent.
 -/
 
 namespace DiagonaLean.Foundations.Computability
@@ -56,6 +67,17 @@ theorem HaltHard.of_letters {α : Type*} [Nontrivial α] {β : Type*} [Primcodab
     (r : (b0 b1 : α) → b0 ≠ b1 → HaltReduction P) : HaltHard P :=
   let ⟨b0, b1, hne⟩ := exists_pair_ne α
   ⟨r b0 b1 hne⟩
+
+/-- `P` is recursively enumerable, registered by `re_results` for `manyOneEquiv_of_complete`. -/
+class REFact {β : Type*} [Primcodable β] (P : β → Prop) : Prop where
+  /-- The fact. -/
+  re : REPred P
+
+/-- **Two registered halting-hard r.e. problems are many-one equivalent**: both have the degree of
+the halting problem. -/
+theorem manyOneEquiv_of_complete {α β : Type*} [Primcodable α] [Primcodable β] (p : α → Prop)
+    (q : β → Prop) [HaltHardFact p] [REFact p] [HaltHardFact q] [REFact q] : ManyOneEquiv p q :=
+  manyOneEquiv_of_haltHard_of_rePred HaltHardFact.hard REFact.re HaltHardFact.hard REFact.re
 
 end DiagonaLean.Foundations.Computability
 
@@ -95,3 +117,27 @@ macro (name := haltResults) "halt_results" pre:(haltResultsName)? p:term
     /-- The problem is registered as halting-hard, for the tactics. Stated by `halt_results`. -/
     instance : DiagonaLean.Foundations.Computability.HaltHardFact $p :=
       ⟨$hardName:ident⟩)
+
+open Lean in
+/-- `re_results P from h` states `complete` for the problem `P`, from `h : REPred P` and the
+halting-hardness that `halt_results` registered, and registers `h` as `REFact P`.
+`re_results Name for …` puts the theorem under `Name`. -/
+macro (name := reResults) "re_results" pre:(haltResultsName)? p:term " from " h:term :
+    command => do
+  let pre : Option Name := pre.map fun stx => stx.raw[0].getId
+  let ref ← getRef
+  let completeName : Ident :=
+    mkIdentFrom ref (pre.elim `complete (· ++ `complete)) (canonical := true)
+  -- plain binder names, so that the theorem reads as if written by hand
+  let β := mkIdent `β
+  let q := mkIdent `q
+  let hq := mkIdent `hq
+  `(/-- The problem is recursively enumerable, registered for `manyOneEquiv_of_complete`. Stated
+    by `re_results`. -/
+    instance : DiagonaLean.Foundations.Computability.REFact $p := ⟨$h⟩
+    /-- The problem is complete for the recursively enumerable problems: every one many-one reduces
+    to it. Stated by `re_results`. -/
+    theorem $completeName:ident {$β : Type*} [Primcodable $β] {$q : $β → Prop} ($hq : REPred $q) :
+        ManyOneReducible $q $p :=
+      ManyOneReducible.of_rePred_of_haltHard $hq
+        (DiagonaLean.Foundations.Computability.HaltHardFact.hard (P := $p)))
