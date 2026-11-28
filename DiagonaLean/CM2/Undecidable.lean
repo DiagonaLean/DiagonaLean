@@ -3,18 +3,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Claude Opus
 -/
 
-import DiagonaLean.CM2.Reductions.HaltCanon_to_CM2
+import DiagonaLean.CM2.Reductions.ListHalt_to_CM2
 import DiagonaLean.Foundations.Computability.HaltResults
 
 @[expose] public section
 
 /-! # Undecidability of halting for two-counter machines
 
-`canonProgram` (`Reductions/HaltCanon_to_CM2.lean`) reduces the halting problem on canonical
-machines to halting of two-counter machines from address 0 with both counters zero
-(`haltCanon_iff_cm2`), and it is primitive recursive (`canonProgram_prim`). So halting of
-two-counter machines is halting-hard (`CM2.fromHalt`). The theorem is due to Minsky. The synthetic
-result is in `SynthHardness.lean`.
+`listToCM2` (`Reductions/ListHalt_to_CM2.lean`) reduces halting of list machines given by a table
+to halting of two-counter machines from address 0 with both counters zero
+(`listHalt_reducesto_cm2_spec`), and it is primitive recursive (`listToCM2_prim`). Halting of list
+machines is halting-hard (`ListHalt.fromHalt`), so halting of two-counter machines is
+(`CM2.fromHalt`). The theorem is due to Minsky. The synthetic result is in `SynthHardness.lean`.
 
 ## Main statements
 
@@ -32,10 +32,11 @@ namespace DiagonaLean.CM2
 
 open DiagonaLean.CM2.Reduction DiagonaLean.Foundations.Computability
 
-/-- **Halting of two-counter machines from zero counters is halting-hard**: `canonProgram` reduces
-the halting problem on canonical machines to it, and is primitive recursive. -/
+/-- **Halting of two-counter machines from zero counters is halting-hard**: halting of list
+machines is (`ListHalt.fromHalt`), and `listToCM2` reduces it to halting of two-counter machines
+and is primitive recursive. -/
 def fromHalt : HaltReduction DecisionProblem := by
-  hard_reduce_from (ComputableReduction.refl HaltCanon) with canonProgram using haltCanon_iff_cm2
+  hard_reduce_from ListHalt.fromHalt with (listToCM2 none) using (listHalt_reducesto_cm2_spec none)
 
 halt_results DecisionProblem from fromHalt
 

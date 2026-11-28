@@ -20,6 +20,9 @@ and right of the head are the lists of its two stacks (`cfgOf`, `next_cfgOf`). W
 moves left at the left end of its tape (`NoLeftBoundary`), it halts on `w` iff its list machine
 halts from the initial configuration (`halts_iff`). `enumAll` lists the elements of a finite type
 with an encoding, computably.
+
+Renaming the states of a list machine keeps halting (`halts_mapCfg_iff`), and two machines that
+agree on a set of states closed under steps halt together from it (`halts_congr`).
 -/
 
 namespace DiagonaLean.Foundations.Computability
@@ -221,6 +224,110 @@ theorem halts_iff {tm : SingleTapeTM Symbol} (h_nbw : NoBlankWrites tm) {w : Lis
     exact halts_of_run h_nbw h_nlb hrun rfl _ _ rfl .refl
   · rintro ⟨k', hrun, hk'⟩
     exact run_of_halts h_nbw h_nlb hrun hk' _ _ rfl .refl
+
+/-! ### Renaming states -/
+
+section Rename
+
+variable {Q Q' Γ : Type}
+
+/-- `mapAct f a` is the transition `a` with its state renamed by `f`. -/
+def mapAct (f : Q → Q') : Act Q Γ → Act Q' Γ
+  | .halt => .halt
+  | .stay q b => .stay (f q) b
+  | .right q b => .right (f q) b
+  | .left q b => .left (f q) b
+
+/-- `mapCfg f k` is the configuration `k` with its state renamed by `f`. -/
+def mapCfg (f : Q → Q') (k : Cfg Q Γ) : Cfg Q' Γ := ⟨f k.q, k.l, k.c, k.r⟩
+
+variable {f : Q → Q'} {δ : Q → Γ → Act Q Γ} {δ' : Q' → Γ → Act Q' Γ} {bl : Γ}
+
+/-- A renamed transition halts iff the transition does. -/
+theorem mapAct_eq_halt {a : Act Q Γ} : mapAct f a = .halt ↔ a = .halt := by
+  cases a <;> simp [mapAct]
+
+/-- If `δ'` on renamed states is `δ` renamed, then a step of `δ'` from a renamed configuration is
+the renamed step of `δ`. -/
+theorem next_mapCfg (h : ∀ q c, δ' (f q) c = mapAct f (δ q c)) (k : Cfg Q Γ) :
+    next δ' bl (mapCfg f k) = (next δ bl k).map (mapCfg f) := by
+  obtain ⟨q, l, c, r⟩ := k
+  simp only [next, mapCfg, h]
+  cases δ q c with
+  | halt => rfl
+  | stay q' b => rfl
+  | right q' b => rfl
+  | left q' b => cases l <;> rfl
+
+/-- **Renaming states keeps halting.** -/
+theorem halts_mapCfg_iff (h : ∀ q c, δ' (f q) c = mapAct f (δ q c)) (k : Cfg Q Γ) :
+    Halts δ' bl (mapCfg f k) ↔ Halts δ bl k := by
+  constructor
+  · rintro ⟨k₁, hreach, hh⟩
+    generalize hk : mapCfg f k = a at hreach
+    induction hreach using Relation.ReflTransGen.head_induction_on generalizing k with
+    | refl =>
+      subst hk
+      refine ⟨k, Relation.ReflTransGen.refl, ?_⟩
+      have := h k.q k.c
+      simp only [mapCfg] at hh
+      rw [hh] at this
+      exact mapAct_eq_halt.mp this.symm
+    | head hstep _ ih =>
+      subst hk
+      rw [next_mapCfg h] at hstep
+      obtain ⟨k₂, hk₂, rfl⟩ := Option.map_eq_some_iff.mp hstep
+      obtain ⟨k₃, hreach, hh⟩ := ih k₂ rfl
+      exact ⟨k₃, Relation.ReflTransGen.head hk₂ hreach, hh⟩
+  · rintro ⟨k₁, hreach, hh⟩
+    have hlift : Relation.ReflTransGen (fun a b => next δ' bl a = some b) (mapCfg f k)
+        (mapCfg f k₁) := by
+      clear hh
+      induction hreach with
+      | refl => exact Relation.ReflTransGen.refl
+      | tail _ hab ih => exact ih.tail (by rw [next_mapCfg h, hab]; rfl)
+    exact ⟨mapCfg f k₁, hlift, by simp only [mapCfg, h, hh, mapAct]⟩
+
+end Rename
+
+/-! ### Machines that agree on a closed set of states -/
+
+section Congr
+
+variable {Q Γ : Type} {δ δ' : Q → Γ → Act Q Γ} {bl : Γ}
+
+/-- Two machines with the same transition at `k` have the same step from `k`. -/
+theorem next_congr {k : Cfg Q Γ} (h : δ' k.q k.c = δ k.q k.c) : next δ' bl k = next δ bl k := by
+  simp only [next, h]
+
+/-- If `δ'` agrees with `δ` on the states of `S`, and a step of `δ` from a state of `S` leads to a
+state of `S`, then a halting run of `δ'` from a state of `S` is a halting run of `δ`. -/
+theorem halts_of_agree (S : Q → Prop) (hagree : ∀ q, S q → ∀ c, δ' q c = δ q c)
+    (hclosed : ∀ k k' : Cfg Q Γ, S k.q → next δ bl k = some k' → S k'.q) (k : Cfg Q Γ)
+    (hk : S k.q) (h : Halts δ' bl k) : Halts δ bl k := by
+  obtain ⟨k₁, hreach, hh⟩ := h
+  revert hk
+  induction hreach using Relation.ReflTransGen.head_induction_on with
+  | refl =>
+    intro hk
+    exact ⟨_, Relation.ReflTransGen.refl, (hagree _ hk _).symm.trans hh⟩
+  | head hstep _ ih =>
+    intro hk
+    rw [next_congr (hagree _ hk _)] at hstep
+    obtain ⟨k₃, hr, h3⟩ := ih (hclosed _ _ hk hstep)
+    exact ⟨k₃, Relation.ReflTransGen.head hstep hr, h3⟩
+
+/-- **Machines that agree on a closed set of states halt together**: if `δ'` agrees with `δ` on
+the states of `S`, and a step of `δ` from a state of `S` leads to a state of `S`, then from a
+state of `S` the machine `δ'` halts iff `δ` does. -/
+theorem halts_congr (S : Q → Prop) (hagree : ∀ q, S q → ∀ c, δ' q c = δ q c)
+    (hclosed : ∀ k k' : Cfg Q Γ, S k.q → next δ bl k = some k' → S k'.q) (k : Cfg Q Γ)
+    (hk : S k.q) : Halts δ' bl k ↔ Halts δ bl k :=
+  ⟨halts_of_agree S hagree hclosed k hk,
+    halts_of_agree S (fun q hq c => (hagree q hq c).symm)
+      (fun a b ha hab => hclosed a b ha (by rwa [← next_congr (hagree _ ha _)])) k hk⟩
+
+end Congr
 
 end ListMachine
 

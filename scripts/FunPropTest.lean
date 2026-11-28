@@ -12,6 +12,7 @@ open DiagonaLean.Foundations.Computability
 example : Primrec fun n : ℕ => n * n + 3 := by fun_prop
 example : Primrec fun p : ℕ × ℕ => (p.2 + 1, p.1 * p.2) := by fun_prop
 example : Primrec fun l : List ℕ => (0 :: l) ++ l.reverse := by fun_prop
+example : Primrec fun p : List ℕ × ℕ => p.1.headD p.2 := by fun_prop
 example : Primrec fun l : List ℕ => l.map (· * 2) ++ l := by fun_prop
 example : Primrec fun p : ℕ × List ℕ => p.2.map (· + p.1) := by fun_prop
 example : Primrec fun p : ℕ × List ℕ => p.2.foldr (fun a s => a + s) p.1 := by fun_prop

@@ -142,8 +142,7 @@ import DiagonaLean.CM2.Execution
 import DiagonaLean.CM2.Link
 import DiagonaLean.CM2.Simulation
 import DiagonaLean.CM2.Assembler
-import DiagonaLean.CM2.Reductions.Halt_to_CM2
-import DiagonaLean.CM2.Reductions.HaltCanon_to_CM2
+import DiagonaLean.CM2.Reductions.ListHalt_to_CM2
 import DiagonaLean.CM2.Undecidable
 import DiagonaLean.CM2.SynthHardness
 
@@ -192,6 +191,8 @@ import DiagonaLean.Foundations.Computability.ReduceFrom
 import DiagonaLean.Foundations.Computability.Upgrade
 import DiagonaLean.Foundations.Computability.UndecTransfer
 import DiagonaLean.Foundations.Computability.ListMachine
+import DiagonaLean.Foundations.Computability.ListHalt
+import DiagonaLean.Foundations.Computability.Normalize.Table
 import DiagonaLean.Foundations.Computability.Normalize.Conditions
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
 import DiagonaLean.Foundations.Computability.Normalize.Cell

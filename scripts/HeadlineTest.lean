@@ -434,6 +434,18 @@ example :
   @DiagonaLean.Rabin.not_machineDecidable
 
 example :
+    DiagonaLean.Foundations.Computability.HaltHard
+      (DiagonaLean.Foundations.Computability.ListHalt.DecisionProblem
+        (none : Option DiagonaLean.Foundations.Computability.Normalize.Sym2)) :=
+  @DiagonaLean.Foundations.Computability.ListHalt.haltHard
+
+example :
+    ¬ComputablePred
+      (DiagonaLean.Foundations.Computability.ListHalt.DecisionProblem
+        (none : Option DiagonaLean.Foundations.Computability.Normalize.Sym2)) :=
+  @DiagonaLean.Foundations.Computability.ListHalt.not_computablePred
+
+example :
     DiagonaLean.Foundations.Computability.HaltHard DiagonaLean.CM2.DecisionProblem :=
   @DiagonaLean.CM2.haltHard
 

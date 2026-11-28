@@ -26,7 +26,7 @@ graph LR
   PCP --> EmpCFG
   PCP --> MatMort
   MatMort --> MatrixGame
-  HALT --> CM2
+  HALT --> ListHalt["ListHalt: list machines<br/>given by a table"] --> CM2
   HALT --> UTMHalt
   HALT --> SKIConv
   HALT --> BetaConv
