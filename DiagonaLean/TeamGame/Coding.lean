@@ -189,7 +189,7 @@ theorem isPlay_enc [Inhabited A] (henc : Function.Injective enc)
 theorem reachProblem_codeGame_iff [Inhabited A] (henc : Function.Injective enc)
     (hencA : Function.Injective encA) (hstart : start ∈ allP)
     (hclosed : ∀ p ∈ allP, ∀ a₀ a₁, ∀ p' ∈ succ p a₀ a₁, p' ∈ allP) (hallA : ∀ a, a ∈ allA) :
-    ReachProblem (codeGame enc encA start succ obs allP allA goal, 0) ↔
+    DecisionProblem (codeGame enc encA start succ obs allP allA goal, 0) ↔
       ∃ σ₀ σ₁ : List Bool → A, ∀ g, IsSuccPlay start succ obs σ₀ σ₁ g → ∃ k, g k ∈ goal := by
   constructor
   · rintro ⟨σ₀, σ₁, hl, hw⟩
@@ -208,7 +208,7 @@ theorem reachProblem_codeGame_iff [Inhabited A] (henc : Function.Injective enc)
 theorem safetyProblem_codeGame_iff [Inhabited A] (henc : Function.Injective enc)
     (hencA : Function.Injective encA) (hstart : start ∈ allP)
     (hclosed : ∀ p ∈ allP, ∀ a₀ a₁, ∀ p' ∈ succ p a₀ a₁, p' ∈ allP) (hallA : ∀ a, a ∈ allA) :
-    SafetyProblem (codeGame enc encA start succ obs allP allA goal, 0) ↔
+    DecisionProblemSafety (codeGame enc encA start succ obs allP allA goal, 0) ↔
       ∃ σ₀ σ₁ : List Bool → A, ∀ g, IsSuccPlay start succ obs σ₀ σ₁ g → ∀ k, g k ∉ goal := by
   constructor
   · rintro ⟨σ₀, σ₁, hl, hw⟩

@@ -13,7 +13,7 @@ import DiagonaLean.Foundations.Computability.CoHalt
 
 Emptiness of the intersection is the complement of non-emptiness, which is halting-hard for
 grammar codes over any alphabet with two letters (`EmpCFG.Code.haltHard`) and recursively
-enumerable (`EmpCFG.code_rePred`). So emptiness is co-halting-hard (`EmpCFG.Code.empty_coHaltHard`),
+enumerable (`EmpCFG.Code.rePred`). So emptiness is co-halting-hard (`EmpCFG.Code.empty_coHaltHard`),
 its complement is recursively enumerable (`EmpCFG.Code.empty_coRE`), and it is not recursively
 enumerable (`EmpCFG.Code.empty_not_rePred`): it has the degree of the complement of the halting
 problem.
@@ -41,7 +41,7 @@ theorem empty_coHaltHard [Nontrivial α] :
 /-- The complement of emptiness of the intersection of grammar codes is recursively enumerable. -/
 theorem empty_coRE :
     REPred fun c : CFGCode α × CFGCode α => ¬ IntersectionEmpty c.1.toCFG c.2.toCFG := by
-  simpa only [not_intersectionEmpty_iff_nonempty] using code_rePred (α := α)
+  simpa only [not_intersectionEmpty_iff_nonempty] using EmpCFG.Code.rePred (α := α)
 
 /-- **Emptiness of the intersection of grammar codes is not recursively enumerable**, over any
 alphabet with two letters. -/

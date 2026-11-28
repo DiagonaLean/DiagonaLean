@@ -33,16 +33,16 @@ namespace DiagonaLean.TeamGame.Reduction
 
 open DiagonaLean.Halt DiagonaLean.Synthetic.Definitions
 
-/-- **The reduction.** The halting problem many-one reduces to deciding whether a team wins a
-reachability game with imperfect information, through `haltToTeamReach`. -/
+/-- **Team reachability games are synthetically halting-hard**: the halting problem many-one
+reduces to them through `haltToTeamReach`. -/
 @[undecReduction] def _root_.DiagonaLean.TeamGame.synthFromHalt :
-    HaltProblem ⪯_s @ReachProblem ℕ _ :=
+    HaltProblem ⪯_s @DecisionProblem ℕ _ :=
   ⟨haltToTeamReach, halt_reducesto_teamReach_spec⟩
 
-/-- **The reduction.** The halting problem many-one reduces to deciding whether a team has no
-winning strategy in a safety game with imperfect information, through `haltToTeamSafety`. -/
+/-- **The complement of team safety games is synthetically halting-hard**: the halting problem
+many-one reduces to it through `haltToTeamSafety`. -/
 def _root_.DiagonaLean.TeamGame.synthComplFromHalt :
-    HaltProblem ⪯_s Complement (@SafetyProblem ℕ _) :=
+    HaltProblem ⪯_s Complement (@DecisionProblemSafety ℕ _) :=
   ⟨haltToTeamSafety, halt_reducesto_not_teamSafety_spec⟩
 
 end DiagonaLean.TeamGame.Reduction

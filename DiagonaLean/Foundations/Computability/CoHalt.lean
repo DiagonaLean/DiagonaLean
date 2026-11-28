@@ -30,9 +30,12 @@ recursively enumerable complement are many-one equivalent
 
 * `haltCanon_rePred`, `not_rePred_compl_haltCanon`: the halting problem is recursively
   enumerable and its complement is not.
-* `CoHaltHard.not_computablePred`, `CoHaltHard.not_machineDecidable`, `CoHaltHard.not_rePred`.
-* `ManyOneReducible.of_coRE_of_coHaltHard`, `manyOneEquiv_of_coHaltHard_of_coRE`: the co-r.e.
-  degree.
+* `CoHaltHard.not_computablePred`, `CoHaltHard.not_machineDecidable`, `CoHaltHard.not_rePred`:
+  co-halting-hard predicates are undecidable, not machine-decidable and not r.e.
+* `HaltHard.coHaltHard_compl`: the complement of a halting-hard predicate is co-halting-hard.
+* `ManyOneReducible.of_coRE_of_coHaltHard`, `manyOneEquiv_of_coHaltHard_of_coRE`: predicates with
+  an r.e. complement reduce to every co-halting-hard predicate, and such co-halting-hard predicates
+  are many-one equivalent.
 
 ## References
 

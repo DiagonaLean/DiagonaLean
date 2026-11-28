@@ -17,6 +17,11 @@ When the machine halts, or does not, the players output the rows of the tableau 
 player 0 stops the waiting one round after the first row with a halting head. Conversely, safe
 winning strategies output the rows of the tableau (`rows_of_safe`), so in the reachability variant
 the stop check finds a halting head, and in the safety variant no row has one.
+
+## Main statements
+
+* `winReach_iff_halts`, `winSafety_iff_not_halts`: the team wins the reachability variant iff the
+  machine halts, and the safety variant iff it does not.
 -/
 
 namespace DiagonaLean.TeamGame

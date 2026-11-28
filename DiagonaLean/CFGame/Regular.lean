@@ -3,7 +3,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Claude Opus
 -/
 
-import Mathlib.Computability.RegularExpressions
+import DiagonaLean.Foundations.Computability.RegularExpression
+import DiagonaLean.Foundations.Computability.DerivePrimrec
 
 @[expose] public section
 
@@ -13,12 +14,13 @@ The sum of a list of regular expressions matches the union of their languages (`
 `anyOf l` matches one letter of the list `l` (`mem_anyOf`), and its star matches the words whose
 letters are all in `l` (`mem_star_anyOf`). `wordRE m` matches the word `m` alone (`mem_wordRE`),
 and `pattern l m` matches the words `u ++ m ++ v` whose letters outside `m` are in `l`
-(`mem_pattern`).
+(`mem_pattern`). Renaming letters commutes with the four constructions (`sumRE_map`,
+`wordRE_map`, `pattern_map`), and they are primitive recursive (`derive_primrec`).
 -/
 
 namespace DiagonaLean.CFGame
 
-open RegularExpression
+open RegularExpression DiagonaLean.Foundations.Computability
 
 variable {α : Type}
 
@@ -98,5 +100,32 @@ theorem mem_pattern {l m w : List α} :
   · rintro ⟨u, v, rfl, hu, hv⟩
     exact ⟨u ++ m, ⟨u, mem_star_anyOf.2 hu, m, mem_wordRE.2 rfl, rfl⟩, v,
       mem_star_anyOf.2 hv, rfl⟩
+
+/-- A sum of renamed expressions is the renamed sum. -/
+theorem sumRE_map {β : Type} (g : α → β) (l : List (RegularExpression α)) :
+    (sumRE l).map g = sumRE (l.map (·.map g)) := by
+  induction l with
+  | nil => rfl
+  | cons e l ih => simp [sumRE, RegularExpression.map] at ih ⊢; rw [ih]
+
+/-- The renamed expression of a word is the expression of the renamed word. -/
+theorem wordRE_map {β : Type} (g : α → β) (m : List α) : (wordRE m).map g = wordRE (m.map g) := by
+  induction m with
+  | nil => rfl
+  | cons x m ih => simp [wordRE, RegularExpression.map] at ih ⊢; rw [ih]
+
+/-- A renamed pattern is the pattern of the renamed lists. -/
+theorem pattern_map {β : Type} (g : α → β) (l m : List α) :
+    (pattern l m).map g = pattern (l.map g) (m.map g) := by
+  simp [pattern, anyOf, RegularExpression.map, sumRE_map, wordRE_map, List.map_map,
+    Function.comp_def]
+
+derive_primrec sumRE [Primcodable α]
+
+derive_primrec anyOf [Primcodable α]
+
+derive_primrec wordRE [Primcodable α]
+
+derive_primrec pattern [Primcodable α]
 
 end DiagonaLean.CFGame

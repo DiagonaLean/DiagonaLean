@@ -6,6 +6,7 @@ Authors: Prathamesh TVH, Claude Opus
 import DiagonaLean.Foundations.Grammar.ToSRS
 import DiagonaLean.Foundations.Rewriting.Primcodable
 import DiagonaLean.Foundations.Computability.StackProof
+import DiagonaLean.Foundations.Computability.DerivePrimrec
 
 @[expose] public section
 
@@ -24,7 +25,8 @@ derivability in a string rewriting system is recursively enumerable, uniformly i
 
 For a context-free grammar code, Mathlib's derivation relation agrees with that of its rewriting
 system (`derives_toCFG_iff`, `Foundations/Grammar/ToSRS.lean`), so membership in the language of a
-grammar code is checked the same way (`mem_language_iff_checks`).
+grammar code is checked the same way (`mem_language_iff_checks`), and the rewriting system of a
+code is primitive recursive in the code (`CFGCode.toSRS_prim`).
 -/
 
 namespace DiagonaLean.Foundations.Grammar
@@ -154,5 +156,7 @@ theorem mem_language_iff_checks (c : CFGCode T) (w : List T) :
   simp [ContextFreeGrammar.mem_language_iff, symOf, Function.comp_def]
 
 end CFG
+
+derive_primrec CFGCode.toSRS [Primcodable T]
 
 end DiagonaLean.Foundations.Grammar
