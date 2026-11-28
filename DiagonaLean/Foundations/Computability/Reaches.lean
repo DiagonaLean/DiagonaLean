@@ -27,7 +27,8 @@ namespace DiagonaLean.Foundations.Computability
 
 variable {σ : Type*}
 
-/-- The configuration after `n` steps of `step` from `s`, or `none` once a step fails. -/
+/-- `iterStep step n s` is the configuration after `n` steps of `step` from `s`, or `none` once a
+step fails. -/
 def iterStep (step : σ → Option σ) (n : ℕ) (s : σ) : Option σ :=
   (fun o => o.bind step)^[n] (some s)
 

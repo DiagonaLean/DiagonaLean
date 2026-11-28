@@ -34,13 +34,14 @@ variable {Γ : Type} [DecidableEq Γ]
 cell and the cells right of the head. -/
 abbrev Tup (Γ : Type) := ℕ × List Γ × Γ × List Γ
 
-/-- The tuple of a configuration. -/
+/-- `toTup k` is the tuple of the configuration `k`. -/
 def toTup (k : Cfg ℕ Γ) : Tup Γ := (k.q, k.l, k.c, k.r)
 
-/-- The configuration of a tuple. -/
+/-- `ofTup t` is the configuration of the tuple `t`. -/
 def ofTup (t : Tup Γ) : Cfg ℕ Γ := ⟨t.1, t.2.1, t.2.2.1, t.2.2.2⟩
 
-/-- One step of the machine of `p` on tuples, from the rule for the state and the head cell. -/
+/-- `stepTup p bl t` is one step of the machine of `p` on the tuple `t`, from the rule for the state
+and the head cell. -/
 def stepTup (p : Program Γ) (bl : Γ) (t : Tup Γ) : Option (Tup Γ) :=
   (rule? p t.1 t.2.2.1).bind fun r =>
     if r.1 = .stay then some (r.2.1, t.2.1, r.2.2, t.2.2.2)

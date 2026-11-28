@@ -522,23 +522,23 @@ example :
   @DiagonaLean.KAComm.KATermEqBool.rePred
 
 example :
-    ∀ {T : Type} [Primcodable T] [DecidableEq T],
+    ∀ {T : Type} [Primcodable T],
       REPred (@DiagonaLean.GrammarMem.DecisionProblem T) :=
   @DiagonaLean.GrammarMem.rePred
 
 example :
-    ∀ {T : Type} [Primcodable T] [DecidableEq T],
+    ∀ {T : Type} [Primcodable T],
       REPred fun g : { g : DiagonaLean.GrammarMem.GrammarCode T //
           DiagonaLean.GrammarMem.IsType0 g } =>
         DiagonaLean.GrammarMem.EmptyWordProblem g.1 :=
-  @DiagonaLean.GrammarMem.emptyWord_rePred
+  @DiagonaLean.GrammarMem.EmptyWord.rePred
 
 example :
     ∀ {α : Type} [Primcodable α] [DecidableEq α],
       REPred fun c : DiagonaLean.Foundations.Grammar.CFGCode α ×
           DiagonaLean.Foundations.Grammar.CFGCode α =>
         DiagonaLean.EmpCFG.IntersectionNonempty c.1.toCFG c.2.toCFG :=
-  @DiagonaLean.EmpCFG.code_rePred
+  @DiagonaLean.EmpCFG.Code.rePred
 
 example :
     REPred DiagonaLean.CM2.DecisionProblem :=

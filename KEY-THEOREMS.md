@@ -77,7 +77,7 @@ root (from `HaltCanon`); proving the last link computable does not upgrade a syn
 | `SemiThue.rePred`, `SKIConv.rePred`, `BetaConv.rePred` | the rewriting problems are r.e. (`X/RE.lean`) |
 | `PCP.rePred`, `MPCP.rePred`, `MatMort.rePred` | PCP, MPCP and matrix mortality are r.e., by a search over solutions (`X/RE.lean`) |
 | `KAComm.TermEq.rePred`, `KAComm.KATermEq.rePred`, and the `Bool` forms | the KAComm equality problems are r.e., by the proof search `checks_prim` (`X/RE.lean`) |
-| `GrammarMem.rePred`, `GrammarMem.emptyWord_rePred`, `EmpCFG.code_rePred` | membership for grammar codes and intersection of grammar codes are r.e., through the search of `SemiThue.rePred` (`X/RE.lean`) |
+| `GrammarMem.rePred`, `GrammarMem.EmptyWord.rePred`, `EmpCFG.Code.rePred` | membership for grammar codes and intersection of grammar codes are r.e., through the search of `SemiThue.rePred` (`X/RE.lean`) |
 | `REPred.of_reaches` | reaching a stopping configuration of a primitive recursive step function is r.e. (`Foundations/Computability/Reaches.lean`) |
 | `CM2.rePred`, `ListHalt.rePred` | halting of two-counter machines and of list machines is r.e., by `REPred.of_reaches` (`CM2/RE.lean`, `Foundations/Computability/ListHaltRE.lean`) |
 | `Degrees.semiThue_equiv_skiConv`, `skiConv_equiv_betaConv`, `semiThue_equiv_betaConv`; `X.complete` | the three rewriting problems are many-one equivalent, and complete for the r.e. problems (`Degrees/Rewriting.lean`) |
