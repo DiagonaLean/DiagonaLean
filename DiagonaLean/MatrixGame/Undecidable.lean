@@ -52,12 +52,11 @@ def fromHalt : HaltReduction DecisionProblem := by
 halt_results DecisionProblem from fromHalt
 
 /-- **No Turing machine decides whether Eve has a winning strategy when Adam's moves are `1` and
-`-1`**, under any computable encoding of Eve's moves. -/
+`-1`**, under any computable encoding of Eve's moves: Eve wins exactly with the mortal move sets
+(`setOf_signGame_eq_mortal`), and no machine decides mortality (`MatMort.not_machineDecidable`). -/
 theorem not_machineDecidable_signGame {enc : Finset Position → List Bool} (he : Computable enc) :
-    ¬ MachineDecidable enc (fun moves => DecisionProblem (signGame moves)) := by
-  have h : (fun moves => DecisionProblem (signGame moves)) = MatMort.DecisionProblem :=
-    funext fun moves => propext (matMort_reducesto_matrixGame_spec moves).symm
-  rw [h]
-  exact MatMort.not_machineDecidable he
+    ¬ MachineDecidable enc (fun moves => DecisionProblem (signGame moves)) :=
+  (show (fun moves => DecisionProblem (signGame moves)) = MatMort.DecisionProblem from
+    setOf_signGame_eq_mortal) ▸ MatMort.not_machineDecidable he
 
 end DiagonaLean.MatrixGame

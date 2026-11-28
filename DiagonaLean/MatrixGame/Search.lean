@@ -13,6 +13,18 @@ import DiagonaLean.MatrixGame.Attractor
 `winsWithin G n p` checks by exhaustive search whether Eve can force zero from `p` within `n`
 rounds. Since the move sets are finite, every winning strategy has a round bound, so Eve can force
 zero iff the search succeeds for some bound (`forceZero_iff_exists_bound`).
+
+`winsWithin` is the definition of the search, and the reduction from matrix mortality uses it.
+`RE.winsList` (`RE.lean`) is the same search in the form `primrec_rec` proves primitive recursive,
+one level of the game tree at a time, and `RE.winsList_eq` says that the two agree.
+`winsWithin` calls itself at every position `p * a * b`, a recursion `primrec_rec` does not
+handle yet; once it does, `winsList` and the lemmas around it can go.
+
+## Main statements
+
+* `winsWithin`: the bounded search.
+* `forceZero_iff_exists_bound`: Eve can force zero iff the search succeeds for some bound.
+
 ## References
 
 * [M. S. Paterson, *Unsolvability in 3 × 3 Matrices*][Paterson1970]
