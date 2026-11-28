@@ -66,7 +66,8 @@ Shared machinery lives in `Foundations/`:
 * grammars presented by lists, and grammar codes (`Foundations/Grammar/`): a `Primcodable` description of a context-free grammar, which a machine can read, and the theorem that renaming nonterminals keeps the language; context-free grammar codes as string rewriting systems (`ToSRS.lean`), since every grammar of the Chomsky hierarchy is one, with derivability checked by a stack machine uniformly in the system (`Rewriting.lean`);
 * codes between alphabets (`Foundations/Codes/`): letterwise codes, the problems that they preserve and reflect (PCP, MPCP, string rewriting, context-free grammars) as functors on codes, and the lifting of `SynthHaltReduction`, `¬ ComputablePred` and `¬ MachineDecidable` from one alphabet to every alphabet with two letters (`code_lift`);
 * the normalisation of Turing machines (`Foundations/Computability/Normalize/`): every machine over `{0, 1}` is equivalent, for halting, to one that never writes a blank and never moves left at the left end, as the reductions to MPCP, PCP and string rewriting assume;
-* proof systems checked by a stack machine (`Foundations/Computability/StackProof.lean`): running proof programs, the invariant, and the primitive recursive check, once for every system. SKI convertibility and string rewriting are instances.
+* proof systems checked by a stack machine (`Foundations/Computability/StackProof.lean`): running proof programs, the invariant, and the primitive recursive check, once for every system. SKI convertibility and string rewriting are instances;
+* halting of list machines given by a table (`Foundations/Computability/ListHalt.lean`): a halting-hard source for reductions that simulate a machine, so that such a reduction is one function on tables with one correctness proof (`ListHalt.fromHalt`; `CM2/` uses it).
 
 `Synthetic/` holds the definitions of reductions and undecidability, and the reduction check.
 

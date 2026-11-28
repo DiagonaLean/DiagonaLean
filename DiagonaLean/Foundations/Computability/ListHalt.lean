@@ -61,7 +61,7 @@ namespace DiagonaLean.Foundations.Computability.ListHalt
 
 open Cslib.Turing DiagonaLean.Halt DiagonaLean.Halt.Encoding
   DiagonaLean.Foundations.Computability.ListMachine
-  DiagonaLean.Foundations.Computability.Normalize DiagonaLean.Synthetic.Definitions
+  DiagonaLean.Foundations.Computability.Normalize
 
 /-! ### The problem -/
 
@@ -150,32 +150,31 @@ derive_primrec rule? [Primcodable Γ]
 
 derive_primrec states [Primcodable Γ]
 
-
 /-! ### The table of a normalised machine -/
 
-/-- `ruleR r` is the right side of the rule for a numeric transition `r` in the format of `simN`
-(the symbol written, the movement code, and the next-state code), or `none` when it halts. -/
-def ruleR (r : Option Sym2 × ℕ × ℕ) : Option (Move × ℕ × Option Sym2) :=
+/-- `ruleOfCode r` is the right side of the rule for a numeric transition `r` in the format of
+`simN` (the symbol written, the movement code, and the next-state code), or `none` when it halts. -/
+def ruleOfCode (r : Option Sym2 × ℕ × ℕ) : Option (Move × ℕ × Option Sym2) :=
   if r.2.2 = 0 then none
   else some (if r.2.1 = 0 then .stay else if r.2.1 = 2 then .right else .left, r.2.2 - 1, r.1)
 
 /-- `actN rows` is the list machine of the transition table `rows`: the normalised machine, on
 the state numbers `Nat.pair i c`. -/
 def actN (rows : List (ℕ × ℕ)) (s : ℕ) (a : Option Sym2) : Act ℕ (Option Sym2) :=
-  ((ruleR (normTrN rows s.unpair.1 s.unpair.2 a)).map toAct).getD .halt
+  ((ruleOfCode (normTrN rows s.unpair.1 s.unpair.2 a)).map toAct).getD .halt
 
 /-- `statesN rows` lists the state numbers of the normalised machine of the table `rows`,
 without repetition. -/
 def statesN (rows : List (ℕ × ℕ)) : List ℕ :=
   ((rows.map fun r => r.1.unpair.1).flatMap fun i => (List.range 8).map fun c => Nat.pair i c).dedup
 
-/-- The cells of a normalised machine. -/
+/-- `cells` lists the cells of a normalised machine. -/
 def cells : List (Option Sym2) := enumAll (Option Sym2)
 
 /-- `tableN rows` is the program of the normalised machine of the transition table `rows`. -/
 def tableN (rows : List (ℕ × ℕ)) : Program (Option Sym2) :=
   (statesN rows ×ˢ cells).filterMap fun p =>
-    (ruleR (normTrN rows p.1.unpair.1 p.1.unpair.2 p.2)).map fun r => (p, r)
+    (ruleOfCode (normTrN rows p.1.unpair.1 p.1.unpair.2 p.2)).map fun r => (p, r)
 
 /-- `tapeN w` is the initial tape of a normalised machine on input `w`. -/
 def tapeN (w : List Bool) : List (Option Sym2) :=
@@ -186,7 +185,7 @@ the start state number and the initial tape. -/
 def canonList (x : CanonTM × List Bool) : Program (Option Sym2) × ℕ × List (Option Sym2) :=
   (tableN x.1.table, Nat.pair x.1.start 0, tapeN x.2)
 
-derive_primrec ruleR
+derive_primrec ruleOfCode
 
 derive_primrec statesN
 
@@ -203,7 +202,7 @@ theorem act_tableN {rows : List (ℕ × ℕ)} {q : ℕ} (hq : q ∈ statesN rows
   unfold act rule? actN
   cases hf : (tableN rows).find? (fun r => decide (r.1 = (q, a))) with
   | none =>
-    cases hr : ruleR (normTrN rows q.unpair.1 q.unpair.2 a) with
+    cases hr : ruleOfCode (normTrN rows q.unpair.1 q.unpair.2 a) with
     | none => rfl
     | some r =>
       have := List.find?_eq_none.mp hf ((q, a), r)
@@ -212,7 +211,7 @@ theorem act_tableN {rows : List (ℕ × ℕ)} {q : ℕ} (hq : q ∈ statesN rows
   | some e =>
     obtain ⟨p, -, hpe⟩ := List.mem_filterMap.mp (List.mem_of_find?_eq_some hf)
     have hkey := List.find?_some hf
-    cases hr : ruleR (normTrN rows p.1.unpair.1 p.1.unpair.2 p.2) with
+    cases hr : ruleOfCode (normTrN rows p.1.unpair.1 p.1.unpair.2 p.2) with
     | none => simp [hr] at hpe
     | some r =>
       simp only [hr, Option.map_some, Option.some.injEq] at hpe
@@ -238,7 +237,7 @@ theorem actN_stIdx (s : c.toTM.State × Ctrl) (a : Option Sym2) :
   unfold actN stIdx
   simp only [Nat.unpair_pair]
   rw [hrows, normTrN_eq]
-  simp only [tmAct, codeOf, ruleR]
+  simp only [tmAct, codeOf, ruleOfCode]
   obtain ⟨⟨wr, mv⟩, nx⟩ := normTr c.toTM.toSingleTapeTM s.1 s.2 a
   rcases nx with _ | s' <;> rcases mv with _ | _ | _ <;> simp [mvc, mapAct, stIdx, toAct]
 
@@ -299,12 +298,7 @@ theorem haltCanon_iff_listHalt (x : CanonTM × List Bool) :
   exact (halts_congr (· ∈ statesN c.table) (fun q hq a => act_tableN hq a) (statesN_closed c) _
     hstart).symm
 
-end DiagonaLean.Foundations.Computability.ListHalt
-
-namespace DiagonaLean.Foundations.Computability.ListHalt
-
-open DiagonaLean.Halt DiagonaLean.Foundations.Computability.Normalize
-  DiagonaLean.Synthetic.Definitions
+open DiagonaLean.Synthetic.Definitions
 
 /-- **Halting of list machines given by a table is halting-hard**, over the cells `Option Sym2`
 with blank `none`: `canonList` reduces the halting problem on canonical machines to it, and is
