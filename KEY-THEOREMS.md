@@ -88,6 +88,8 @@ root (from `HaltCanon`); proving the last link computable does not upgrade a syn
 | `X.complete` | every problem that is halting-hard and r.e. is complete for the r.e. problems, stated by `re_results` (`Degrees/Complete.lean`) |
 | `manyOneEquiv_of_complete p q` | two problems registered by `halt_results` and `re_results` are `ManyOneEquiv` (`Foundations/Computability/HaltResults.lean`) |
 | `Degrees.semiThue_equiv_skiConv`, `skiConv_equiv_betaConv`, `semiThue_equiv_betaConv` | the three rewriting problems are many-one equivalent (`Degrees/Rewriting.lean`) |
+| `MatrixGame.rePred` | whether Eve has a winning strategy is r.e., by a bounded search run on a whole level of the game tree at once (`winsList`, recursion on `ℕ` with one changing argument) (`MatrixGame/RE.lean`) |
+| `Degrees.matMort_equiv_matrixGame` | matrix mortality and the matrix game are many-one equivalent (`Degrees/Matrices.lean`); their `X.complete` are in `Degrees/Complete.lean` |
 
 ## 4. Alphabets: functors on codes
 
