@@ -65,14 +65,20 @@ theorem winsWithin_signGame_iff (moves : Finset Position) (n : ℕ) (p : Positio
 /-- A finite set of matrices is mortal iff Eve wins `signGame` with it. -/
 theorem matMort_reducesto_matrixGame_spec :
     MatMort.DecisionProblem ⪯_s[signGame] DecisionProblem := fun moves => by
-  unfold DecisionProblem EveForcesZero
-  rw [forceZero_iff_exists_bound]
+  rw [decisionProblem_iff_forceZero, forceZero_iff_exists_bound]
   constructor
   · rintro ⟨w, hw, hz⟩
     exact ⟨w.length, (winsWithin_signGame_iff _ _ _).mpr ⟨w, le_rfl, hw, by simpa using hz⟩⟩
   · rintro ⟨n, hn⟩
     obtain ⟨w, _, hw, hz⟩ := (winsWithin_signGame_iff _ _ _).mp hn
     exact ⟨w, hw, by simpa using hz⟩
+
+/-- **With Adam's moves fixed to `1` and `-1`, the matrix game is matrix mortality**: the move
+sets with which Eve wins are exactly the mortal sets. -/
+theorem _root_.DiagonaLean.MatrixGame.setOf_signGame_eq_mortal :
+    {eve : Finset Position | DecisionProblem (eve, {1, -1})} =
+      {M : Finset Position | MatMort.DecisionProblem M} :=
+  Set.ext fun M => (matMort_reducesto_matrixGame_spec M).symm
 
 /-- The matrix game is displayed as "Matrix-game winner". -/
 instance : Synthetic.ReductionChain.ProblemName DecisionProblem :=
