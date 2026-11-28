@@ -137,7 +137,7 @@ duplicates `MatMortProblem`, `AmbigCFGProblem` and `EmpCFGProblem` were removed.
 `MatrixGame.fromHalt` (from `MatMort.fromHalt` along `signGame`),
 `ListHalt.fromHalt` (a second root: list machines given by a table, through `canonList`,
 `Foundations/Computability/ListHalt.lean`; a simulation reduces from it with one function on tables)
-and from it `CM2.fromHalt` (along `listToCM2`),
+and from it `CM2.fromHalt` (along `listToCM2`) and `CFGame.fromHalt` (along `listToCFGame`),
 `EmpCFG.codeFromHaltTerm`, `AmbigCFG.codeFromHaltSum` (fixed terminal shapes) and, lifted to grammar
 codes over every alphabet with two letters, `EmpCFG.codeFromHaltOver`, `AmbigCFG.codeFromHaltOver`.
 Each problem states its consequences with `halt_results` (`X.haltHard`, `X.not_computablePred`,

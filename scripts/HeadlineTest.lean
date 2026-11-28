@@ -459,6 +459,20 @@ example :
           DiagonaLean.CM2.DecisionProblem :=
   @DiagonaLean.CM2.not_machineDecidable
 
+example :
+    DiagonaLean.Foundations.Computability.HaltHard (@DiagonaLean.CFGame.DecisionProblem ℕ) :=
+  @DiagonaLean.CFGame.haltHard
+
+example :
+    ¬ComputablePred (@DiagonaLean.CFGame.DecisionProblem ℕ) :=
+  @DiagonaLean.CFGame.not_computablePred
+
+example :
+    ∀ {enc : DiagonaLean.CFGame.Game ℕ × List ℕ → List Bool},
+      Computable enc → ¬DiagonaLean.Synthetic.Definitions.MachineDecidable enc
+          (@DiagonaLean.CFGame.DecisionProblem ℕ) :=
+  @DiagonaLean.CFGame.not_machineDecidable
+
 /-! ## Recursive enumerability
 
 The three rewriting problems, PCP, MPCP, matrix mortality, the four KAComm equality problems,
