@@ -44,7 +44,8 @@ registers the problem so that any two of them are many-one equivalent by
 ## Main statements
 
 * `MPCP.complete`, `PCP.complete`, `SemiThue.complete`, `SKIConv.complete`, `BetaConv.complete`,
-  `MatMort.complete`: the classical problems.
+  `MatMort.complete`: PCP, MPCP, string rewriting, SKI convertibility, β-conversion and matrix
+  mortality.
 * `KAComm.TermEq.complete`, `KAComm.KATermEq.complete` and their `Bool` forms.
 * `GrammarMem.complete`, `GrammarMem.EmptyWord.complete`, `EmpCFG.Code.complete`.
 * `CM2.complete`, `ListHalt.complete`: halting of two-counter machines and of list machines.
@@ -128,10 +129,10 @@ namespace GrammarMem
 
 variable {T : Type} [Primcodable T]
 
-re_results (@DecisionProblem T) from (by classical exact rePred)
+re_results (@DecisionProblem T) from rePred
 
 re_results EmptyWord for (fun g : { g : GrammarCode T // IsType0 g } => EmptyWordProblem g.1)
-  from (by classical exact emptyWord_rePred)
+  from EmptyWord.rePred
 
 end GrammarMem
 
@@ -140,7 +141,7 @@ namespace EmpCFG
 variable {α : Type} [Primcodable α] [DecidableEq α] [Nontrivial α]
 
 re_results Code for (fun c : CFGCode α × CFGCode α => IntersectionNonempty c.1.toCFG c.2.toCFG)
-  from code_rePred
+  from Code.rePred
 
 end EmpCFG
 

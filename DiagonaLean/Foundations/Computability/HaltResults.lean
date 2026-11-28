@@ -135,8 +135,8 @@ macro (name := reResults) "re_results" pre:(haltResultsName)? p:term " from " h:
   `(/-- The problem is recursively enumerable, registered for `manyOneEquiv_of_complete`. Stated
     by `re_results`. -/
     instance : DiagonaLean.Foundations.Computability.REFact $p := ⟨$h⟩
-    /-- The problem is complete for the recursively enumerable problems: every one many-one reduces
-    to it. Stated by `re_results`. -/
+    /-- Every recursively enumerable problem many-one reduces to the problem; with `REFact`, the
+    problem is complete for the recursively enumerable problems. Stated by `re_results`. -/
     theorem $completeName:ident {$β : Type*} [Primcodable $β] {$q : $β → Prop} ($hq : REPred $q) :
         ManyOneReducible $q $p :=
       ManyOneReducible.of_rePred_of_haltHard $hq
