@@ -15,6 +15,8 @@ import DiagonaLean.BetaConv.Undecidable
 import DiagonaLean.BetaConv.RE
 import DiagonaLean.MatMort.Undecidable
 import DiagonaLean.MatMort.RE
+import DiagonaLean.MatrixGame.Undecidable
+import DiagonaLean.MatrixGame.RE
 import DiagonaLean.KAComm.TermEq.Undecidable
 import DiagonaLean.KAComm.TermEq.RE
 import DiagonaLean.KAComm.KATermEq.Undecidable
@@ -44,8 +46,8 @@ registers the problem so that any two of them are many-one equivalent by
 ## Main statements
 
 * `MPCP.complete`, `PCP.complete`, `SemiThue.complete`, `SKIConv.complete`, `BetaConv.complete`,
-  `MatMort.complete`: PCP, MPCP, string rewriting, SKI convertibility, β-conversion and matrix
-  mortality.
+  `MatMort.complete`, `MatrixGame.complete`: PCP, MPCP, string rewriting, SKI convertibility,
+  β-conversion, matrix mortality and the matrix game.
 * `KAComm.TermEq.complete`, `KAComm.KATermEq.complete` and their `Bool` forms.
 * `GrammarMem.complete`, `GrammarMem.EmptyWord.complete`, `EmpCFG.Code.complete`.
 * `CM2.complete`, `ListHalt.complete`: halting of two-counter machines and of list machines.
@@ -100,6 +102,12 @@ namespace MatMort
 re_results DecisionProblem from rePred
 
 end MatMort
+
+namespace MatrixGame
+
+re_results DecisionProblem from rePred
+
+end MatrixGame
 
 namespace KAComm.TermEq
 
