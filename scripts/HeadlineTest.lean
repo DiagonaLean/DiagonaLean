@@ -435,9 +435,9 @@ example :
 
 /-! ## Recursive enumerability
 
-The three rewriting problems, PCP, MPCP and matrix mortality are recursively enumerable, so with
-their halting-hardness above they are exactly as hard as the halting problem. Generated on
-2026-11-27. -/
+The three rewriting problems, PCP, MPCP, matrix mortality and the matrix game are recursively
+enumerable, so with their halting-hardness above they are exactly as hard as the halting problem.
+Generated on 2026-11-27 and 2026-11-28. -/
 
 example :
     ∀ {T : Type} [Primcodable T] [DecidableEq T],
@@ -463,6 +463,10 @@ example :
 example :
     REPred DiagonaLean.MatMort.DecisionProblem :=
   @DiagonaLean.MatMort.rePred
+
+example :
+    REPred DiagonaLean.MatrixGame.DecisionProblem :=
+  @DiagonaLean.MatrixGame.rePred
 
 /-! ## Completeness and degrees
 
@@ -504,6 +508,23 @@ example :
     ∀ {α : Type} [Primcodable α] [DecidableEq α] [Nontrivial α],
       ManyOneEquiv (@DiagonaLean.SemiThue.DecisionProblem α) DiagonaLean.BetaConv.DecisionProblem :=
   @DiagonaLean.Degrees.semiThue_equiv_betaConv
+
+/-! Matrix mortality and the matrix game have the degree of the halting problem too. Added on
+2026-11-28. -/
+
+example :
+    ∀ {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ DiagonaLean.MatMort.DecisionProblem :=
+  @DiagonaLean.MatMort.complete
+
+example :
+    ∀ {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ DiagonaLean.MatrixGame.DecisionProblem :=
+  @DiagonaLean.MatrixGame.complete
+
+example :
+    ManyOneEquiv DiagonaLean.MatMort.DecisionProblem DiagonaLean.MatrixGame.DecisionProblem :=
+  @DiagonaLean.Degrees.matMort_equiv_matrixGame
 
 /-! ## The problems, pinned
 
@@ -635,6 +656,26 @@ example :
 
 example :
     ∀ (eve adam : Finset DiagonaLean.MatrixGame.Position),
-      DiagonaLean.MatrixGame.DecisionProblem (eve, adam) ↔
-        DiagonaLean.MatrixGame.EveForcesZero eve adam :=
+      DiagonaLean.MatrixGame.DecisionProblem (eve, adam) ↔ DiagonaLean.MatrixGame.EveWins eve adam :=
   @DiagonaLean.MatrixGame.decisionProblem_mk
+
+example :
+    ∀ (eve adam : Finset DiagonaLean.MatrixGame.Position),
+      DiagonaLean.MatrixGame.EveWins eve adam ↔
+        ∃ σ, DiagonaLean.MatrixGame.LegalEve (eve, adam) σ ∧
+          DiagonaLean.MatrixGame.WinsFrom (eve, adam) σ 1 :=
+  @DiagonaLean.MatrixGame.eveWins_iff
+
+/-! The matrix game, stated by strategies (above), is membership of the identity in the attractor of
+zero (`MatrixGame/Attractor.lean`); and with Adam's moves fixed to `±1`, it is matrix mortality. -/
+
+example :
+    ∀ (G : DiagonaLean.MatrixGame.Arena),
+      DiagonaLean.MatrixGame.DecisionProblem G ↔ DiagonaLean.MatrixGame.ForceZero G 1 :=
+  @DiagonaLean.MatrixGame.decisionProblem_iff_forceZero
+
+example :
+    {eve | DiagonaLean.MatrixGame.DecisionProblem (eve, {1, -1})} =
+      {M | DiagonaLean.MatMort.DecisionProblem M} :=
+  @DiagonaLean.MatrixGame.setOf_signGame_eq_mortal
+
