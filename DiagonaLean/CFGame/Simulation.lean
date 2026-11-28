@@ -701,8 +701,7 @@ theorem objCount_phase {k : Cfg Q Γ} {w : List (Letter Q Γ)} (h : Phase δ bl 
   cases h <;> simp only [cfgWord, objCount_frame] <;> simp [objCount, IsObj]
 
 /-- A split of a framed word at a letter that satisfies `P` is the split at the middle part, when
-exactly one letter of the middle
-part does and `P` fails on tape letters, `$` and `#`. -/
+exactly one letter of the middle part does and `P` fails on tape letters, `$` and `#`. -/
 theorem frame_split {P : Letter Q Γ → Bool} (ht : ∀ c, P (tape c) = false)
     (hd : P dollar = false) (he : P endm = false) {l r : List Γ} {m₁ m₂ u v : List (Letter Q Γ)}
     {x y : Letter Q Γ} (hx : P x) (hy : P y) (hm : (m₁ ++ y :: m₂).countP P = 1)
@@ -842,8 +841,7 @@ theorem objCount_pos_of_mem {u : List (Letter Q Γ)} {x : Letter Q Γ} (hx : x.I
   List.countP_pos_iff.2 ⟨x, hm, by simpa using hx⟩
 
 /-- **If an objection on the head is in the target, Juliet played the head of a configuration
-word**,
-and Romeo answers with the transition. -/
+word**, and Romeo answers with the transition. -/
 theorem faithful_of_objHead {k : Cfg Q Γ} {w u v : List (Letter Q Γ)} {a : Letter Q Γ}
     (hp : Phase δ bl k w) (hw : w = u ++ a :: v) (ha : IsNonterminal (rules δ qs cs bl) a)
     (hm : objHead ∈ u ++ objOf a :: v) (hact : ∀ x ∈ u ++ objOf a :: v, ¬ x.IsActive) :

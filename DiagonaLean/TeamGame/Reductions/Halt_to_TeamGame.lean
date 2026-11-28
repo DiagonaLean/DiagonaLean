@@ -36,7 +36,7 @@ the safety variant reduces the halting problem to the complement of team safety 
 
 namespace DiagonaLean.TeamGame.Reduction
 
-open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding
+open Cslib.Turing DiagonaLean.Halt DiagonaLean.Halt.Encoding
   DiagonaLean.Foundations.Computability.ListMachine DiagonaLean.Foundations.Computability.Normalize
   DiagonaLean.Synthetic.Definitions
 
@@ -49,15 +49,15 @@ def goalOf {Q Γ : Type} : Variant → List (Pos Q Γ)
 /-- **The reduction.** For a variant, a machine and an input: the game of that variant of the
 normalised list machine from the initial configuration, with positions and actions coded as
 natural numbers. -/
-def haltToTeamGame (v : Variant) (p : EncodableTM Bool × List Bool) : Game ℕ × ℕ :=
+def haltToTeamGame (var : Variant) (p : EncodableTM Bool × List Bool) : Game ℕ × ℕ :=
   letI := (normEnc p.1).stateEncodable
   letI := (normEnc p.1).stateFintype
   letI : DecidableEq (normEnc p.1).State := Encodable.decidableEqOfEncodable _
   let tm := (normEnc p.1).toSingleTapeTM
   let c₀ := cells (cfgOf tm tm.q₀ (BiTape.mk₁ (encInput p.2)))
-  (codeGame Encodable.encode Encodable.encode .start (succs (tmAct tm) none c₀ v) observe
+  (codeGame Encodable.encode Encodable.encode .start (succs (tmAct tm) none c₀ var) observe
     (allPos (enumAll tm.State) (enumAll (Option Sym2)) c₀.length)
-    (allMoves (enumAll tm.State) (enumAll (Option Sym2))) (goalOf v), 0)
+    (allMoves (enumAll tm.State) (enumAll (Option Sym2))) (goalOf var), 0)
 
 /-- The reachability variant of `haltToTeamGame`. -/
 def haltToTeamReach : EncodableTM Bool × List Bool → Game ℕ × ℕ := haltToTeamGame .reach
@@ -67,7 +67,7 @@ def haltToTeamSafety : EncodableTM Bool × List Bool → Game ℕ × ℕ := halt
 
 /-- `haltToTeamReach` witnesses the reduction from the halting problem to team reachability
 games. -/
-theorem halt_reducesto_teamReach_spec : HaltProblem ⪯_s[haltToTeamReach] ReachProblem := by
+theorem halt_reducesto_teamReach_spec : HaltProblem ⪯_s[haltToTeamReach] DecisionProblem := by
   rintro ⟨M, w⟩
   show Halts M.toSingleTapeTM w ↔ _
   let := (normEnc M).stateEncodable
@@ -87,7 +87,7 @@ theorem halt_reducesto_teamReach_spec : HaltProblem ⪯_s[haltToTeamReach] Reach
 /-- `haltToTeamSafety` witnesses the reduction from the halting problem to the complement of team
 safety games. -/
 theorem halt_reducesto_not_teamSafety_spec :
-    HaltProblem ⪯_s[haltToTeamSafety] Complement SafetyProblem := by
+    HaltProblem ⪯_s[haltToTeamSafety] Complement DecisionProblemSafety := by
   rintro ⟨M, w⟩
   show Halts M.toSingleTapeTM w ↔ _
   let := (normEnc M).stateEncodable
@@ -105,7 +105,7 @@ theorem halt_reducesto_not_teamSafety_spec :
   rfl
 
 /-- Team reachability games are displayed as "Team reachability game". -/
-instance : Synthetic.ReductionChain.ProblemName (@ReachProblem ℕ _) :=
+instance : Synthetic.ReductionChain.ProblemName (@DecisionProblem ℕ _) :=
   ⟨"Team reachability game"⟩
 
 end DiagonaLean.TeamGame.Reduction

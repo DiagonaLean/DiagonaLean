@@ -75,16 +75,19 @@ root (from `HaltCanon`); proving the last link computable does not upgrade a syn
 | `ManyOneReducible.of_rePred_of_haltHard` | `REPred p → HaltHard q → ManyOneReducible p q` |
 | `manyOneEquiv_of_haltHard_of_rePred` | halting-hard r.e. predicates are `ManyOneEquiv` |
 | `CoHaltHard p` | `HaltHard (fun x => ¬ p x)`: the complement of `HaltCanon` reduces to `p` (`coHaltHard_iff`, `Foundations/Computability/CoHalt.lean`) |
+| `HaltHard.coHaltHard_compl` | the complement of a halting-hard predicate is co-halting-hard |
 | `CoHaltHard.not_computablePred`, `.not_machineDecidable`, `.not_rePred` | co-halting-hard predicates are undecidable and not r.e. (`haltCanon_rePred`, `not_rePred_compl_haltCanon`) |
 | `ManyOneReducible.of_coRE_of_coHaltHard`, `manyOneEquiv_of_coHaltHard_of_coRE` | the degree of the complement of the halting problem |
-| `EmpCFG.Code.empty_coHaltHard`, `EmpCFG.Code.empty_not_rePred` | emptiness of the intersection of grammar codes is co-halting-hard and not r.e. (`EmpCFG/Emptiness.lean`) |
+| `EmpCFG.Code.empty_coHaltHard`, `EmpCFG.Code.empty_coRE`, `EmpCFG.Code.empty_not_rePred` | emptiness of the intersection of grammar codes is co-halting-hard and not r.e. (`EmpCFG/Emptiness.lean`) |
 | `SemiThue.rePred`, `SKIConv.rePred`, `BetaConv.rePred` | the rewriting problems are r.e. (`X/RE.lean`) |
 | `PCP.rePred`, `MPCP.rePred`, `MatMort.rePred` | PCP, MPCP and matrix mortality are r.e., by a search over solutions (`X/RE.lean`) |
 | `KAComm.TermEq.rePred`, `KAComm.KATermEq.rePred`, and the `Bool` forms | the KAComm equality problems are r.e., by the proof search `checks_prim` (`X/RE.lean`) |
-| `GrammarMem.rePred`, `GrammarMem.emptyWord_rePred`, `EmpCFG.code_rePred` | membership for grammar codes and intersection of grammar codes are r.e., through the search of `SemiThue.rePred` (`X/RE.lean`) |
+| `GrammarMem.rePred`, `GrammarMem.EmptyWord.rePred`, `EmpCFG.Code.rePred` | membership for grammar codes and intersection of grammar codes are r.e., through the search of `SemiThue.rePred` (`X/RE.lean`) |
 | `REPred.of_reaches` | reaching a stopping configuration of a primitive recursive step function is r.e. (`Foundations/Computability/Reaches.lean`) |
 | `CM2.rePred`, `ListHalt.rePred` | halting of two-counter machines and of list machines is r.e., by `REPred.of_reaches` (`CM2/RE.lean`, `Foundations/Computability/ListHaltRE.lean`) |
-| `Degrees.semiThue_equiv_skiConv`, `skiConv_equiv_betaConv`, `semiThue_equiv_betaConv`; `X.complete` | the three rewriting problems are many-one equivalent, and complete for the r.e. problems (`Degrees/Rewriting.lean`) |
+| `X.complete` | every problem that is halting-hard and r.e. is complete for the r.e. problems, stated by `re_results` (`Degrees/Complete.lean`) |
+| `manyOneEquiv_of_complete p q` | two problems registered by `halt_results` and `re_results` are `ManyOneEquiv` (`Foundations/Computability/HaltResults.lean`) |
+| `Degrees.semiThue_equiv_skiConv`, `skiConv_equiv_betaConv`, `semiThue_equiv_betaConv` | the three rewriting problems are many-one equivalent (`Degrees/Rewriting.lean`) |
 
 ## 4. Alphabets: functors on codes
 
@@ -121,6 +124,7 @@ explicitly (`…Over b0 b1 hne`); `Nontrivial α` is enough only for `Prop` resu
 | `derive_primrec f [inst…]` | command: states `Primrec fun x : A₁ × A₂ => f x.1 x.2`, proves it by `unfold f; fun_prop`, registers it as `f_prim` with `@[fun_prop]` |
 | `primrec_rec` | tactic for structural recursion on `ℕ`, `List`, or a type with `derive_primcodable`: `@[fun_prop] theorem f_primrec : Primrec f := by primrec_rec` |
 | `derive_primcodable T` | command: `Primcodable T` for an inductive type (fields `T`, `List T`, `Option T`, `Primcodable` data), with constructor lemmas and `T.primrec_of_eqns` |
+| `RegularExpression` | Mathlib's regular expressions are `Primcodable` by `derive_primcodable`, with `fun_prop` lemmas for `+`, `*`, `0`, `1` (`Foundations/Computability/RegularExpression.lean`) |
 | `tm_computes F`, `tm_computer F` | a Turing machine computing a function (`Foundations/Computability/Computer.lean`) |
 | `#check_reductions` (`local`) | checks every reduction's dependency closure for escape hatches; run by CI on the whole library |
 
