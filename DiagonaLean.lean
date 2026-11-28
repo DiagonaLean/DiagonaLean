@@ -183,6 +183,7 @@ import DiagonaLean.Synthetic.AxiomCheck
 
 import DiagonaLean.Foundations.Computability.Prim
 import DiagonaLean.Foundations.Computability.StackProof
+import DiagonaLean.Foundations.Computability.RegularExpression
 import DiagonaLean.Foundations.Computability.PrimrecRec
 import DiagonaLean.Foundations.Computability.PolyTree
 import DiagonaLean.Foundations.Computability.TaggedCode

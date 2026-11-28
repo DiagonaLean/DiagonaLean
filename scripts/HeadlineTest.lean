@@ -473,6 +473,15 @@ example :
           (@DiagonaLean.CFGame.DecisionProblem ℕ) :=
   @DiagonaLean.CFGame.not_machineDecidable
 
+example :
+    DiagonaLean.Halt.HaltProblem ⪯_s @DiagonaLean.TeamGame.DecisionProblem ℕ _ :=
+  DiagonaLean.TeamGame.synthFromHalt
+
+example :
+    DiagonaLean.Halt.HaltProblem ⪯_s
+      DiagonaLean.Synthetic.Definitions.Complement (@DiagonaLean.TeamGame.DecisionProblemSafety ℕ _) :=
+  DiagonaLean.TeamGame.synthComplFromHalt
+
 /-! ## Recursive enumerability
 
 The three rewriting problems, PCP, MPCP, matrix mortality, the four KAComm equality problems,
@@ -723,3 +732,19 @@ example :
       DiagonaLean.MatrixGame.DecisionProblem (eve, adam) ↔
         DiagonaLean.MatrixGame.EveForcesZero eve adam :=
   @DiagonaLean.MatrixGame.decisionProblem_mk
+
+example :
+    ∀ {α : Type} (G : DiagonaLean.CFGame.Game α) (w : List α),
+      DiagonaLean.CFGame.DecisionProblem (G, w) ↔ DiagonaLean.CFGame.Wins G w :=
+  @DiagonaLean.CFGame.decisionProblem_mk
+
+example :
+    ∀ {α : Type} [DecidableEq α] (G : DiagonaLean.TeamGame.Game α) (d : α),
+      DiagonaLean.TeamGame.DecisionProblem (G, d) ↔ DiagonaLean.TeamGame.TeamWinsReach G d :=
+  @DiagonaLean.TeamGame.decisionProblem_mk
+
+example :
+    ∀ {α : Type} [DecidableEq α] (G : DiagonaLean.TeamGame.Game α) (d : α),
+      DiagonaLean.TeamGame.DecisionProblemSafety (G, d) ↔
+        DiagonaLean.TeamGame.TeamWinsSafety G d :=
+  @DiagonaLean.TeamGame.decisionProblemSafety_mk

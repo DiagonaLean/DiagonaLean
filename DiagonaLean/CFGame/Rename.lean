@@ -22,7 +22,7 @@ game built on a finite type of states can be read on the states it is renamed to
 
 namespace DiagonaLean.CFGame.Simulation
 
-open DiagonaLean.Foundations.Computability.ListMachine RegularExpression
+open DiagonaLean.Foundations.Computability.ListMachine
 
 variable {Q Q' Γ : Type} (f : Q → Q')
 
@@ -68,23 +68,6 @@ theorem isActiveB_mapQ (x : Letter Q Γ) : isActiveB (x.mapQ f) = isActiveB x :=
 /-- Renaming keeps a letter a head or not. -/
 theorem isHeadB_mapQ (x : Letter Q Γ) : isHeadB (x.mapQ f) = isHeadB x := by
   cases x <;> rfl
-
-/-- A sum of renamed expressions is the renamed sum. -/
-theorem sumRE_map {α β : Type} (g : α → β) (l : List (RegularExpression α)) :
-    (sumRE l).map g = sumRE (l.map (·.map g)) := by
-  induction l with
-  | nil => rfl
-  | cons e l ih => simp [sumRE, RegularExpression.map] at ih ⊢; rw [ih]
-
-/-- A renamed pattern is the pattern of the renamed lists. -/
-theorem pattern_map {α β : Type} (g : α → β) (l m : List α) :
-    (pattern l m).map g = pattern (l.map g) (m.map g) := by
-  have hw : ∀ m : List α, (wordRE m).map g = wordRE (m.map g) := by
-    intro m
-    induction m with
-    | nil => rfl
-    | cons x m ih => simp [wordRE, RegularExpression.map] at ih ⊢; rw [ih]
-  simp [pattern, anyOf, RegularExpression.map, sumRE_map, hw, List.map_map, Function.comp_def]
 
 variable {f}
 

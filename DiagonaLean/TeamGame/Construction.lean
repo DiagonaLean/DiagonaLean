@@ -122,12 +122,12 @@ def chk (δ : Q → Γ → Act Q Γ) (bl : Γ) (c₀ : List (Cell Q Γ)) :
   | .succ _ _ _ 2, _, .fin => .ok
   | p, _, _ => if p = .ok then .ok else .err
 
-/-- A position where Nature waits. -/
+/-- Nature waits at `p` (`isWaiting p`). -/
 def isWaiting : Pos Q Γ → Bool
   | .start | .wait _ => true
   | _ => false
 
-/-- A sink position. -/
+/-- `p` is a sink: a passed check, a failed check or `hlt` (`isSink p`). -/
 def isSink : Pos Q Γ → Bool
   | .ok | .err | .hlt => true
   | _ => false

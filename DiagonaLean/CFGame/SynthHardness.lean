@@ -13,7 +13,8 @@ import DiagonaLean.Foundations.Computability.ReduceFrom
 `listToCFGame` (`Reductions/ListHalt_to_CFGame.lean`) many-one reduces halting of list machines
 given by a table to the combined decision problem for context-free games, over letters coded as
 numbers (`listHalt_reducesto_cfGame_spec`). Halting of list machines is synthetically
-halting-hard (`ListHalt.synthFromHalt`), so the combined problem is (`CFGame.synthFromHalt`). This
+halting-hard (`ListHalt.synthFromHalt`), so the combined problem is synthetically halting-hard
+(`CFGame.synthFromHalt`). This
 is the combined form of Theorem 4.2 of Muscholl, Schwentick and Segoufin. The undecidability
 results are in `Undecidable.lean`.
 
