@@ -3,18 +3,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.MPCP.MachineLevel
+import DiagonaLean.MPCP.Reductions.HaltCanon_to_MPCP
 import DiagonaLean.SemiThue.Basic
 import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
 import DiagonaLean.Foundations.Codes.Rewriting
+import DiagonaLean.Foundations.Computability.HaltCanon
 
 @[expose] public section
 
-/-! # The word problem for string rewriting systems, at machine level
+/-! # From the halting problem on canonical machines to string rewriting
 
 `Reductions/Halt_to_SemiThue.lean` shows that a machine halts iff its configuration string rewrites
 to the empty string under `tmRules`. Here the system is read off a transition table, as
-`MPCP.MachineLevel.instOf` reads the MPCP tiles: the transition tiles `transN`, the absorb rules and
+`MPCP.Reduction.instOf` reads the MPCP tiles: the transition tiles `transN`, the absorb rules and
 the final rule, over the alphabet `Alpha ℕ Sym2` (`codeRules`, `toEmptyOf`). The rules of the table
 of a machine are the rules of the normalised machine with its states renamed to numbers
 (`mem_codeRules`), and renaming letters injectively keeps derivability
@@ -23,22 +24,26 @@ rewrites to the empty string (`halts_iff_toEmptyN`).
 
 ## Main statements
 
-* `halts_iff_toEmptyN`, `codeRules_lhs_ne`: used in `Hardness.lean` for the halting reductions
-  `SemiThue.fromHalt`, `SemiThue.toEmptyFromHalt`, `SemiThue.posFromHalt`, from which the negative
-  results there (`not_computablePred_semiThue`, `not_machineDecidable_semiThue`, …) follow.
+* `halts_iff_toEmptyN`, `codeRules_lhs_ne`: a machine halts iff the start string of its table
+  rewrites to the empty string, and the rules have non-empty left sides.
+* `haltCanon_iff_toEmpty`, `canonToEmpty_prim`, `canonWord_prim`: the reductions from `HaltCanon`.
+  Their rules depend on the table only through its lookup and its state numbers
+  (`mem_codeRules_congr`), which `c.table` shares with the table of `c.toTM`
+  (`CanonTM.sameTable`), as for MPCP. The halting reductions built from them
+  (`SemiThue.toEmptyFromHalt`, `SemiThue.posFromHalt`, …) are in `Undecidable.lean`.
 -/
 
-namespace DiagonaLean.SemiThue.MachineLevel
+namespace DiagonaLean.SemiThue.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.PCP.Reduction DiagonaLean.MPCP.Reduction
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability
-  DiagonaLean.Foundations.Computability.Normalize DiagonaLean.MPCP.MachineLevel
-  DiagonaLean.SemiThue.Reduction
-  DiagonaLean.Foundations.Grammar DiagonaLean.Synthetic.Definitions
+  DiagonaLean.Foundations.Computability.Normalize DiagonaLean.SemiThue.Reduction
+  DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Rewriting
+  DiagonaLean.Synthetic.Definitions
 
 /-- The absorb rules and the final rule, over `Alpha ℕ Sym2`. -/
 def haltRules : SRS (Alpha ℕ Normalize.Sym2) :=
-  syms2.flatMap (fun a => [([↟ₜa, h⊥], [h⊥]), ([h⊥, ↟ₜa], [h⊥])]) ++ [([#, h⊥, #], [])]
+  syms2.flatMap (fun a => [⟨[↟ₜa, h⊥], [h⊥]⟩, ⟨[h⊥, ↟ₜa], [h⊥]⟩]) ++ [⟨[#, h⊥, #], []⟩]
 
 /-- The rewriting system of a machine code: the transition tiles of `transN` as rules, the absorb
 rules and the final rule. -/
@@ -58,7 +63,7 @@ derive_primrec codeRules
 derive_primrec toEmptyOf
 
 /-- Every rule of `codeRules` has a non-empty left side. -/
-theorem codeRules_lhs_ne (rows : List (ℕ × ℕ)) : ∀ lr ∈ codeRules rows, lr.1 ≠ [] := by
+theorem codeRules_lhs_ne (rows : List (ℕ × ℕ)) : ∀ lr ∈ codeRules rows, lr.lhs ≠ [] := by
   intro lr hlr
   simp only [codeRules, haltRules, List.mem_append, List.mem_map, List.mem_flatMap, List.mem_cons,
     List.not_mem_nil, or_false] at hlr
@@ -81,7 +86,7 @@ attribute [local instance] EncodableTM.stateEncodable
 
 /-- **The rules of the code are the renamed rules of the normalised machine.** -/
 theorem mem_codeRules
-    (lr : List (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2)) :
+    (lr : Rule (Alpha ℕ Normalize.Sym2)) :
     lr ∈ (tmRules (normEnc M)).mapRules (Alpha.map (stIdx M)) ↔ lr ∈ codeRules (rowsE M) := by
   have hlist : (tmRules (normEnc M)).mapRules (Alpha.map (stIdx M)) =
       ((transitionTiles (normEnc M)).map (ren M)).map tileRule ++ haltRules := by
@@ -113,4 +118,44 @@ theorem halts_iff_toEmptyN (w : List Bool) :
 
 end
 
-end DiagonaLean.SemiThue.MachineLevel
+end DiagonaLean.SemiThue.Reduction
+
+namespace DiagonaLean.SemiThue.Reduction
+
+open DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Computability
+  DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Rewriting
+
+/-- `codeRules` depends on a table only through its lookup and its set of state numbers. -/
+theorem mem_codeRules_congr {r₁ r₂ : List (ℕ × ℕ)} (h : SameTable r₁ r₂)
+    (lr : Rule (Alpha ℕ Normalize.Sym2)) :
+    lr ∈ codeRules r₁ ↔ lr ∈ codeRules r₂ := by
+  simp only [codeRules, List.mem_append, List.mem_map, mem_transN_congr h]
+
+/-- The rewriting instance of a canonical machine on an input. -/
+def canonToEmpty (x : CanonTM × List Bool) :
+    SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) :=
+  toEmptyOf x.1.start x.1.table x.2
+
+theorem canonToEmpty_prim : Primrec canonToEmpty := by
+  unfold canonToEmpty
+  fun_prop
+
+/-- **A canonical machine halts on an input iff the start string of its instance rewrites to the
+empty string.** -/
+theorem haltCanon_iff_toEmpty (x : CanonTM × List Bool) :
+    HaltCanon x ↔ ToEmptyProblem (canonToEmpty x) := by
+  obtain ⟨c, w⟩ := x
+  exact (halts_iff_toEmptyN c.toTM w).trans
+    (SRS.derives_congr (mem_codeRules_congr (CanonTM.sameTable c)) _ _)
+
+/-- The word problem of the instance with target `[]`. -/
+def canonWord (x : CanonTM × List Bool) :
+    SRS (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) × List (Alpha ℕ Normalize.Sym2) :=
+  ((canonToEmpty x).1, (canonToEmpty x).2, [])
+
+theorem canonWord_prim : Primrec canonWord := by
+  have := canonToEmpty_prim
+  unfold canonWord
+  fun_prop
+
+end DiagonaLean.SemiThue.Reduction

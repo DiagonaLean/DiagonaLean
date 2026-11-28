@@ -5,6 +5,7 @@ Authors: Prathamesh TVH, Claude Opus
 
 import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
 import Mathlib.Computability.TuringMachine.ToPartrec
+import DiagonaLean.Foundations.Computability.Simulation
 
 @[expose] public section
 
@@ -19,12 +20,14 @@ cell. `wrap` closes the gap.
 * When the `TM0` machine stops in state `q`, `wrap` sweeps left to the first blank, erases rightward
   up to the next blank, writes the single bit `bit q`, and halts.
 
-Only forward simulation is proved, because that is all the reduction needs.
+The simulation is forward (`rel_step`, `wrapG_reach`), and it reflects halting
+(`eval_dom_of_wrapG`): if the Cslib machine halts, `M` stops.
 
 ## Main statements
 
 * `wrap`: the Cslib machine.
 * `wrap_outputs`: if `M` stops in `c` on input `l`, then `wrap` outputs `[bit c.q]` on `l`.
+* `eval_dom_of_wrapG`: if the Cslib machine halts on `l`, then `M` stops on `l`.
 -/
 
 namespace DiagonaLean.Foundations.Computability
@@ -221,6 +224,21 @@ theorem wrapG_reach {l : List Bool} {c : TM0.Cfg Bool Λ}
     simp only [wrapTrG, tp]
     split <;> simp_all
   exact ⟨h, L, R, hw.tail (wrap_step htr rfl), rfl⟩
+
+variable (M S hS enter stopTr) in
+/-- **The converse of the simulation**: if `wrapG` halts on `l`, then `M` stops on `l`. Each step
+of `M` is one step of `wrapG` (`rel_step`), so the simulation reflects halting
+(`eval_dom_of_simulation`); the cleanup stage plays no part. -/
+theorem eval_dom_of_wrapG {l : List Bool}
+    (h : (StateTransition.eval (wrapG M S hS enter stopTr).step
+      ((wrapG M S hS enter stopTr).initCfg l)).Dom) :
+    (StateTransition.eval (TM0.step M) (TM0.init l)).Dom :=
+  eval_dom_of_simulation (R := WRel M S hS enter stopTr)
+    (fun _ _ _ hr hb =>
+      let ⟨w', hw', hs⟩ := rel_step hr hb
+      ⟨w', hw', Relation.TransGen.single hs⟩)
+    ⟨Finset.mem_coe.1 hS.1, l.head?, [], l.tail,
+      by simp only [SingleTapeTM.initCfg, tp_mk₁]; rfl, ab_mk₁ l⟩ h
 
 /-! ### Cleaning up by sweeping -/
 

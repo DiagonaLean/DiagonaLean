@@ -22,8 +22,8 @@ allows the end tile to close a solution. The three tile roles are:
 `tileStart` (forces every solution to begin with it), `tileReg` (encodes
 an MPCP card), and `tileEnd` (closes the match).
 
-`mpcp_iff_pcp` proves the equivalence, and `mpcp_reducesto_pcp_spec` and `PCP.synthFromMPCP` state
-it as a many-one reduction.
+`mpcp_iff_pcp` proves the equivalence, and `mpcp_reducesto_pcp_spec` states it as a many-one
+reduction through `fun x => mpcpToPcp x.1 x.2`.
 
 ## References
 
@@ -513,14 +513,5 @@ theorem mpcp_reducesto_pcp_spec :
     (@MPCP.DecisionProblem α) ⪯_s[fun x => mpcpToPcp x.1 x.2]
       (@PCP.DecisionProblem (Ext α)) :=
   fun x => mpcp_iff_pcp x.1 x.2
-
-/-- MPCP many-one reduces to PCP over the extended alphabet, through `mpcpToPcp`. -/
-def _root_.DiagonaLean.PCP.synthFromMPCP :
-    (@MPCP.DecisionProblem α) ⪯_s (@PCP.DecisionProblem (Ext α)) :=
-  ⟨fun x => mpcpToPcp x.1 x.2, mpcp_reducesto_pcp_spec⟩
-
-/-- The former name of `PCP.synthFromMPCP`. -/
-@[deprecated DiagonaLean.PCP.synthFromMPCP (since := "2026-11-23")]
-abbrev mpcpReducesPCP := @DiagonaLean.PCP.synthFromMPCP
 
 end DiagonaLean.PCP.Reduction

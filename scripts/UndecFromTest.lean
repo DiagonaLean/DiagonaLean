@@ -1,10 +1,16 @@
+import DiagonaLean.MPCP.SynthHardness
+import DiagonaLean.EmpCFG.SynthHardness
+import DiagonaLean.SemiThue.SynthHardness
+import DiagonaLean.MatMort.SynthHardness
 import DiagonaLean.EmpCFG.Undecidable
 import DiagonaLean.SemiThue.Undecidable
-import DiagonaLean.MatMort.MachineLevel
+import DiagonaLean.MatMort.Undecidable
 import DiagonaLean.MatrixGame.Undecidable
-import DiagonaLean.MatrixGame.MachineLevel
+import DiagonaLean.MatrixGame.Undecidable
+import DiagonaLean.MatrixGame.SynthHardness
 import DiagonaLean.Rabin.FixedGame
-import DiagonaLean.Rabin.MachineLevel
+import DiagonaLean.Rabin.Undecidable
+import DiagonaLean.Rabin.SynthHardness
 
 /-! Regression tests for discovery, composition, and the manual tactic interface. -/
 
@@ -33,10 +39,16 @@ example : SynthHaltReduction MPCP.MPCProblem := by show_term undec from Halt.Hal
 info: Halting → Binary PCP → PCP over Paterson’s alphabet → 3×3 matrix mortality
 ---
 info: Try this:
-  [apply] undec from PCP.synthFromHaltBool via MatMort.synthS23FromPCP, MatMort.synthFromPCP
+  [apply] reduce_from PCP.synthFromHaltBool
+    via MatMort.synthS23FromPCP,
+    via MatMort.synthFromPCP
 -/
 #guard_msgs (whitespace := lax) in
 example : SynthHaltReduction MatMort.DecisionProblem := by undec? from PCP.PCProblem
+
+-- The suggestion replays with `reduce_from`.
+example : SynthHaltReduction MatMort.DecisionProblem := by
+  reduce_from PCP.synthFromHaltBool via MatMort.synthS23FromPCP, via MatMort.synthFromPCP
 
 -- Library results are discoverable from halting.
 example : SynthHaltReduction MPCP.MPCProblem := by undec from Halt.HaltProblem
@@ -174,8 +186,7 @@ example : SynthHaltReduction MatMort.DecisionProblem := by
 info: Binary PCP → PCP over Paterson’s alphabet → 3×3 matrix mortality
 ---
 info: Try this:
-  [apply] undec from PCP.MachineLevel.not_computablePred_pcp via MatMort.synthS23FromPCP,
-    MatMort.synthFromPCP
+  [apply] reduce_from PCP.not_computablePred via MatMort.synthS23FromPCP, via MatMort.synthFromPCP
 -/
 #guard_msgs (whitespace := lax) in
 example {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool} (he : Computable enc) :
@@ -184,7 +195,11 @@ example {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool} (he : Computab
 
 example {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool} (he : Computable enc) :
     ¬ MachineDecidable enc MatMort.DecisionProblem := by
-  undec from PCP.MachineLevel.not_computablePred_pcp via MatMort.synthS23FromPCP,
+  reduce_from PCP.not_computablePred via MatMort.synthS23FromPCP, via MatMort.synthFromPCP
+
+example {enc : Finset (Matrix (Fin 3) (Fin 3) ℤ) → List Bool} (he : Computable enc) :
+    ¬ MachineDecidable enc MatMort.DecisionProblem := by
+  undec from PCP.not_computablePred via MatMort.synthS23FromPCP,
     MatMort.synthFromPCP
 
 -- A source with an error is reported once.
@@ -195,8 +210,8 @@ example : SynthHaltReduction MPCP.MPCProblem := by undec from MPCP.synthFromHalt
 -- An unsupported goal names the goals that `undec from` proves.
 /--
 error: undec from proves goals of the form `SynthHaltReduction Q`, and, with
-`DiagonaLean.Foundations.Computability.UndecTransfer` imported, `¬ ComputablePred Q` and
-`¬ MachineDecidable enc Q`
+`DiagonaLean.Foundations.Computability.UndecTransfer` imported, `¬ ComputablePred Q`,
+`¬ MachineDecidable enc Q`, `HaltReduction Q` and `HaltHard Q`
 The goal is
   ComputablePred P
 -/
@@ -245,7 +260,7 @@ example : SynthHaltReduction Halt.HaltProblem := by undec?
 
 /--
 info: Try this:
-  [apply] undec from ‹SynthHaltReduction P› via ‹P ⪯_s Q›
+  [apply] reduce_from ‹SynthHaltReduction P› via ‹P ⪯_s Q›
 -/
 #guard_msgs (whitespace := lax) in
 example (P Q : ℕ → Prop) : (SynthHaltReduction P) → (P ⪯_s Q) → SynthHaltReduction Q := by
@@ -256,11 +271,15 @@ example (P Q : ℕ → Prop) : (SynthHaltReduction P) → (P ⪯_s Q) → SynthH
   intro _ _
   undec from ‹SynthHaltReduction P› via ‹P ⪯_s Q›
 
+example (P Q : ℕ → Prop) : (SynthHaltReduction P) → (P ⪯_s Q) → SynthHaltReduction Q := by
+  intro _ _
+  reduce_from ‹SynthHaltReduction P› via ‹P ⪯_s Q›
+
 /--
 info: Halting → P → Q
 ---
 info: Try this:
-  [apply] undec from h via ‹P ⪯_s Q›
+  [apply] reduce_from h via ‹P ⪯_s Q›
 -/
 #guard_msgs (whitespace := lax) in
 example (P Q R : ℕ → Prop) (h : SynthHaltReduction P) (r : P ⪯_s Q) (r' : Q ⪯_s R) :
@@ -324,5 +343,75 @@ example : SynthHaltReduction MatrixGame.DecisionProblem := by
 -- The suggested script for the matrix game replays without search.
 example {enc : MatrixGame.Arena → List Bool} (he : Computable enc) :
     ¬ MachineDecidable enc MatrixGame.DecisionProblem := by
-  undec from PCP.MachineLevel.not_computablePred_pcp via MatMort.synthS23FromPCP,
+  undec from PCP.not_computablePred via MatMort.synthS23FromPCP,
     MatMort.synthFromPCP, MatrixGame.synthFromMatMort
+
+/-! ### Proved goals
+
+On `HaltReduction Q` and `HaltHard Q` the route is found as for noncomputability and proved by
+`reduce_from`, from the source problem's registered halting reduction. -/
+
+open DiagonaLean.Foundations.Computability in
+/--
+info: 3×3 matrix mortality → Matrix-game winner
+---
+info: Try this:
+  [apply] reduce_from MatMort.DecisionProblem via MatrixGame.synthFromMatMort
+-/
+#guard_msgs (whitespace := lax) in
+example : HaltReduction MatrixGame.DecisionProblem := by
+  undec? from MatMort.DecisionProblem
+
+open DiagonaLean.Foundations.Computability in
+example : HaltReduction MatrixGame.DecisionProblem := by
+  reduce_from MatMort.DecisionProblem via MatrixGame.synthFromMatMort
+
+open DiagonaLean.Foundations.Computability in
+example : HaltHard MatrixGame.DecisionProblem := by
+  undec from MatMort.DecisionProblem via MatrixGame.synthFromMatMort
+
+open DiagonaLean.Foundations.Computability in
+/--
+error: on a goal
+  HaltReduction MatrixGame.DecisionProblem
+name a source problem: `undec? from P`
+-/
+#guard_msgs in
+example : HaltReduction MatrixGame.DecisionProblem := by
+  undec?
+
+/-! ### A route with no links
+
+When the source is the goal's problem, the suggestion is a term, not a search. -/
+
+/--
+info: Rabin game winner
+---
+info: Try this:
+  [apply] exact Rabin.not_computablePred
+-/
+#guard_msgs (whitespace := lax) in
+example : ¬ ComputablePred Rabin.DecisionProblem := by
+  undec? from Rabin.DecisionProblem
+
+/--
+info: Rabin game winner
+---
+info: Try this:
+  [apply] exact DiagonaLean.Foundations.Computability.not_machineDecidable_of_not_computablePred
+    (by fun_prop) Rabin.not_computablePred
+-/
+#guard_msgs (whitespace := lax) in
+example {enc : Rabin.PayoffCode → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc Rabin.DecisionProblem := by
+  undec? from Rabin.DecisionProblem
+
+-- Both replay.
+example : ¬ ComputablePred Rabin.DecisionProblem := by
+  exact Rabin.not_computablePred
+
+example {enc : Rabin.PayoffCode → List Bool} (henc : Computable enc) :
+    ¬ MachineDecidable enc Rabin.DecisionProblem := by
+  exact DiagonaLean.Foundations.Computability.not_machineDecidable_of_not_computablePred
+    (by fun_prop) Rabin.not_computablePred
+

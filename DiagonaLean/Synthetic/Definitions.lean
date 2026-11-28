@@ -13,8 +13,7 @@ The basic notions of synthetic computability: Boolean deciders (`Decider`, `SDec
 Turing machine deciders (`TMDeciderFor`, `MachineDecidable`), enumerators (`Enumerator`,
 `SEnumerable`), semi-deciders (`SemiDecider`, `SemiDecidable`), many-one reductions by a fixed
 function (`ReducesVia`, notation `p ⪯_s[f] q`) and synthetic many-one reductions as data
-(`SynthReduction`, notation `p ⪯_s q`). `Reduction` and `ManyOneReduces` are their former names,
-kept as deprecated aliases.
+(`SynthReduction`, notation `p ⪯_s q`). `Reduction` and `ManyOneReduces` were their former names.
 
 ## References
 
@@ -78,10 +77,6 @@ correctness statement shared by synthetic reductions and reductions proved compu
 def ReducesVia (f : X → Y) (P : X → Prop) (Q : Y → Prop) : Prop :=
   ∀ x, P x ↔ Q (f x)
 
-/-- The former name of `ReducesVia`. -/
-@[deprecated ReducesVia (since := "2026-11-22")]
-abbrev Reduction := @ReducesVia
-
 /-- If `f` many-one reduces `p` to `q` then we write `p ⪯_s[f] q`. -/
 notation:50 p " ⪯_s[" f "] " q => ReducesVia f p q
 
@@ -114,10 +109,6 @@ structure SynthReduction (p : X → Prop) (q : Y → Prop) where
   f : X → Y
   /-- `f` witnesses the reduction: `p ⪯_s[f] q`, i.e. `p x ↔ q (f x)` for every `x`. -/
   hf : p ⪯_s[f] q
-
-/-- The former name of `SynthReduction`. -/
-@[deprecated SynthReduction (since := "2026-11-22")]
-abbrev ManyOneReduces := @SynthReduction
 
 /-- If `p` many-one reduces to `q` (synthetically) then we write `p ⪯_s q`. -/
 notation:50 p " ⪯_s " q => SynthReduction p q

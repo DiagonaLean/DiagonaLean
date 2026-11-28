@@ -13,7 +13,7 @@ import DiagonaLean.Synthetic.Definitions
 Synthetic many-one reducibility is reflexive (`SynthReduction.refl`) and transitive
 (`SynthReduction.trans`), and a reduction from `P` to `Q` is also a reduction from the complement
 of `P` to the complement of `Q` (`SynthReduction.compl`). `reducesRefl`, `reducesTrans` and
-`reducesCompl` are their former names, kept as deprecated aliases. Each
+`reducesCompl` were their former names (the aliases were removed on 2026-11-27). Each
 reduction is a `def` built from a spec theorem (`reduces_reflexive_spec`,
 `reduces_transitive_spec`, `reduces_complement_spec`).
 
@@ -37,10 +37,6 @@ a `def`, not a `theorem`. -/
 def _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.refl (P : X → Prop) : P ⪯_s P :=
   ⟨id, reduces_reflexive_spec P⟩
 
-/-- The former name of `SynthReduction.refl`. -/
-@[deprecated SynthReduction.refl (since := "2026-11-22")]
-abbrev reducesRefl := @SynthReduction.refl
-
 /-- The composition `hQR.f ∘ hPQ.f` of the two witness functions witnesses that many-one
 reducibility is transitive. -/
 theorem reduces_transitive_spec {P : X → Prop} {Q : Y → Prop} {R : Z → Prop}
@@ -52,10 +48,6 @@ def _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.trans {P : X → Pro
     {R : Z → Prop} (hPQ : P ⪯_s Q) (hQR : Q ⪯_s R) : P ⪯_s R :=
   ⟨hQR.f ∘ hPQ.f, reduces_transitive_spec hPQ hQR⟩
 
-/-- The former name of `SynthReduction.trans`. -/
-@[deprecated SynthReduction.trans (since := "2026-11-22")]
-abbrev reducesTrans := @SynthReduction.trans
-
 /-- The witness function `h.f` of `P ⪯_s Q` also witnesses that the complement of `P` reduces to
 the complement of `Q`. -/
 theorem reduces_complement_spec {P : X → Prop} {Q : Y → Prop}
@@ -66,9 +58,5 @@ theorem reduces_complement_spec {P : X → Prop} {Q : Y → Prop}
 def _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.compl {P : X → Prop} {Q : Y → Prop}
     (h : P ⪯_s Q) : Complement P ⪯_s Complement Q :=
   ⟨h.f, reduces_complement_spec h⟩
-
-/-- The former name of `SynthReduction.compl`. -/
-@[deprecated SynthReduction.compl (since := "2026-11-22")]
-abbrev reducesCompl := @SynthReduction.compl
 
 end DiagonaLean.Synthetic.ReductionChain

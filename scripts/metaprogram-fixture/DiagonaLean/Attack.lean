@@ -1,4 +1,4 @@
-import DiagonaLean.Synthetic.Undecidability
+import DiagonaLean.Synthetic.HaltReduction
 
 /-! Fixture for `scripts/CheckMetaprograms.lean`, run by CI, which must reject it. Not built.
 
@@ -21,7 +21,8 @@ def stubFn : EncodableTM Bool × List Bool → ℕ := fun _ => 0
 
 run_cmd do
   let ty ← liftTermElabM do
-    instantiateMVars (← Term.elabTermAndSynthesize (← `(Undecidable fun n : ℕ => Even n)) none)
+    instantiateMVars
+      (← Term.elabTermAndSynthesize (← `(SynthHaltReduction fun n : ℕ => Even n)) none)
   let val ← liftTermElabM do
     instantiateMVars
       (← Term.elabTermAndSynthesize (← `(⟨classicalFn.choose, classicalFn.choose_spec⟩)) ty)

@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.Foundations.Computability.Prim
+import DiagonaLean.Foundations.Computability.IntPrim
 import Mathlib.LinearAlgebra.Matrix.Notation
 
 @[expose] public section
@@ -17,7 +17,9 @@ primitive recursive exactly when each of its components is (`prim_finFun`). Matr
 
 The vector literals `![a, b, …]` (`Matrix.vecCons`, `Matrix.vecEmpty`) and `Matrix.of` have
 `fun_prop` lemmas, so a matrix written as `!![a, b; c, d]` with primitive recursive entries is
-proved primitive recursive by `fun_prop` alone, with no split into entries.
+proved primitive recursive by `fun_prop` alone, with no split into entries. Products of integer
+square matrices, and of lists of them, are primitive recursive (`prim_intMatMul`,
+`prim_intMatProd`).
 -/
 
 namespace DiagonaLean.Foundations.Computability
@@ -67,6 +69,27 @@ theorem prim_finApp {n : ℕ} {f : α → Fin n → σ} {g : α → Fin n} (hf :
 
 @[fun_prop] theorem prim_finSucc {n : ℕ} {f : α → Fin n} (hf : Primrec f) :
     Primrec fun x => (f x).succ := Primrec.fin_succ.comp hf
+
+/-- **The product of two integer square matrices is primitive recursive**: each entry is a sum of
+`n` products of entries. -/
+@[fun_prop] theorem prim_intMatMul {n : ℕ} {f g : α → Matrix (Fin n) (Fin n) ℤ} (hf : Primrec f)
+    (hg : Primrec g) : Primrec fun x => f x * g x := by
+  refine prim_matrix fun i k => ?_
+  have hv : Primrec fun x (j : Fin n) => f x i j * g x j k := prim_finFun fun j =>
+    prim_intMul (prim_finApp (prim_finApp hf (.const i)) (.const j))
+      (prim_finApp (prim_finApp hg (.const j)) (.const k))
+  have : Primrec fun x => (List.ofFn fun j => f x i j * g x j k).foldr (· + ·) 0 :=
+    Primrec.list_foldr (prim_ofFn hv) (.const 0)
+      (prim_intAdd (Primrec.fst.comp .snd) (Primrec.snd.comp .snd)).to₂
+  exact this.of_eq fun x => by simp [Matrix.mul_apply, ← List.sum_eq_foldr, List.sum_ofFn]
+
+/-- **The product of a list of integer square matrices is primitive recursive.** -/
+@[fun_prop] theorem prim_intMatProd {n : ℕ} {f : α → List (Matrix (Fin n) (Fin n) ℤ)}
+    (hf : Primrec f) : Primrec fun x => (f x).prod := by
+  have : Primrec fun x => (f x).foldr (· * ·) 1 :=
+    Primrec.list_foldr hf (Primrec.const 1)
+      (prim_intMatMul (Primrec.fst.comp Primrec.snd) (Primrec.snd.comp Primrec.snd)).to₂
+  exact this.of_eq fun x => List.prod_eq_foldr.symm
 
 end Prim
 

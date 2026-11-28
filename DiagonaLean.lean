@@ -13,85 +13,111 @@ import DiagonaLean.UTMHalt.Undecidable
 
 import DiagonaLean.MPCP.Basic
 import DiagonaLean.MPCP.AlphabetLift
-import DiagonaLean.MPCP.Hardness
-import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.MPCP.Undecidable
-import DiagonaLean.MPCP.MachineLevel
+import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
+import DiagonaLean.MPCP.SynthHardness
+import DiagonaLean.MPCP.Reductions.HaltCanon_to_MPCP
+import DiagonaLean.MPCP.RE
 import DiagonaLean.SemiThue.Basic
 import DiagonaLean.SemiThue.Reductions.Halt_to_SemiThue
-import DiagonaLean.SemiThue.MachineLevel
+import DiagonaLean.SemiThue.Reductions.HaltCanon_to_SemiThue
 import DiagonaLean.SemiThue.AlphabetLift
-import DiagonaLean.SemiThue.Hardness
 import DiagonaLean.SemiThue.Undecidable
+import DiagonaLean.SemiThue.RE
+import DiagonaLean.SemiThue.SynthHardness
 import DiagonaLean.GrammarMem.Basic
 import DiagonaLean.GrammarMem.Reductions.Halt_to_GrammarMem
-import DiagonaLean.GrammarMem.MachineLevel
-import DiagonaLean.GrammarMem.Hardness
+import DiagonaLean.GrammarMem.Reductions.SemiThue_to_GrammarMem
+import DiagonaLean.GrammarMem.Reductions.HaltCanon_to_GrammarMem
 import DiagonaLean.GrammarMem.Undecidable
+import DiagonaLean.GrammarMem.SynthHardness
 
 import DiagonaLean.PCP.Basic
 import DiagonaLean.PCP.AlphabetLift
 import DiagonaLean.PCP.Reductions.Halt_to_PCP
 import DiagonaLean.PCP.Reductions.MPCP_to_PCP
-import DiagonaLean.PCP.Undecidable
+import DiagonaLean.PCP.SynthHardness
 import DiagonaLean.PCP.Primrec
-import DiagonaLean.PCP.MachineLevel
+import DiagonaLean.PCP.Undecidable
+import DiagonaLean.PCP.RE
 
 import DiagonaLean.AmbigCFG.Basic
 import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFG
+import DiagonaLean.AmbigCFG.SynthHardness
+import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFGCode
 import DiagonaLean.AmbigCFG.Undecidable
-import DiagonaLean.AmbigCFG.MachineLevel
 import DiagonaLean.AmbigCFG.Rename
 import DiagonaLean.AmbigCFG.Encode
 import DiagonaLean.AmbigCFG.AlphabetLift
 
 import DiagonaLean.EmpCFG.Basic
 import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFG
-import DiagonaLean.EmpCFG.Undecidable
+import DiagonaLean.EmpCFG.SynthHardness
 import DiagonaLean.EmpCFG.AlphabetLift
-import DiagonaLean.EmpCFG.MachineLevel
+import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFGCode
+import DiagonaLean.EmpCFG.Undecidable
 
 import DiagonaLean.MatMort.Basic
 import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
-import DiagonaLean.MatMort.Undecidable
+import DiagonaLean.MatMort.SynthHardness
 import DiagonaLean.MatMort.Primrec
-import DiagonaLean.MatMort.MachineLevel
+import DiagonaLean.MatMort.Undecidable
+import DiagonaLean.MatMort.RE
 
 import DiagonaLean.KAComm.TermEq.Basic
 import DiagonaLean.KAComm.TermEq.Reductions.Halt_to_TermEq
+import DiagonaLean.KAComm.TermEq.Reductions.HaltCanon_to_TermEq
+import DiagonaLean.KAComm.TermEq.SynthHardness
 import DiagonaLean.KAComm.TermEq.Undecidable
 import DiagonaLean.KAComm.TermEqBool.Basic
 import DiagonaLean.KAComm.TermEqBool.Reductions.Halt_to_TermEqBool
+import DiagonaLean.KAComm.TermEqBool.Reductions.HaltCanon_to_TermEqBool
+import DiagonaLean.KAComm.TermEqBool.SynthHardness
 import DiagonaLean.KAComm.TermEqBool.Undecidable
 import DiagonaLean.KAComm.KATermEq.Basic
 import DiagonaLean.KAComm.KATermEq.Reductions.Halt_to_KATermEq
+import DiagonaLean.KAComm.KATermEq.Reductions.HaltCanon_to_KATermEq
+import DiagonaLean.KAComm.KATermEq.SynthHardness
 import DiagonaLean.KAComm.KATermEq.Undecidable
 import DiagonaLean.KAComm.KATermEqBool.Basic
 import DiagonaLean.KAComm.KATermEqBool.Reductions.Halt_to_KATermEqBool
+import DiagonaLean.KAComm.KATermEqBool.Reductions.HaltCanon_to_KATermEqBool
+import DiagonaLean.KAComm.KATermEqBool.SynthHardness
 import DiagonaLean.KAComm.KATermEqBool.Undecidable
 import DiagonaLean.KAComm.LangEq.Basic
 import DiagonaLean.KAComm.LangEq.Reductions.Halt_to_LangEq
+import DiagonaLean.KAComm.LangEq.SynthHardness
 import DiagonaLean.KAComm.LangEq.Undecidable
 import DiagonaLean.KAComm.LangEqBool.Basic
 import DiagonaLean.KAComm.LangEqBool.Reductions.Halt_to_LangEqBool
+import DiagonaLean.KAComm.LangEqBool.SynthHardness
 import DiagonaLean.KAComm.LangEqBool.Undecidable
 import DiagonaLean.KAComm.ModelLe.Basic
 import DiagonaLean.KAComm.ModelLe.Reductions.Halt_to_ModelLe
+import DiagonaLean.KAComm.ModelLe.SynthHardness
 import DiagonaLean.KAComm.ModelLe.Undecidable
 import DiagonaLean.KAComm.ModelLeBool.Basic
 import DiagonaLean.KAComm.ModelLeBool.Reductions.Halt_to_ModelLeBool
+import DiagonaLean.KAComm.ModelLeBool.SynthHardness
 import DiagonaLean.KAComm.ModelLeBool.Undecidable
 
 import DiagonaLean.SKIConv.Basic
 import DiagonaLean.SKIConv.Reductions.Halt_to_SKIConv
+import DiagonaLean.SKIConv.Reductions.HaltCanon_to_SKIConv
+import DiagonaLean.SKIConv.SynthHardness
 import DiagonaLean.SKIConv.Undecidable
+import DiagonaLean.SKIConv.RE
 
 import DiagonaLean.BetaConv.Basic
 import DiagonaLean.BetaConv.Reductions.Halt_to_BetaConv
+import DiagonaLean.BetaConv.Reductions.HaltCanon_to_BetaConv
+import DiagonaLean.BetaConv.SynthHardness
 import DiagonaLean.BetaConv.Undecidable
+import DiagonaLean.BetaConv.RE
 
 import DiagonaLean.Rice.Basic
 import DiagonaLean.Rice.Reductions.Halt_to_Rice
+import DiagonaLean.Rice.SynthHardness
 import DiagonaLean.Rice.Undecidable
 
 import DiagonaLean.Rabin.Basic
@@ -99,24 +125,24 @@ import DiagonaLean.Rabin.FixedGame
 import DiagonaLean.Rabin.Strategies
 import DiagonaLean.Rabin.Reductions.Halt_to_Rabin
 import DiagonaLean.Rabin.Undecidable
-import DiagonaLean.Rabin.MachineLevel
+import DiagonaLean.Rabin.SynthHardness
 import DiagonaLean.Rabin.ComputableStrategy
 
 import DiagonaLean.MatrixGame.Basic
 import DiagonaLean.MatrixGame.Search
 import DiagonaLean.MatrixGame.Reductions.MatMort_to_MatrixGame
 import DiagonaLean.MatrixGame.Undecidable
-import DiagonaLean.MatrixGame.MachineLevel
+import DiagonaLean.MatrixGame.SynthHardness
 
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
 import DiagonaLean.Synthetic.HaltReduction
 import DiagonaLean.Synthetic.Tactics.ReductionPath
 import DiagonaLean.Synthetic.Tactics.UndecFrom
-import DiagonaLean.Synthetic.Undecidability
 import DiagonaLean.Synthetic.Tactics.ReduceFromPCP
 import DiagonaLean.Synthetic.ReductionCheck
 import DiagonaLean.Synthetic.MetaprogramCheck
+import DiagonaLean.Synthetic.AxiomCheck
 
 import DiagonaLean.Foundations.Computability.Prim
 import DiagonaLean.Foundations.Computability.StackProof
@@ -144,7 +170,13 @@ import DiagonaLean.Foundations.Computability.MachineBridge
 import DiagonaLean.Foundations.Computability.MachineComputes
 import DiagonaLean.Foundations.Computability.ComputableReduction
 import DiagonaLean.Foundations.Computability.HaltCanon
+import DiagonaLean.Foundations.Computability.Simulation
+import DiagonaLean.Foundations.Computability.HaltComplete
+import DiagonaLean.Foundations.Computability.Undecidable
+import DiagonaLean.Foundations.Computability.CanonRace
+import DiagonaLean.Foundations.Computability.HaltResults
 import DiagonaLean.Foundations.Computability.ReduceFrom
+import DiagonaLean.Foundations.Computability.Upgrade
 import DiagonaLean.Foundations.Computability.UndecTransfer
 import DiagonaLean.Foundations.Computability.Normalize.Conditions
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
@@ -158,6 +190,9 @@ import DiagonaLean.Foundations.Computability.Normalize.Sim
 import DiagonaLean.Foundations.Computability.Normalize.Steps
 
 import DiagonaLean.Foundations.Grammar.Code
+import DiagonaLean.Foundations.Rewriting.SRS
+import DiagonaLean.Foundations.Rewriting.Primcodable
+import DiagonaLean.Foundations.Grammar.ToSRS
 import DiagonaLean.Foundations.Grammar.Rewriting
 
 import DiagonaLean.Foundations.Codes.Basic
@@ -170,11 +205,13 @@ import DiagonaLean.Foundations.Codes.ComputableLift
 import DiagonaLean.Foundations.Codes.Tactic
 
 import DiagonaLean.Foundations.CombinatoryLogic.Code
+import DiagonaLean.Foundations.CombinatoryLogic.Conv
 import DiagonaLean.Foundations.CombinatoryLogic.ProofSearch
 import DiagonaLean.Foundations.CombinatoryLogic.Race
 import DiagonaLean.Foundations.CombinatoryLogic.Primcodable
 
 import DiagonaLean.Foundations.LambdaCalculus.Code
+import DiagonaLean.Foundations.LambdaCalculus.Conv
 import DiagonaLean.Foundations.LambdaCalculus.ProofSearch
 import DiagonaLean.Foundations.LambdaCalculus.Translation
 import DiagonaLean.Foundations.LambdaCalculus.Race
@@ -207,6 +244,7 @@ import DiagonaLean.KAComm.KleeneAlgebra.InstanceCode
 import DiagonaLean.KAComm.KleeneAlgebra.BinarySubst
 import DiagonaLean.KAComm.KleeneAlgebra.Race
 import DiagonaLean.KAComm.KleeneAlgebra.BoolCode
+import DiagonaLean.KAComm.KleeneAlgebra.CanonRace
 import DiagonaLean.KAComm.KleeneAlgebra.Between
 
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Configurations
@@ -215,3 +253,5 @@ import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.TraceCompleteness
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.LanguageSoundness
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.MachineTerms
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Halting
+import DiagonaLean.Degrees.Rewriting
+import DiagonaLean.Aliases.MachineLevel

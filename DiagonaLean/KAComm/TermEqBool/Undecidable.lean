@@ -6,22 +6,32 @@ Authors: Prathamesh TVH, Claude Opus
 import DiagonaLean.KAComm.TermEqBool.Reductions.Halt_to_TermEqBool
 import DiagonaLean.Halt.Inseparable
 import DiagonaLean.KAComm.KleeneAlgebra.BoolCode
+import DiagonaLean.KAComm.TermEqBool.Reductions.HaltCanon_to_TermEqBool
+import DiagonaLean.Foundations.Computability.HaltResults
+import DiagonaLean.Foundations.Computability.ReduceFrom
 
 @[expose] public section
 
 /-! # Undecidability of equality on `T Σ̈` over `{0, 1}`
 
-Provable equality in pre-Kleene algebra with commutativity over `{0, 1}` is synthetically
-halting-hard (`KAComm.TermEqBool.synthFromHalt`), given finite constants that are only known to
-exist. No Turing machine decides it under the encoding `encBool` of a pair of expressions as the
-binary digits of its code (`not_machineDecidable_termEqBool`), or under any encoding that a machine
-computes from `encBool` (`not_machineDecidable_termEqBool_of_conv`).
-Since the code of `encBool` has a primitive recursive decoder (`rcbDec`), it is not a computable
-predicate either (`not_computablePred_termEqBool`).
+The reduction from canonical machines, `canonReductionB B C` (`KAComm/KleeneAlgebra/CanonRace.lean`,
+correct by `haltCanon_reducesto_spec` in `Reductions/HaltCanon_to_TermEqBool.lean`), is proved
+computable, so `KAComm.TermEqBool.fromHaltWith B C …` is a proved halting reduction to provable
+equality in pre-Kleene algebra with commutativity over `{0, 1}`, for each choice of the interpreter
+constants `B` and the race program `C`. These exist only classically, so halting-hardness, a
+proposition, obtains them in its proof (`KAComm.TermEqBool.haltHard`); the problem is undecidable
+(`KAComm.TermEqBool.not_computablePred`) and no machine decides it under any computable encoding
+(`KAComm.TermEqBool.not_machineDecidable`).
+
+Independently, no Turing machine decides it under the encoding `encBool` of a pair of expressions as
+the binary digits of its code (`not_machineDecidable_termEqBool`), or under any encoding that a
+machine computes from `encBool` (`not_machineDecidable_termEqBool_of_conv`). The synthetic result is
+in `SynthHardness.lean`.
 
 ## References
 
 * [A. Azevedo de Amorim, C. Zhang, M. Gaboardi][AmorimZhangGaboardi2024], Theorems 18 and 19
+* R. M. Smullyan, *Undecidability and recursive inseparability* (1958)
 -/
 
 namespace DiagonaLean.KAComm.TermEqBool.Reduction
@@ -29,23 +39,11 @@ namespace DiagonaLean.KAComm.TermEqBool.Reduction
 open DiagonaLean.KAComm.KleeneAlgebra Cslib.Turing Nat.Partrec DiagonaLean.Foundations.Computability
   DiagonaLean.Synthetic.Definitions DiagonaLean.Halt.Undecidable
 
-/-- The former name of `KAComm.TermEqBool.synthFromHalt`. -/
-@[deprecated DiagonaLean.KAComm.TermEqBool.synthFromHalt (since := "2026-11-23")]
-abbrev undecidableTermEqBool := @DiagonaLean.KAComm.TermEqBool.synthFromHalt
-
 /-- **No Turing machine decides provable equality in pre-Kleene algebra over `{0, 1}`.** -/
 theorem not_machineDecidable_termEqBool : ¬ MachineDecidable encBool TermEqBoolProblem :=
   not_machineDecidable_of_family (ka := false) instCodeB instCodeB_prim
     (fun K l => sbI (rInst K l)) enc_bool iff_bool (fun _ _ h => pos_bool h)
     (fun _ _ h => neg_bool h)
-
-/-- **Provable equality in pre-Kleene algebra with commutativity over `{0, 1}` is not a computable
-predicate**: `encBool` writes the pair of codes `rc (toNat e)` in binary, which has a primitive
-recursive decoder (`rcbDec`), so this follows from `not_machineDecidable_termEqBool`
-(`not_computablePred_of_bitsPair`). -/
-theorem not_computablePred_termEqBool : ¬ ComputablePred TermEqBoolProblem :=
-  Foundations.Computability.not_computablePred_of_bitsPair rcb_prim rcbDec_prim rcbDec_rc
-    not_machineDecidable_termEqBool
 
 /-- **No Turing machine decides provable equality in pre-Kleene algebra over `{0, 1}`, under any
 encoding** that a machine computes from `encBool`. -/
@@ -55,3 +53,22 @@ theorem not_machineDecidable_termEqBool_of_conv {enc : InstB → List Bool}
   Halt.Inseparable.not_machineDecidable_of_conv not_machineDecidable_termEqBool hR
 
 end DiagonaLean.KAComm.TermEqBool.Reduction
+
+namespace DiagonaLean.KAComm.TermEqBool
+
+open DiagonaLean.KAComm.KleeneAlgebra Nat.Partrec DiagonaLean.Foundations.Computability
+  DiagonaLean.Synthetic.Definitions
+
+/-- **A proved halting reduction**, given the interpreter constants `B` and the race program `C`. -/
+def fromHaltWith (B : Base) (C : Code) (hB : B.Good) (hC : RaceProgB false B C) :
+    HaltReduction TermEqBoolProblem :=
+  ⟨canonReductionB B C, (canonReductionB_prim B C).to_comp, haltCanon_reducesto_spec hB hC⟩
+
+-- Halting-hardness and its consequences: the interpreter constants and the race program exist
+-- (`exists_base`, `exists_raceProgB`), so the proof obtains them, and only the existence of a
+-- reduction is stated.
+halt_results TermEqBoolProblem from
+  exists_base.elim fun B hB => (exists_raceProgB false B).elim fun C hC =>
+    ⟨fromHaltWith B C hB hC⟩
+
+end DiagonaLean.KAComm.TermEqBool

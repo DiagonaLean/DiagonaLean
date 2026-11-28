@@ -263,12 +263,11 @@ axiom DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad29 :
 structure DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30 where
   r : HaltProblem ⪯_s fun n : ℕ => Even n
 
-/-! ### The renamed structure and relation, and the former names kept as aliases
+/-! ### The structure's own namespace
 
-`SynthReduction` is the reduction structure; `ManyOneReduces`, `Undecidable` and `Reduction` are
-its former names and those of `SynthHaltReduction` and `ReducesVia`, kept as deprecated aliases. The cases
-above use `ManyOneReduces.*` names, now the namespace of an alias; these use the structure's own
-namespace, and reach the structure and the relation through each alias. -/
+`SynthReduction` is the reduction structure. The cases above use `ManyOneReduces.*` names, the
+namespace of its former name (removed with the other deprecated aliases on 2026-11-27, but still a
+namespace a declaration can be put in); these use the structure's own namespace. -/
 
 /-- A definition inside the structure's namespace. -/
 noncomputable def DiagonaLean.Synthetic.Definitions.SynthReduction.bad50 :
@@ -282,24 +281,8 @@ theorem DiagonaLean.Synthetic.Definitions.SynthReduction.bad51 :
 structure DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52 where
   r : HaltProblem ⪯_s fun n : ℕ => Even n
 
-set_option linter.deprecated false in
-/-- A reduction typed through the alias `ManyOneReduces`. -/
-noncomputable def bad53 : ManyOneReduces HaltProblem fun n : ℕ => Even n :=
-  ⟨classicalF, classicalF_spec⟩
-
 /-- A reduction typed through `SynthHaltReduction` directly. -/
 noncomputable def bad54 : SynthHaltReduction fun n : ℕ => Even n := ⟨classicalF, classicalF_spec⟩
-
-set_option linter.deprecated false in
-/-- A claim that a reduction exists, through the former relation name `Reduction`. -/
-theorem bad55 :
-    ∃ f : EncodableTM Bool × List Bool → ℕ, Reduction f HaltProblem fun n => Even n :=
-  ⟨classicalF, classicalF_spec⟩
-
-set_option linter.deprecated false in
-/-- A reduction typed through the former name `Undecidable`, in its old namespace. -/
-noncomputable def bad56 : DiagonaLean.Synthetic.Notation.Undecidable fun n : ℕ => Even n :=
-  ⟨classicalF, classicalF_spec⟩
 
 /-! ### Aliases that are not literally types -/
 
@@ -393,38 +376,209 @@ theorem goodComputableExists : ∃ f : ℕ → ℕ,
     (fun n : ℕ => Even n) ⪯[f] (fun n : ℕ => Even n) :=
   ⟨id, Computable.id, fun _ => Iff.rfl⟩
 
+/-! ### Rule 4: encodings are programs
+
+Under a classical encoding, `Computable`, `ComputablePred` and `MachineDecidable` are about the
+encoding, not about a program: with `encode := σ` for a classical bijection `σ` that sends the
+halting set to the even numbers, a decidable predicate is provably not computable (NOTIONS-style
+counterexample in the module docstring). The `σ` below is only `Classical.choice` of the identity,
+which is enough to test that the check sees it. Found by the attack round on the proved layer
+(2026-11-26), cases P1–P3 and P6–P8. -/
+
+/-- A type with the encodings below. -/
+def EncW := ℕ
+
+/-- A classical bijection. -/
+noncomputable def encσ : EncW ≃ ℕ := Classical.choice ⟨Equiv.refl ℕ⟩
+
+/-- A classical `Primcodable` instance (P1). -/
+noncomputable instance badEncInst : Primcodable EncW := Primcodable.ofEquiv ℕ encσ
+
+/-- An `encode` whose compiled code is swapped (P2). -/
+def badEncFn (n : ℕ) : ℕ := n
+/-- The code swapped in. -/
+def badEncImpl (n : ℕ) : ℕ := n + 1
+attribute [implemented_by badEncImpl] badEncFn
+
+/-- A type with the swapped encoding. -/
+def EncW2 := ℕ
+
+/-- An `Encodable` instance through the swapped `encode` (P2). -/
+instance badEncInst2 : Encodable EncW2 := ⟨badEncFn, fun n => some n, fun _ => rfl⟩
+
+/-- A classical machine encoding. -/
+noncomputable def badMachineEnc : ℕ → List Bool := fun n =>
+  if (Classical.propDecidable (n = 0)).decide then [] else [true]
+
+/-- A statement about the classical machine encoding (P3). -/
+theorem badEncMachine : MachineDecidable badMachineEnc (fun _ : ℕ => True) ∨ True := Or.inr trivial
+
+/-- The classical instance written inline (P6). -/
+theorem badEncInline : @Computable EncW ℕ (Primcodable.ofEquiv ℕ encσ) _ (fun _ => 0) :=
+  @Computable.const EncW ℕ (Primcodable.ofEquiv ℕ encσ) _ 0
+
+/-- The classical machine encoding in the body of a predicate that statements only name (P7). -/
+def badEncPred (P : ℕ → Prop) : Prop := MachineDecidable badMachineEnc P
+
+/-- A class that extends `Primcodable`. -/
+class EncCodes (α : Type) extends Primcodable α
+
+/-- An instance of it, built from the classical instance. -/
+noncomputable instance badEncCodes : EncCodes EncW := ⟨⟩
+
+/-- A statement through the projection to `Primcodable` (P8). -/
+theorem badEncExtends : @Computable EncW ℕ EncCodes.toPrimcodable _ (fun _ => 0) :=
+  @Computable.const EncW ℕ EncCodes.toPrimcodable _ 0
+
+/-- A type with an honest encoding. -/
+def EncW3 := ℕ
+
+/-- An honest `Encodable` instance: compiled, no escape hatch. -/
+instance goodEncInst : Encodable EncW3 := ⟨fun n => n, fun n => some n, fun _ => rfl⟩
+
+/-- A statement about every computable machine encoding: the encoding is a variable. -/
+theorem goodEncVariable (P : ℕ → Prop) (h : ∀ enc : ℕ → List Bool, Computable enc →
+    ¬ MachineDecidable enc P) : ∀ enc : ℕ → List Bool, Computable enc → ¬ MachineDecidable enc P :=
+  h
+
+/-! Rounds 2 and 3 of the attack (2026-11-26): encodings that a fixed list of machine-level
+predicates, or a check of closed encodings only, did not see. -/
+
+open Cslib.Turing in
+/-- `TMDeciderFor`, found from its type rather than a list (Q1). -/
+theorem badEncTMDecider (D : SingleTapeTM Bool) :
+    TMDeciderFor D badMachineEnc (fun _ => True) ∨ True := Or.inr trivial
+
+/-- A structure that bundles a machine encoding. -/
+structure EncBox (X : Type) where
+  /-- The encoding. -/
+  enc : X → List Bool
+
+/-- A predicate on such a structure. -/
+def EncBoxDecidable (E : EncBox ℕ) (P : ℕ → Prop) : Prop := MachineDecidable E.enc P
+
+/-- The classical encoding in a structure argument (Q2). -/
+theorem badEncBox : EncBoxDecidable ⟨badMachineEnc⟩ (fun _ => True) ∨ True := Or.inr trivial
+
+/-- A predicate on a curried encoding. -/
+def EncCurried (enc : ℕ → ℕ → List Bool) (P : ℕ → ℕ → Prop) : Prop :=
+  MachineDecidable (fun p : ℕ × ℕ => enc p.1 p.2) (fun p => P p.1 p.2)
+
+/-- A curried classical encoding (Q3). -/
+theorem badEncCurried : EncCurried (fun _ => badMachineEnc) (fun _ _ => True) ∨ True :=
+  Or.inr trivial
+
+/-- A predicate whose encoding is an implicit argument. -/
+def EncImplicit {enc : ℕ → List Bool} (P : ℕ → Prop) : Prop := MachineDecidable enc P
+
+/-- The classical encoding as an implicit argument (Q4). -/
+theorem badEncImplicit : @EncImplicit badMachineEnc (fun _ => True) ∨ True := Or.inr trivial
+
+/-- The classical encoding behind a beta-redex (Q6). -/
+theorem badEncBeta :
+    (fun e : ℕ → List Bool => MachineDecidable e (fun _ => True)) badMachineEnc ∨ True :=
+  Or.inr trivial
+
+/-- The classical encoding behind a `let` (Q7). -/
+theorem badEncLet : (let e := badMachineEnc; MachineDecidable e (fun _ => True)) ∨ True :=
+  Or.inr trivial
+
+/-- A classical decidability instance inside an encoding that mentions a bound variable (Q10). -/
+theorem badEncBound (p : ℕ → Prop) (hp : PrimrecPred p) :
+    @Computable {n // p n} ℕ (@Primcodable.subtype ℕ _ p (Classical.decPred p) hp) _ (fun _ => 0) :=
+  @Computable.const {n // p n} ℕ (@Primcodable.subtype ℕ _ p (Classical.decPred p) hp) _ 0
+
+/-- A predicate on an encoding inside a pair. -/
+def EncPair (p : (ℕ → List Bool) × Unit) (P : ℕ → Prop) : Prop := MachineDecidable p.1 P
+
+/-- The classical encoding inside a pair (R1). -/
+theorem badEncPair : EncPair (badMachineEnc, ()) (fun _ => True) ∨ True := Or.inr trivial
+
+/-- A predicate that takes a class extending `Primcodable`. -/
+def EncCodesPred (X : Type) [EncCodes X] (P : X → Prop) : Prop := ComputablePred P
+
+/-- The classical instance through such a predicate (R2). -/
+theorem badEncCodesPred : EncCodesPred EncW (fun _ => True) ∨ True := Or.inr trivial
+
+/-- A `Prop` structure whose constructor fixes the classical encoding (R3). -/
+structure BadEncStruct (P : ℕ → Prop) : Prop where
+  /-- The fact. -/
+  h : MachineDecidable badMachineEnc P
+
+/-- An inductive predicate whose constructor fixes the classical encoding (R4). -/
+inductive BadEncInd (P : ℕ → Prop) : Prop
+  | intro : MachineDecidable badMachineEnc P → BadEncInd P
+
+/-- An honest encoding in a structure argument, a quantified one, and a statement on
+`EncodableTM` (whose structure has an `Encodable` field): none is reported. -/
+def goodMachineEnc : ℕ → List Bool := fun n => List.replicate n false
+theorem goodEncBox : EncBoxDecidable ⟨goodMachineEnc⟩ (fun _ => True) ∨ True := Or.inr trivial
+theorem goodEncBoxVar : ∀ E : EncBox ℕ, EncBoxDecidable E (fun _ => True) ∨ True :=
+  fun _ => Or.inr trivial
+theorem goodEncHalt (M : EncodableTM Bool) (w : List Bool) : HaltProblem (M, w) ∨ True :=
+  Or.inr trivial
+
+/-! ### Registries (rule 2)
+
+A registry of synthetic reductions as a class stores a reduction in a structure, which rule 2
+rejects. A registry records names instead, through an attribute (NOTIONS §9.7, decided
+2026-11-26); the proved layer has one as a class, `HaltSource`, since it is not checked. -/
+
+/-- A class of synthetic sources (P9). -/
+class BadSynthSource (p : ℕ → Prop) where
+  /-- The source. -/
+  red : SynthHaltReduction p
+
+/-! ### Rule 5: statement and command syntax does not overlap existing syntax
+
+Found by the attack of 2026-11-26: Lean picks the longest parse and reports only a tie, so the
+first macro below makes `theorem t : ¬ A ∧ B` state `True ∨ (A ∧ B)` with no error, and leaves
+`¬ A` alone. These declarations come last, since they change how the rest of a file parses. -/
+
+/-- Takes over `¬ A ∧ B` (T4). -/
+macro (name := badSyntaxNotAnd) "¬" p:term:36 "∧" q:term:35 : term => `(True ∨ ($p ∧ $q))
+
+/-- A longer trailing `∧`. -/
+macro:35 (name := badSyntaxAnd) p:term:36 " ∧ " q:term:0 : term => `(True ∨ ($p ∧ $q))
+
+/-- Syntax that starts with an identifier: its first token cannot be read. -/
+syntax (name := badSyntaxIdent) ident " ↦↦ " term : term
+
+/-- A notation with a fresh first token: allowed. -/
+notation:50 (name := goodSyntaxFresh) a " ≈≈ " b => a = b
+
 /--
-error: `bad1` builds a reduction but is marked `noncomputable`
+error: `bad1` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
-error: `bad11` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad11 → haltOracle' → haltOracle → oracle
+error: `bad11` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad11 → haltOracle' → haltOracle → oracle; remove the escape hatch from that dependency, or state a proved reduction (`⪯`), which needs none
 ---
-error: `bad12` builds a reduction but is marked `noncomputable`
+error: `bad12` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
-error: `bad13` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad13 → pcpOracle → oracle
+error: `bad13` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad13 → pcpOracle → oracle; remove the escape hatch from that dependency, or state a proved reduction (`⪯`), which needs none
 ---
-error: `bad14` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad14 → bad13 → pcpOracle → oracle
+error: `bad14` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad14 → bad13 → pcpOracle → oracle; remove the escape hatch from that dependency, or state a proved reduction (`⪯`), which needs none
 ---
-error: `bad15` builds a reduction that depends on `spin`, which is `opaque` or `partial`, via bad15 → spin
+error: `bad15` builds a reduction that depends on `spin`, which is `opaque` or `partial`, via bad15 → spin; remove the escape hatch from that dependency, or state a proved reduction (`⪯`), which needs none
 ---
-error: `bad16` builds a reduction that depends on `sorryAx`, which is `sorry`, via bad16 → sorryAx
+error: `bad16` builds a reduction that depends on `sorryAx`, which is `sorry`, via bad16 → sorryAx; remove the escape hatch from that dependency, or state a proved reduction (`⪯`), which needs none
 ---
-error: `bad17` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad17 → haltDecidable → oracle
+error: `bad17` builds a reduction that depends on `oracle`, which uses `implemented_by`, via bad17 → haltDecidable → oracle; remove the escape hatch from that dependency, or state a proved reduction (`⪯`), which needs none
 ---
-error: `bad18` builds a reduction that depends on `sorry`
+error: `bad18` builds a reduction that depends on `sorry`; remove it from the proofs it reaches
 ---
-error: `bad19` builds a reduction that depends on the axiom `liesAxiom`
+error: `bad19` builds a reduction that depends on the axiom `liesAxiom`; remove it from the proofs it reaches
 ---
-error: `bad2` builds a reduction but is marked `noncomputable`
+error: `bad2` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
-error: `bad20` builds a reduction that depends on the axiom `nativeLie._native.native_decide.ax_1_1`
+error: `bad20` builds a reduction that depends on the axiom `nativeLie._native.native_decide.ax_1_1`; remove it from the proofs it reaches
 ---
-error: `bad25_sunfold` builds a reduction but is marked `noncomputable`
+error: `bad25_sunfold` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
-error: `bad3` builds a reduction but is marked `noncomputable`
+error: `bad3` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
-error: `bad31` builds a reduction but is marked `noncomputable`
+error: `bad31` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
-error: `bad32` builds a reduction but is marked `noncomputable`
+error: `bad32` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
 error: `bad33` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
@@ -434,47 +588,77 @@ error: `bad35` states a proposition that a reduction exists; state the result as
 ---
 error: `bad36` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `bad4` builds a reduction but is marked `noncomputable`
+error: `bad4` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
 error: `bad5` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `bad53` builds a reduction but is marked `noncomputable`
----
-error: `bad54` builds a reduction but is marked `noncomputable`
----
-error: `bad55` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
----
-error: `bad56` builds a reduction but is marked `noncomputable`
+error: `bad54` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
 error: `bad6` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `bad7` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `bad8` is an axiom about reductions
+error: `bad8` is an axiom about reductions; prove it, or take it as a hypothesis
 ---
-error: `bad9` is an opaque or partial declaration about reductions
+error: `bad9` is an opaque or partial declaration about reductions; use a `def` or a `theorem`
 ---
-error: `badAxiom` is an axiom about reductions
+error: `badAxiom` is an axiom about reductions; prove it, or take it as a hypothesis
+---
+error: `badEncBeta` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncBound` states a result about an encoding that uses `Classical.decPred`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncBox` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncCodesPred` states a result about an encoding that uses `badEncCodes`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncCurried` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncExtends` states a result about an encoding that uses `badEncCodes`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncImplicit` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncInline` states a result about an encoding that uses `encσ`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncInst` is an encoding but is marked `noncomputable`; build the encoding from compiled definitions, or take it as a parameter
+---
+error: `badEncInst2` is an encoding that depends on `badEncFn`, which uses `implemented_by`, via badEncInst2 → badEncFn; build the encoding from compiled definitions, or take it as a parameter
+---
+error: `badEncLet` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncMachine` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncPair` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncPred` defines a predicate about an encoding that uses `badMachineEnc`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `badEncTMDecider` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
 ---
 error: `classicalFn` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `dependent` returns a reduction inside another type
+error: `dependent` returns a reduction inside another type; return the reduction itself, and the other data from separate definitions
 ---
-error: `Bad10.mk` stores a reduction inside another type
+error: `Bad10.mk` stores a reduction inside another type; pass the reduction as a parameter (a registry records names, through an attribute)
 ---
-error: `Hidden._sizeOf_inst` builds a reduction but is marked `noncomputable`
+error: `BadEncInd.intro` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
 ---
-error: `Hidden.intro` stores a reduction inside another type
+error: `BadEncStruct.mk` states a result about an encoding that uses `badMachineEnc`, which is marked `noncomputable`; use a compiled encoding, or quantify over it
+---
+error: `BadSynthSource.mk` stores a reduction inside another type; pass the reduction as a parameter (a registry records names, through an attribute)
+---
+error: `Hidden._sizeOf_inst` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
+---
+error: `Hidden.intro` stores a reduction inside another type; pass the reduction as a parameter (a registry records names, through an attribute)
 ---
 error: `bad2._proof_1` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `bad24._hidden` builds a reduction but is marked `noncomputable`
+error: `bad24._hidden` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
 error: `bad26._hidden` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
 error: `dependent._proof_6` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `sunfoldBase._sunfold` builds a reduction but is marked `noncomputable`
+error: `sunfoldBase._sunfold` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
 error: `Bad10.mk.inj` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
@@ -482,25 +666,25 @@ error: `Bad10.mk.injEq` states a proposition that a reduction exists; state the 
 ---
 error: `Bad10.mk.sizeOf_spec` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `Hidden.intro._flat_ctor` builds a reduction but is marked `noncomputable`
+error: `Hidden.intro._flat_ctor` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
-error: `Nat.succ.bad23` builds a reduction but is marked `noncomputable`
+error: `Nat.succ.bad23` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
 error: `Nat.succ.bad27` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad22` builds a reduction but is marked `noncomputable`
+error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad22` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
 error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad28` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad29` is an axiom about reductions
+error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.bad29` is an axiom about reductions; prove it, or take it as a hypothesis
 ---
-error: `DiagonaLean.Synthetic.Definitions.SynthReduction.bad50` builds a reduction but is marked `noncomputable`
+error: `DiagonaLean.Synthetic.Definitions.SynthReduction.bad50` builds a reduction but is marked `noncomputable`; build its function from compiled definitions, or, for a result proved classically, prove `Computable` of it and state a proved reduction (`⪯`, `HaltReduction`) instead
 ---
 error: `DiagonaLean.Synthetic.Definitions.SynthReduction.bad51` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30.mk` stores a reduction inside another type
+error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30.mk` stores a reduction inside another type; pass the reduction as a parameter (a registry records names, through an attribute)
 ---
-error: `DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52.mk` stores a reduction inside another type
+error: `DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52.mk` stores a reduction inside another type; pass the reduction as a parameter (a registry records names, through an attribute)
 ---
 error: `DiagonaLean.Synthetic.Definitions.ManyOneReduces.Bad30.mk.inj` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
@@ -514,7 +698,13 @@ error: `DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52.mk.injEq` states 
 ---
 error: `DiagonaLean.Synthetic.Definitions.SynthReduction.Bad52.mk.sizeOf_spec` states a proposition that a reduction exists; state the result as a definition whose value is the reduction
 ---
-error: `classicalF_eq` is a `@[csimp]` lemma that depends on `sorry`, so the compiled code of `classicalF` may differ from its meaning
+error: `classicalF_eq` is a `@[csimp]` lemma that depends on `sorry`, so the compiled code of `classicalF` may differ from its meaning; prove it without `sorry` or a new axiom
+---
+error: `badSyntaxIdent` is term syntax whose first token cannot be read, so rule 5 cannot check that it does not overlap existing syntax; start it with a token
+---
+error: `badSyntaxNotAnd` is term syntax whose first token `¬` also starts 1 other parser(s), so a longer parse can take over existing notation without an error; start it with a fresh token, or add it to `syntaxOverlapAllowances` after review
+---
+error: `badSyntaxAnd` is term syntax whose first token `∧` also starts 1 other parser(s), so a longer parse can take over existing notation without an error; start it with a fresh token, or add it to `syntaxOverlapAllowances` after review
 -/
 #guard_msgs in
 #check_reductions local

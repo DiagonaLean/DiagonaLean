@@ -65,7 +65,7 @@ theorem winsWithin_signGame_iff (moves : Finset Position) (n : ℕ) (p : Positio
 /-- A finite set of matrices is mortal iff Eve wins `signGame` with it. -/
 theorem matMort_reducesto_matrixGame_spec :
     MatMort.DecisionProblem ⪯_s[signGame] DecisionProblem := fun moves => by
-  unfold DecisionProblem
+  unfold DecisionProblem EveForcesZero
   rw [forceZero_iff_exists_bound]
   constructor
   · rintro ⟨w, hw, hz⟩

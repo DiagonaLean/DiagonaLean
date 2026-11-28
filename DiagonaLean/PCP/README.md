@@ -9,8 +9,9 @@ Given a finite list of tiles `P : Stack` over an alphabet `α`, each tile pairin
 ## Layout
 * `Basic.lean`: the problem.
 * `AlphabetLift.lean`: encoding the tiles by a code (`Foundations/Codes/`) preserves and reflects solvability (`decisionProblem_encode_iff`), so PCP is a functor on codes (`pcpFunctor`) and many-one reduces to PCP over any alphabet with two distinct letters (`PCP.synthAlphabetLift`). An injective renaming of letters is such a code (`pcp_map_iff`).
-* `Reductions/MPCP_to_PCP.lean`: `MPCP ⪯_s PCP` over the extended alphabet `Ext α` (`PCP.synthFromMPCP`).
-* `Reductions/Halt_to_PCP.lean`: `HaltProblem ⪯_s` PCP over `Ext (Alpha ℕ Bool)` (`PCP.synthFromHalt`). See `Reductions/README.md`.
-* `Primrec.lean`: tiles and `Ext α` are `Primcodable`, and `mpcpToPcp` and `liftInstance` are primitive recursive.
-* `Undecidable.lean`: PCP is synthetically halting-hard over `Ext (Alpha ℕ Bool)` (`PCP.synthFromHalt`), and over every alphabet with two distinct letters (`PCP.synthFromHaltOver`).
-* `MachineLevel.lean`: over any nontrivial `Primcodable` alphabet, PCP is not a computable predicate (`not_computablePred_pcp`), so no Turing machine decides it under any computable encoding (`not_machineDecidable_pcp`). The reductions are proved computable too: `PCP.fromMPCP`, and the halting reductions `PCP.fromHalt`, `PCP.fromHaltOver b0 b1 hne`, `PCP.fromHaltBool`.
+* `Reductions/MPCP_to_PCP.lean`: `MPCP ⪯_s PCP` over the extended alphabet `Ext α` (`mpcp_reducesto_pcp_spec`).
+* `Reductions/Halt_to_PCP.lean`: the reduction `haltToPcp` from `HaltProblem` to PCP over `Ext (Alpha ℕ Bool)` (`halt_reducesto_pcp_spec`). See `Reductions/README.md`.
+* `Primrec.lean`: tiles and `Ext α` are `Primcodable`, and `mpcpToPcp`, `liftInstance`, `τ1` and `τ2` are primitive recursive.
+* `SynthHardness.lean`: PCP is synthetically halting-hard over `Ext (Alpha ℕ Bool)` (`PCP.synthFromHalt`), and over every alphabet with two distinct letters (`PCP.synthFromHaltOver`).
+* `Undecidable.lean`: the halting reductions `PCP.fromHalt`, `PCP.fromHaltOver b0 b1 hne`, `PCP.fromHaltBool`, proved computable; so over any nontrivial `Primcodable` alphabet PCP is halting-hard (`PCP.haltHard`), undecidable (`PCP.not_computablePred`), and no Turing machine decides it under any computable encoding (`PCP.not_machineDecidable`).
+* `RE.lean`: PCP is recursively enumerable over every `Primcodable` alphabet (`PCP.rePred`), by a search over stacks of tiles that checks each candidate solution; with `PCP.haltHard`, it is exactly as hard as the halting problem.

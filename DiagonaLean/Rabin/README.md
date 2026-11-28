@@ -10,9 +10,9 @@ Player I chooses a natural number `i`, Player II sees it and replies with `j`, a
 * `Basic.lean`: the game, payoff programs, and the problem.
 * `FixedGame.lean`: Rabin's theorem (`rabin_game`). For the primitive recursive rule `rabinFunction`, Player II has a winning strategy, but no computable strategy wins for Player II.
 * `Strategies.lean`: Player I wins iff the complement of the range of `g` is finite (`hasWinningI_iff_finite_compl`), so exactly one player has a winning strategy (`winningII_iff_not_hasWinningI`). For computable `g`, a winning Player I has a computable final response (`exists_computable_last`), and Player II wins computably iff the complement of the range contains an infinite computably enumerable set (`computable_winningII_iff_infinite_range`).
-* `Reductions/Halt_to_Rabin.lean`: `HaltProblem ⪯_s DecisionProblem` (`Rabin.synthFromHalt`). See `Reductions/README.md`.
-* `Undecidable.lean`: imports `Rabin.synthFromHalt`, so that winner determination is synthetically halting-hard.
-* `MachineLevel.lean`: it is not a computable predicate (`not_computablePred_rabin`), so no Turing machine decides it under any computable encoding (`not_machineDecidable_rabin`).
+* `Reductions/Halt_to_Rabin.lean`: the reduction function `haltToRabin` and its correctness, `HaltProblem ⪯_s[haltToRabin] DecisionProblem` (`halt_reducesto_rabin_spec`). See `Reductions/README.md`.
+* `SynthHardness.lean`: winner determination is synthetically halting-hard (`Rabin.synthFromHalt`).
+* `Undecidable.lean`: it is undecidable (`Rabin.not_computablePred`), so no Turing machine decides it under any computable encoding (`Rabin.not_machineDecidable`). The proof reduces from self-halting, not from `HaltCanon`, so there is no `HaltReduction` and no `halt_results`.
 * `ComputableStrategy.lean`: no Turing machine decides whether Player II has a computable winning strategy, even when it only has to answer on programs for which Player II has a winning strategy (`not_machineDecidable_promised_strategy`). The payoff `cutoff d` agrees with `rabinFunction` until the simulation of `d` halts and is zero afterwards; Player II wins every cutoff game, and wins it computably iff the simulation halts (`cutoff_spec`). A promise problem is not a predicate, so the statement does not use `MachineDecidable`.
 
 ## Proof sketch

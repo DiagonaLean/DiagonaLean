@@ -4,7 +4,7 @@ Authors: Aalok Thakkar, Claude Opus
 -/
 
 import Mathlib.Data.List.Palindrome
-import DiagonaLean.PCP.MachineLevel
+import DiagonaLean.PCP.Undecidable
 
 /-! # Does a linear grammar generate a palindrome?
 

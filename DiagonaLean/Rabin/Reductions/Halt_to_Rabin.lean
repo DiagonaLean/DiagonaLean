@@ -14,7 +14,8 @@ import DiagonaLean.Synthetic.Tactics.ReductionPath
 The payoff program `haltToRabin p` returns its argument once the simulated machine has halted.
 From that point on, Player I can match every reply. If the simulation never halts, Player II
 wins by playing 1 (`winningII_of_not_halts`). So `haltToRabin` many-one reduces the halting
-problem to winner determination (`halt_reducesto_rabin_spec`, `Rabin.synthFromHalt`).
+problem to winner determination (`halt_reducesto_rabin_spec`); `SynthHardness.lean` states it as
+`Rabin.synthFromHalt`.
 
 ## References
 
@@ -62,10 +63,5 @@ theorem winningII_of_not_halts {p : EncodableTM Bool × List Bool} (hp : ¬ Halt
 /-- Winner determination in Rabin's game is displayed as "Rabin game winner". -/
 instance : Synthetic.ReductionChain.ProblemName DecisionProblem :=
   ⟨"Rabin game winner"⟩
-
-/-- **The reduction.** The halting problem many-one reduces to winner determination in Rabin's
-game through `haltToRabin`. -/
-@[undecReduction] def _root_.DiagonaLean.Rabin.synthFromHalt : HaltProblem ⪯_s DecisionProblem :=
-  ⟨haltToRabin, halt_reducesto_rabin_spec⟩
 
 end DiagonaLean.Rabin.Reduction

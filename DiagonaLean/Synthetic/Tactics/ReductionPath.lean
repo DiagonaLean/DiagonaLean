@@ -102,7 +102,8 @@ def badReductionTags : MetaM (Array MessageData) := do
 /-- Add the visible, compiled, parameter-free reduction definition `ci` to `edges`, unless it is
 tagged, private to another module, internal, unsafe or deprecated. -/
 def addLibraryEdge (recognize : Expr → Expr → MetaM (Option ReductionEdge)) (env : Environment)
-    (tagged : NameSet) (imported : Bool) (edges : Array ReductionEdge) (ci : ConstantInfo) :
+    (mc : ReductionCheck.ModuleClass) (tagged : NameSet) (imported : Bool)
+    (edges : Array ReductionEdge) (ci : ConstantInfo) :
     MetaM (Array ReductionEdge) := do
   let n := ci.name
   unless ci.isDefinition && ci.levelParams.isEmpty && ci.type.getAppFn.isConst do return edges
@@ -110,7 +111,7 @@ def addLibraryEdge (recognize : Expr → Expr → MetaM (Option ReductionEdge)) 
       tagged.contains n || ci.isUnsafe || Linter.isDeprecated env n then
     return edges
   let some edge ← recognize (← whnf ci.type) (mkConst n) | return edges
-  if (ReductionCheck.compiledViolation env n).isSome then return edges
+  if (ReductionCheck.compiledViolation mc env n).isSome then return edges
   return edges.push edge
 
 /-- Extend the preferred edges with visible, compiled, parameter-free reduction definitions.
@@ -119,6 +120,7 @@ def libraryReductionEdges (preferred : Array ReductionEdge)
     (recognize : Expr → Expr → MetaM (Option ReductionEdge) := syntheticEdge?) :
     MetaM (Array ReductionEdge) := do
   let env ← getEnv
+  let mc := ReductionCheck.ModuleClass.of env
   let tagged := NameSet.ofList (preferred.toList.filterMap (·.witness.constName?))
   let mut edges := preferred
   let mut relevant : NameSet := {}
@@ -127,8 +129,9 @@ def libraryReductionEdges (preferred : Array ReductionEdge)
         data.imports.any (fun imp => relevant.contains imp.module) then
       relevant := relevant.insert mod.module
       for ci in data.constants do
-        edges ← addLibraryEdge recognize env tagged true edges ci
-  env.constants.map₂.foldlM (fun es _ ci => addLibraryEdge recognize env tagged false es ci) edges
+        edges ← addLibraryEdge recognize env mc tagged true edges ci
+  env.constants.map₂.foldlM
+    (fun es _ ci => addLibraryEdge recognize env mc tagged false es ci) edges
 
 /-- The constant heading the predicate `p`, used to index edges. Reducible constants are unfolded
 while the unfolding is again headed by a constant, so an `abbrev` such as `PCP.PCProblem` and

@@ -137,7 +137,7 @@ theorem tr_SK : tr (S ⬝ K) ↠βᶠ Term.abs lI := by
 /-- The translation does not reflect convertibility: `S ⬝ K` and `K ⬝ I` have no common
 SKI reduct, but their translations have a common β-reduct. -/
 theorem tr_not_reflect :
-    ¬ Join (ReflTransGen Red) (S ⬝ K) (K ⬝ I) ∧ BetaConv (tr (S ⬝ K)) (tr (K ⬝ I)) :=
+    ¬ Join (ReflTransGen Red) (S ⬝ K) (K ⬝ I) ∧ Conv (tr (S ⬝ K)) (tr (K ⬝ I)) :=
   ⟨fun h => by simpa using eq_of_join_mRed_redexFree h (by decide) (by decide),
     ⟨Term.abs lI, tr_SK, tr_KI⟩⟩
 
@@ -176,7 +176,7 @@ theorem eq_of_noApp_steps {M N : Term ℕ} (h : NoApp M) (hs : M ↠βᶠ N) : N
   · exact (not_step_of_noApp h hP).elim
 
 /-- `tr TT` and `tr FF` are not β-convertible. -/
-theorem not_betaConv_tr_TT_FF : ¬ BetaConv (tr TT) (tr FF) := by
+theorem not_betaConv_tr_TT_FF : ¬ Conv (tr TT) (tr FF) := by
   intro h
   have hFF : tr FF ↠βᶠ Term.abs lI := tr_KI
   obtain ⟨P, hK, hI⟩ := betaConv_equivalence.trans h (betaConv_of_steps hFF)
