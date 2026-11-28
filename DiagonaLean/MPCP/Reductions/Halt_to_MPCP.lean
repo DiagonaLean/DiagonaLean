@@ -10,7 +10,7 @@ import DiagonaLean.Foundations.Computability.ListMachine
 
 @[expose] public section
 
-/-! # Halt ⪯_s MPCP
+/-! # Halting computations as MPCP solutions
 
 Reduction from the halting problem to MPCP following the Hopcroft–Ullman construction. Solutions to
 `DecisionProblem (startTile tm w) (haltTiles tm)` encode halting computation histories of `tm` on

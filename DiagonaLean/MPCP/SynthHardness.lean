@@ -30,9 +30,7 @@ are in `Undecidable.lean`.
 
 namespace DiagonaLean.MPCP.Reduction
 
-open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP DiagonaLean.Halt
-  DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability.Normalize
-  DiagonaLean.Synthetic.Definitions
+open DiagonaLean.Halt DiagonaLean.Foundations.Computability.Normalize
 
 /-- **MPCP is synthetically halting-hard over the fixed alphabet `Alpha ℕ Sym2`**: the proved
 reduction `MPCP.fromHalt`, through the bridge. -/

@@ -18,9 +18,9 @@ The MPCP instance of `halt_iff_mpcp` is built from the machine itself, so as a f
 act on `Primcodable` data and says nothing about machines. `instOf q rows w` builds it from a
 transition table `rows` in the format of `rowsE`, with start state number `q`, on input `w`: it
 computes the transitions of the normalised machine `normTM` from the table (`normTrN`, in
-`Foundations/Computability/Normalize/Table.lean`), and lists
-the tiles of `haltTiles` with each state `(q, c)` renamed to the number
-`Nat.pair (encode q) (encode c)` (`stIdx`). `instOf` is primitive recursive.
+`Foundations/Computability/Normalize/Table.lean`), and lists the tiles of `haltTiles` with each
+state `(q, c)` renamed to the number `Nat.pair (encode q) (encode c)` (`stIdx`). `instOf` is
+primitive recursive.
 
 The tiles of `stackN (rowsE M)` are those of `haltTiles` for `normTM M`, renamed (`mem_stackN`), and
 solvability depends only on the set of tiles (`mpcp_congr`). So `M` halts on `w` iff
