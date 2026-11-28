@@ -30,6 +30,7 @@ import DiagonaLean.GrammarMem.Reductions.Halt_to_GrammarMem
 import DiagonaLean.GrammarMem.Reductions.SemiThue_to_GrammarMem
 import DiagonaLean.GrammarMem.Reductions.HaltCanon_to_GrammarMem
 import DiagonaLean.GrammarMem.Undecidable
+import DiagonaLean.GrammarMem.RE
 import DiagonaLean.GrammarMem.SynthHardness
 
 import DiagonaLean.PCP.Basic
@@ -56,6 +57,7 @@ import DiagonaLean.EmpCFG.SynthHardness
 import DiagonaLean.EmpCFG.AlphabetLift
 import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFGCode
 import DiagonaLean.EmpCFG.Undecidable
+import DiagonaLean.EmpCFG.RE
 
 import DiagonaLean.MatMort.Basic
 import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
@@ -69,21 +71,25 @@ import DiagonaLean.KAComm.TermEq.Reductions.Halt_to_TermEq
 import DiagonaLean.KAComm.TermEq.Reductions.HaltCanon_to_TermEq
 import DiagonaLean.KAComm.TermEq.SynthHardness
 import DiagonaLean.KAComm.TermEq.Undecidable
+import DiagonaLean.KAComm.TermEq.RE
 import DiagonaLean.KAComm.TermEqBool.Basic
 import DiagonaLean.KAComm.TermEqBool.Reductions.Halt_to_TermEqBool
 import DiagonaLean.KAComm.TermEqBool.Reductions.HaltCanon_to_TermEqBool
 import DiagonaLean.KAComm.TermEqBool.SynthHardness
 import DiagonaLean.KAComm.TermEqBool.Undecidable
+import DiagonaLean.KAComm.TermEqBool.RE
 import DiagonaLean.KAComm.KATermEq.Basic
 import DiagonaLean.KAComm.KATermEq.Reductions.Halt_to_KATermEq
 import DiagonaLean.KAComm.KATermEq.Reductions.HaltCanon_to_KATermEq
 import DiagonaLean.KAComm.KATermEq.SynthHardness
 import DiagonaLean.KAComm.KATermEq.Undecidable
+import DiagonaLean.KAComm.KATermEq.RE
 import DiagonaLean.KAComm.KATermEqBool.Basic
 import DiagonaLean.KAComm.KATermEqBool.Reductions.Halt_to_KATermEqBool
 import DiagonaLean.KAComm.KATermEqBool.Reductions.HaltCanon_to_KATermEqBool
 import DiagonaLean.KAComm.KATermEqBool.SynthHardness
 import DiagonaLean.KAComm.KATermEqBool.Undecidable
+import DiagonaLean.KAComm.KATermEqBool.RE
 import DiagonaLean.KAComm.LangEq.Basic
 import DiagonaLean.KAComm.LangEq.Reductions.Halt_to_LangEq
 import DiagonaLean.KAComm.LangEq.SynthHardness
@@ -138,12 +144,12 @@ import DiagonaLean.CM2.Basic
 import DiagonaLean.CM2.Assembly
 import DiagonaLean.CM2.Arithmetic
 import DiagonaLean.CM2.Registers
-import DiagonaLean.CM2.Execution
 import DiagonaLean.CM2.Link
 import DiagonaLean.CM2.Simulation
 import DiagonaLean.CM2.Assembler
 import DiagonaLean.CM2.Reductions.ListHalt_to_CM2
 import DiagonaLean.CM2.Undecidable
+import DiagonaLean.CM2.RE
 import DiagonaLean.CM2.SynthHardness
 
 import DiagonaLean.Synthetic.Definitions
@@ -192,6 +198,8 @@ import DiagonaLean.Foundations.Computability.Upgrade
 import DiagonaLean.Foundations.Computability.UndecTransfer
 import DiagonaLean.Foundations.Computability.ListMachine
 import DiagonaLean.Foundations.Computability.ListHalt
+import DiagonaLean.Foundations.Computability.ListHaltRE
+import DiagonaLean.Foundations.Computability.Reaches
 import DiagonaLean.Foundations.Computability.Normalize.Table
 import DiagonaLean.Foundations.Computability.Normalize.Conditions
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
