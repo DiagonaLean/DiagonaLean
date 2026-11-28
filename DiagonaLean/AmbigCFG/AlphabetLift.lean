@@ -4,7 +4,7 @@ Authors: Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.AmbigCFG.Encode
-import DiagonaLean.AmbigCFG.MachineLevel
+import DiagonaLean.AmbigCFG.Reductions.PCP_to_AmbigCFGCode
 import DiagonaLean.Foundations.Codes.Tactic
 
 @[expose] public section
@@ -14,20 +14,18 @@ import DiagonaLean.Foundations.Codes.Tactic
 Encoding the terminals of a grammar by a code keeps and reflects ambiguity
 (`decisionProblem_grammarEncode_iff`), so on grammar codes ambiguity is a functor on codes
 (`ambCodeFunctor`), and the lifting of `Foundations.Codes.Functor` moves the results over the
-terminals `Bool ⊕ ℕ` (`not_computablePred_ambigCFGCode`, through `AmbigCFG.synthCodeFromPCP`) to
-grammar codes over any alphabet with two distinct letters: the classical statement, with a finite
-terminal alphabet.
+terminals `Bool ⊕ ℕ` (through `ambCode`) to grammar codes over any alphabet with two distinct
+letters: the classical statement, with a finite terminal alphabet. The lifted results are
+`AmbigCFG.synthCodeFromHaltOver` (`SynthHardness.lean`) and `AmbigCFG.codeFromHaltOver`
+(`Undecidable.lean`).
 
 ## Main statements
 
-* `AmbigCFG.synthCodeFromHaltOver`: `SynthHaltReduction` over any alphabet with two distinct
-  letters.
-* `not_computablePred_ambigCFGCodeOf`, `not_machineDecidable_ambigCFGCodeOf`: over every
-  nontrivial `Primcodable` alphabet.
+* `ambCodeFunctor`, `codeProblemReduces`, `codeProblemReduces'`.
 * `ambigCFGCode_manyOneEquiv`: many-one equivalent over any two such alphabets.
 -/
 
-namespace DiagonaLean.AmbigCFG.MachineLevel
+namespace DiagonaLean.AmbigCFG.AlphabetLift
 
 open DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Codes
   DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
@@ -72,40 +70,6 @@ def codeProblemReduces' [DecidableEq T] :
     @CodeProblem T ⪯_s fun p : CFGCode T => AmbigCFG.DecisionProblem p.toCFG :=
   ⟨id, fun p => codeProblem_iff p⟩
 
-/-- **Ambiguity of grammar codes is synthetically halting-hard over any alphabet `α` with two
-distinct letters
-`b0`, `b1`**: from PCP over `Bool` to codes over `Bool ⊕ ℕ`, then the lifting. -/
-def _root_.DiagonaLean.AmbigCFG.synthCodeFromHaltOver [DecidableEq α] (b0 b1 : α) (hne : b0 ≠ b1) :
-    SynthHaltReduction fun c : CFGCode α => AmbigCFG.DecisionProblem c.toCFG :=
-  have u : SynthHaltReduction (@CodeProblem (Bool ⊕ ℕ)) :=
-    SynthHaltReduction.comp
-      (SynthHaltReduction.comp
-        (PCP.synthFromHaltOver false true Bool.false_ne_true) AmbigCFG.synthCodeFromPCP)
-      codeProblemReduces
-  have u' : SynthHaltReduction (@CodeProblem α) := by code_lift ambCodeFunctor from u
-  SynthHaltReduction.comp u' codeProblemReduces'
-
-/-- The former name of `AmbigCFG.synthCodeFromHaltOver`. -/
-@[deprecated DiagonaLean.AmbigCFG.synthCodeFromHaltOver (since := "2026-11-23")]
-abbrev undecidableAmbigCFGCodeOf := @DiagonaLean.AmbigCFG.synthCodeFromHaltOver
-
-/-- **Whether a grammar code is ambiguous is not a computable predicate over any nontrivial
-alphabet**: the lifting of `not_computablePred_ambigCFGCode` from the terminals `Bool ⊕ ℕ`. -/
-theorem not_computablePred_ambigCFGCodeOf [Primcodable α] [Nontrivial α] [DecidableEq α] :
-    ¬ ComputablePred fun c : CFGCode α => AmbigCFG.DecisionProblem c.toCFG := by
-  have h₀ : ¬ ComputablePred (@CodeProblem (Bool ⊕ ℕ)) := by
-    rw [codeProblem_eq]
-    exact not_computablePred_ambigCFGCode (α := Bool)
-  have h : ¬ ComputablePred (@CodeProblem α) := by code_lift ambCodeFunctor from h₀
-  rwa [codeProblem_eq] at h
-
-/-- **No Turing machine decides whether a grammar code over any nontrivial alphabet is
-ambiguous**, under any computable encoding. -/
-theorem not_machineDecidable_ambigCFGCodeOf [Primcodable α] [Nontrivial α] [DecidableEq α]
-    {enc : CFGCode α → List Bool} (henc : Computable enc) :
-    ¬ MachineDecidable enc fun c => AmbigCFG.DecisionProblem c.toCFG :=
-  not_machineDecidable_of_not_computablePred henc not_computablePred_ambigCFGCodeOf
-
 /-- **Alphabet invariance of ambiguity on grammar codes**: over any two nontrivial `Primcodable`
 alphabets, ambiguity of grammar codes is many-one equivalent. -/
 theorem ambigCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
@@ -115,4 +79,4 @@ theorem ambigCFGCode_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] 
   have h : ManyOneEquiv (@CodeProblem α) (@CodeProblem β) := by code_lift ambCodeFunctor
   rwa [codeProblem_eq, codeProblem_eq] at h
 
-end DiagonaLean.AmbigCFG.MachineLevel
+end DiagonaLean.AmbigCFG.AlphabetLift

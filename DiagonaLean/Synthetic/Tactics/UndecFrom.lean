@@ -14,9 +14,12 @@ import DiagonaLean.Synthetic.Tactics.ReductionPath
 `undec from P` proves `SynthHaltReduction Q` by a route from halting to `P` and a route from `P`
 to `Q`. Given a witness `H : SynthHaltReduction P` it leaves the reduction `P ⪯_s Q` as a goal,
 and `undec from H via?` searches for it. `undec from H via r₁, …, rₙ` composes exactly the named
-reductions, with no search. `undec?` and `undec? from P` suggest such a script, so that replaying
-the proof does not depend on which reductions are tagged. The goals `¬ ComputablePred Q` and
-`¬ MachineDecidable enc Q` are handled in `Foundations/Computability/UndecTransfer.lean`.
+reductions, with no search. `undec?` and `undec? from P` suggest a script for the route found,
+written with `reduce_from s via r₁, via r₂, …` (`Foundations/Computability/ReduceFrom.lean`), the
+tactic library proofs use, so that replaying the proof does not depend on which reductions are
+tagged. The goals `¬ ComputablePred Q`,
+`¬ MachineDecidable enc Q`, `HaltReduction Q` and `HaltHard Q` are handled in
+`Foundations/Computability/UndecTransfer.lean`.
 -/
 
 namespace DiagonaLean.Synthetic.Notation
@@ -34,7 +37,7 @@ to it is found by search. -/
 @[tactic_alt undecFrom]
 syntax (name := undecFromVia) "undec" " from " term " via " term,+ : tactic
 
-/-- Find a route and suggest a replayable `undec from … via …` script for it. -/
+/-- Find a route and suggest a replayable `reduce_from … via …` script for it. -/
 syntax (name := undecSuggest) "undec?" (" from " term)? : tactic
 
 /-- The halting problem, as a node of the reduction graph. -/
@@ -49,9 +52,13 @@ def haltReductionTarget? (type : Expr) : MetaM (Option Expr) := do
 def isPredicate (e : Expr) : MetaM Bool := do
   forallTelescopeReducing (← inferType e) fun xs body => return !xs.isEmpty && body.isProp
 
-/-- The proposition `P` of a negation, written `¬ P` or `P → False`. -/
+/-- The proposition `P` of a negation, written `¬ P` or `P → False`. The library's
+`Undecidable P` abbreviates `¬ ComputablePred P` and is read as that negation. -/
 def notBody? (type : Expr) : Option Expr :=
   let type := type.consumeMData
+  if type.isAppOfArity `DiagonaLean.Foundations.Computability.Undecidable 3 then
+    some (mkAppN (.const `ComputablePred type.getAppFn.constLevels!) type.getAppArgs)
+  else
   match type.not? with
   | some body => some body
   | none =>
@@ -62,6 +69,10 @@ def notBody? (type : Expr) : Option Expr :=
 /-- `type` is `¬ ComputablePred Q` or `¬ MachineDecidable enc Q`, the goals that
 `Foundations/Computability/UndecTransfer.lean` handles. -/
 def isHardnessGoal (type : Expr) : Bool :=
+  let type := type.consumeMData
+  -- the proved goals, handled in `UndecTransfer` by `reduce_from`
+  type.isAppOf `DiagonaLean.Foundations.Computability.HaltReduction ||
+  type.isAppOf `DiagonaLean.Foundations.Computability.HaltHard ||
   match notBody? type with
   | some body => body.isAppOf `ComputablePred || body.isAppOf ``MachineDecidable
   | none => false
@@ -69,8 +80,8 @@ def isHardnessGoal (type : Expr) : Bool :=
 /-- The goals `undec from` proves, for error messages. -/
 def undecGoalShapes : MessageData :=
   m!"undec from proves goals of the form `SynthHaltReduction Q`, and, with \
-    `DiagonaLean.Foundations.Computability.UndecTransfer` imported, `¬ ComputablePred Q` and \
-    `¬ MachineDecidable enc Q`"
+    `DiagonaLean.Foundations.Computability.UndecTransfer` imported, `¬ ComputablePred Q`, \
+    `¬ MachineDecidable enc Q`, `HaltReduction Q` and `HaltHard Q`"
 
 /-- Compose reductions given first to last. With none, the identity reduction on `source`. -/
 def composeWitnesses (source : Expr) : List Expr → MetaM Expr
@@ -147,22 +158,67 @@ def delabTermForScript (e : Expr) (expected? : Option Expr := none) : TermElabM 
 /-- The term naming `e` in a suggestion. -/
 def delabEdge (e : ReductionEdge) : TermElabM (Option Term) := delabTermForScript e.name
 
-/-- The script `undec from s via r₁, …, rₙ` for a route whose first step is the source `s`, or
+/-- A script to suggest: a tactic, or a `reduce_from` chain as its pieces of text, which are
+joined with spaces and wrapped at 100 columns. -/
+inductive Script | tactic (t : TSyntax `tactic) | text (pieces : List String)
+
+/-- `t` printed for a script, in parentheses unless it is a name or `‹type›`, which `reduce_from`
+reads as one argument. -/
+def scriptTerm (t : Term) : MetaM String := do
+  let s := toString (← PrettyPrinter.ppTerm t)
+  let atomic := t.raw.isIdent || t.raw.isOfKind ``Lean.Parser.Term.paren ||
+    (s.startsWith "‹" && s.endsWith "›" && (s.splitOn "‹").length == 2)
+  return if atomic then s else s!"({s})"
+
+/-- The script `reduce_from s via r₁, via r₂, …` composing the source term `s` with the links
+`rᵢ`. Library proofs are written with `reduce_from` (`Foundations/Computability/ReduceFrom.lean`),
+which proves the same goals along the same links and also the proved goals (`HaltReduction`,
+`HaltHard`); the search of `undec?` only finds the route. -/
+def reduceFromScript (src : Term) (links : Array Term) : MetaM Script := do
+  let links ← links.mapM scriptTerm
+  let n := links.size
+  let pieces := links.toList.zipIdx.map fun (l, i) => s!"via {l}" ++ if i + 1 < n then "," else ""
+  return .text (s!"reduce_from {← scriptTerm src}" :: pieces)
+
+/-- The pieces joined with spaces, wrapped at 100 columns for text starting at column `col`; a
+continuation line is indented 4 more. -/
+def wrapPieces (col : Nat) : List String → String
+  | [] => ""
+  | p :: ps => Id.run do
+    let indent := "\n" ++ "".pushn ' ' (col + 4)
+    let mut out := p
+    let mut width := col + p.length
+    for q in ps do
+      if width + 1 + q.length > 100 then
+        out := out ++ indent ++ q
+        width := col + 4 + q.length
+      else
+        out := out ++ " " ++ q
+        width := width + 1 + q.length
+    return out
+
+/-- The script `reduce_from s via r₁, …` for a route whose first step is the source `s`, or
 `exact s` for a route of one step. `none` if some step has no term that elaborates again. -/
-def routeScript : List ReductionEdge → TermElabM (Option (TSyntax `tactic))
-  | [] => return some (← `(tactic| exact $(mkIdent ``SynthReduction.refl) _))
+def routeScript : List ReductionEdge → TermElabM (Option Script)
+  | [] => return some (.tactic (← `(tactic| exact $(mkIdent ``SynthReduction.refl) _)))
   | [s] => do
     let some t ← delabEdge s | return none
-    return some (← `(tactic| exact $t))
+    return some (.tactic (← `(tactic| exact $t)))
   | s :: rest => do
     let some t ← delabEdge s | return none
     let some names := (← rest.toArray.mapM delabEdge).mapM id | return none
-    return some (← `(tactic| undec from $t via $names,*))
+    return some (← reduceFromScript t names)
 
 /-- Suggest `script` at `ref`, or say that the route has no replayable script. -/
-def suggestScript (ref : Syntax) (script : Option (TSyntax `tactic)) : MetaM Unit := do
+def suggestScript (ref : Syntax) (script : Option Script) : MetaM Unit := do
   match script with
-  | some script => TryThis.addSuggestion ref { suggestion := .tsyntax script }
+  | some (.tactic script) => TryThis.addSuggestion ref { suggestion := .tsyntax script }
+  | some (.text pieces) =>
+    let fileMap ← getFileMap
+    let col := match ref.getPos? with
+      | some pos => (fileMap.toPosition pos).column
+      | none => 0
+    TryThis.addSuggestion ref { suggestion := .string (wrapPieces col pieces) }
   | none => logInfoAt ref "a step of this route has no term that elaborates again, so there is \
       no script to suggest; name it in a `via` list"
 

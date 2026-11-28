@@ -24,7 +24,7 @@ namespace DiagonaLean.CM2
 
 open DiagonaLean.Foundations.Computability StateTransition
 
-/-- A piece of two-counter code with exits labelled by `α`. -/
+/-- A block is a piece of two-counter code with exits labelled by `α`. -/
 structure Block (α : Type) where
   /-- The number of instructions, the same at every address. -/
   size : ℕ
@@ -74,8 +74,8 @@ def Runs (c : Block α) (a b : ℕ) (i : α) (a' b' : ℕ) : Prop :=
   ∀ p pc dst, Loaded p pc (c.emit pc dst) →
     Reaches₁ (step p) ⟨pc, a, b⟩ ⟨dst i, a', b'⟩
 
-/-- A jump to exit `i`: an increment of the first counter, then a decrement of it that goes to
-exit `i`. -/
+/-- `goto i` jumps to exit `i`: an increment of the first counter, then a decrement of it with
+exit `i` as both successors. -/
 def goto (i : α) : Block α where
   size := 2
   emit pc dst := [.inc .fst (pc + 1), .dec .fst (dst i) (dst i)]
@@ -91,14 +91,15 @@ theorem runs_goto (i : α) (a b : ℕ) : (goto i).Runs a b i a b := by
   · simp [Option.mem_def, step, second, execute]
   · simp [Option.mem_def, step, first, execute]
 
-/-- An increment of counter `r`, followed by the block `k`. -/
+/-- `inc r k` increments counter `r`, then continues with the block `k`. -/
 def inc (r : Counter) (k : Block α) : Block α where
   size := k.size + 1
   emit pc dst := .inc r (pc + 1) :: k.emit (pc + 1) dst
   length_emit pc dst := by simp [k.length_emit]
   prim_emit hb hd := prim_cons (by fun_prop) (k.prim_emit (by fun_prop) hd)
 
-/-- A decrement of counter `r`: on zero the block `z` follows, on success the block `s`. -/
+/-- `dec r z s` continues with the block `z` when counter `r` is zero, and otherwise decrements
+it and continues with the block `s`. -/
 def dec (r : Counter) (z s : Block α) : Block α where
   size := z.size + s.size + 1
   emit pc dst :=
@@ -132,14 +133,14 @@ theorem runs_dec_succ {r a b i a' b'} {z s : Block α} (h : s.Runs a b i a' b') 
   apply (h p (pc + 1 + z.size) dst hs).head
   cases r <;> simp [Option.mem_def, step, loaded.first, execute]
 
-/-- The block `k` with exit `i` relabelled `f i`. -/
+/-- `k.rename f` is the block `k` with exit `i` relabelled `f i`. -/
 def rename (f : α → β) (k : Block α) : Block β where
   size := k.size
   emit pc dst := k.emit pc (dst ∘ f)
   length_emit _ _ := k.length_emit _ _
   prim_emit hb hd := k.prim_emit hb (fun i => hd (f i))
 
-/-- The loop of `body`: exit `none` of the body returns to its first instruction. -/
+/-- `body.loop` repeats `body`: exit `none` of the body returns to its first instruction. -/
 def loop (body : Block (Option α)) : Block α where
   size := body.size
   emit pc dst := body.emit pc (fun i => i.elim pc dst)

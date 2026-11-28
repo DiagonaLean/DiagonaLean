@@ -13,6 +13,10 @@ The solvability predicate `DecisionProblem` for the Modified Post Correspondence
 MPCP is PCP with a designated start tile: every solution must begin with it.
 MPCP serves as the intermediate step in the reduction chain `Halt ⪯_s MPCP ⪯_s PCP`.
 
+The problem is `Solvable c P`, curried; `DecisionProblem` is the same problem on an instance
+`(c, P)`. To audit the definition, read `Solvable` and `decisionProblem_mk`, which is pinned in
+`scripts/HeadlineTest.lean`.
+
 ## References
 
 * [J. E. Hopcroft, R. Motwani, J. D. Ullman,
@@ -34,11 +38,17 @@ def Solvable (c : Tile α) (P : Stack α) : Prop :=
   ∃ A : Stack α, (∀ t ∈ A, t ∈ c :: P) ∧
     c.top ++ τ1 A = c.bot ++ τ2 A
 
-/-- **MPCP**, as a problem on one argument: is the instance, a start tile and a stack, solvable?
-Like every problem of the library, it is a predicate on a single type, so that it can be the source
-or the target of a reduction. -/
+/-! ### The problem on instances, for the reductions and the computability statements -/
+
+/-- **The problem on an instance `(c, P)`**, for the reductions and the computability statements:
+`Solvable c P`. Read it curried, `decisionProblem_mk`. -/
 def DecisionProblem (x : Tile α × Stack α) : Prop := Solvable x.1 x.2
 
+/-- The problem on an instance `(c, P)` is the curried problem. -/
+@[simp] theorem decisionProblem_mk (c : Tile α) (P : Stack α) :
+    DecisionProblem (c, P) ↔ Solvable c P := Iff.rfl
+
+/-- The problem on an instance, by projections. -/
 theorem decisionProblem_iff (x : Tile α × Stack α) : DecisionProblem x ↔ Solvable x.1 x.2 :=
   Iff.rfl
 

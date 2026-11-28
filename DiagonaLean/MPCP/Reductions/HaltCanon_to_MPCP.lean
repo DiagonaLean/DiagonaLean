@@ -3,14 +3,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.MPCP.Undecidable
+import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
 import DiagonaLean.PCP.Primrec
 import DiagonaLean.Foundations.Computability.CodeSim
 import DiagonaLean.Foundations.Computability.MachineBridge
+import DiagonaLean.Foundations.Computability.HaltCanon
 
 @[expose] public section
 
-/-! # The MPCP instance of a transition table, numerically
+/-! # From the halting problem on canonical machines to MPCP
 
 `haltToMpcpNorm` builds the MPCP instance of a machine from the machine itself, so its input is not
 `Primcodable` and it says nothing about machines. `instOf q rows w` builds the same instance from a
@@ -21,18 +22,23 @@ the tiles of `haltTiles` with each state `(q, c)` renamed to the number
 
 The tiles of `stackN (rowsE M)` are those of `haltTiles` for `normTM M`, renamed (`mem_stackN`), and
 solvability depends only on the set of tiles (`mpcp_congr`). So `M` halts on `w` iff
-`instOf (encode M.q₀) (rowsE M) w` is solvable (`halts_iff_mpcpN`). `canonInst` (`Hardness.lean`)
-reads the table off a canonical machine, which gives the halting reduction `MPCP.fromHalt` and,
-from it, the negative results.
+`instOf (encode M.q₀) (rowsE M) w` is solvable (`halts_iff_mpcpN`).
+
+On canonical machines the table is primitive recursive (`CanonTM.table`), and `stackN` depends on a
+table only through its lookup and its set of state numbers (`mem_stackN_congr`), which `c.table`
+shares with the table of `c.toTM`. So `canonInst (c, w) = instOf c.start c.table w` reduces
+`HaltCanon` to MPCP (`haltCanon_iff_mpcp`), primitive recursively (`canonInst_prim`); the halting
+reduction `MPCP.fromHalt` is in `Undecidable.lean`.
 
 ## Main statements
 
 * `halts_iff_mpcpN`: a machine halts on an input iff the instance of its table on it is solvable.
+* `haltCanon_iff_mpcp`, `canonInst_prim`: the reduction from `HaltCanon`, and its computability.
 -/
 
 derive_primcodable DiagonaLean.MPCP.Reduction.Alpha
 
-namespace DiagonaLean.MPCP.MachineLevel
+namespace DiagonaLean.MPCP.Reduction
 
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP.Reduction
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability
@@ -255,4 +261,56 @@ theorem halts_iff_mpcpN (w : List Bool) :
 
 end
 
-end DiagonaLean.MPCP.MachineLevel
+end DiagonaLean.MPCP.Reduction
+
+namespace DiagonaLean.MPCP.Reduction
+
+open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.PCP.Reduction DiagonaLean.MPCP.Reduction
+  DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability
+  DiagonaLean.Foundations.Computability.Normalize
+
+/-- `normTrN` reads a table only through `lookup`. -/
+theorem normTrN_congr {r₁ r₂ : List (ℕ × ℕ)} (h : ∀ k, lookup r₁ k = lookup r₂ k) (i c : ℕ)
+    (a : Option Normalize.Sym2) : normTrN r₁ i c a = normTrN r₂ i c a := by
+  unfold normTrN simN
+  simp only [h]
+
+/-- Two transition tables are **the same table** when they have the same lookup and the same set of
+state numbers: the constructions on tables (`transN`, `stackN`, and the rewriting systems of
+`SemiThue.Reduction.codeRules`) read a table only through these. -/
+def SameTable (r₁ r₂ : List (ℕ × ℕ)) : Prop :=
+  (∀ k, lookup r₁ k = lookup r₂ k) ∧
+    ∀ i, i ∈ r₁.map (fun r => r.1.unpair.1) ↔ i ∈ r₂.map (fun r => r.1.unpair.1)
+
+/-- `transN` depends on a table only through its lookup and its set of state numbers. -/
+theorem mem_transN_congr {r₁ r₂ : List (ℕ × ℕ)} (h : SameTable r₁ r₂)
+    (t : Tile (Alpha ℕ Normalize.Sym2)) : t ∈ transN r₁ ↔ t ∈ transN r₂ := by
+  simp only [transN, List.mem_flatMap, normTrN_congr h.1, h.2]
+
+/-- `stackN` depends on a table only through its lookup and its set of state numbers. -/
+theorem mem_stackN_congr {r₁ r₂ : List (ℕ × ℕ)} (h : SameTable r₁ r₂)
+    (t : Tile (Alpha ℕ Normalize.Sym2)) : t ∈ stackN r₁ ↔ t ∈ stackN r₂ := by
+  simp only [stackN, List.mem_append, mem_transN_congr h]
+
+/-- **The table of a canonical machine is the table of its machine.** -/
+theorem CanonTM.sameTable (c : CanonTM) : SameTable (rowsE c.toTM) c.table := by
+  refine ⟨fun k => by rw [CanonTM.lookup_rowsE_toTM, CanonTM.lookup_table], fun i => ?_⟩
+  rw [mem_idx, CanonTM.mem_idx_table]
+  exact ⟨fun ⟨q, hq⟩ => hq ▸ q.isLt, fun h => ⟨⟨i, h⟩, rfl⟩⟩
+
+/-- The MPCP instance of a canonical machine on an input. -/
+def canonInst (x : CanonTM × List Bool) :
+    Tile (Alpha ℕ Normalize.Sym2) × Stack (Alpha ℕ Normalize.Sym2) :=
+  instOf x.1.start x.1.table x.2
+
+theorem canonInst_prim : Primrec canonInst := by
+  unfold canonInst
+  fun_prop
+
+/-- **A canonical machine halts on an input iff its MPCP instance is solvable.** -/
+theorem haltCanon_iff_mpcp (x : CanonTM × List Bool) :
+    HaltCanon x ↔ MPCP.DecisionProblem (canonInst x) := by
+  obtain ⟨c, w⟩ := x
+  exact (halts_iff_mpcpN c.toTM w).trans (mpcp_congr _ (mem_stackN_congr (CanonTM.sameTable c)))
+
+end DiagonaLean.MPCP.Reduction

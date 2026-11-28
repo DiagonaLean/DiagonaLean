@@ -18,8 +18,8 @@ Reduction from the halting problem to MPCP following the Hopcroft–Ullman const
 
 The reduction `haltToMpcpNorm` first normalizes the machine and its input with
 `Foundations.Computability.Normalize`, so that both conditions hold, then renames states to their
-codes (`Alpha.map`), over the fixed alphabet `Alpha ℕ Sym2` (`halt_reducesto_mpcp_spec`,
-`MPCP.synthFromHalt`).
+codes (`Alpha.map`), over the fixed alphabet `Alpha ℕ Sym2` (`halt_reducesto_mpcp_spec`). The
+packaged reduction `MPCP.synthFromHalt` is in `SynthHardness.lean`.
 
 ## References
 
@@ -3127,16 +3127,5 @@ theorem halt_reducesto_mpcp_spec :
     halt_iff_mpcp normTMEnc (normTM_noBlankWrites tm.toSingleTapeTM) (encInput w)
       (normTM_noLeftBoundary tm.toSingleTapeTM w)]
   exact mpcp_map_iff _ (Alpha.map_injective Encodable.encode_injective) _ _
-
-/-- **MPCP is synthetically halting-hard over the fixed alphabet `Alpha ℕ Sym2`.** The halting
-problem many-one reduces to MPCP over the fixed alphabet `Alpha ℕ Sym2`, through `haltToMpcpNorm`.
--/
-def _root_.DiagonaLean.MPCP.synthFromHalt :
-    HaltProblem ⪯_s (@MPCP.DecisionProblem (Alpha ℕ Sym2)) :=
-  ⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩
-
-/-- The former name of `MPCP.synthFromHalt`. -/
-@[deprecated DiagonaLean.MPCP.synthFromHalt (since := "2026-11-23")]
-abbrev haltReducesMPCP := @DiagonaLean.MPCP.synthFromHalt
 
 end DiagonaLean.MPCP.Reduction

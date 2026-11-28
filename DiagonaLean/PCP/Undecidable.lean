@@ -3,17 +3,29 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Prathamesh Turaga
 -/
 
-import DiagonaLean.Synthetic.Tactics.UndecFrom
-import DiagonaLean.PCP.Reductions.Halt_to_PCP
+import DiagonaLean.PCP.Primrec
+import DiagonaLean.MPCP.Undecidable
+import DiagonaLean.PCP.AlphabetLift
 
 @[expose] public section
 
 /-! # Undecidability of PCP
 
-PCP is undecidable over the fixed alphabet `Ext (Alpha ℕ Bool)` (`PCP.synthFromHalt`), and over any
-alphabet with two distinct letters (`PCP.synthFromHaltOver`), by transporting the first result along
-`PCP.synthAlphabetLift`; over `Bool` this is `PCP.synthFromHaltBool`. The machine-level
-statements are in `MachineLevel.lean`.
+MPCP is halting-hard (`MPCP.fromHalt`), and the reduction `mpcpToPcp` from MPCP to PCP is primitive
+recursive (`mpcpToPcp_primrec`), so PCP is halting-hard over `Ext (Alpha ℕ Sym2)` (`PCP.fromHalt`).
+The change of alphabet `liftInstance b0 b1` is primitive recursive too (`liftInstance_primrec`), so
+PCP is halting-hard over every alphabet with two distinct letters (`PCP.fromHaltOver b0 b1 hne`,
+`PCP.fromHaltBool`). So over every nontrivial alphabet PCP is undecidable, and no Turing machine
+decides it under any computable encoding.
+
+## Main statements
+
+* `PCP.fromHalt`, `PCP.fromHaltOver`, `PCP.fromHaltBool`: reductions from the halting problem,
+  proved computable.
+* `PCP.haltHard`, `PCP.not_computablePred`, `PCP.not_machineDecidable` (`halt_results`): over every
+  nontrivial alphabet.
+
+The synthetic results are in `SynthHardness.lean`.
 
 ## References
 
@@ -23,32 +35,34 @@ statements are in `MachineLevel.lean`.
   *Verification of PCP-Related Computational Reductions in Coq*][ForsterHeiterSmolka2018]
 -/
 
-namespace DiagonaLean.PCP.Reduction
+namespace DiagonaLean.PCP
 
-open DiagonaLean.MPCP.Reduction DiagonaLean.Synthetic.Definitions
+open DiagonaLean.PCP.Reduction DiagonaLean.PCP.AlphabetLift DiagonaLean.MPCP.Reduction
+  DiagonaLean.Foundations.Computability
 
-/-- The former name of `PCP.synthFromHalt`. -/
-@[deprecated DiagonaLean.PCP.synthFromHalt (since := "2026-11-23")]
-abbrev undecidablePCP' := @DiagonaLean.PCP.synthFromHalt
+/-- **PCP is halting-hard**, over the alphabet `Ext (Alpha ℕ Sym2)`: `MPCP.fromHalt`, then
+`mpcpToPcp` (`mpcp_reducesto_pcp_spec`, `mpcpToPcp_primrec`). -/
+def fromHalt : HaltReduction (@PCP.DecisionProblem (Ext (Alpha ℕ Normalize.Sym2))) := by
+  hard_reduce_from MPCP.fromHalt with (fun x => mpcpToPcp x.1 x.2) using mpcp_reducesto_pcp_spec
 
-/-- **PCP is synthetically halting-hard over any alphabet `α` with two distinct letters `b0`,
-`b1`.** Obtained by transporting `PCP.synthFromHalt` along `PCP.synthAlphabetLift`. The letters
-are arguments rather than taken from `Nontrivial α`, since a definition cannot extract data from a
-proof. -/
-def _root_.DiagonaLean.PCP.synthFromHaltOver {α : Type} (b0 b1 : α) (hne : b0 ≠ b1) :
-    SynthHaltReduction (@DecisionProblem α) :=
-  SynthHaltReduction.comp PCP.synthFromHalt (PCP.synthAlphabetLift b0 b1 hne)
+/-- **PCP is halting-hard over any alphabet with two distinct letters**: `fromHalt`, then the
+change of alphabet `liftInstance b0 b1` (`pcp_alphabet_lift_spec`, `liftInstance_primrec`). -/
+def fromHaltOver {α : Type} [Primcodable α] (b0 b1 : α) (hne : b0 ≠ b1) :
+    HaltReduction (@PCP.DecisionProblem α) := by
+  hard_reduce_from fromHalt with (liftInstance b0 b1) using (pcp_alphabet_lift_spec b0 b1 hne)
 
-/-- The former name of `PCP.synthFromHaltOver`. -/
-@[deprecated DiagonaLean.PCP.synthFromHaltOver (since := "2026-11-23")]
-abbrev undecidablePCP := @DiagonaLean.PCP.synthFromHaltOver
+/-- **PCP over `Bool` is halting-hard.** -/
+def fromHaltBool : HaltReduction (@PCP.DecisionProblem Bool) :=
+  fromHaltOver false true Bool.false_ne_true
 
-/-- PCP over `Bool` is displayed as binary PCP. -/
-instance : Synthetic.ReductionChain.ProblemName PCProblem :=
-  ⟨"Binary PCP"⟩
+/-- PCP over `Bool` is registered as halting-hard. -/
+instance : HaltSource (@PCP.DecisionProblem Bool) := ⟨fromHaltBool⟩
 
-/-- **PCP over `Bool` is synthetically halting-hard.** -/
-@[undecReduction] def _root_.DiagonaLean.PCP.synthFromHaltBool : SynthHaltReduction PCProblem :=
-  PCP.synthFromHaltOver false true Bool.false_ne_true
+section
+variable {α : Type} [Primcodable α] [Nontrivial α]
 
-end DiagonaLean.PCP.Reduction
+halt_results (@PCP.DecisionProblem α) over_letters from fromHaltOver
+
+end
+
+end DiagonaLean.PCP

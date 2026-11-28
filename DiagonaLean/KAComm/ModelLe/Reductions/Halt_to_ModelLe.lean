@@ -28,14 +28,4 @@ theorem halt_reducesto_not_modelLe_spec :
     HaltProblem ⪯_s[haltRed] Complement ModelLeProblem :=
   halt_iff_not_modelLe
 
-/-- **The failure of inclusion of languages over `ℕ` is synthetically halting-hard.** `HaltProblem`
-many-one reduces to the failure of inclusion in the language model. -/
-def _root_.DiagonaLean.KAComm.ModelLe.synthComplFromHalt :
-    HaltProblem ⪯_s Complement ModelLeProblem :=
-  ⟨haltRed, halt_reducesto_not_modelLe_spec⟩
-
-/-- The former name of `KAComm.ModelLe.synthComplFromHalt`. -/
-@[deprecated DiagonaLean.KAComm.ModelLe.synthComplFromHalt (since := "2026-11-23")]
-abbrev haltReducesNotModelLe := @DiagonaLean.KAComm.ModelLe.synthComplFromHalt
-
 end DiagonaLean.KAComm.ModelLe.Reduction

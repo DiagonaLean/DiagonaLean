@@ -419,7 +419,7 @@ end Code
 /-- **The halting problem on canonical machines.** -/
 def HaltCanon (x : CanonTM × List Bool) : Prop := Halts x.1.toTM.toSingleTapeTM x.2
 
-/-- **`HaltCanon` is undecidable**: self-halting reduces to it through `parse`. -/
+/-- **`HaltCanon` is not a computable predicate**: self-halting reduces to it through `parse`. -/
 theorem not_computablePred_haltCanon : ¬ ComputablePred HaltCanon :=
   not_computablePred_of_selfHalt (code := fun w => (parse w, w))
     (parse_prim.pair Primrec.id).to_comp fun M => (halts_parse_code M _).symm
@@ -458,7 +458,7 @@ def HaltReduction.trans {γ : Type*} [Primcodable γ] {p : β → Prop} {q : γ 
 def HaltReduction.toSynthHalt {P : β → Prop} (h : HaltReduction P) : SynthHaltReduction P :=
   synthHaltToCanon.trans h.toSynth
 
-/-- **Halting-hard predicates are undecidable.** -/
+/-- **Halting-hard predicates are not computable.** -/
 theorem HaltHard.not_computablePred {P : β → Prop} (h : HaltHard P) : ¬ ComputablePred P :=
   let ⟨r⟩ := h
   r.not_computablePred not_computablePred_haltCanon
@@ -468,8 +468,9 @@ theorem HaltHard.not_machineDecidable {P : β → Prop} (h : HaltHard P) {enc : 
     (henc : Computable enc) : ¬ MachineDecidable enc P :=
   not_machineDecidable_of_not_computablePred henc h.not_computablePred
 
-/-- **The target of a halting reduction is undecidable**: `HaltHard.not_computablePred`, by dot
-notation on the reduction (`MPCP.fromHalt.not_computablePred`). -/
+/-- **The target of a halting reduction is not a computable predicate**:
+`HaltHard.not_computablePred`, by dot notation on the reduction
+(`MPCP.fromHalt.not_computablePred`). -/
 theorem HaltReduction.not_computablePred {P : β → Prop} (h : HaltReduction P) :
     ¬ ComputablePred P :=
   HaltHard.not_computablePred ⟨h⟩

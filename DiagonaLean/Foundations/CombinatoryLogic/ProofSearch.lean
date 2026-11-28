@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Claude Opus
 -/
 
-import Cslib.Languages.CombinatoryLogic.Confluence
+import DiagonaLean.Foundations.CombinatoryLogic.Conv
 import DiagonaLean.Foundations.CombinatoryLogic.Code
 import DiagonaLean.Foundations.Computability.StackProof
 
@@ -27,16 +27,6 @@ is `∃ k, Checks ..` (`conv_iff_checks`).
 namespace DiagonaLean.Foundations.CombinatoryLogic
 
 open Cslib SKI Relation DiagonaLean.Foundations.Computability
-
-/-- Two SKI terms are convertible: they have a common reduct. -/
-abbrev Conv (x y : SKI) : Prop := Join (ReflTransGen Red) x y
-
-/-- A reduction is a conversion. -/
-theorem conv_of_mRed {x y : SKI} (h : x ↠ y) : Conv x y := ⟨y, h, .refl⟩
-
-/-- Convertibility is a congruence for application. -/
-theorem conv_app {x x' y y' : SKI} (hx : Conv x x') (hy : Conv y y') : Conv (x ⬝ y) (x' ⬝ y') :=
-  join_mRed_equivalence.trans (join_mRed_head y hx) (join_mRed_tail x' hy)
 
 /-- The stack machine's stack. -/
 abbrev Stk := List (ℕ × ℕ)

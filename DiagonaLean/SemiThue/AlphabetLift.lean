@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Prathamesh TVH, Claude Opus
 -/
 
-import DiagonaLean.SemiThue.MachineLevel
+import DiagonaLean.SemiThue.Reductions.HaltCanon_to_SemiThue
 import DiagonaLean.Foundations.Codes.Tactic
 import DiagonaLean.Foundations.Codes.Rewriting
 
@@ -19,24 +19,24 @@ matches inside a block.
 
 The reductions from the halting problem produce systems with non-empty left sides, so the restricted
 problem is halting-hard over `Alpha ℕ Sym2`. The lifting of `Foundations.Codes.Functor` moves it
-to every alphabet with two distinct letters, and `SemiThue.synthFromPos` returns to the plain word
+to every alphabet with two distinct letters, and `posToWord` returns to the plain word
 problem, sending a system with an empty left side to a fixed instance without solution. The
-`SynthHaltReduction` statements obtained this way are in `Undecidable.lean`
+`SynthHaltReduction` statements obtained this way are in `SynthHardness.lean`
 (`SemiThue.synthPosFromHaltOver`, `SemiThue.synthFromHaltOver`, `SemiThue.synthFromHaltBool`), the
-proved ones in `Hardness.lean`.
+proved ones in `Undecidable.lean`.
 
 ## Main statements
 
-* `semiThueFunctor`, `SemiThue.synthFromPos`.
-* The negative results over every nontrivial alphabet (`not_computablePred_semiThueOf`, …) are in
-  `Hardness.lean`, from `SemiThue.posFromHaltOver` and `SemiThue.fromHaltOver`.
+* `semiThueFunctor`, `posToWord_spec`.
+* The results over every nontrivial alphabet (`SemiThue.haltHard`, `SemiThue.Pos.haltHard`, …) are
+  in `Undecidable.lean`, from `SemiThue.posFromHaltOver` and `SemiThue.fromHaltOver`.
 * `semiThuePos_manyOneEquiv`: the restricted problem is many-one equivalent over any two such
   alphabets.
 -/
 
 namespace DiagonaLean.SemiThue
 
-open Foundations.Grammar Foundations.Codes DiagonaLean.Synthetic.Definitions
+open Foundations.Grammar Foundations.Rewriting Foundations.Codes DiagonaLean.Synthetic.Definitions
 
 variable {α T : Type}
 
@@ -48,9 +48,10 @@ abbrev semiThueFunctor : CodeFunctor IsSync where
   map_unit x := by simp
   map_kcomp c₁ c₂ x := by simp [SRS.encode_kcomp, encode_kcomp]
   natural hc x := by
-    rw [DecisionProblemPos, DecisionProblemPos, lhs_ne_encode_iff hc.isCode]
+    rw [DecisionProblemPos, DecisionProblemPos, PosWordProblem, PosWordProblem,
+      lhs_ne_encode_iff hc.isCode]
     exact and_congr_right fun h => derives_encode_iff hc h
-  supp x := letters x.1 ++ x.2.1 ++ x.2.2
+  supp x := SRS.letters x.1 ++ x.2.1 ++ x.2.2
   map_congr x h := Prod.ext (SRS.encode_congr fun a ha => h a (by simp [ha]))
     (Prod.ext (encode_congr fun a ha => h a (by simp [ha]))
       (encode_congr fun a ha => h a (by simp [ha])))
@@ -58,19 +59,20 @@ abbrev semiThueFunctor : CodeFunctor IsSync where
 /-- Back to the plain word problem: a system with an empty left side goes to `[a] ⇒* []` in the
 empty system, which has no solution. -/
 def posToWord (a : T) (x : SRS T × List T × List T) : SRS T × List T × List T :=
-  bif x.1.all (fun lr => !(lr.1.length == 0)) then x else ([], [a], [])
+  bif x.1.all (fun lr => !(lr.lhs.length == 0)) then x else ([], [a], [])
 
 /-- `posToWord a` witnesses the reduction from the restricted word problem to the plain one. -/
 theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯_s[posToWord a] @DecisionProblem T := by
   intro x
-  have hall : x.1.all (fun lr => !(lr.1.length == 0)) = true ↔ ∀ lr ∈ x.1, lr.1 ≠ [] := by
+  have hall : x.1.all (fun lr => !(lr.lhs.length == 0)) = true ↔ ∀ lr ∈ x.1, lr.lhs ≠ [] := by
     simp [List.all_eq_true]
   unfold posToWord
-  cases h : x.1.all (fun lr => !(lr.1.length == 0))
+  cases h : x.1.all (fun lr => !(lr.lhs.length == 0))
   · refine iff_of_false (fun hx => by simp [hall.2 hx.1] at h) fun hd => ?_
-    rcases Relation.ReflTransGen.cases_head (r := SRS.Step []) hd with h' | ⟨_, ⟨_, hlr, -⟩, -⟩
+    rcases Relation.ReflTransGen.cases_head (r := SRS.Step []) hd with h' | ⟨_, hs, -⟩
     · simp at h'
-    · simp at hlr
+    · obtain ⟨_, hlr, -⟩ := SRS.step_iff.1 hs
+      simp at hlr
   · exact and_iff_right (hall.1 h)
 
 /-- `posToWord a` is primitive recursive. -/
@@ -78,16 +80,7 @@ theorem posToWord_spec (a : T) : @DecisionProblemPos T ⪯_s[posToWord a] @Decis
   unfold posToWord
   fun_prop
 
-/-- The restricted word problem many-one reduces to the plain one, given a letter. -/
-def _root_.DiagonaLean.SemiThue.synthFromPos (a : T) :
-    @DecisionProblemPos T ⪯_s @DecisionProblem T :=
-  ⟨posToWord a, posToWord_spec a⟩
-
-/-- The former name of `SemiThue.synthFromPos`. -/
-@[deprecated DiagonaLean.SemiThue.synthFromPos (since := "2026-11-23")]
-abbrev posReduces := @DiagonaLean.SemiThue.synthFromPos
-
-namespace MachineLevel
+namespace AlphabetLift
 
 open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.MPCP.Reduction
   DiagonaLean.Foundations.Computability DiagonaLean.Synthetic.Definitions
@@ -95,12 +88,15 @@ open Cslib.Turing SingleTapeTM DiagonaLean.Halt DiagonaLean.Halt.Encoding Diagon
 /- Encoding a system is primitive recursive, for a code that may depend on the input. -/
 derive_primrec SRS.encode [Primcodable α] [Primcodable β]
 
+/- The letters of a system are primitive recursive in it. -/
+derive_primrec SRS.letters [Primcodable α]
+
 /-- **Alphabet invariance of the restricted word problem**: over any two nontrivial `Primcodable`
 alphabets, it is many-one equivalent. -/
 theorem semiThuePos_manyOneEquiv {β : Type} [Primcodable α] [Primcodable β] [Nontrivial α]
     [Nontrivial β] : ManyOneEquiv (@DecisionProblemPos α) (@DecisionProblemPos β) := by
   code_lift semiThueFunctor
 
-end MachineLevel
+end AlphabetLift
 
 end DiagonaLean.SemiThue

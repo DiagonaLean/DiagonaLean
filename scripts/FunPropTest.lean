@@ -1,6 +1,8 @@
 import DiagonaLean
 
-/-! Run by CI: `fun_prop` proves `Primrec` and `Computable` goals.
+/-! Run by CI: `fun_prop` proves `Primrec` and `Computable` goals. The `derive_primcodable` tests
+are in `scripts/FunPropDeriveTest.lean` and the nested types in `scripts/FunPropNestedTest.lean`,
+so that CI runs the three files in parallel.
 See `DiagonaLean.Foundations.Computability.Prim` for the setup. -/
 
 open DiagonaLean.Foundations.Computability
@@ -367,137 +369,6 @@ example : Primrec swapPlus := by primrec_rec
 
 end M7
 
-/-! ### `derive_primcodable` -/
-
-section Derive
-
-inductive Tree2 | leaf | node (l r : Tree2)
-derive_primcodable Tree2
-def tsize : Tree2 → ℕ
-  | .leaf => 1
-  | .node l r => tsize l + tsize r + 1
-example : Primrec tsize := by primrec_rec
-
-inductive Expr2
-  | lit (n : ℕ)
-  | var (x : ℕ ⊕ Bool)
-  | neg (e : Expr2)
-  | add (a : Expr2) (k : ℕ) (b : Expr2)
-derive_primcodable Expr2
-def eval2 (v : ℕ) : Expr2 → ℕ
-  | .lit n => n
-  | .var x => x.elim (fun _ => v) (fun _ => 0)
-  | .neg e => eval2 v e
-  | .add a k b => eval2 v a + k * eval2 v b
-example : Primrec₂ eval2 := by primrec_rec
-
-inductive Pt | mk (x y : ℕ) (b : Bool)
-derive_primcodable Pt
-def ptSum : Pt → ℕ | .mk x y _ => x + y
-example : Primrec ptSum := by primrec_rec
-
-inductive Color | red | green | blue
-derive_primcodable Color
-def colorN : Color → ℕ | .red => 0 | .green => 1 | .blue => 2
-example : Primrec colorN := by primrec_rec
-
-inductive NSeq | nil | cons (a b : ℕ) (rest : NSeq)
-derive_primcodable NSeq
-def seqSum : NSeq → ℕ | .nil => 0 | .cons a b r => a * b + seqSum r
-example : Primrec seqSum := by primrec_rec
-example : Primrec fun n : ℕ => NSeq.cons n (n + 1) .nil := by fun_prop
-
--- parameters of sort `Type`
-inductive Tr (α : Type) | leaf (a : α) | node (l r : Tr α)
-derive_primcodable Tr
-example : Primcodable (Tr (ℕ ⊕ Bool)) := inferInstance
-def trSum : Tr ℕ → ℕ
-  | .leaf a => a
-  | .node l r => trSum l + trSum r
-example : Primrec trSum := by primrec_rec
-example : Primrec fun n : ℕ => Tr.node (.leaf n) (.leaf (n + 1)) := by fun_prop
-
-inductive Two (α β' : Type) | a (x : α) | b (y : β') | both (l r : Two α β')
-derive_primcodable Two
-def twoCount : Two ℕ Bool → ℕ
-  | .a x => x
-  | .b y => if y then 1 else 0
-  | .both l r => twoCount l + twoCount r
-example : Primrec twoCount := by primrec_rec
-
--- universe polymorphic: parameters in any universe, two sharing one, and a nested one
-universe u v
-inductive UExp (X : Type u) where
-  | zero | one
-  | sym (x : X)
-  | plus (e f : UExp X)
-  | star (e : UExp X)
-derive_primcodable UExp
-def UExp.size {X : Type u} : UExp X → ℕ
-  | .zero | .one | .sym _ => 1
-  | .plus e f => e.size + f.size + 1
-  | .star e => e.size + 1
-example {X : Type u} [Primcodable X] : Primrec (@UExp.size X) := by primrec_rec
-example : Primrec fun n : ℕ => UExp.plus (.sym n) .one := by fun_prop
-
-inductive Pair2 (X Y : Type u) where
-  | mk (x : X) (y : Y)
-  | more (p : Pair2 X Y)
-derive_primcodable Pair2
-
-inductive URose (X : Type u) (Y : Type v) where
-  | node (x : X) (y : Y) (cs : List (URose X Y))
-derive_primcodable URose
-def URose.count {X : Type u} {Y : Type v} : URose X Y → ℕ
-  | .node _ _ cs => 1 + (cs.map URose.count).sum
-example {X : Type u} {Y : Type v} [Primcodable X] [Primcodable Y] : Primrec (@URose.count X Y) := by
-  primrec_rec
-
--- rejected
-
-inductive Idx : ℕ → Type | z : Idx 0
-/-- error: derive_primcodable: `Idx` has indices, which are not supported -/
-#guard_msgs in
-derive_primcodable Idx
-
-inductive Clash (σ : Type) | mk (v : σ)
-/-- error: derive_primcodable: rename the parameter `σ` of `Clash`; the generated code uses that name -/
-#guard_msgs in
-derive_primcodable Clash
-
-/-! ### Paramorphisms: right-hand sides that use the subterms themselves -/
-
-instance : Inhabited Cslib.SKI := ⟨.S⟩
-def sameSides : Cslib.SKI → ℕ
-  | .S => 0
-  | .K => 0
-  | .I => 0
-  | .app x y => if x = y then 1 else sameSides x + sameSides y
-example : Primrec sameSides := by primrec_rec
-
-inductive Tree3 | leaf (n : ℕ) | node (l r : Tree3)
-  deriving DecidableEq
-derive_primcodable Tree3
-instance : Inhabited Tree3 := ⟨.leaf 0⟩
-def leftmost : Tree3 → Tree3
-  | .leaf n => .leaf n
-  | .node l _ => leftmost l
-example : Primrec leftmost := by primrec_rec
-def countEq (k : ℕ) : Tree3 → ℕ
-  | .leaf n => if n = k then 1 else 0
-  | .node l r => (if l = r then 1 else 0) + countEq k l + countEq k r
-example : Primrec₂ countEq := by primrec_rec
-
--- projections of a structure
-structure P3 (α : Type) where
-  a : ℕ
-  b : List α
-  c : Bool
-derive_primcodable P3
-example : Primrec fun x : P3 ℕ => x.a + x.b.length + (if x.c then 1 else 0) := by fun_prop
-
-end Derive
-
 /-! ### `primrec_rec` on polymorphic definitions -/
 
 section Poly
@@ -549,6 +420,13 @@ example : Primrec fun z : ℤ => (z.toNat, ((z.natAbs : ℕ) : ℤ)) := by fun_p
 example : Primrec fun p : ℤ × ℤ => (!![p.1, 0; p.2, p.1 * p.2] : Matrix (Fin 2) (Fin 2) ℤ) := by
   fun_prop
 example : Primrec fun n : ℕ => (Matrix.of fun (i j : Fin 3) => n * i + j) := by fun_prop
+
+example : Primrec fun p : Matrix (Fin 3) (Fin 3) ℤ × Matrix (Fin 3) (Fin 3) ℤ => p.1 * p.2 := by
+  fun_prop
+
+example : Primrec fun l : List (Matrix (Fin 2) (Fin 2) ℤ) => l.prod := by fun_prop
+
+example : PrimrecPred fun p : Finset ℕ × ℕ => p.2 ∈ p.1 := by fun_prop
 example : Primrec fun n : ℕ => List.ofFn fun i : Fin 4 => n + i := by fun_prop
 
 example : Primrec fun n : ℕ => (List.range n).zip (List.range (n+1)) := by fun_prop
@@ -563,149 +441,3 @@ example : Primrec fun n : ℕ => (List.range n).insert 3 := by fun_prop
 example : Primrec fun n : ℕ => (List.range n).zipIdx := by fun_prop
 example : Primrec fun n : ℕ => (List.range n) ×ˢ (List.range n) := by fun_prop
 example : Primrec fun n : ℕ => (List.range n).foldl max 0 := by fun_prop
-
-/-! ### `derive_primcodable` and `primrec_rec` on nested types (fields of type `List T`) -/
-
-section Nested
-
-inductive Rose where
-  | node (a : ℕ) (cs : List Rose)
-  deriving Inhabited
-derive_primcodable Rose
-
-inductive Mix where
-  | leaf (n : ℕ)
-  | bin (l : Mix) (b : Bool) (cs : List Mix) (r : Mix)
-  deriving Inhabited
-derive_primcodable Mix
-
-inductive Three where
-  | nil
-  | one (k : ℕ) (t : Three)
-  | two (xs : List Three) (b : Bool) (ys : List Three)
-derive_primcodable Three
-
-inductive PRose (α : Type) where
-  | node (a : α) (cs : List (PRose α))
-derive_primcodable PRose
-
-example : Primrec fun n : ℕ => Rose.node n [Rose.node (n + 1) [], Rose.node 0 []] := by fun_prop
-
-def Rose.size : Rose → ℕ
-  | .node a cs => a + (cs.map Rose.size).sum
-example : Primrec Rose.size := by primrec_rec
-
-def Rose.depth : Rose → ℕ
-  | .node _ cs => (cs.map fun c => c.depth + 1).foldr max 0
-example : Primrec Rose.depth := by primrec_rec
-
-def Rose.mirror : Rose → Rose
-  | .node a cs => .node a (cs.map Rose.mirror).reverse
-example : Primrec Rose.mirror := by primrec_rec
-
-def Rose.width : Rose → ℕ
-  | .node _ cs => cs.length + (cs.map Rose.width).foldr max 0
-example : Primrec Rose.width := by primrec_rec
-
-def Rose.scale (k : ℕ) : Rose → Rose
-  | .node a cs => .node (a * k) (cs.map (Rose.scale k))
-example : Primrec₂ Rose.scale := by primrec_rec
-
-def Mix.total : Mix → ℕ
-  | .leaf n => n
-  | .bin l b cs r => l.total + (if b then (cs.map Mix.total).sum else cs.length) + r.total
-@[fun_prop] theorem Mix.total_primrec : Primrec Mix.total := by primrec_rec
-
-def Three.count : Three → ℕ
-  | .nil => 1
-  | .one k t => k + t.count
-  | .two xs _ ys => (xs.map Three.count).sum * (ys.map Three.count).sum
-example : Primrec Three.count := by primrec_rec
-
-def PRose.flat {α : Type} : PRose α → List α
-  | .node a cs => a :: (cs.map PRose.flat).flatten
-example {α : Type} [Primcodable α] : Primrec (@PRose.flat α) := by primrec_rec
-
-/-! Paramorphisms on nested types: the right-hand side uses the subterms themselves. -/
-
-def Rose.label : Rose → ℕ
-  | .node a _ => a
-@[fun_prop] theorem Rose.label_primrec : Primrec Rose.label := by primrec_rec
-
-def Rose.kids : Rose → ℕ
-  | .node _ cs => (cs.map Rose.label).sum + (cs.map Rose.kids).sum
-example : Primrec Rose.kids := by primrec_rec
-
-/-- Recursion through a `filter` first: rejected, with a message. -/
-def Rose.prune (k : ℕ) : Rose → Rose
-  | .node a cs => .node a ((cs.filter fun c => c.label < k).map (Rose.prune k))
-example : True := by
-  fail_if_success (have : Primrec₂ Rose.prune := by primrec_rec)
-  trivial
-
-def Mix.leftSize : Mix → ℕ
-  | .leaf n => n
-  | .bin l _ cs r => (if l.total < r.total then l.leftSize else r.leftSize) + cs.length
-example : Primrec Mix.leftSize := by primrec_rec
-
-def Rose.firstKids : Rose → List Rose
-  | .node _ cs => cs.take 1 ++ (cs.map Rose.firstKids).flatten
-example : Primrec Rose.firstKids := by primrec_rec
-
-/-! Option fields: Lean splits the equations by `none` and `some`. -/
-
-inductive OTree where
-  | leaf (n : ℕ)
-  | node (l : Option OTree) (k : ℕ) (r : Option OTree)
-  deriving Inhabited
-derive_primcodable OTree
-
-inductive OT where
-  | leaf (n : ℕ)
-  | node (l : Option OT) (cs : List OT) (r : Option OT)
-derive_primcodable OT
-
-example : Primrec fun n : ℕ => OTree.node (some (.leaf n)) n none := by fun_prop
-
-def OTree.sum : OTree → ℕ
-  | .leaf n => n
-  | .node l k r =>
-    (match l with | none => 0 | some t => t.sum) + k + (match r with | none => 0 | some t => t.sum)
-example : Primrec OTree.sum := by primrec_rec
-
-def OTree.sum3 : OTree → ℕ
-  | .leaf n => n
-  | .node none k none => k
-  | .node (some l) k none => l.sum3 + k
-  | .node none k (some r) => k + r.sum3
-  | .node (some l) k (some r) => l.sum3 + k + r.sum3
-@[fun_prop] theorem OTree.sum3_primrec : Primrec OTree.sum3 := by primrec_rec
-
-def OTree.leftOnly : OTree → ℕ
-  | .leaf n => n
-  | .node none k _ => k
-  | .node (some l) _ _ => l.leftOnly
-example : Primrec OTree.leftOnly := by primrec_rec
-
-def OTree.mirror : OTree → OTree
-  | .leaf n => .leaf n
-  | .node none k none => .node none k none
-  | .node (some l) k none => .node none k (some l.mirror)
-  | .node none k (some r) => .node (some r.mirror) k none
-  | .node (some l) k (some r) => .node (some r.mirror) k (some l.mirror)
-example : Primrec OTree.mirror := by primrec_rec
-
-def OT.size : OT → ℕ
-  | .leaf n => n
-  | .node l cs r => (match l with | none => 0 | some c => c.size + 1) + (cs.map OT.size).sum +
-      (match r with | none => 1 | some c => c.size)
-example : Primrec OT.size := by primrec_rec
-
-/-- A paramorphism through an option field: it uses the subtree itself. -/
-def OTree.bigLeft : OTree → ℕ
-  | .leaf n => n
-  | .node none k _ => k
-  | .node (some l) k _ => if k < l.sum3 then l.bigLeft else k
-example : Primrec OTree.bigLeft := by primrec_rec
-
-end Nested

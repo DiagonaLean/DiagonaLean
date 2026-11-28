@@ -26,7 +26,7 @@ namespace DiagonaLean.CM2.Register
 private theorem pairModels_physical : PairModels (physical .fst) (physical .snd) Prod.mk :=
   ⟨models_left, models_right⟩
 
-/-- The register of the exponent of `p` in the first counter. -/
+/-- `factor p` is the register of the exponent of `p` in the first counter. -/
 def factor (p : ℕ) : Register where
   inc k := multiply (physical .fst) (physical .snd) p k
   dec z s := divide (physical .fst) (physical .snd) p fun r =>
@@ -55,7 +55,7 @@ theorem models_factor (p co : ℕ) (hp : 0 < p) (hc : co % p ≠ 0) :
     apply pairModels_physical.divide hp
     simpa using h
 
-/-- The counters that store the three values `l`, `r` and `t`. -/
+/-- `encode l r t` is the pair of counters that stores the three values `l`, `r` and `t`. -/
 def encode (l r t : ℕ) : ℕ × ℕ := (2 ^ l * 3 ^ r * 5 ^ t, 0)
 
 /-- A prime that divides neither `a` nor `b` does not divide `a ^ i * b ^ j`. -/

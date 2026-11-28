@@ -15,7 +15,13 @@ predicate with a registered hardness theorem or a proof of `¬ ComputablePred P`
 `ComputablePred P → False`). Search prefers a route whose reduction functions have computability
 proofs, and proves each function's computability at most once per call. If evidence is missing,
 the corresponding computability obligations remain as goals. `undec from h via r₁, …, rₙ` follows
-exactly the named reductions, and `undec? from P` suggests such a script.
+exactly the named reductions, and `undec? from P` suggests a script for the route, written with
+`reduce_from h via r₁, via r₂, …`.
+On the proved goals `HaltReduction Q` and `HaltHard Q`, `undec from P` (and `undec? from P`,
+`undec from P via r₁, …`) finds the route the same way and proves it with
+`reduce_from P via r₁, via r₂, …`, which starts from `P`'s registered halting reduction
+(`HaltSource`, or `HaltHardFact` for `HaltHard`, which `halt_results` registers) and proves each
+synthetic link computable with `fun_prop`.
 `undecTagProblems` lists ill-formed `@[undecReduction]` and `@[undecHardness]` declarations;
 `scripts/CheckUndecTags.lean` runs it in CI.
 -/
@@ -190,21 +196,66 @@ def hardnessViaEdge (r : Term) : TacticM ReductionEdge := do
       {indentExpr (← inferType e)}"
   return edge
 
-/-- The script `undec from proof via r₁, …, rₙ` for a route from a hardness proof. `none` if
+/-- The script `reduce_from proof via r₁, …` for a route from a hardness proof. A route with no
+links needs no tactic: `exact proof`, or on a goal `¬ MachineDecidable enc Q` (`machine`) the
+bridge `not_machineDecidable_of_not_computablePred`, with the encoding's computability by
+`fun_prop` (which uses a hypothesis `Computable enc`). `none` if
 some term does not elaborate again. -/
-def hardnessScript (proof : Expr) (path : List ReductionEdge) :
-    TermElabM (Option (TSyntax `tactic)) := do
+def hardnessScript (proof : Expr) (path : List ReductionEdge) (machine : Bool) :
+    TermElabM (Option Synthetic.Notation.Script) := do
   -- the source is replayed against the route, which fixes its implicit arguments
   let some src ← Synthetic.Notation.delabTermForScript proof (← inferType proof) | return none
   match path with
-  | [] => return some (← `(tactic| undec from $src))
+  | [] =>
+    if machine then
+      let bridge := mkIdent ``not_machineDecidable_of_not_computablePred
+      return some (.tactic (← `(tactic| exact $bridge (by fun_prop) $src)))
+    return some (.tactic (← `(tactic| exact $src)))
   | _ =>
     let some names := (← path.toArray.mapM Synthetic.Notation.delabEdge).mapM id | return none
-    return some (← `(tactic| undec from $src via $names,*))
+    return some (← Synthetic.Notation.reduceFromScript src names)
+
+/-- The problem `Q` of a proved goal `HaltReduction Q` or `HaltHard Q`. -/
+def provedGoalTarget? (type : Expr) : MetaM (Option Expr) := do
+  let t ← whnfR (← instantiateMVars type)
+  let t ← if t.isAppOfArity ``Nonempty 1 then whnfR t.appArg! else pure t
+  let_expr ComputableReduction _ _ _ _ p q := t | return none
+  return if p.isConstOf `DiagonaLean.Foundations.Computability.HaltCanon then some q else none
+
+/-- Run the text `script` as a tactic. -/
+def runScript (script : String) : TacticM Unit := do
+  match Parser.runParserCategory (← getEnv) `tactic script with
+  | .ok stx => evalTactic stx
+  | .error e => throwError "could not parse the script{indentD script}\n{e}"
+
+/-- `undec from P` on a proved goal `HaltReduction Q` or `HaltHard Q`: the route from `P` to `Q`
+is found as for noncomputability, preferring links with computability proofs, and proved by
+`reduce_from P via r₁, via r₂, …`, which takes `P`'s registered halting reduction
+(`HaltSource`, or `HaltHardFact` for `HaltHard`) and proves each synthetic link computable with
+`fun_prop`. With `ref`, the route is shown and the script suggested there. -/
+def undecProved (h : Term) (ref : Option Syntax) : TacticM Unit := do
+  let some target ← provedGoalTarget? (← getMainTarget) | throwUnsupportedSyntax
+  let source ← instantiateMVars (← elabTerm h none)
+  unless ← Synthetic.Notation.isPredicate source do
+    throwErrorAt h m!"on a proved goal, `undec from` takes a source problem `P` with a \
+      registered halting reduction; for a reduction `r`, write `reduce_from r via …`"
+  let path := (← hardnessRoute (← IO.mkRef {}) source target).map Prod.fst
+  if path.isEmpty then
+    throwError m!"the source is the goal's problem; prove it with its halting reduction"
+  let some src ← Synthetic.Notation.delabForScript source |
+    throwError m!"the source{indentExpr source}\nhas no term that elaborates again"
+  let some names := (← path.toArray.mapM fun e => Synthetic.Notation.delabEdge e).mapM id |
+    throwError "a step of this route has no term that elaborates again; name it in a `via` list"
+  let script ← Synthetic.Notation.reduceFromScript src names
+  let .text pieces := script | unreachable!
+  if let some tk := ref then
+    withOptions (fun o => o.setBool `undec.showRoute true) <| reportReductionPath source path
+    Synthetic.Notation.suggestScript tk (some script)
+  runScript (" ".intercalate pieces)
 
 /-- `undec from h` on a noncomputability goal, suggesting a script at `ref` when given. -/
 def undecHardness (h : Term) (ref : Option Syntax) : TacticM Unit := do
-  let some (encoding, target) ← prepareHardnessGoal | throwUnsupportedSyntax
+  let some (encoding, target) ← prepareHardnessGoal | undecProved h ref
   let (source, proof) ← resolveHardness h
   let cache ← IO.mkRef {}
   let path ← hardnessRoute cache source target
@@ -212,12 +263,17 @@ def undecHardness (h : Term) (ref : Option Syntax) : TacticM Unit := do
   | none => applyRoute source proof path
   | some tk =>
     withOptions (fun o => o.setBool `undec.showRoute true) <| applyRoute source proof path
-    Synthetic.Notation.suggestScript tk (← hardnessScript proof (path.map Prod.fst))
+    Synthetic.Notation.suggestScript tk
+      (← hardnessScript proof (path.map Prod.fst) (machine := encoding.isSome))
   finishEncoding encoding
 
 elab_rules : tactic
   | `(tactic| undec from $h $[via?]?) => focus <| withMainContext do undecHardness h none
   | `(tactic| undec from $h via $rs,*) => focus <| withMainContext do
+    if (← provedGoalTarget? (← getMainTarget)).isSome then
+      -- the proved goals are `reduce_from`'s, along the same links
+      let .text pieces ← Synthetic.Notation.reduceFromScript h rs.getElems | unreachable!
+      return ← runScript (" ".intercalate pieces)
     let some (encoding, target) ← prepareHardnessGoal | throwUnsupportedSyntax
     -- elaborating a link synthesizes pending instances, so the links come before the source
     let links ← rs.getElems.toList.mapM hardnessViaEdge

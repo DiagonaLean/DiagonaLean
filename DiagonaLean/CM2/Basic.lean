@@ -8,18 +8,18 @@ import DiagonaLean.Foundations.Computability.DerivePrimcodable
 
 @[expose] public section
 
-/-! # Halting of a two-counter machine
+/-! # Halting of two-counter machines
 
 A two-counter machine is a list of instructions on two counters with values in `ℕ` (`Instr`).
-The instruction at address `i` is the state `i` of the machine. `inc c n`
-increments counter `c` and goes to `n`. `dec c n z` goes to `z` when counter `c` is zero, and
-otherwise decrements it and goes to `n`. A configuration is an address and the two counter values
-(`Config`, `step`). An address outside the program has no instruction, and the machine halts
-there (`step_eq_none_iff`).
+The addresses of the list are the states of the machine. The instruction `inc c n` increments
+counter `c` and goes to address `n`. The instruction `dec c n z` goes to `z` when counter `c` is
+zero, and otherwise decrements it and goes to `n`. A configuration is an address and the two
+counter values (`Config`), and `step` executes the instruction at the address. An address outside
+the program has no instruction, and the machine halts there (`step_eq_none_iff`).
 
-`HaltsFrom p s` states that the machine `p` reaches such an address from the configuration `s`.
-The decision problem (`DecisionProblem`) takes a program and asks whether it halts from address 0
-with both counters zero.
+The machine `p` halts from a configuration `s` when it reaches such an address (`HaltsFrom p s`).
+The problem (`DecisionProblem`) asks whether a machine halts from address 0 with both counters
+zero.
 
 These are the deterministic two-counter Minsky machines of Niskanen, Potapov and Reichert, with
 the addresses as states and address 0 as the initial state. Their machines have one sink state;
@@ -42,15 +42,16 @@ inductive Counter where
   | snd
   deriving DecidableEq
 
-/-- An instruction of a two-counter machine. -/
+/-- An instruction of a two-counter machine names the addresses of its successors. -/
 inductive Instr where
-  /-- Increment the counter and go to `next`. -/
+  /-- `inc c n` increments counter `c` and goes to address `n`. -/
   | inc (counter : Counter) (next : ℕ)
-  /-- If the counter is zero go to `ifZero`; otherwise decrement it and go to `next`. -/
+  /-- `dec c n z` goes to address `z` when counter `c` is zero, and otherwise decrements it
+  and goes to `n`. -/
   | dec (counter : Counter) (next : ℕ) (ifZero : ℕ)
   deriving DecidableEq
 
-/-- A configuration: the address of the current instruction and the values of the two
+/-- A configuration is the address of the current instruction and the values of the two
 counters. -/
 structure Config where
   /-- The address of the current instruction. -/
@@ -71,7 +72,8 @@ derive_primcodable DiagonaLean.CM2.Config
 
 namespace DiagonaLean.CM2
 
-/-- The configuration after an instruction, from the counter values of `s`. -/
+/-- `execute s i` is the configuration after the instruction `i` is executed in the
+configuration `s`. -/
 def execute (s : Config) : Instr → Config
   | .inc c n => if c = .fst then ⟨n, s.a + 1, s.b⟩ else ⟨n, s.a, s.b + 1⟩
   | .dec c n z =>
@@ -80,8 +82,8 @@ def execute (s : Config) : Instr → Config
     else
       if s.b = 0 then ⟨z, s.a, s.b⟩ else ⟨n, s.a, s.b - 1⟩
 
-/-- One step: the instruction at the address of `s` is executed. There is no step when the
-address is outside the program. -/
+/-- `step p s` is the configuration after one step of the machine `p` from `s`: the instruction
+at the address of `s` is executed. There is no step when the address is outside the program. -/
 def step (p : List Instr) (s : Config) : Option Config :=
   p[s.pc]?.map (execute s)
 

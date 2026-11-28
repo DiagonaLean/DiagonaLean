@@ -7,8 +7,7 @@ import Mathlib.Data.Matrix.Basic
 
 /-! # The Matrix Mortality Problem
 
-The matrix mortality predicate `DecisionProblem` on finite sets of `3 × 3` integer matrices. Its
-former alias `MatMortProblem` is deprecated.
+The matrix mortality predicate `DecisionProblem` on finite sets of `3 × 3` integer matrices.
 
 ## References
 
@@ -24,9 +23,5 @@ open Matrix
   (list) of matrices drawn from the set such that their product is the zero matrix. -/
 def DecisionProblem (Ms : Finset (Matrix (Fin 3) (Fin 3) ℤ)) : Prop :=
   ∃ Ms' : List (Matrix (Fin 3) (Fin 3) ℤ), (∀ M ∈ Ms', M ∈ Ms) ∧ Ms'.prod = 0
-
-/-- The former alias of `DecisionProblem`. -/
-@[deprecated DecisionProblem (since := "2026-11-23")]
-abbrev MatMortProblem : (Ms : Finset (Matrix (Fin 3) (Fin 3) ℤ)) → Prop := DecisionProblem
 
 end DiagonaLean.MatMort

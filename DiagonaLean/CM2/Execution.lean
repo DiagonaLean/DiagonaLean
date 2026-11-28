@@ -33,7 +33,8 @@ theorem step_primrec : Primrec₂ step := by
     (hp : Primrec p) (hs : Primrec s) : Primrec fun x => step (p x) (s x) :=
   step_primrec.comp hp hs
 
-/-- The configuration after `n` steps, or the last configuration if the machine halts earlier. -/
+/-- `run p s n` is the configuration after `n` steps from `s`, or the last configuration if the
+machine halts earlier. -/
 def run (p : List Instr) (s : Config) : ℕ → Config
   | 0 => s
   | n + 1 => let t := run p s n; (step p t).getD t

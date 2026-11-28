@@ -15,10 +15,11 @@ import DiagonaLean.Synthetic.Tactics.ReductionPath
 A single-tape machine that never writes a blank and never moves left at the left end of its tape
 halts on `w` iff its list machine halts from the initial configuration
 (`Foundations.Computability.ListMachine.halts_iff`). The reduction `haltToCM2` normalises the
-machine and its input (`Foundations.Computability.Normalize`) and takes the two-counter program
-of the list machine of the normalised machine for its initial configuration. The program starts
-from zero counters. By `haltsFrom_program_iff` it is a reduction from `HaltProblem`
-(`halt_reducesto_cm2_spec`, `CM2.synthFromHalt`).
+machine and its input (`Foundations.Computability.Normalize`), so that both conditions hold, and
+links the two-counter program of the list machine of the normalised machine (`program`, `link`).
+The program loads the input itself, so it starts from zero counters. `haltsFrom_program_iff`
+makes `haltToCM2` a reduction from `HaltProblem` (`halt_reducesto_cm2_spec`). The packaged
+reduction `CM2.synthFromHalt` is in `SynthHardness.lean`.
 
 ## References
 
@@ -31,8 +32,8 @@ open Cslib.Turing DiagonaLean.Halt DiagonaLean.Halt.Encoding
   DiagonaLean.Foundations.Computability.ListMachine
   DiagonaLean.Foundations.Computability.Normalize
 
-/-- **The reduction.** For a machine and an input: the two-counter program of the list machine of
-the normalised machine, for its initial configuration. -/
+/-- The two-counter program of a machine and an input: the linked program of the list machine of
+the normalised machine, for its initial configuration on the encoded input. -/
 def haltToCM2 (p : EncodableTM Bool × List Bool) : List Instr :=
   letI := (normEnc p.1).stateEncodable
   letI := (normEnc p.1).stateFintype
@@ -56,10 +57,5 @@ theorem halt_reducesto_cm2_spec : HaltProblem ⪯_s[haltToCM2] DecisionProblem :
 /-- Halting of two-counter machines is displayed as "Two-counter machine halting". -/
 instance : Synthetic.ReductionChain.ProblemName DecisionProblem :=
   ⟨"Two-counter machine halting"⟩
-
-/-- **The reduction.** The halting problem many-one reduces to halting of two-counter machines,
-through `haltToCM2`. -/
-@[undecReduction] def _root_.DiagonaLean.CM2.synthFromHalt : HaltProblem ⪯_s DecisionProblem :=
-  ⟨haltToCM2, halt_reducesto_cm2_spec⟩
 
 end DiagonaLean.CM2.Reduction

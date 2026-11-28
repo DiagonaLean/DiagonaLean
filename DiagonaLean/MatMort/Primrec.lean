@@ -53,7 +53,7 @@ theorem matImage_eq (K : Stack S23) : matImage K =
 
 /-- The alphabet lift `MatMort.synthS23FromPCP` is primitive recursive. -/
 @[fun_prop] theorem synthS23FromPCP_primrec : Primrec MatMort.synthS23FromPCP.f :=
-  AlphabetLift.synthAlphabetLift_primrec (γ₁ := Bool) (b0 := (0 : S23)) (b1 := 1) (by decide)
+  AlphabetLift.liftMap_primrec (γ₁ := Bool) (0 : S23) 1
 
 /-- **The reduction from PCP to matrix mortality is primitive recursive.** -/
 @[fun_prop] theorem matImage_primrec : Primrec matImage := by
@@ -63,8 +63,5 @@ theorem matImage_eq (K : Stack S23) : matImage K =
     unfold liftS23
     fun_prop
   exact h.of_eq fun K => (matImage_eq K).symm
-
-/-- The function of the reduction `MatMort.synthFromPCP` is primitive recursive. -/
-theorem synthFromPCP_primrec : Primrec MatMort.synthFromPCP.f := matImage_primrec
 
 end DiagonaLean.MatMort.Reduction

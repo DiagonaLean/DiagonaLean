@@ -43,10 +43,11 @@ variable {Q Γ : Type} [DecidableEq Γ] {α : Type}
 
 /-! ### Stacks as numbers -/
 
-/-- The digit of a symbol: its position in `cs`, plus one. -/
+/-- `digit cs c` is the digit of the symbol `c`: its position in `cs`, plus one. -/
 def digit (cs : List Γ) (c : Γ) : ℕ := cs.idxOf c + 1
 
-/-- The number of a stack, in base `cs.length + 1`, top symbol in the lowest digit. -/
+/-- `val cs l` is the number of the stack `l` in base `cs.length + 1`, top symbol in the lowest
+digit. -/
 def val (cs : List Γ) : List Γ → ℕ
   | [] => 0
   | c :: l => digit cs c + val cs l * (cs.length + 1)
@@ -73,12 +74,13 @@ theorem val_split {cs : List Γ} (hcs : ∀ c, c ∈ cs) (bl : Γ) (f : Γ → �
 
 /-! ### Push and pop -/
 
-/-- Push the digit `d` in base `B`: multiply the register by `B` and add `d`. -/
+/-- `push s B d k` pushes the digit `d` in base `B`: it multiplies the register `s` by `B` and
+adds `d`, then continues with `k`. -/
 def push (s : Register) (B d : ℕ) (k : Block α) : Block α :=
   s.multiply (factor 5) B (s.add d k)
 
-/-- Pop a digit in base `B`: divide the register by `B` and continue with `k` of the
-remainder. -/
+/-- `pop s B k` pops a digit in base `B`: it divides the register `s` by `B` and continues with
+`k` of the remainder. -/
 def pop (s : Register) (B : ℕ) (k : ℕ → Block α) : Block α :=
   s.divide (factor 5) B k
 
@@ -130,19 +132,19 @@ theorem runs_pop_right {B d l r : ℕ} (hd : d < B) {k : ℕ → Block α} {i : 
 inductive Kind (Γ : Type) where
   /-- A jump to exit 0. -/
   | jump
-  /-- A right move that writes `b`: push `b` on the left stack and pop the right stack. The exit
-  is the popped digit. -/
+  /-- A right move that writes `b`: it pushes `b` on the left stack and pops the right stack. The
+  exit is the popped digit. -/
   | right (b : Γ)
-  /-- A left move that writes `b`: pop the left stack; on digit 0 take exit 0, otherwise push `b`
-  on the right stack and take the exit of the popped digit. -/
+  /-- A left move that writes `b`: it pops the left stack; on digit 0 it takes exit 0, and
+  otherwise it pushes `b` on the right stack and takes the exit of the popped digit. -/
   | left (b : Γ)
-  /-- Push `b` on the right stack and take exit 0. -/
+  /-- A load of `b`: it pushes `b` on the right stack and takes exit 0. -/
   | load (b : Γ)
-  /-- Increment the first counter and take exit 0. -/
+  /-- The boot block: it increments the first counter and takes exit 0. -/
   | boot
   deriving DecidableEq
 
-/-- The block of a kind, with exits labelled by natural numbers. -/
+/-- `kindBlock cs k` is the block of the kind `k`, with exits labelled by natural numbers. -/
 def kindBlock (cs : List Γ) : Kind Γ → Block ℕ
   | .jump => goto 0
   | .right b =>
@@ -153,8 +155,8 @@ def kindBlock (cs : List Γ) : Kind Γ → Block ℕ
   | .load b => push (factor 3) (cs.length + 1) (digit cs b) (goto 0)
   | .boot => Block.inc .fst (goto 0)
 
-/-- The block of a kind and a list of block indices: exit `e` of the kind is relabelled by
-entry `e` of the list. -/
+/-- `codeBlock cs c` is the block of a kind and a list of block indices: exit `e` of the kind is
+relabelled by entry `e` of the list. -/
 def codeBlock (cs : List Γ) (c : Kind Γ × List ℕ) : Block ℕ :=
   (kindBlock cs c.1).rename fun e => c.2.getD e 0
 
@@ -208,9 +210,9 @@ theorem runs_boot (cs : List Γ) : RunsAt (kindBlock cs .boot) (0, 0) 0 (encode 
 
 /-! ### The block of a state and a head cell -/
 
-/-- The kind and exits of the block for the state and head cell `p`: the transition
-`δ p.1 p.2` on the two stacks. The block of `p'` has index `ix p'`; the index `haltIx` is beyond
-the program. -/
+/-- `stepCode δ bl cs ix haltIx p` is the kind and exits of the block for the state and head
+cell `p`: the transition `δ p.1 p.2` on the two stacks. The block of `p'` has index `ix p'`; the
+index `haltIx` is beyond the program. -/
 def stepCode (δ : Q → Γ → Act Q Γ) (bl : Γ) (cs : List Γ) (ix : Q × Γ → ℕ) (haltIx : ℕ)
     (p : Q × Γ) : Kind Γ × List ℕ :=
   match δ p.1 p.2 with
@@ -219,7 +221,8 @@ def stepCode (δ : Q → Γ → Act Q Γ) (bl : Γ) (cs : List Γ) (ix : Q × Γ
   | .right q b => (.right b, ix (q, bl) :: cs.map fun c => ix (q, c))
   | .left q b => (.left b, ix p :: cs.map fun c => ix (q, c))
 
-/-- The counters of a configuration: the numbers of its two stacks. -/
+/-- `counters cs k` is the pair of counters of the configuration `k`: the numbers of its two
+stacks. -/
 def counters (cs : List Γ) (k : Cfg Q Γ) : ℕ × ℕ := encode (val cs k.l) (val cs k.r) 0
 
 variable {δ : Q → Γ → Act Q Γ} {bl : Γ} {cs : List Γ} {ix : Q × Γ → ℕ} {haltIx : ℕ}
@@ -291,17 +294,18 @@ section Program
 
 variable [DecidableEq Q]
 
-/-- The position of a pair in a list of pairs, by decidable equality. -/
+/-- `pairIx pairs p` is the position of `p` in the list `pairs`, by decidable equality. -/
 abbrev pairIx (pairs : List (Q × Γ)) (p : Q × Γ) : ℕ :=
   @List.idxOf (Q × Γ) instBEqOfDecidableEq p pairs
 
-/-- The index of the block of a state and a head cell, in the program with `n` load blocks. -/
+/-- `stepIx qs cs n p` is the index of the block of the state and head cell `p`, in the program
+with `n` load blocks. -/
 def stepIx (qs : List Q) (cs : List Γ) (n : ℕ) (p : Q × Γ) : ℕ := n + 2 + pairIx (qs ×ˢ cs) p
 
-/-- The kinds and exits of the program of a list machine with states `qs` and symbols `cs`, for
-the initial configuration `k₀`: the boot block, a load block for each cell right of the head,
-farthest first, a jump to the block of `k₀`, and a block for each pair of a state and a
-symbol. -/
+/-- `codes δ bl qs cs k₀` lists the kinds and exits of the blocks of the program of a list
+machine with states `qs` and symbols `cs`, for the initial configuration `k₀`: the boot block, a
+load block for each cell right of the head, farthest first, a jump to the block of `k₀`, and a
+block for each pair of a state and a symbol. -/
 def codes (δ : Q → Γ → Act Q Γ) (bl : Γ) (qs : List Q) (cs : List Γ) (k₀ : Cfg Q Γ) :
     List (Kind Γ × List ℕ) :=
   (.boot, [1]) ::
@@ -310,12 +314,13 @@ def codes (δ : Q → Γ → Act Q Γ) (bl : Γ) (qs : List Q) (cs : List Γ) (k
     (qs ×ˢ cs).map
       (stepCode δ bl cs (stepIx qs cs k₀.r.length) (k₀.r.length + 2 + (qs ×ˢ cs).length))
 
-/-- The blocks of the program. -/
+/-- `program δ bl qs cs k₀` lists the blocks of the program. -/
 def program (δ : Q → Γ → Act Q Γ) (bl : Γ) (qs : List Q) (cs : List Γ) (k₀ : Cfg Q Γ) :
     List (Block ℕ) :=
   (codes δ bl qs cs k₀).map (codeBlock cs)
 
-/-- The configuration of the two-counter machine for a configuration of the list machine. -/
+/-- `config δ bl qs cs k₀ k` is the configuration of the two-counter machine for the
+configuration `k` of the list machine. -/
 def config (δ : Q → Γ → Act Q Γ) (bl : Γ) (qs : List Q) (cs : List Γ) (k₀ k : Cfg Q Γ) :
     Config :=
   cfgAt (addr (program δ bl qs cs k₀) (stepIx qs cs k₀.r.length (k.q, k.c))) (counters cs k)

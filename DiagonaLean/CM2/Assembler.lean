@@ -59,7 +59,8 @@ theorem exists_all_kinds {Γ : Type} [Finite Γ] : ∃ all : List (Kind Γ), ∀
 
 variable {Γ : Type} [DecidableEq Γ]
 
-/-- The instructions of the program given by a list of kinds and exits. -/
+/-- `assemble cs c` is the list of instructions of the program given by the list `c` of kinds
+and exits. -/
 def assemble (cs : List Γ) (c : List (Kind Γ × List ℕ)) : List Instr :=
   link (c.map (codeBlock cs))
 

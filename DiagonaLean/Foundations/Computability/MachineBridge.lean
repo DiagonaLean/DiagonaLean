@@ -35,7 +35,9 @@ So every `¬ ComputablePred` result of Mathlib, such as `ComputablePred.rice` or
 * `not_machineDecidable_of_not_computablePred`: the form used for undecidability.
 * `not_computablePred_of_reduces`: `¬ ComputablePred` transfers along a reduction with a computable
   function; `REPred.of_reduces`, `REPred.of_manyOneReducible`: recursive enumerability transfers
-  back along one.
+  back along one; `REPred.of_exists_primrecPred`: recursive enumerability from a primitive
+  recursive check, and `REPred.of_exists_primrecPred_witness` with witnesses of any `Primcodable`
+  type.
 * `not_computablePred_of_selfHalt`: a predicate that a computable map of machine codes reduces
   self-halting to is not computable.
 * `encUnary`, `machineDecidable_unary_iff`: an encoding of any `Primcodable` type that satisfies
@@ -155,17 +157,8 @@ theorem _root_.DiagonaLean.Synthetic.Definitions.SynthReduction.toManyOneReducib
     (hr : Computable r.f) : ManyOneReducible p q :=
   ⟨r.f, hr, r.hf⟩
 
-/-- The former name of `SynthReduction.toManyOneReducible`. Its parameter is typed with the former
-name `ManyOneReduces`, so that field notation finds it on terms whose type uses that name. -/
-@[deprecated SynthReduction.toManyOneReducible (since := "2026-11-22")]
-theorem _root_.DiagonaLean.Synthetic.Definitions.ManyOneReduces.toManyOneReducible
-    {X Y : Type*} [Primcodable X] [Primcodable Y] {p : X → Prop} {q : Y → Prop}
-    (r : DiagonaLean.Synthetic.Definitions.ManyOneReduces p q)
-    (hr : Computable r.f) : ManyOneReducible p q :=
-  DiagonaLean.Synthetic.Definitions.SynthReduction.toManyOneReducible r hr
-
-/-- **Undecidability transfers along a computable reduction.** If `p` is not a computable
-predicate and `r : p ⪯_s q` has a computable function, then `q` is not one either. -/
+/-- **Not being a computable predicate transfers along a computable reduction.** If `p` is not a
+computable predicate and `r : p ⪯_s q` has a computable function, then `q` is not one either. -/
 theorem not_computablePred_of_reduces {X Y : Type*} [Primcodable X] [Primcodable Y]
     {p : X → Prop} {q : Y → Prop} (r : p ⪯_s q) (hr : Computable r.f) (hp : ¬ ComputablePred p) :
     ¬ ComputablePred q :=
@@ -181,6 +174,49 @@ theorem _root_.REPred.of_manyOneReducible {X Y : Type*} [Primcodable X] [Primcod
     {p : X → Prop} {q : Y → Prop} (h : ManyOneReducible p q) (hq : REPred q) : REPred p := by
   obtain ⟨f, hf, hpq⟩ := h
   exact REPred.of_reduces (q := q) ⟨f, hpq⟩ hf hq
+
+/-- **Recursive enumerability from a primitive recursive check**: a predicate that holds exactly
+when some `k` passes a primitive recursive check `q a k` is recursively enumerable, by an
+unbounded search for `k` (`Nat.rfind`). The checks are typically "the program numbered `k` proves
+the instance", as for the proof searches of `StackProof`. -/
+theorem _root_.REPred.of_exists_primrecPred {α : Type*} [Primcodable α] {p : α → Prop}
+    {q : α → ℕ → Prop} (hq : PrimrecPred fun x : α × ℕ => q x.1 x.2)
+    (h : ∀ a, p a ↔ ∃ k, q a k) : REPred p := by
+  classical
+  have hc : Computable fun x : α × ℕ => decide (q x.1 x.2) := by
+    simpa using (PrimrecPred.computablePred hq).decide
+  let g : α → ℕ →. Bool := fun a k => Part.some (decide (q a k))
+  have hf : Partrec fun a => Nat.rfind (g a) :=
+    Partrec.rfind (hc.partrec.comp (Computable.pair .fst .snd)).to₂
+  refine (Partrec.dom_re hf).of_eq fun a => ?_
+  rw [h a, Nat.rfind_dom]
+  simp [g]
+
+/-- **Recursive enumerability from a primitive recursive check on witnesses**: a predicate that
+holds exactly when some witness `w` of a `Primcodable` type passes a primitive recursive check
+`q a w` is recursively enumerable. The search runs over the codes `k` of witnesses
+(`REPred.of_exists_primrecPred`), checking `decode k`. The witnesses are typically the solutions
+themselves, as a stack of tiles for PCP or a list of matrices for matrix mortality. -/
+theorem _root_.REPred.of_exists_primrecPred_witness {α β : Type*} [Primcodable α] [Primcodable β]
+    {p : α → Prop} {q : α → β → Prop} (hq : PrimrecPred fun x : α × β => q x.1 x.2)
+    (h : ∀ a, p a ↔ ∃ w, q a w) : REPred p := by
+  classical
+  have hd : Primrec fun x : α × β => decide (q x.1 x.2) := hq.decide
+  refine REPred.of_exists_primrecPred
+    (q := fun a k => (Encodable.decode (α := β) k).elim false (fun w => decide (q a w)) = true) ?_
+    fun a => ?_
+  · refine (Primrec.eq.comp (Primrec.option_casesOn (Primrec.decode.comp .snd) (.const false)
+      (hd.comp ((Primrec.fst.comp .fst).pair .snd)).to₂) (.const true)).of_eq
+      fun x => ?_
+    cases Encodable.decode (α := β) x.2 <;> rfl
+  · rw [h a]
+    constructor
+    · rintro ⟨w, hw⟩
+      exact ⟨Encodable.encode w, by simpa [Encodable.encodek] using hw⟩
+    · rintro ⟨k, hk⟩
+      cases hdk : Encodable.decode (α := β) k with
+      | none => simp [hdk] at hk
+      | some w => exact ⟨w, by simpa [hdk] using hk⟩
 
 /-! ### From self-halting on codes -/
 

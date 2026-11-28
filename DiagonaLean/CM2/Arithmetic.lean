@@ -21,11 +21,12 @@ namespace DiagonaLean.CM2
 
 open Block
 
-/-- A register: code for an increment and for a decrement with a zero test. -/
+/-- A register is code for an increment and for a decrement with a zero test. -/
 structure Register where
-  /-- Increment the register, then continue with the block. -/
+  /-- `r.inc k` increments the register, then continues with the block `k`. -/
   inc {α : Type} : Block α → Block α
-  /-- On zero continue with the first block; otherwise decrement and continue with the second. -/
+  /-- `r.dec z s` continues with `z` when the register is zero, and otherwise decrements it and
+  continues with `s`. -/
   dec {α : Type} : Block α → Block α → Block α
 
 namespace Register
@@ -35,7 +36,8 @@ variable {α : Type}
 /-- `k` runs from the counters `v` to exit `i` with counters `w`. -/
 abbrev RunsAt (k : Block α) (v : ℕ × ℕ) (i : α) (w : ℕ × ℕ) := k.Runs v.1 v.2 i w.1 w.2
 
-/-- The templates of `r` act as increment and decrement on the value `n` stored as `repr n`. -/
+/-- `r.Models repr` states that the templates of `r` act as increment and decrement on the value
+`n` stored as `repr n`. -/
 structure Models (r : Register) (repr : ℕ → ℕ × ℕ) : Prop where
   /-- If `k` runs from the value `n + 1`, then `r.inc k` runs from `n`. -/
   inc {α : Type} {k : Block α} {n i w} :
@@ -47,7 +49,7 @@ structure Models (r : Register) (repr : ℕ → ℕ × ℕ) : Prop where
   succ {α : Type} {z s : Block α} {n i w} :
     RunsAt s (repr n) i w → RunsAt (r.dec z s) (repr (n + 1)) i w
 
-/-- The register of counter `r`. -/
+/-- `physical r` is the register of counter `r`. -/
 def physical (r : Counter) : Register := ⟨Block.inc r, Block.dec r⟩
 
 /-- The first counter is a register, for every value of the second. -/
@@ -60,7 +62,8 @@ theorem models_right (a : ℕ) : (physical .snd).Models (fun b => (a, b)) :=
   ⟨fun h => runs_inc (r := .snd) h, fun h => runs_dec_zero (r := .snd) rfl h,
    fun h => runs_dec_succ (r := .snd) h⟩
 
-/-- Add the constant `n` to the register: `n` increments. -/
+/-- `r.add n k` adds the constant `n` to the register by `n` increments, then continues with
+`k`. -/
 def add (r : Register) (n : ℕ) (k : Block α) : Block α :=
   n.rec k (fun _ c => r.inc c)
 
@@ -71,11 +74,13 @@ theorem Models.add {r repr} (hr : Models r repr) (d : ℕ) {k : Block α} {n i w
   | zero => exact h
   | succ d ih => exact hr.inc (ih (by simpa [Nat.add_right_comm, Nat.add_assoc] using h))
 
-/-- Empty the register `src`, adding `m` times its value to the register `dst`. -/
+/-- `src.transfer dst m k` empties the register `src`, adding `m` times its value to the
+register `dst`, then continues with `k`. -/
 def transfer (src dst : Register) (m : ℕ) (k : Block α) : Block α :=
   (src.dec (k.rename some) (dst.add m (goto none))).loop
 
-/-- Two registers stored together: the values `a` and `b` are stored as `repr a b`. -/
+/-- `PairModels src dst repr` states that the two registers are stored together: the values `a`
+and `b` are stored as `repr a b`. -/
 structure PairModels (src dst : Register) (repr : ℕ → ℕ → ℕ × ℕ) : Prop where
   /-- `src` is a register for every value of `dst`. -/
   first (b : ℕ) : Models src (fun a => repr a b)
@@ -103,8 +108,8 @@ theorem PairModels.transfer {s t repr} (hr : PairModels s t repr) (m : ℕ)
       exact runs_goto _ _ _
     · exact ih (by simpa [Nat.succ_mul, Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using h)
 
-/-- Multiply the register `s` by the constant `m`, with the register `t`, zero at the start and
-at the end, as scratch space. -/
+/-- `s.multiply t m k` multiplies the register `s` by the constant `m`, then continues with `k`.
+The register `t` is scratch space, zero at the start and at the end. -/
 def multiply (s t : Register) (m : ℕ) (k : Block α) : Block α :=
   s.transfer t m (t.transfer s 1 k)
 
@@ -116,8 +121,8 @@ theorem PairModels.multiply {s t repr} (hr : PairModels s t repr) (m : ℕ)
   apply hr.swap.transfer
   simpa using h
 
-/-- Decrement the register `n` times, then continue with `full`. If the register reaches zero
-after `r < n` decrements, continue with `short r`. -/
+/-- `s.group n short full` decrements the register `n` times, then continues with `full`. If the
+register reaches zero after `r < n` decrements, it continues with `short r`. -/
 def group (s : Register) : ℕ → (ℕ → Block α) → Block α → Block α
   | 0, _, full => full
   | n + 1, short, full => s.dec (short 0) (s.group n (fun r => short (r + 1)) full)
@@ -141,8 +146,8 @@ theorem Models.group_short {s repr} (hr : Models s repr) (n : ℕ) (short : ℕ 
     | zero => exact hr.zero h
     | succ r => exact hr.succ (ih _ (by omega) h)
 
-/-- Divide the register `s` by the constant `d`: the quotient is left in `s`, and the block
-`k r` of the remainder `r` follows. The register `t` counts the quotient. -/
+/-- `s.divide t d k` divides the register `s` by the constant `d`: the quotient is left in `s`,
+and the block `k r` of the remainder `r` follows. The register `t` counts the quotient. -/
 def divide (s t : Register) (d : ℕ) (k : ℕ → Block α) : Block α :=
   (s.group d (fun r => (t.transfer s 1 (k r)).rename some) (t.inc (goto none))).loop
 

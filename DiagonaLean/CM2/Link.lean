@@ -22,15 +22,17 @@ namespace DiagonaLean.CM2
 
 open Block StateTransition
 
-/-- The address of block `i`: the total size of the blocks before it. -/
+/-- `addr bs i` is the address of block `i`: the total size of the blocks before it. -/
 def addr (bs : List (Block ℕ)) (i : ℕ) : ℕ := ((bs.take i).map Block.size).sum
 
-/-- The code of the blocks `bs` laid out from the address `base`, with exits resolved by `dst`. -/
+/-- `emitAll dst bs base` is the code of the blocks `bs` laid out from the address `base`, with
+exits resolved by `dst`. -/
 def emitAll (dst : ℕ → ℕ) : List (Block ℕ) → ℕ → List Instr
   | [], _ => []
   | b :: bs, base => b.emit base dst ++ emitAll dst bs (base + b.size)
 
-/-- The program of the blocks `bs`: exit `i` of every block is the address of block `i`. -/
+/-- `link bs` is the program of the blocks `bs`: exit `i` of every block is the address of
+block `i`. -/
 def link (bs : List (Block ℕ)) : List Instr := emitAll (addr bs) bs 0
 
 /-- The code of a list of blocks has the total size of the blocks. -/
@@ -78,7 +80,7 @@ theorem loaded_link (bs : List (Block ℕ)) (j : ℕ) (hj : j < bs.length) :
   rw [← List.drop_eq_getElem_cons hj, List.take_append_drop] at h
   simpa [link, addr] using h
 
-/-- The configuration at the address `pc` with the pair of counter values `v`. -/
+/-- `cfgAt pc v` is the configuration at the address `pc` with the pair of counter values `v`. -/
 def cfgAt (pc : ℕ) (v : ℕ × ℕ) : Config := ⟨pc, v.1, v.2⟩
 
 /-- A block of a linked program that runs to exit `i` takes the program from the block's address

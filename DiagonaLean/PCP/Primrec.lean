@@ -16,7 +16,9 @@ MPCP instances (lists and pairs of tiles). With these encodings:
 
 * the reduction from MPCP to PCP is primitive recursive (`mpcpToPcp_primrec`);
 * the change of alphabet behind `PCP.synthFromHaltOver` is primitive recursive
-  (`liftInstance_primrec`).
+  (`liftInstance_primrec`);
+* the concatenations `τ1`, `τ2` of a stack are primitive recursive (`τ1_primrec`, `τ2_primrec`),
+  for the solution checks of `PCP/RE.lean` and `MPCP/RE.lean`.
 
 This is a statement about the functions themselves, stronger than `#check_reductions`, which only
 checks that they compile.
@@ -26,6 +28,20 @@ derive_primcodable DiagonaLean.PCP.Tile
 derive_primcodable DiagonaLean.PCP.Reduction.Ext
 
 namespace DiagonaLean.PCP
+
+section
+
+variable {α : Type} [Primcodable α]
+
+/-- `τ1` is primitive recursive. -/
+@[fun_prop] theorem τ1_primrec : Primrec (τ1 (α := α)) := by
+  unfold τ1; fun_prop
+
+/-- `τ2` is primitive recursive. -/
+@[fun_prop] theorem τ2_primrec : Primrec (τ2 (α := α)) := by
+  unfold τ2; fun_prop
+
+end
 
 open DiagonaLean.Foundations.Computability
 
@@ -77,11 +93,6 @@ variable {γ₁ γ₂ : Type} [DecidableEq γ₁] [Primcodable γ₁] [Primcodab
 with `fun_prop`, so `reduce_from` upgrades `PCP.synthAlphabetLift` with no goal left. -/
 @[fun_prop] theorem liftMap_primrec (b0 b1 : γ₂) :
     Primrec (pcpFunctor.liftMap (α := γ₁) b0 b1) :=
-  liftInstance_primrec b0 b1
-
-/-- The function of the reduction `PCP.synthAlphabetLift` is primitive recursive. -/
-theorem synthAlphabetLift_primrec {b0 b1 : γ₂} (hne : b0 ≠ b1) :
-    Primrec (PCP.synthAlphabetLift (γ₁ := γ₁) b0 b1 hne).f :=
   liftInstance_primrec b0 b1
 
 end AlphabetLift

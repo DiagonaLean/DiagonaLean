@@ -35,14 +35,4 @@ theorem halt_reducesto_not_modelLeBool_spec :
     HaltProblem ⪯_s[haltRedB] Complement ModelLeBoolProblem :=
   fun p => (halt_iff_not_modelLe p).trans (not_congr ⟨pl_sb_le wordOf, pl_le_of_sb cd_injective⟩)
 
-/-- **The failure of inclusion of languages over `{0, 1}` is synthetically halting-hard.**
-`HaltProblem` many-one reduces to the failure of inclusion in the language model over `{0, 1}`. -/
-def _root_.DiagonaLean.KAComm.ModelLeBool.synthComplFromHalt :
-    HaltProblem ⪯_s Complement ModelLeBoolProblem :=
-  ⟨haltRedB, halt_reducesto_not_modelLeBool_spec⟩
-
-/-- The former name of `KAComm.ModelLeBool.synthComplFromHalt`. -/
-@[deprecated DiagonaLean.KAComm.ModelLeBool.synthComplFromHalt (since := "2026-11-23")]
-abbrev haltReducesNotModelLeBool := @DiagonaLean.KAComm.ModelLeBool.synthComplFromHalt
-
 end DiagonaLean.KAComm.ModelLeBool.Reduction

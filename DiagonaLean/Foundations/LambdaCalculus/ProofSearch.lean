@@ -3,7 +3,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Aalok Thakkar, Claude Opus
 -/
 
-import Cslib.Languages.LambdaCalculus.LocallyNameless.Untyped.FullBetaConfluence
+import DiagonaLean.Foundations.LambdaCalculus.Conv
 import DiagonaLean.Foundations.LambdaCalculus.Code
 import DiagonaLean.Foundations.Computability.StackProof
 
@@ -36,16 +36,6 @@ namespace DiagonaLean.Foundations.LambdaCalculus
 open Cslib LambdaCalculus.LocallyNameless.Untyped Term Relation
   DiagonaLean.Foundations.Computability
 
-/-- Two λ-terms are β-convertible: they have a common reduct under full β-reduction. -/
-abbrev BetaConv (M N : Term ℕ) : Prop := Join (ReflTransGen FullBeta) M N
-
-/-- β-convertibility is an equivalence relation. -/
-theorem betaConv_equivalence : Equivalence BetaConv :=
-  Confluent.equivalence_join_reflTransGen confluent_fullBeta
-
-/-- A β-reduction is a β-conversion. -/
-theorem betaConv_of_steps {M N : Term ℕ} (h : M ↠βᶠ N) : BetaConv M N := ⟨N, h, .refl⟩
-
 /-- A reduct of a locally closed term is locally closed. -/
 theorem lc_of_steps {M N : Term ℕ} (h : M ↠βᶠ N) (hM : LC M) : LC N := by
   rcases FullBeta.steps_lc_or_rfl h with ⟨_, hN⟩ | rfl
@@ -54,8 +44,8 @@ theorem lc_of_steps {M N : Term ℕ} (h : M ↠βᶠ N) (hM : LC M) : LC N := by
 
 /-- If `M` and `N'` are locally closed, `M` is convertible to `M'` and `N` to `N'`, then
 `app M N` is convertible to `app M' N'`. -/
-theorem betaConv_app {M M' N N' : Term ℕ} (hM : LC M) (hN' : LC N') (h₁ : BetaConv M M')
-    (h₂ : BetaConv N N') : BetaConv (app M N) (app M' N') := by
+theorem betaConv_app {M M' N N' : Term ℕ} (hM : LC M) (hN' : LC N') (h₁ : Conv M M')
+    (h₂ : Conv N N') : Conv (app M N) (app M' N') := by
   obtain ⟨P, hMP, hM'P⟩ := h₁
   obtain ⟨Q, hNQ, hN'Q⟩ := h₂
   have hP := lc_of_steps hMP hM
@@ -90,8 +80,8 @@ theorem lc_abs_close {x : ℕ} {M : Term ℕ} (h : LC M) : LC (Term.abs (M⟦0 �
   exact lcAt_closeRec h
 
 /-- β-convertibility is a congruence for abstraction, through closing a variable. -/
-theorem betaConv_abs {x : ℕ} {M N : Term ℕ} (h : BetaConv M N) :
-    BetaConv (Term.abs (M⟦0 ↜ x⟧)) (Term.abs (N⟦0 ↜ x⟧)) := by
+theorem betaConv_abs {x : ℕ} {M N : Term ℕ} (h : Conv M N) :
+    Conv (Term.abs (M⟦0 ↜ x⟧)) (Term.abs (N⟦0 ↜ x⟧)) := by
   obtain ⟨P, hMP, hNP⟩ := h
   exact ⟨Term.abs (P⟦0 ↜ x⟧), FullBeta.redex_abs_close hMP, FullBeta.redex_abs_close hNP⟩
 
@@ -104,7 +94,7 @@ abbrev Stk := List Ent
 /-- `e` records a true fact, read according to its tag. -/
 def Good (e : Ent) : Prop :=
   if e.1 = 1 then
-    ∃ M N, e.2.1 = tc M ∧ e.2.2.1 = tc N ∧ LC M ∧ LC N ∧ BetaConv M N
+    ∃ M N, e.2.1 = tc M ∧ e.2.2.1 = tc N ∧ LC M ∧ LC N ∧ Conv M N
   else if e.1 = 2 then
     ∃ M, e.2.2.1 = tc M ∧ LcAt e.2.1 M
   else if e.1 = 3 then
@@ -114,7 +104,7 @@ def Good (e : Ent) : Prop :=
   else True
 
 /-- A conversion between locally closed terms gives a good entry. -/
-theorem good_cv {M N : Term ℕ} (hM : LC M) (hN : LC N) (h : BetaConv M N) :
+theorem good_cv {M N : Term ℕ} (hM : LC M) (hN : LC N) (h : Conv M N) :
     Good (1, tc M, tc N, 0, 0) := by
   simp only [Good, ite_true]
   exact ⟨M, N, rfl, rfl, hM, hN, h⟩
@@ -136,7 +126,7 @@ theorem good_cl (k x : ℕ) (M : Term ℕ) : Good (4, k, x, tc M, tc (M⟦k ↜ 
 
 /-- A good conversion entry relates the codes of two convertible locally closed terms. -/
 theorem Good.cv {e : Ent} (h : Good e) (ht : e.1 = 1) :
-    ∃ M N, e.2.1 = tc M ∧ e.2.2.1 = tc N ∧ LC M ∧ LC N ∧ BetaConv M N := by
+    ∃ M N, e.2.1 = tc M ∧ e.2.2.1 = tc N ∧ LC M ∧ LC N ∧ Conv M N := by
   simpa [Good, ht] using h
 
 /-- A good local closure entry records a term that is locally closed at its level. -/
@@ -563,7 +553,7 @@ theorem exists_steps {M N : Term ℕ} (h : M ↠βᶠ N) (hM : LC M) :
     exact ⟨_, pushes_trans hp hq⟩
 
 /-- Every β-conversion between locally closed terms has a program that pushes it. -/
-theorem exists_prog {M N : Term ℕ} (hM : LC M) (hN : LC N) (h : BetaConv M N) :
+theorem exists_prog {M N : Term ℕ} (hM : LC M) (hN : LC N) (h : Conv M N) :
     ∃ p, Pushes p (1, tc M, tc N, 0, 0) := by
   obtain ⟨P, hMP, hNP⟩ := h
   obtain ⟨p, hp⟩ := exists_steps hMP hM
@@ -578,16 +568,40 @@ instance (k a b : ℕ) : Decidable (Checks k a b) := inferInstanceAs (Decidable 
 
 /-- If a program checks the codes of `M` and `N`, then `M` and `N` are β-convertible. -/
 theorem betaConv_of_checks {k : ℕ} {M N : Term ℕ} (h : Checks k (tc M) (tc N)) :
-    BetaConv M N := by
+    Conv M N := by
   have hg := StackProof.good_of_checks sys () good_default (fun _ hs n => stepS_inv hs n) h
   obtain ⟨M', N', hm, hn, -, -, hc⟩ := hg.cv rfl
   rwa [tc_injective hm, tc_injective hn]
 
 /-- Two locally closed terms are β-convertible iff some program checks their codes. -/
 theorem betaConv_iff_checks {M N : Term ℕ} (hM : LC M) (hN : LC N) :
-    BetaConv M N ↔ ∃ k, Checks k (tc M) (tc N) :=
+    Conv M N ↔ ∃ k, Checks k (tc M) (tc N) :=
   ⟨fun h => (exists_prog hM hN h).elim fun _ hp => StackProof.checks_of_pushes hp,
     fun ⟨_, hk⟩ => betaConv_of_checks hk⟩
+
+/-- **β-convertibility of any two terms is checking or equality.** On locally closed terms it is
+checking (`betaConv_iff_checks`). Otherwise `FullBeta` takes no step from the term that is not
+locally closed (`FullBeta.steps_lc_or_rfl`), so the two terms are convertible only if they are
+equal. A program that checks a conversion is sound for all terms (`betaConv_of_checks`). -/
+theorem conv_iff_exists_checks (M N : Term ℕ) :
+    Conv M N ↔ ∃ k, M = N ∨ Checks k (tc M) (tc N) := by
+  constructor
+  · intro h
+    by_cases hl : LC M ∧ LC N
+    · obtain ⟨k, hk⟩ := (betaConv_iff_checks hl.1 hl.2).1 h
+      exact ⟨k, .inr hk⟩
+    · refine ⟨0, .inl ?_⟩
+      obtain ⟨P, hMP, hNP⟩ := h
+      -- off locally closed terms the reductions are empty
+      rcases FullBeta.steps_lc_or_rfl hMP with ⟨hM, hP⟩ | rfl <;>
+        rcases FullBeta.steps_lc_or_rfl hNP with ⟨hN, hP'⟩ | rfl
+      · exact absurd ⟨hM, hN⟩ hl
+      · exact absurd ⟨hM, hP⟩ hl
+      · exact absurd ⟨hP', hN⟩ hl
+      · rfl
+  · rintro ⟨k, rfl | hk⟩
+    · exact ⟨M, .refl, .refl⟩
+    · exact betaConv_of_checks hk
 
 /-- `Checks` is a primitive recursive predicate. -/
 theorem checks_prim : PrimrecPred fun x : ℕ × ℕ × ℕ => Checks x.1 x.2.1 x.2.2 :=

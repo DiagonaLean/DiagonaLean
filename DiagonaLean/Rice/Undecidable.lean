@@ -5,28 +5,16 @@ Authors: Kshitij Salunke, Aalok Thakkar, Claude Opus
 
 import Mathlib.Computability.Halting
 import DiagonaLean.Rice.Reductions.Halt_to_Rice
-import DiagonaLean.Foundations.Computability.MachineBridge
+import DiagonaLean.Foundations.Computability.Undecidable
 
 @[expose] public section
 
 /-! # Rice's theorem
 
-If `C` is non-trivial (`IsNontrivial`), then `RiceProblem C` is not a computable predicate
-(`not_computablePred_rice`, from Mathlib's `ComputablePred.rice`). So no machine decides it, under
-any computable encoding of programs (`not_machineDecidable_rice`, through
-`not_machineDecidable_of_not_computablePred`).
-
-The undecidability results split on whether `C` contains the nowhere-defined function, which is
-itself computed by a program. If it does not and `cT` computes a function in `C`, then
-`RiceProblem C` is synthetically halting-hard (`Rice.synthFromHalt`). If it does and `cF` computes a
-function not in `C`, then the complement of `RiceProblem C` is synthetically halting-hard
-(`Rice.synthComplFromHalt`). So every non-trivial `C` is covered by one of the two. A single
-`SynthHaltReduction` result is not possible: which case holds cannot be computed, and when `C`
-contains the nowhere-defined function, `RiceProblem C` may be co-r.e. (for
-`C = {fun _ => Part.none}`), so that `HaltProblem` does not reduce to it.
-
-Each result takes a waiter program `w` (`exists_isWaiter`) and the witness code as arguments,
-since they are only known to exist.
+If `C` is non-trivial (`IsNontrivial`), then `RiceProblem C` is undecidable
+(`Rice.not_computablePred`, from Mathlib's `ComputablePred.rice`). So no machine decides it, under
+any computable encoding of programs (`Rice.not_machineDecidable`, through
+`not_machineDecidable_of_not_computablePred`). The synthetic results are in `SynthHardness.lean`.
 
 ## References
 
@@ -38,35 +26,19 @@ namespace DiagonaLean.Rice.Reduction
 open Nat.Partrec DiagonaLean.Synthetic.Definitions
   DiagonaLean.Foundations.Computability
 
-/-- **Rice's theorem.** If `C` is non-trivial, then `RiceProblem C` is not a computable
-predicate. -/
-theorem not_computablePred_rice {C : Set (ℕ →. ℕ)} (h : IsNontrivial C) :
-    ¬ ComputablePred (RiceProblem C) := fun hc => by
+/-- **Rice's theorem.** If `C` is non-trivial, then `RiceProblem C` is undecidable: it is not a
+computable predicate. -/
+theorem _root_.DiagonaLean.Rice.not_computablePred {C : Set (ℕ →. ℕ)} (h : IsNontrivial C) :
+    Undecidable (RiceProblem C) := fun hc => by
   obtain ⟨⟨c, hc₁⟩, d, hd⟩ := h
   exact hd (ComputablePred.rice C hc (Code.exists_code.2 ⟨c, rfl⟩) (Code.exists_code.2 ⟨d, rfl⟩)
     hc₁)
 
 /-- **No machine decides Rice's problem.** If `C` is non-trivial, no `SingleTapeTM Bool` decides
 `RiceProblem C` under a computable encoding `enc` of programs, such as `encUnary`. -/
-theorem not_machineDecidable_rice {C : Set (ℕ →. ℕ)} (h : IsNontrivial C)
+theorem _root_.DiagonaLean.Rice.not_machineDecidable {C : Set (ℕ →. ℕ)} (h : IsNontrivial C)
     {enc : Code → List Bool} (henc : Computable enc) :
     ¬ MachineDecidable enc (RiceProblem C) :=
-  not_machineDecidable_of_not_computablePred henc (not_computablePred_rice h)
-
-/-- The former name of `Rice.synthFromHalt`. -/
-@[deprecated DiagonaLean.Rice.synthFromHalt (since := "2026-11-23")]
-abbrev undecidableRice := @DiagonaLean.Rice.synthFromHalt
-
-/-- **The complement of Rice's problem is synthetically halting-hard.** If `cF` computes a function
-not in `C` and the nowhere-defined function is in `C`, then the complement of `RiceProblem C` is
-synthetically halting-hard, given a waiter program `w` (`exists_isWaiter`). -/
-def _root_.DiagonaLean.Rice.synthComplFromHalt {C : Set (ℕ →. ℕ)} (w cF : Code) (hw : IsWaiter w)
-    (hF : cF.eval ∉ C) (hbot : (fun _ => Part.none : ℕ →. ℕ) ∈ C) :
-    SynthHaltReduction fun c => ¬ RiceProblem C c :=
-  Rice.synthFromHalt (C := Cᶜ) w cF hw hF (fun h => h hbot)
-
-/-- The former name of `Rice.synthComplFromHalt`. -/
-@[deprecated DiagonaLean.Rice.synthComplFromHalt (since := "2026-11-23")]
-abbrev undecidableRiceCompl := @DiagonaLean.Rice.synthComplFromHalt
+  not_machineDecidable_of_not_computablePred henc (DiagonaLean.Rice.not_computablePred h)
 
 end DiagonaLean.Rice.Reduction

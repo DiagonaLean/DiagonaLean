@@ -36,13 +36,13 @@ def linst (U : SKI) (c : Code) (n : ℕ) : Term ℕ := tr (CombinatoryLogic.inst
 /-- If `c` outputs `1` on `n`, the λ-instance is β-convertible to `tr FF`. -/
 theorem betaConv_linst_of_one {u : Code} {U : SKI} (hu : CombinatoryLogic.IsUniversal u)
     (hU : Computes U u.eval) {c : Code} {n : ℕ} (h : 1 ∈ c.eval n) :
-    BetaConv (linst U c n) (tr FF) :=
+    Conv (linst U c n) (tr FF) :=
   betaConv_of_steps (tr_mRed (CombinatoryLogic.inst_mRed_of_one hu hU h))
 
 /-- If `c` outputs `0` on `n`, the λ-instance is not β-convertible to `tr FF`. -/
 theorem not_betaConv_linst_of_zero {u : Code} {U : SKI} (hu : CombinatoryLogic.IsUniversal u)
     (hU : Computes U u.eval) {c : Code} {n : ℕ} (h : 0 ∈ c.eval n) :
-    ¬ BetaConv (linst U c n) (tr FF) := fun hc =>
+    ¬ Conv (linst U c n) (tr FF) := fun hc =>
   not_betaConv_tr_TT_FF (betaConv_equivalence.trans (betaConv_equivalence.symm
     (betaConv_of_steps (tr_mRed (CombinatoryLogic.inst_mRed_of_zero hu hU h)))) hc)
 
@@ -96,7 +96,7 @@ theorem instCode_prim (U : SKI) : Primrec₂ (instCode U) :=
 attribute [local irreducible] Nat.pair in
 /-- The λ-instance of `c` on `n` is β-convertible to `tr FF` iff some `k` passes the proof test. -/
 theorem betaConv_iff_chk (U : SKI) (c : Code) (n : ℕ) :
-    BetaConv (linst U c n) (tr FF) ↔ ∃ k, chk k (instCode U c n) = true :=
+    Conv (linst U c n) (tr FF) ↔ ∃ k, chk k (instCode U c n) = true :=
   (betaConv_iff_checks (lc_tr _) (lc_tr _)).trans
     (exists_congr fun k => (decide_eq_true_iff (p := Checks k _ _)).symm)
 
@@ -111,8 +111,8 @@ theorem exists_raceProg (U : SKI) : ∃ C, RaceProg U C :=
 λ-instance of the race program on the data of `p` is β-convertible to `tr FF`. -/
 theorem halt_iff_betaConv {u : Code} {U : SKI} {C : Code} (hu : CombinatoryLogic.IsUniversal u)
     (hU : Computes U u.eval) (hC : RaceProg U C) (p : EncodableTM Bool × List Bool) :
-    HaltProblem p ↔ BetaConv (linst U C (Encodable.encode (dataOf p))) (tr FF) :=
-  ProofRace.halt_iff hC (Q := fun n => BetaConv (linst U C n) (tr FF))
+    HaltProblem p ↔ Conv (linst U C (Encodable.encode (dataOf p))) (tr FF) :=
+  ProofRace.halt_iff hC (Q := fun n => Conv (linst U C n) (tr FF))
     (fun _ => betaConv_iff_chk U C _)
     (fun _ h => betaConv_linst_of_one hu hU h) (fun _ h => not_betaConv_linst_of_zero hu hU h) p
 

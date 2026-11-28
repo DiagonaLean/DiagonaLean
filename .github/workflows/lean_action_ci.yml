@@ -26,14 +26,30 @@ jobs:
         run: lake env lean examples/GameReductions.lean
       - name: Check that fun_prop proves Primrec and Computable goals
         run: lake env lean scripts/FunPropTest.lean
+      - name: Check derive_primcodable and primrec_rec on inductive types
+        run: lake env lean scripts/FunPropDeriveTest.lean
+      - name: Check derive_primcodable and primrec_rec on nested types
+        run: lake env lean scripts/FunPropNestedTest.lean
       - name: Check that reduce_from composes reductions in both layers
         run: lake env lean scripts/ReduceFromTest.lean
+      - name: Check that upgrade makes a synthetic halting reduction proved
+        run: lake env lean scripts/UpgradeTest.lean
+      - name: Check that halt_results states the consequences of a halting reduction
+        run: lake env lean scripts/HaltResultsTest.lean
+      - name: Check that the library makes no new keyword by accident
+        run: lake env lean scripts/ReservedWordsTest.lean
+      - name: Check that the headline results keep their statements
+        run: lake env lean scripts/HeadlineTest.lean
+      - name: Check that every declaration uses only the standard axioms
+        run: lake env lean --run scripts/CheckAxioms.lean
+      - name: Test the axiom check
+        run: lake env lean scripts/CheckAxiomsTest.lean
       - name: Check that no metaprogram changes the environment
         run: lake env lean --run scripts/CheckMetaprograms.lean
       - name: Check that the metaprogram check rejects an injected reduction
         run: |
           out=$(lake env lean --run scripts/CheckMetaprograms.lean scripts/metaprogram-fixture) && exit 1
-          for word in run_cmd addDecl modifyEnv declMapExt debug.; do
+          for word in run_cmd addDecl modifyEnv declMapExt debug. macro_rules elab_rules @[macro] term_elab priority; do
             grep -qF "\`$word\`" <<< "$out" || { echo "not reported: $word"; exit 1; }
           done
       - name: Test the metaprogram check on small inputs

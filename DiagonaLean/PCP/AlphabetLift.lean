@@ -186,8 +186,4 @@ def _root_.DiagonaLean.PCP.synthAlphabetLift (hne : b0 ≠ b1) :
     (@DiagonaLean.PCP.DecisionProblem γ₁) ⪯_s (@DiagonaLean.PCP.DecisionProblem γ₂) :=
   pcpFunctor.lift b0 b1 hne
 
-/-- The former name of `PCP.synthAlphabetLift`. -/
-@[deprecated DiagonaLean.PCP.synthAlphabetLift (since := "2026-11-23")]
-abbrev pcpAlphabetLift := @DiagonaLean.PCP.synthAlphabetLift
-
 end DiagonaLean.PCP.AlphabetLift
