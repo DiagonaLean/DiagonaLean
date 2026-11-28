@@ -433,6 +433,32 @@ example :
           DiagonaLean.Rabin.DecisionProblem :=
   @DiagonaLean.Rabin.not_machineDecidable
 
+example :
+    DiagonaLean.Foundations.Computability.HaltHard
+      (DiagonaLean.Foundations.Computability.ListHalt.DecisionProblem
+        (none : Option DiagonaLean.Foundations.Computability.Normalize.Sym2)) :=
+  @DiagonaLean.Foundations.Computability.ListHalt.haltHard
+
+example :
+    ¬ComputablePred
+      (DiagonaLean.Foundations.Computability.ListHalt.DecisionProblem
+        (none : Option DiagonaLean.Foundations.Computability.Normalize.Sym2)) :=
+  @DiagonaLean.Foundations.Computability.ListHalt.not_computablePred
+
+example :
+    DiagonaLean.Foundations.Computability.HaltHard DiagonaLean.CM2.DecisionProblem :=
+  @DiagonaLean.CM2.haltHard
+
+example :
+    ¬ComputablePred DiagonaLean.CM2.DecisionProblem :=
+  @DiagonaLean.CM2.not_computablePred
+
+example :
+    ∀ {enc : List DiagonaLean.CM2.Instr → List Bool},
+      Computable enc → ¬DiagonaLean.Synthetic.Definitions.MachineDecidable enc
+          DiagonaLean.CM2.DecisionProblem :=
+  @DiagonaLean.CM2.not_machineDecidable
+
 /-! ## Recursive enumerability
 
 The three rewriting problems, PCP, MPCP, matrix mortality and the matrix game are recursively

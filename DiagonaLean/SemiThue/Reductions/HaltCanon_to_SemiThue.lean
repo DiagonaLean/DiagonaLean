@@ -123,7 +123,8 @@ end DiagonaLean.SemiThue.Reduction
 namespace DiagonaLean.SemiThue.Reduction
 
 open DiagonaLean.PCP DiagonaLean.MPCP.Reduction DiagonaLean.Foundations.Computability
-  DiagonaLean.Foundations.Grammar DiagonaLean.Foundations.Rewriting
+  DiagonaLean.Foundations.Computability.Normalize DiagonaLean.Foundations.Grammar
+  DiagonaLean.Foundations.Rewriting
 
 /-- `codeRules` depends on a table only through its lookup and its set of state numbers. -/
 theorem mem_codeRules_congr {r₁ r₂ : List (ℕ × ℕ)} (h : SameTable r₁ r₂)

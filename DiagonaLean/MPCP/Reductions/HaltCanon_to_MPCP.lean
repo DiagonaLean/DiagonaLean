@@ -8,6 +8,7 @@ import DiagonaLean.PCP.Primrec
 import DiagonaLean.Foundations.Computability.CodeSim
 import DiagonaLean.Foundations.Computability.MachineBridge
 import DiagonaLean.Foundations.Computability.HaltCanon
+import DiagonaLean.Foundations.Computability.Normalize.Table
 
 @[expose] public section
 
@@ -16,7 +17,8 @@ import DiagonaLean.Foundations.Computability.HaltCanon
 `haltToMpcpNorm` builds the MPCP instance of a machine from the machine itself, so its input is not
 `Primcodable` and it says nothing about machines. `instOf q rows w` builds the same instance from a
 transition table `rows` in the format of `rowsE`, with start state number `q`, on input `w`: it
-computes the transitions of the normalised machine `normTM` from the table (`normTrN`), and lists
+computes the transitions of the normalised machine `normTM` from the table (`normTrN`, in
+`Foundations/Computability/Normalize/Table.lean`), and lists
 the tiles of `haltTiles` with each state `(q, c)` renamed to the number
 `Nat.pair (encode q) (encode c)` (`stIdx`). `instOf` is primitive recursive.
 
@@ -43,40 +45,6 @@ namespace DiagonaLean.MPCP.Reduction
 open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP.Reduction
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability
   DiagonaLean.Foundations.Computability.Normalize
-
-/-- The transition of the normalised machine in a simulating control state (`simR` if `right`,
-`simL` otherwise), from the transition table `rows` of the simulated machine, in state number `i` on
-cell `a`. The result is the symbol written, the movement code `mvc` and the next-state code: `0`
-halts, `Nat.pair j c + 1` is state number `j` with control state number `c`. -/
-def simN (rows : List (ℕ × ℕ)) (i : ℕ) (right : Bool) (a : Option Normalize.Sym2) :
-    Option Normalize.Sym2 × ℕ × ℕ :=
-  if rowX (lookup rows (Nat.pair i (hc (decSym a)))) = 0 then
-    (encSym (optOf (rowA (lookup rows (Nat.pair i (hc (decSym a)))))), 0, 0)
-  else if rowM (lookup rows (Nat.pair i (hc (decSym a)))) = 0 then
-    (encSym (optOf (rowA (lookup rows (Nat.pair i (hc (decSym a)))))), 0,
-      Nat.pair (rowX (lookup rows (Nat.pair i (hc (decSym a)))) - 1) (if right then 1 else 2) + 1)
-  else if rowM (lookup rows (Nat.pair i (hc (decSym a)))) = 2 then
-    (encSym (optOf (rowA (lookup rows (Nat.pair i (hc (decSym a)))))), (if right then 2 else 1),
-      Nat.pair (rowX (lookup rows (Nat.pair i (hc (decSym a)))) - 1) (if right then 3 else 6) + 1)
-  else
-    (encSym (optOf (rowA (lookup rows (Nat.pair i (hc (decSym a)))))), (if right then 1 else 2),
-      Nat.pair (rowX (lookup rows (Nat.pair i (hc (decSym a)))) - 1) (if right then 5 else 4) + 1)
-
-derive_primrec simN
-
-/-- The transition `normTr` of the normalised machine, numerically, in state number `i` with control
-state number `c` (the `Encodable` code of `Ctrl`), in the format of `simN`. -/
-def normTrN (rows : List (ℕ × ℕ)) (i c : ℕ) (a : Option Normalize.Sym2) :
-    Option Normalize.Sym2 × ℕ × ℕ :=
-  if c = 0 then (some Mk, 2, Nat.pair i 1 + 1)
-  else if c = 1 then simN rows i true a
-  else if c = 2 then simN rows i false a
-  else if c = 3 then (preserve a, 2, Nat.pair i 1 + 1)
-  else if c = 4 then (preserve a, 2, Nat.pair i 2 + 1)
-  else if c = 5 then
-    (if a = some Mk then (some Mk, 2, Nat.pair i 4 + 1) else (preserve a, 1, Nat.pair i 1 + 1))
-  else if c = 6 then (preserve a, 1, Nat.pair i 7 + 1)
-  else (if a = some Mk then (some Mk, 2, Nat.pair i 1 + 1) else (preserve a, 0, Nat.pair i 2 + 1))
 
 /-- The cell symbols of the normalised machine. -/
 def syms2 : List (Option Normalize.Sym2) :=
@@ -120,8 +88,6 @@ def instOf (q : ℕ) (rows : List (ℕ × ℕ)) (w : List Bool) :
 
 derive_primrec markerN
 
-derive_primrec normTrN
-
 derive_primrec trTilesN
 
 derive_primrec transN
@@ -142,38 +108,6 @@ variable (M : EncodableTM Bool)
 
 attribute [local instance] EncodableTM.stateEncodable
 
-/-- The number of a state of the normalised machine: the pair of the codes of its components. -/
-def stIdx (s : M.State × Ctrl) : ℕ := Nat.pair (Encodable.encode s.1) (Encodable.encode s.2)
-
-/-- `stIdx` is injective. -/
-theorem stIdx_injective : Function.Injective (stIdx M) := fun s t h => by
-  obtain ⟨h₁, h₂⟩ := Nat.pair_eq_pair.1 h
-  exact Prod.ext (Encodable.encode_injective h₁) (Encodable.encode_injective h₂)
-
-/-- The numeric form of a transition of the normalised machine, in the format of `simN`. -/
-def codeOf (r : Stmt Normalize.Sym2 × Option (M.State × Ctrl)) :
-    Option Normalize.Sym2 × ℕ × ℕ :=
-  (r.1.symbol, mvc r.1.movement, match r.2 with | none => 0 | some s => stIdx M s + 1)
-
-/-- `simN` computes `simStep` from the transition table `rowsE M`. -/
-theorem simN_eq (q : M.State) (right : Bool) (a : Option Normalize.Sym2) :
-    simN (rowsE M) (Encodable.encode q) right a =
-      codeOf M (simStep M.toSingleTapeTM q right a) := by
-  unfold simN simStep
-  rw [lookup_rowsE]
-  obtain ⟨⟨wr, mv⟩, nx⟩ := M.tr q (decSym a)
-  rcases nx with _ | q₂
-  · simp [rowT, codeOf, qc, mvc, optOf_hc]
-  · rcases mv with _ | _ | _ <;> cases right <;>
-      simp [rowT, codeOf, qc, mvc, optOf_hc, stIdx, Ctrl.sim, Encodable.encode]
-
-/-- `normTrN` computes `normTr` from the transition table `rowsE M`. -/
-theorem normTrN_eq (q : M.State) (c : Ctrl) (a : Option Normalize.Sym2) :
-    normTrN (rowsE M) (Encodable.encode q) (Encodable.encode c) a =
-      codeOf M (normTr M.toSingleTapeTM q c a) := by
-  cases c <;> simp [normTrN, normTr, simN_eq, codeOf, stIdx, mvc, Encodable.encode] <;>
-    split_ifs <;> simp
-
 /-- The renaming of states by `stIdx`, on tiles. -/
 abbrev ren :
     Tile (Alpha (M.State × Ctrl) Normalize.Sym2) →
@@ -189,27 +123,6 @@ theorem transitionTilesFor_ren (s : M.State × Ctrl) (a : Option Normalize.Sym2)
   rcases mv with _ | _ | _ <;> rcases nx with _ | s' <;>
     simp [ren, mvc, Tile.map, Alpha.map, noMoveTile, rightMoveTile, rightMoveBoundaryTile,
       leftMoveTile, markerN, stateMarker, syms2]
-
-/-- The state numbers read off `rowsE M` are the codes of the states of `M`. -/
-theorem mem_idx (i : ℕ) :
-    i ∈ (rowsE M).map (fun r => r.1.unpair.1) ↔ ∃ q : M.State, Encodable.encode q = i := by
-  simp only [rowsE, List.map_flatMap, List.map_map, List.mem_flatMap, List.mem_map,
-    Function.comp_def, Nat.unpair_pair]
-  constructor
-  · rintro ⟨q, -, -, -, rfl⟩
-    exact ⟨q, rfl⟩
-  · rintro ⟨q, rfl⟩
-    exact ⟨q, mem_statesList q, none, mem_syms none, rfl⟩
-
-/-- The numbers below `8` are the codes of the control states. -/
-theorem mem_range_eight (c : ℕ) : c ∈ List.range 8 ↔ ∃ k : Ctrl, Encodable.encode k = c := by
-  rw [List.mem_range]
-  constructor
-  · intro h
-    have : ∀ c : Fin 8, ∃ k : Ctrl, Encodable.encode k = c.val := by decide
-    exact this ⟨c, h⟩
-  · rintro ⟨k, rfl⟩
-    cases k <;> decide
 
 /-- The renamed transition tiles of the normalised machine are the tiles of `transN`. -/
 theorem mem_transN (t : Tile (Alpha ℕ Normalize.Sym2)) :
@@ -269,19 +182,6 @@ open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.PCP.Reduction Diagona
   DiagonaLean.Halt DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability
   DiagonaLean.Foundations.Computability.Normalize
 
-/-- `normTrN` reads a table only through `lookup`. -/
-theorem normTrN_congr {r₁ r₂ : List (ℕ × ℕ)} (h : ∀ k, lookup r₁ k = lookup r₂ k) (i c : ℕ)
-    (a : Option Normalize.Sym2) : normTrN r₁ i c a = normTrN r₂ i c a := by
-  unfold normTrN simN
-  simp only [h]
-
-/-- Two transition tables are **the same table** when they have the same lookup and the same set of
-state numbers: the constructions on tables (`transN`, `stackN`, and the rewriting systems of
-`SemiThue.Reduction.codeRules`) read a table only through these. -/
-def SameTable (r₁ r₂ : List (ℕ × ℕ)) : Prop :=
-  (∀ k, lookup r₁ k = lookup r₂ k) ∧
-    ∀ i, i ∈ r₁.map (fun r => r.1.unpair.1) ↔ i ∈ r₂.map (fun r => r.1.unpair.1)
-
 /-- `transN` depends on a table only through its lookup and its set of state numbers. -/
 theorem mem_transN_congr {r₁ r₂ : List (ℕ × ℕ)} (h : SameTable r₁ r₂)
     (t : Tile (Alpha ℕ Normalize.Sym2)) : t ∈ transN r₁ ↔ t ∈ transN r₂ := by
@@ -291,12 +191,6 @@ theorem mem_transN_congr {r₁ r₂ : List (ℕ × ℕ)} (h : SameTable r₁ r�
 theorem mem_stackN_congr {r₁ r₂ : List (ℕ × ℕ)} (h : SameTable r₁ r₂)
     (t : Tile (Alpha ℕ Normalize.Sym2)) : t ∈ stackN r₁ ↔ t ∈ stackN r₂ := by
   simp only [stackN, List.mem_append, mem_transN_congr h]
-
-/-- **The table of a canonical machine is the table of its machine.** -/
-theorem CanonTM.sameTable (c : CanonTM) : SameTable (rowsE c.toTM) c.table := by
-  refine ⟨fun k => by rw [CanonTM.lookup_rowsE_toTM, CanonTM.lookup_table], fun i => ?_⟩
-  rw [mem_idx, CanonTM.mem_idx_table]
-  exact ⟨fun ⟨q, hq⟩ => hq ▸ q.isLt, fun h => ⟨⟨i, h⟩, rfl⟩⟩
 
 /-- The MPCP instance of a canonical machine on an input. -/
 def canonInst (x : CanonTM × List Bool) :

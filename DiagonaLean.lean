@@ -136,6 +136,18 @@ import DiagonaLean.MatrixGame.Undecidable
 import DiagonaLean.MatrixGame.RE
 import DiagonaLean.MatrixGame.SynthHardness
 
+import DiagonaLean.CM2.Basic
+import DiagonaLean.CM2.Assembly
+import DiagonaLean.CM2.Arithmetic
+import DiagonaLean.CM2.Registers
+import DiagonaLean.CM2.Execution
+import DiagonaLean.CM2.Link
+import DiagonaLean.CM2.Simulation
+import DiagonaLean.CM2.Assembler
+import DiagonaLean.CM2.Reductions.ListHalt_to_CM2
+import DiagonaLean.CM2.Undecidable
+import DiagonaLean.CM2.SynthHardness
+
 import DiagonaLean.Synthetic.Definitions
 import DiagonaLean.Synthetic.ReductionChain
 import DiagonaLean.Synthetic.HaltReduction
@@ -180,6 +192,9 @@ import DiagonaLean.Foundations.Computability.HaltResults
 import DiagonaLean.Foundations.Computability.ReduceFrom
 import DiagonaLean.Foundations.Computability.Upgrade
 import DiagonaLean.Foundations.Computability.UndecTransfer
+import DiagonaLean.Foundations.Computability.ListMachine
+import DiagonaLean.Foundations.Computability.ListHalt
+import DiagonaLean.Foundations.Computability.Normalize.Table
 import DiagonaLean.Foundations.Computability.Normalize.Conditions
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
 import DiagonaLean.Foundations.Computability.Normalize.Cell

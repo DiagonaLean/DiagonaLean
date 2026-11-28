@@ -298,6 +298,11 @@ by a rewrite into `foldr` or `map`. -/
 @[fun_prop] theorem prim_head? {f : α → List β} (hf : Primrec f) : Primrec fun x => (f x).head? :=
   Primrec.list_head?.comp hf
 
+@[fun_prop] theorem prim_headD {f : α → List β} {g : α → β} (hf : Primrec f) (hg : Primrec g) :
+    Primrec fun x => (f x).headD (g x) :=
+  (Primrec.option_getD.comp (Primrec.list_head?.comp hf) hg).of_eq fun x => by
+    cases f x <;> rfl
+
 @[fun_prop] theorem prim_flatten {f : α → List (List β)} (hf : Primrec f) :
     Primrec fun x => (f x).flatten := Primrec.list_flatten.comp hf
 
