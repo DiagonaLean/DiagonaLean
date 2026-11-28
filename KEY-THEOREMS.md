@@ -74,6 +74,11 @@ root (from `HaltCanon`); proving the last link computable does not upgrade a syn
 | `manyOneReducible_haltCanon_of_rePred` | `REPred p → ManyOneReducible p HaltCanon`: `HaltCanon` is complete for the r.e. predicates (`HaltComplete.lean`) |
 | `ManyOneReducible.of_rePred_of_haltHard` | `REPred p → HaltHard q → ManyOneReducible p q` |
 | `manyOneEquiv_of_haltHard_of_rePred` | halting-hard r.e. predicates are `ManyOneEquiv` |
+| `CoHaltHard p` | `HaltHard (fun x => ¬ p x)`: the complement of `HaltCanon` reduces to `p` (`coHaltHard_iff`, `Foundations/Computability/CoHalt.lean`) |
+| `HaltHard.coHaltHard_compl` | the complement of a halting-hard predicate is co-halting-hard |
+| `CoHaltHard.not_computablePred`, `.not_machineDecidable`, `.not_rePred` | co-halting-hard predicates are undecidable and not r.e. (`haltCanon_rePred`, `not_rePred_compl_haltCanon`) |
+| `ManyOneReducible.of_coRE_of_coHaltHard`, `manyOneEquiv_of_coHaltHard_of_coRE` | the degree of the complement of the halting problem |
+| `EmpCFG.Code.empty_coHaltHard`, `EmpCFG.Code.empty_coRE`, `EmpCFG.Code.empty_not_rePred` | emptiness of the intersection of grammar codes is co-halting-hard and not r.e. (`EmpCFG/Emptiness.lean`) |
 | `SemiThue.rePred`, `SKIConv.rePred`, `BetaConv.rePred` | the rewriting problems are r.e. (`X/RE.lean`) |
 | `PCP.rePred`, `MPCP.rePred`, `MatMort.rePred` | PCP, MPCP and matrix mortality are r.e., by a search over solutions (`X/RE.lean`) |
 | `KAComm.TermEq.rePred`, `KAComm.KATermEq.rePred`, and the `Bool` forms | the KAComm equality problems are r.e., by the proof search `checks_prim` (`X/RE.lean`) |
