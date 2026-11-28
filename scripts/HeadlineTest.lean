@@ -509,6 +509,23 @@ example :
       ManyOneEquiv (@DiagonaLean.SemiThue.DecisionProblem α) DiagonaLean.BetaConv.DecisionProblem :=
   @DiagonaLean.Degrees.semiThue_equiv_betaConv
 
+/-! Matrix mortality and the matrix game have the degree of the halting problem too. Added on
+2026-11-28. -/
+
+example :
+    ∀ {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ DiagonaLean.MatMort.DecisionProblem :=
+  @DiagonaLean.MatMort.complete
+
+example :
+    ∀ {β : Type u} [Primcodable β] {p : β → Prop},
+      REPred p → p ≤₀ DiagonaLean.MatrixGame.DecisionProblem :=
+  @DiagonaLean.MatrixGame.complete
+
+example :
+    ManyOneEquiv DiagonaLean.MatMort.DecisionProblem DiagonaLean.MatrixGame.DecisionProblem :=
+  @DiagonaLean.Degrees.matMort_equiv_matrixGame
+
 /-! ## The problems, pinned
 
 Each problem's one-argument `DecisionProblem` unfolds, by `Iff.rfl`, to its curried form

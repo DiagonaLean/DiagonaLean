@@ -256,4 +256,5 @@ import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.LanguageSoundness
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.MachineTerms
 import DiagonaLean.KAComm.KleeneAlgebra.MachineEncoding.Halting
 import DiagonaLean.Degrees.Rewriting
+import DiagonaLean.Degrees.Matrices
 import DiagonaLean.Aliases.MachineLevel
