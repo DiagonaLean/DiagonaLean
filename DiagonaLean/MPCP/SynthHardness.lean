@@ -4,7 +4,7 @@ Authors: Aalok Thakkar, Prathamesh TVH, Claude Opus
 -/
 
 import DiagonaLean.Synthetic.Tactics.UndecFrom
-import DiagonaLean.MPCP.Reductions.Halt_to_MPCP
+import DiagonaLean.MPCP.Undecidable
 import DiagonaLean.MPCP.AlphabetLift
 import DiagonaLean.Foundations.Codes.Tactic
 
@@ -12,12 +12,13 @@ import DiagonaLean.Foundations.Codes.Tactic
 
 /-! # MPCP is synthetically halting-hard
 
-`MPCP.synthFromHalt`, through `haltToMpcpNorm` (`Reductions/Halt_to_MPCP.lean`), many-one reduces
-the halting problem to MPCP over the fixed alphabet `Alpha ℕ Sym2`, so MPCP is synthetically
-halting-hard there. MPCP is a functor on codes (`AlphabetLift.lean`), so it is synthetically
-halting-hard over every alphabet with two distinct letters (`MPCP.synthFromHaltOver`), for instance
-over `Bool` (`MPCP.synthFromHaltBool`). The undecidability results, from a halting reduction proved
-computable, are in `Undecidable.lean`.
+`MPCP.synthFromHalt` many-one reduces the halting problem to MPCP over the fixed alphabet
+`Alpha ℕ Sym2`: it is the proved reduction `MPCP.fromHalt` (`Undecidable.lean`), read as a synthetic
+one through the bridge from `HaltProblem` to `HaltCanon` (`HaltReduction.toSynthHalt`). MPCP is a
+functor on codes (`AlphabetLift.lean`), so it is synthetically halting-hard over every alphabet with
+two distinct letters (`MPCP.synthFromHaltOver`), for instance over `Bool`
+(`MPCP.synthFromHaltBool`). The undecidability results, from a halting reduction proved computable,
+are in `Undecidable.lean`.
 
 ## References
 
@@ -33,12 +34,11 @@ open Cslib.Turing SingleTapeTM DiagonaLean.PCP DiagonaLean.MPCP DiagonaLean.Halt
   DiagonaLean.Halt.Encoding DiagonaLean.Foundations.Computability.Normalize
   DiagonaLean.Synthetic.Definitions
 
-/-- **MPCP is synthetically halting-hard over the fixed alphabet `Alpha ℕ Sym2`.** The halting
-problem many-one reduces to MPCP over the fixed alphabet `Alpha ℕ Sym2`, through `haltToMpcpNorm`.
--/
+/-- **MPCP is synthetically halting-hard over the fixed alphabet `Alpha ℕ Sym2`**: the proved
+reduction `MPCP.fromHalt`, through the bridge. -/
 def _root_.DiagonaLean.MPCP.synthFromHalt :
     HaltProblem ⪯_s (@MPCP.DecisionProblem (Alpha ℕ Sym2)) :=
-  ⟨haltToMpcpNorm, halt_reducesto_mpcp_spec⟩
+  MPCP.fromHalt.toSynthHalt
 
 end DiagonaLean.MPCP.Reduction
 

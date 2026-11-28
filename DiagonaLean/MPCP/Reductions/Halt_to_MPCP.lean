@@ -16,10 +16,9 @@ Reduction from the halting problem to MPCP following the Hopcroft–Ullman const
 `DecisionProblem (startTile tm w) (haltTiles tm)` encode halting computation histories of `tm` on
 `w`. The main result is `halt_iff_mpcp`, subject to `NoBlankWrites` and `NoLeftBoundary`.
 
-The reduction `haltToMpcpNorm` first normalizes the machine and its input with
-`Foundations.Computability.Normalize`, so that both conditions hold, then renames states to their
-codes (`Alpha.map`), over the fixed alphabet `Alpha ℕ Sym2` (`halt_reducesto_mpcp_spec`). The
-packaged reduction `MPCP.synthFromHalt` is in `SynthHardness.lean`.
+The halting reduction built on it, from canonical machines whose normalisation meets both
+conditions, is in `HaltCanon_to_MPCP.lean`; `MPCP.synthFromHalt` (`SynthHardness.lean`) is that
+reduction read as a synthetic one.
 
 ## References
 
@@ -3102,30 +3101,5 @@ theorem halt_iff_mpcp (tm : EncodableTM Symbol)
       exact h_nbw
       exact h_nlb
       exact hd
-
-/-- **The reduction.** The function witnessing `HaltProblem ⪯_s MPCP`: it normalizes the machine
-and input to satisfy `NoBlankWrites` and `NoLeftBoundary`, builds the MPCP instance of
-`halt_iff_mpcp`, and renames states by `tm.stateEncodable` composed with the `Encodable` instance
-for the normalizer's control states. -/
-def haltToMpcpNorm (p : EncodableTM Bool × List Bool) :
-    Tile (Alpha ℕ Sym2) × Stack (Alpha ℕ Sym2) :=
-  let tm := normEnc p.1
-  letI := tm.stateEncodable
-  (Tile.map (Alpha.map Encodable.encode) (startTile tm.toSingleTapeTM (encInput p.2)),
-    (haltTiles tm).map (Tile.map (Alpha.map Encodable.encode)))
-
-/-- `haltToMpcpNorm` witnesses that the halting problem many-one reduces to MPCP over the fixed
-alphabet `Alpha ℕ Sym2`. -/
-theorem halt_reducesto_mpcp_spec :
-    HaltProblem ⪯_s[haltToMpcpNorm]
-      (@MPCP.DecisionProblem (Alpha ℕ Sym2)) := by
-  rintro ⟨tm, w⟩
-  show Halts tm.toSingleTapeTM w ↔ _
-  let normTMEnc := normEnc tm
-  let _ := normTMEnc.stateEncodable
-  rw [halts_normTM_iff tm.toSingleTapeTM w,
-    halt_iff_mpcp normTMEnc (normTM_noBlankWrites tm.toSingleTapeTM) (encInput w)
-      (normTM_noLeftBoundary tm.toSingleTapeTM w)]
-  exact mpcp_map_iff _ (Alpha.map_injective Encodable.encode_injective) _ _
 
 end DiagonaLean.MPCP.Reduction

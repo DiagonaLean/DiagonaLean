@@ -14,8 +14,8 @@ import DiagonaLean.Foundations.Computability.Normalize.Table
 
 /-! # From the halting problem on canonical machines to MPCP
 
-`haltToMpcpNorm` builds the MPCP instance of a machine from the machine itself, so its input is not
-`Primcodable` and it says nothing about machines. `instOf q rows w` builds the same instance from a
+The MPCP instance of `halt_iff_mpcp` is built from the machine itself, so as a function it does not
+act on `Primcodable` data and says nothing about machines. `instOf q rows w` builds it from a
 transition table `rows` in the format of `rowsE`, with start state number `q`, on input `w`: it
 computes the transitions of the normalised machine `normTM` from the table (`normTrN`, in
 `Foundations/Computability/Normalize/Table.lean`), and lists
