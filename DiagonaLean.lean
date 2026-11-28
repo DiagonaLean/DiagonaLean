@@ -142,6 +142,25 @@ import DiagonaLean.MatrixGame.Undecidable
 import DiagonaLean.MatrixGame.RE
 import DiagonaLean.MatrixGame.SynthHardness
 
+import DiagonaLean.CFGame.Basic
+import DiagonaLean.CFGame.Simulation
+import DiagonaLean.CFGame.Regular
+import DiagonaLean.CFGame.Target
+import DiagonaLean.CFGame.Rename
+import DiagonaLean.CFGame.Codes
+import DiagonaLean.CFGame.Reductions.ListHalt_to_CFGame
+import DiagonaLean.CFGame.SynthHardness
+import DiagonaLean.CFGame.Undecidable
+import DiagonaLean.TeamGame.Basic
+import DiagonaLean.TeamGame.Machine
+import DiagonaLean.TeamGame.Construction
+import DiagonaLean.TeamGame.Correctness
+import DiagonaLean.TeamGame.Winning
+import DiagonaLean.TeamGame.Coding
+import DiagonaLean.TeamGame.Finite
+import DiagonaLean.TeamGame.Reductions.Halt_to_TeamGame
+import DiagonaLean.TeamGame.SynthHardness
+
 import DiagonaLean.CM2.Basic
 import DiagonaLean.CM2.Assembly
 import DiagonaLean.CM2.Arithmetic
@@ -166,6 +185,7 @@ import DiagonaLean.Synthetic.AxiomCheck
 
 import DiagonaLean.Foundations.Computability.Prim
 import DiagonaLean.Foundations.Computability.StackProof
+import DiagonaLean.Foundations.Computability.RegularExpression
 import DiagonaLean.Foundations.Computability.PrimrecRec
 import DiagonaLean.Foundations.Computability.PolyTree
 import DiagonaLean.Foundations.Computability.TaggedCode

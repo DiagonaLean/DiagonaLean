@@ -459,6 +459,29 @@ example :
           DiagonaLean.CM2.DecisionProblem :=
   @DiagonaLean.CM2.not_machineDecidable
 
+example :
+    DiagonaLean.Foundations.Computability.HaltHard (@DiagonaLean.CFGame.DecisionProblem ℕ) :=
+  @DiagonaLean.CFGame.haltHard
+
+example :
+    ¬ComputablePred (@DiagonaLean.CFGame.DecisionProblem ℕ) :=
+  @DiagonaLean.CFGame.not_computablePred
+
+example :
+    ∀ {enc : DiagonaLean.CFGame.Game ℕ × List ℕ → List Bool},
+      Computable enc → ¬DiagonaLean.Synthetic.Definitions.MachineDecidable enc
+          (@DiagonaLean.CFGame.DecisionProblem ℕ) :=
+  @DiagonaLean.CFGame.not_machineDecidable
+
+example :
+    DiagonaLean.Halt.HaltProblem ⪯_s @DiagonaLean.TeamGame.DecisionProblem ℕ _ :=
+  DiagonaLean.TeamGame.synthFromHalt
+
+example :
+    DiagonaLean.Halt.HaltProblem ⪯_s
+      DiagonaLean.Synthetic.Definitions.Complement (@DiagonaLean.TeamGame.DecisionProblemSafety ℕ _) :=
+  DiagonaLean.TeamGame.synthComplFromHalt
+
 /-! ## Recursive enumerability
 
 The three rewriting problems, PCP, MPCP, matrix mortality, the matrix game, the four KAComm
@@ -729,6 +752,22 @@ example :
     ∀ (eve adam : Finset DiagonaLean.MatrixGame.Position),
       DiagonaLean.MatrixGame.DecisionProblem (eve, adam) ↔ DiagonaLean.MatrixGame.EveWins eve adam :=
   @DiagonaLean.MatrixGame.decisionProblem_mk
+
+example :
+    ∀ {α : Type} (G : DiagonaLean.CFGame.Game α) (w : List α),
+      DiagonaLean.CFGame.DecisionProblem (G, w) ↔ DiagonaLean.CFGame.Wins G w :=
+  @DiagonaLean.CFGame.decisionProblem_mk
+
+example :
+    ∀ {α : Type} [DecidableEq α] (G : DiagonaLean.TeamGame.Game α) (d : α),
+      DiagonaLean.TeamGame.DecisionProblem (G, d) ↔ DiagonaLean.TeamGame.TeamWinsReach G d :=
+  @DiagonaLean.TeamGame.decisionProblem_mk
+
+example :
+    ∀ {α : Type} [DecidableEq α] (G : DiagonaLean.TeamGame.Game α) (d : α),
+      DiagonaLean.TeamGame.DecisionProblemSafety (G, d) ↔
+        DiagonaLean.TeamGame.TeamWinsSafety G d :=
+  @DiagonaLean.TeamGame.decisionProblemSafety_mk
 
 example :
     ∀ (eve adam : Finset DiagonaLean.MatrixGame.Position),

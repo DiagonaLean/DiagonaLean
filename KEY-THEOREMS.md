@@ -118,6 +118,7 @@ explicitly (`…Over b0 b1 hne`); `Nontrivial α` is enough only for `Prop` resu
 | `derive_primrec f [inst…]` | command: states `Primrec fun x : A₁ × A₂ => f x.1 x.2`, proves it by `unfold f; fun_prop`, registers it as `f_prim` with `@[fun_prop]` |
 | `primrec_rec` | tactic for structural recursion on `ℕ`, `List`, or a type with `derive_primcodable`: `@[fun_prop] theorem f_primrec : Primrec f := by primrec_rec` |
 | `derive_primcodable T` | command: `Primcodable T` for an inductive type (fields `T`, `List T`, `Option T`, `Primcodable` data), with constructor lemmas and `T.primrec_of_eqns` |
+| `RegularExpression` | Mathlib's regular expressions are `Primcodable` by `derive_primcodable`, with `fun_prop` lemmas for `+`, `*`, `0`, `1` (`Foundations/Computability/RegularExpression.lean`) |
 | `tm_computes F`, `tm_computer F` | a Turing machine computing a function (`Foundations/Computability/Computer.lean`) |
 | `#check_reductions` (`local`) | checks every reduction's dependency closure for escape hatches; run by CI on the whole library |
 
@@ -139,7 +140,7 @@ duplicates `MatMortProblem`, `AmbigCFGProblem` and `EmpCFGProblem` were removed.
 `MatrixGame.fromHalt` (from `MatMort.fromHalt` along `signGame`),
 `ListHalt.fromHalt` (a second root: list machines given by a table, through `canonList`,
 `Foundations/Computability/ListHalt.lean`; a simulation reduces from it with one function on tables)
-and from it `CM2.fromHalt` (along `listToCM2`),
+and from it `CM2.fromHalt` (along `listToCM2`) and `CFGame.fromHalt` (along `listToCFGame`),
 `EmpCFG.codeFromHaltTerm`, `AmbigCFG.codeFromHaltSum` (fixed terminal shapes) and, lifted to grammar
 codes over every alphabet with two letters, `EmpCFG.codeFromHaltOver`, `AmbigCFG.codeFromHaltOver`.
 Each problem states its consequences with `halt_results` (`X.haltHard`, `X.not_computablePred`,
