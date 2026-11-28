@@ -549,6 +549,35 @@ example :
       REPred (DiagonaLean.Foundations.Computability.ListHalt.DecisionProblem bl) :=
   @DiagonaLean.Foundations.Computability.ListHalt.rePred
 
+/-! ## Co-halting-hardness
+
+The complement of the halting problem is not recursively enumerable, so neither is a
+co-halting-hard predicate; emptiness of the intersection of grammar codes is one. Generated on
+2026-11-28. -/
+
+example :
+    ¬REPred fun x => ¬DiagonaLean.Foundations.Computability.HaltCanon x :=
+  @DiagonaLean.Foundations.Computability.not_rePred_compl_haltCanon
+
+example :
+    ∀ {α : Type} [Primcodable α] [DecidableEq α] [Nontrivial α],
+      DiagonaLean.Foundations.Computability.CoHaltHard
+        fun (c : DiagonaLean.Foundations.Grammar.CFGCode α ×
+            DiagonaLean.Foundations.Grammar.CFGCode α) =>
+        DiagonaLean.EmpCFG.IntersectionEmpty (DiagonaLean.Foundations.Grammar.GrammarPres.toCFG
+            c.1)
+          (DiagonaLean.Foundations.Grammar.GrammarPres.toCFG c.2) :=
+  @DiagonaLean.EmpCFG.Code.empty_coHaltHard
+
+example :
+    ∀ {α : Type} [Primcodable α] [DecidableEq α] [Nontrivial α],
+      ¬REPred fun (c : DiagonaLean.Foundations.Grammar.CFGCode α ×
+            DiagonaLean.Foundations.Grammar.CFGCode α) =>
+        DiagonaLean.EmpCFG.IntersectionEmpty (DiagonaLean.Foundations.Grammar.GrammarPres.toCFG
+            c.1)
+          (DiagonaLean.Foundations.Grammar.GrammarPres.toCFG c.2) :=
+  @DiagonaLean.EmpCFG.Code.empty_not_rePred
+
 /-! ## Completeness and degrees
 
 The halting problem is complete for the recursively enumerable problems, and the three rewriting

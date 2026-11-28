@@ -58,6 +58,7 @@ import DiagonaLean.EmpCFG.AlphabetLift
 import DiagonaLean.EmpCFG.Reductions.PCP_to_EmpCFGCode
 import DiagonaLean.EmpCFG.Undecidable
 import DiagonaLean.EmpCFG.RE
+import DiagonaLean.EmpCFG.Emptiness
 
 import DiagonaLean.MatMort.Basic
 import DiagonaLean.MatMort.Reductions.PCP_to_MatMort
@@ -219,6 +220,7 @@ import DiagonaLean.Foundations.Computability.ListMachine
 import DiagonaLean.Foundations.Computability.ListHalt
 import DiagonaLean.Foundations.Computability.ListHaltRE
 import DiagonaLean.Foundations.Computability.Reaches
+import DiagonaLean.Foundations.Computability.CoHalt
 import DiagonaLean.Foundations.Computability.Normalize.Table
 import DiagonaLean.Foundations.Computability.Normalize.Conditions
 import DiagonaLean.Foundations.Computability.Normalize.Normalize
